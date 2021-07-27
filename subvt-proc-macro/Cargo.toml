@@ -1,0 +1,12 @@
+[lib]
+proc-macro = true
+
+[package]
+name = "subvt-proc-macro"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+proc-macro2 = "1.0.29"
+syn = "1.0.77"
+quote = "1.0.9"

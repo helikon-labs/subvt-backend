@@ -1,0 +1,13 @@
+[package]
+name = "subvt-service-common"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.44"
+async-trait = "0.1.51"
+log = "0.4.14"
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
+subvt-config = { path = "../subvt-config" }
+subvt-logging = { path = "../subvt-logging" }
+subvt-types = { path = "../subvt-types" }

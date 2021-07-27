@@ -1,0 +1,21 @@
+[common]
+recovery_retry_seconds = 5
+
+[substrate]
+chain = "kusama"
+rpc_url = "wss://kusama.api.onfinality.io/ws?apikey=dd5360ec-27ab-439b-8a4a-9446b3b716a3"
+timeout_seconds = 30
+connection_timeout_seconds = 30
+request_timeout_seconds = 30
+
+[log]
+subvt_level = "debug"
+other_level = "info"
+
+[rpc]
+host = "127.0.0.1"
+live_network_status_port = 7888
+inactive_validator_list_port = 7889
+
+[redis]
+url = "redis://127.0.0.1:6379/"

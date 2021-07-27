@@ -1,0 +1,6 @@
+[log]
+subvt_level = "debug"
+other_level = "info"
+
+[redis]
+url = "redis://127.0.0.1:6379/"

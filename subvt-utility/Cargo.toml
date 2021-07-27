@@ -1,0 +1,9 @@
+[package]
+name = "subvt-utility"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.44"
+hex = "0.4"
+parity-scale-codec = { version = "2.3.0", default-features = false, features = ["derive", "full"] }

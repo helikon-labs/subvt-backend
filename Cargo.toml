@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "subvt-config",
+    "subvt-inactive-validator-list-server",
+    "subvt-inactive-validators-updater",
+    "subvt-live-network-status-server",
+    "subvt-live-network-status-updater",
+    "subvt-logging",
+    "subvt-proc-macro",
+    "subvt-service-common",
+    "subvt-substrate-client",
+    "subvt-types",
+    "subvt-utility",
+]
