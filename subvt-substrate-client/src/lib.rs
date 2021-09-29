@@ -37,6 +37,8 @@ use std::hash::{Hash, Hasher};
 mod storage;
 mod metadata;
 
+const KEY_QUERY_PAGE_SIZE: usize = 1000;
+
 /// The client.
 pub struct SubstrateClient {
     pub chain: Chain,
@@ -274,7 +276,7 @@ impl SubstrateClient {
         ).collect();
         debug!("Got {} storage keys for identities.", keys.len());
         if keys.is_empty() {
-            return Ok(HashMap::new())
+            return Ok(HashMap::new());
         }
         let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
             "state_queryStorageAt",
@@ -343,6 +345,34 @@ impl SubstrateClient {
         Ok(accounts)
     }
 
+    async fn get_all_keys_for_storage(
+        &self,
+        module_name: &str,
+        storage_name: &str,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<String>> {
+        let mut all_keys: Vec<String> = Vec::new();
+        loop {
+            let last = all_keys.last();
+            let mut keys: Vec<String> = self.ws_client.request(
+                "state_getKeysPaged",
+                get_rpc_paged_keys_params(
+                    module_name,
+                    storage_name,
+                    KEY_QUERY_PAGE_SIZE,
+                    if let Some(last) = last { Some(last.as_str()) } else { None },
+                    Some(block_hash),
+                ),
+            ).await?;
+            let keys_length = keys.len();
+            all_keys.append(&mut keys);
+            if keys_length < KEY_QUERY_PAGE_SIZE {
+                break;
+            }
+        }
+        Ok(all_keys)
+    }
+
     /// Get the list of all validators at the given block.
     pub async fn get_all_inactive_validators(
         &self,
@@ -350,37 +380,20 @@ impl SubstrateClient {
     ) -> anyhow::Result<Vec<InactiveValidator>> {
         debug!("Getting all inactive validators...");
         let active_validator_account_ids = self.get_active_validator_account_ids(block_hash).await?;
-        let keys_page_size = 1000;
         let max_nominator_rewarded_per_validator: u32 = self.metadata.module("Staking")?
             .constant("MaxNominatorRewardedPerValidator")?
             .value()?;
-        let all_keys: Vec<String> = {
-            let mut all_keys: Vec<String> = Vec::new();
-            loop {
-                let last = all_keys.last();
-                let mut keys: Vec<String> = self.ws_client.request(
-                    "state_getKeysPaged",
-                    get_rpc_paged_keys_params(
-                        "Staking",
-                        "Validators",
-                        keys_page_size,
-                        if let Some(last) = last { Some(last.as_str()) } else { None },
-                        Some(block_hash),
-                    ),
-                ).await?;
-                let keys_length = keys.len();
-                all_keys.append(&mut keys);
-                if keys_length < keys_page_size {
-                    break;
-                }
+        let all_keys: Vec<String> = self.get_all_keys_for_storage(
+            "Staking",
+            "Validators",
+            block_hash,
+        ).await?.into_iter().filter(
+            |key| {
+                !active_validator_account_ids.contains(
+                    &self.account_id_from_storage_key_string(key)
+                )
             }
-            all_keys.iter()
-                .map(|key| key.to_owned())
-                .filter(|key| {
-                    !active_validator_account_ids.contains(&self.account_id_from_storage_key_string(key))
-                })
-                .collect()
-        };
+        ).collect();
 
         let mut inactive_validator_map: HashMap<AccountId, InactiveValidator> = HashMap::new();
         {
@@ -389,12 +402,10 @@ impl SubstrateClient {
             ).collect();
             let accounts = self.get_accounts(&account_ids, block_hash).await?;
             for account in accounts {
-                let inactive_validator = InactiveValidator {
-                    account: account.clone(),
-                    active_next_session: false,
-                    ..Default::default()
-                };
-                inactive_validator_map.insert(account.id.clone(), inactive_validator);
+                inactive_validator_map.insert(
+                    account.id.clone(),
+                    InactiveValidator { account: account.clone(), ..Default::default() },
+                );
             }
         }
         debug!("There are {} inactive validators.", inactive_validator_map.len());
@@ -411,7 +422,7 @@ impl SubstrateClient {
                     )
                 }
             ).collect();
-            for chunk in keys.chunks(keys_page_size) {
+            for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -467,7 +478,7 @@ impl SubstrateClient {
                 }
             ).collect();
 
-            for chunk in keys.chunks(keys_page_size) {
+            for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -504,7 +515,7 @@ impl SubstrateClient {
                 }
             ).collect();
             let mut number_of_slashed_validators = 0;
-            for chunk in keys.chunks(keys_page_size) {
+            for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -538,21 +549,21 @@ impl SubstrateClient {
                     get_rpc_paged_keys_params(
                         "Staking",
                         "Nominators",
-                        keys_page_size,
+                        KEY_QUERY_PAGE_SIZE,
                         if let Some(last) = last { Some(last.as_str()) } else { None },
                         Some(block_hash),
                     ),
                 ).await?;
                 let keys_length = keys.len();
                 all_keys.append(&mut keys);
-                if keys_length < keys_page_size {
+                if keys_length < KEY_QUERY_PAGE_SIZE {
                     break;
                 }
             }
 
             debug!("{} nominations.", all_keys.len());
             let mut nomination_map: HashMap<AccountId, Nomination> = HashMap::new();
-            for chunk in all_keys.chunks(keys_page_size) {
+            for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -581,7 +592,7 @@ impl SubstrateClient {
             // get nominator account details
             {
                 let nominator_account_ids: Vec<AccountId> = nomination_map.keys().cloned().collect();
-                for account_id_chunk in nominator_account_ids.chunks(keys_page_size) {
+                for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
                     let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
                     for account in accounts {
                         nomination_map.get_mut(&account.id).unwrap().nominator_account = account.clone();
@@ -611,7 +622,7 @@ impl SubstrateClient {
             }
             let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
             let mut validator_controller_account_ids: Vec<AccountId> = Vec::new();
-            for chunk in controller_storage_keys.chunks(keys_page_size) {
+            for chunk in controller_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -640,7 +651,7 @@ impl SubstrateClient {
             // get validator controller account details
             {
                 let mut validator_controller_account_map: HashMap<AccountId, Account> = HashMap::new();
-                for controller_account_id_chunk in validator_controller_account_ids.chunks(keys_page_size) {
+                for controller_account_id_chunk in validator_controller_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
                     let accounts = self.get_accounts(controller_account_id_chunk, block_hash).await?;
                     for account in accounts {
                         validator_controller_account_map.insert(account.id.clone(), account);
@@ -670,7 +681,7 @@ impl SubstrateClient {
                     )
             ).collect();
             // her biri için bonded miktarı al (staking.ledger)
-            for chunk in ledger_storage_keys.chunks(keys_page_size) {
+            for chunk in ledger_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
                     JsonRpcParams::Array(
@@ -788,7 +799,6 @@ impl SubstrateClient {
         clipped: bool,
         block_hash: &str,
     ) -> anyhow::Result<EraStakers> {
-        let keys_page_size = 1000;
         let mut all_keys: Vec<String> = Vec::new();
         loop {
             let last = all_keys.last();
@@ -799,20 +809,20 @@ impl SubstrateClient {
                     "Staking",
                     if clipped { "ErasStakersClipped" } else { "ErasStakers" },
                     &era.index,
-                    keys_page_size,
+                    KEY_QUERY_PAGE_SIZE,
                     if let Some(last) = last { Some(last.as_str()) } else { None },
                     Some(block_hash),
                 ),
             ).await?;
             let keys_length = keys.len();
             all_keys.append(&mut keys);
-            if keys_length < keys_page_size {
+            if keys_length < KEY_QUERY_PAGE_SIZE {
                 break;
             }
         }
 
         let mut stakers: Vec<ValidatorStake> = Vec::new();
-        for chunk in all_keys.chunks(keys_page_size) {
+        for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
             let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                 "state_queryStorageAt",
                 JsonRpcParams::Array(
