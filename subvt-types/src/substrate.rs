@@ -60,6 +60,38 @@ pub struct SystemProperties {
     pub token_symbol: String,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct Account {
+    pub id: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub identity: Option<IdentityRegistration>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Box<Option<Account>>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct AccountSummary {
+    pub id: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub identity: Option<IdentityRegistrationSummary>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent: Box<Option<AccountSummary>>,
+}
+
+impl From<&Account> for AccountSummary {
+    fn from(account: &Account) -> AccountSummary {
+        AccountSummary {
+            id: account.id.clone(),
+            identity: account.identity.as_ref().map(|identity| identity.into()),
+            parent: if let Some(account) = &*account.parent {
+                Box::new(Some(AccountSummary::from(account)))
+            } else {
+                Box::new(None)
+            },
+        }
+    }
+}
+
 /// A block's header as fetched from the node RPC interface.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -154,14 +186,14 @@ impl Epoch {
 
 /// A nominator's active stake on a validator.
 pub struct NominatorStake {
-    pub nominator_account_id: AccountId,
+    pub account: Account,
     pub stake: u128,
 }
 
 /// Active staking information for a single active validator. Contains the validator account id,
 /// self stake, total stake and each nominator's active stake on the validator.
 pub struct ValidatorStake {
-    pub account_id: AccountId,
+    pub account: Account,
     pub self_stake: u128,
     pub total_stake: u128,
     pub nominators: Vec<NominatorStake>,
@@ -173,10 +205,14 @@ impl ValidatorStake {
         let mut nominators: Vec<NominatorStake> = Vec::new();
         for other in exposure.others {
             let stake = other.value;
-            nominators.push(NominatorStake { nominator_account_id: other.who, stake });
+            let account = Account { id: other.who, ..Default::default() };
+            nominators.push(NominatorStake { account, stake });
         }
         let validator_stake = Self {
-            account_id: validator_account_id,
+            account: Account {
+                id: validator_account_id,
+                ..Default::default()
+            },
             self_stake: exposure.own,
             total_stake: exposure.total,
             nominators,
@@ -201,19 +237,21 @@ impl EraStakers {
     }
 
     /// Gets the minimum stake backing an active validator. Returns validator account id and stake.
-    pub fn min_stake(&self) -> (AccountId, u128) {
-        self.stakers.iter().map(
+    pub fn min_stake(&self) -> (Account, u128) {
+        let validator_stake = self.stakers.iter().min_by_key(
             |validator_stake|
-                (validator_stake.account_id.clone(), validator_stake.total_stake)
-        ).min_by_key(|pair| pair.1).unwrap()
+                validator_stake.total_stake
+        ).unwrap();
+        (validator_stake.account.clone(), validator_stake.total_stake)
     }
 
     /// Gets the maximum stake backing an active validator. Returns validator account id and stake.
-    pub fn max_stake(&self) -> (AccountId, u128) {
-        self.stakers.iter().map(
+    pub fn max_stake(&self) -> (Account, u128) {
+        let validator_stake = self.stakers.iter().max_by_key(
             |validator_stake|
-                (validator_stake.account_id.clone(), validator_stake.total_stake)
-        ).max_by_key(|pair| pair.1).unwrap()
+                validator_stake.total_stake
+        ).unwrap();
+        (validator_stake.account.clone(), validator_stake.total_stake)
     }
 
     /// Gets the average of all stakes backing all active validators.
@@ -341,7 +379,7 @@ pub struct Nomination {
     pub nominator_account: Account,
     pub controller_account: Account,
     pub submission_era_index: u32,
-    pub target_account_ids: Vec<AccountId>,
+    pub target_accounts: Vec<Account>,
     pub stake: Stake,
 }
 
@@ -353,7 +391,10 @@ impl Nomination {
             Nomination {
                 nominator_account: Account { id: account_id, ..Default::default() },
                 submission_era_index,
-                target_account_ids: nomination.targets,
+                target_accounts: nomination.targets.iter().map(
+                    |id|
+                        Account { id: id.clone(), ..Default::default() }
+                ).collect(),
                 ..Default::default()
             }
         )
@@ -419,7 +460,7 @@ pub enum RewardDestination {
     Staked,
     Stash,
     Controller,
-    Account(AccountId),
+    Account(Account),
     None,
 }
 
@@ -429,7 +470,7 @@ impl Display for RewardDestination {
             Self::Staked => f.write_str("Staked"),
             Self::Stash => f.write_str("Stash"),
             Self::Controller => f.write_str("Controller"),
-            Self::Account(account_id) => f.write_str(&format!("Account({})", account_id.to_string())),
+            Self::Account(account) => f.write_str(&format!("Account({})", account.id.to_string())),
             Self::None => f.write_str("None"),
         }
     }
@@ -448,41 +489,13 @@ impl RewardDestination {
             pallet_staking::RewardDestination::Staked => Self::Staked,
             pallet_staking::RewardDestination::Stash => Self::Stash,
             pallet_staking::RewardDestination::Controller => Self::Controller,
-            pallet_staking::RewardDestination::Account(account_id) => Self::Account(account_id),
+            pallet_staking::RewardDestination::Account(account_id) => {
+                Self::Account(
+                    Account { id: account_id, ..Default::default() }
+                )
+            },
             pallet_staking::RewardDestination::None => Self::None,
         };
         Ok(destination)
-    }
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct Account {
-    pub id: AccountId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub identity: Option<IdentityRegistration>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parent: Box<Option<Account>>,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct AccountSummary {
-    pub id: AccountId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub identity: Option<IdentityRegistrationSummary>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parent: Box<Option<AccountSummary>>,
-}
-
-impl From<&Account> for AccountSummary {
-    fn from(account: &Account) -> AccountSummary {
-        AccountSummary {
-            id: account.id.clone(),
-            identity: account.identity.as_ref().map(|identity| identity.into()),
-            parent: if let Some(account) = &*account.parent {
-                Box::new(Some(AccountSummary::from(account)))
-            } else {
-                Box::new(None)
-            },
-        }
     }
 }
