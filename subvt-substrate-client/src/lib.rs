@@ -577,8 +577,18 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Got {} nominations.", nomination_map.len());
-
+            debug!("Got {} nominations. Get nominator account details...", nomination_map.len());
+            // get nominator account details
+            {
+                let nominator_account_ids: Vec<AccountId> = nomination_map.keys().cloned().collect();
+                for account_id_chunk in nominator_account_ids.chunks(keys_page_size) {
+                    let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
+                    for account in accounts {
+                        nomination_map.get_mut(&account.id).unwrap().nominator_account = account.clone();
+                    }
+                }
+                debug!("Completed fetching nominator account details.");
+            }
             let mut controller_storage_keys: Vec<String> = nomination_map.keys().map(
                 |nominator_account_id|
                     get_storage_map_key(
@@ -600,6 +610,7 @@ impl SubstrateClient {
                 )
             }
             let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
+            let mut validator_controller_account_ids: Vec<AccountId> = Vec::new();
             for chunk in controller_storage_keys.chunks(keys_page_size) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
@@ -612,34 +623,42 @@ impl SubstrateClient {
                 ).await?;
                 for (storage_key, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
+                        let account_id = self.account_id_from_storage_key(storage_key);
                         let mut bytes: &[u8] = &data.0;
                         let controller_account_id: AccountId = Decode::decode(&mut bytes).unwrap();
-                        let account_id = self.account_id_from_storage_key(storage_key);
+                        if let Some(nomination) = nomination_map.get_mut(&account_id) {
+                            nomination.controller_account_id = controller_account_id.clone();
+                        } else {
+                            validator_controller_account_ids.push(controller_account_id.clone())
+                        }
                         controller_account_id_map.insert(account_id, controller_account_id);
                     }
                 }
             }
             let controller_account_ids: Vec<AccountId> = controller_account_id_map.values().cloned().collect();
-            debug!("Got {} controller account ids. Get all account details...", controller_account_ids.len());
-            let mut controller_account_map: HashMap<AccountId, Account> = HashMap::new();
-            for controller_account_id_chunk in controller_account_ids.chunks(keys_page_size) {
-                let accounts = self.get_accounts(controller_account_id_chunk, block_hash).await?;
-                for account in accounts {
-                    controller_account_map.insert(account.id.clone(), account);
+            debug!("Got {} controller account ids.", controller_account_ids.len());
+            // get validator controller account details
+            {
+                let mut validator_controller_account_map: HashMap<AccountId, Account> = HashMap::new();
+                for controller_account_id_chunk in validator_controller_account_ids.chunks(keys_page_size) {
+                    let accounts = self.get_accounts(controller_account_id_chunk, block_hash).await?;
+                    for account in accounts {
+                        validator_controller_account_map.insert(account.id.clone(), account);
+                    }
                 }
-            }
-            for account_id in controller_account_id_map.keys() {
-                let controller_account = controller_account_map.get(
-                    controller_account_id_map.get(account_id).unwrap()
-                ).unwrap().clone();
-                if let Some(nomination) = nomination_map.get_mut(account_id) {
-                    nomination.controller_account = controller_account;
-                } else {
-                    let validator = inactive_validator_map.get_mut(account_id).unwrap();
-                    validator.controller_account = controller_account;
+                debug!(
+                    "Got {} validator controller account details.",
+                    validator_controller_account_map.len()
+                );
+                for inactive_validator in inactive_validator_map.values_mut() {
+                    let controller_account = validator_controller_account_map.get(
+                        controller_account_id_map.get(&inactive_validator.account.id).unwrap()
+                    ).unwrap();
+                    inactive_validator.controller_account = controller_account.clone();
                 }
+                debug!("Completed fetching validator controller account details.");
             }
-            debug!("Controller account processing completed.");
+            debug!("Get nominations and self stakes.");
             // her biri için bonding'i al (staking.bonded)
             let ledger_storage_keys: Vec<String> = controller_account_ids.iter().map(
                 |controller_account_id|
@@ -665,7 +684,7 @@ impl SubstrateClient {
                     if let Some(data) = data {
                         let bytes: &[u8] = &data.0;
                         let stake: Stake = Stake::from_bytes(bytes).unwrap();
-                        let account_id = &stake.stash_account.id;
+                        let account_id = &stake.stash_account_id;
                         if let Some(nomination) = nomination_map.get_mut(account_id) {
                             nomination.stake = stake;
                         } else {

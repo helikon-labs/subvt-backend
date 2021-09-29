@@ -377,7 +377,7 @@ pub type SuperAccountId = (AccountId, Data);
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
     pub nominator_account: Account,
-    pub controller_account: Account,
+    pub controller_account_id: AccountId,
     pub submission_era_index: u32,
     pub target_account_ids: Vec<AccountId>,
     pub stake: Stake,
@@ -418,7 +418,7 @@ impl From<&Vec<Nomination>> for NominationsSummary {
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Stake {
-    pub stash_account: Account,
+    pub stash_account_id: AccountId,
     pub total_amount: u128,
     pub active_amount: u128,
     pub claimed_era_indices: Vec<u32>,
@@ -428,7 +428,7 @@ impl Stake {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
         let ledger: StakingLedger<AccountId, u128> = Decode::decode(&mut bytes)?;
         let stake = Self {
-            stash_account: Account { id: ledger.stash, ..Default::default() },
+            stash_account_id: ledger.stash,
             total_amount: ledger.total,
             active_amount: ledger.active,
             claimed_era_indices: ledger.claimed_rewards,
@@ -446,7 +446,7 @@ pub struct StakeSummary {
 impl From<&Stake> for StakeSummary {
     fn from(stake: &Stake) -> StakeSummary {
         StakeSummary {
-            stash_account_id: stake.stash_account.id.clone(),
+            stash_account_id: stake.stash_account_id.clone(),
             active_amount: stake.active_amount,
         }
     }
@@ -457,7 +457,7 @@ pub enum RewardDestination {
     Staked,
     Stash,
     Controller,
-    Account(Account),
+    Account(AccountId),
     None,
 }
 
@@ -467,7 +467,7 @@ impl Display for RewardDestination {
             Self::Staked => f.write_str("Staked"),
             Self::Stash => f.write_str("Stash"),
             Self::Controller => f.write_str("Controller"),
-            Self::Account(account) => f.write_str(&format!("Account({})", account.id.to_string())),
+            Self::Account(account_id) => f.write_str(&format!("Account({})", account_id)),
             Self::None => f.write_str("None"),
         }
     }
@@ -486,11 +486,7 @@ impl RewardDestination {
             pallet_staking::RewardDestination::Staked => Self::Staked,
             pallet_staking::RewardDestination::Stash => Self::Stash,
             pallet_staking::RewardDestination::Controller => Self::Controller,
-            pallet_staking::RewardDestination::Account(account_id) => {
-                Self::Account(
-                    Account { id: account_id, ..Default::default() }
-                )
-            },
+            pallet_staking::RewardDestination::Account(account_id) => Self::Account(account_id),
             pallet_staking::RewardDestination::None => Self::None,
         };
         Ok(destination)
