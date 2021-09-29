@@ -677,8 +677,8 @@ impl SubstrateClient {
             }
             debug!("Got all stakes.");
             for nomination in nomination_map.values() {
-                for account in nomination.target_accounts.iter() {
-                    if let Some(validator) = inactive_validator_map.get_mut(&account.id) {
+                for account_id in nomination.target_account_ids.iter() {
+                    if let Some(validator) = inactive_validator_map.get_mut(account_id) {
                         validator.nominations.push(nomination.clone());
                         validator.oversubscribed =
                             validator.nominations.len()

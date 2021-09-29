@@ -379,7 +379,7 @@ pub struct Nomination {
     pub nominator_account: Account,
     pub controller_account: Account,
     pub submission_era_index: u32,
-    pub target_accounts: Vec<Account>,
+    pub target_account_ids: Vec<AccountId>,
     pub stake: Stake,
 }
 
@@ -391,10 +391,7 @@ impl Nomination {
             Nomination {
                 nominator_account: Account { id: account_id, ..Default::default() },
                 submission_era_index,
-                target_accounts: nomination.targets.iter().map(
-                    |id|
-                        Account { id: id.clone(), ..Default::default() }
-                ).collect(),
+                target_account_ids: nomination.targets,
                 ..Default::default()
             }
         )
