@@ -228,6 +228,9 @@ impl SubstrateClient {
             }
         ).collect();
         debug!("Got {} keys for super accounts.", keys.len());
+        if keys.is_empty() {
+            return Ok(HashMap::new());
+        }
         let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
             "state_queryStorageAt",
             JsonRpcParams::Array(
@@ -270,6 +273,9 @@ impl SubstrateClient {
             }
         ).collect();
         debug!("Got {} storage keys for identities.", keys.len());
+        if keys.is_empty() {
+            return Ok(HashMap::new())
+        }
         let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
             "state_queryStorageAt",
             JsonRpcParams::Array(
@@ -342,7 +348,7 @@ impl SubstrateClient {
         &self,
         block_hash: &str,
     ) -> anyhow::Result<Vec<InactiveValidator>> {
-        debug!("start");
+        debug!("Getting all inactive validators...");
         let active_validator_account_ids = self.get_active_validator_account_ids(block_hash).await?;
         let keys_page_size = 1000;
         let max_nominator_rewarded_per_validator: u32 = self.metadata.module("Staking")?
@@ -583,17 +589,17 @@ impl SubstrateClient {
                     )
             ).collect();
             // add validator addresses
-            for validator_address in inactive_validator_map.keys() {
+            for validator_account_id in inactive_validator_map.keys() {
                 controller_storage_keys.push(
                     get_storage_map_key(
                         &self.metadata,
                         "Staking",
                         "Bonded",
-                        validator_address,
+                        validator_account_id,
                     )
                 )
             }
-            let mut controller_account_ids: Vec<AccountId> = Vec::new();
+            let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
             for chunk in controller_storage_keys.chunks(keys_page_size) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self.ws_client.request(
                     "state_queryStorageAt",
@@ -609,19 +615,31 @@ impl SubstrateClient {
                         let mut bytes: &[u8] = &data.0;
                         let controller_account_id: AccountId = Decode::decode(&mut bytes).unwrap();
                         let account_id = self.account_id_from_storage_key(storage_key);
-                        controller_account_ids.push(controller_account_id.clone());
-                        let controller_account = Account { id: controller_account_id, ..Default::default() };
-                        if let Some(nomination) = nomination_map.get_mut(&account_id) {
-                            nomination.controller_account = controller_account;
-                        } else {
-                            let validator = inactive_validator_map.get_mut(&account_id).unwrap();
-                            validator.controller_account = controller_account;
-                        }
+                        controller_account_id_map.insert(account_id, controller_account_id);
                     }
                 }
             }
-            debug!("Got {} controller account ids.", controller_account_ids.len());
-
+            let controller_account_ids: Vec<AccountId> = controller_account_id_map.values().cloned().collect();
+            debug!("Got {} controller account ids. Get all account details...", controller_account_ids.len());
+            let mut controller_account_map: HashMap<AccountId, Account> = HashMap::new();
+            for controller_account_id_chunk in controller_account_ids.chunks(keys_page_size) {
+                let accounts = self.get_accounts(controller_account_id_chunk, block_hash).await?;
+                for account in accounts {
+                    controller_account_map.insert(account.id.clone(), account);
+                }
+            }
+            for account_id in controller_account_id_map.keys() {
+                let controller_account = controller_account_map.get(
+                    controller_account_id_map.get(account_id).unwrap()
+                ).unwrap().clone();
+                if let Some(nomination) = nomination_map.get_mut(account_id) {
+                    nomination.controller_account = controller_account;
+                } else {
+                    let validator = inactive_validator_map.get_mut(account_id).unwrap();
+                    validator.controller_account = controller_account;
+                }
+            }
+            debug!("Controller account processing completed.");
             // her biri için bonding'i al (staking.bonded)
             let ledger_storage_keys: Vec<String> = controller_account_ids.iter().map(
                 |controller_account_id|
