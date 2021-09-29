@@ -212,6 +212,131 @@ impl SubstrateClient {
         Ok(decode_hex_string(hex_string.as_str())?)
     }
 
+    pub async fn get_parent_account_ids(
+        &self,
+        account_ids: &[AccountId],
+        block_hash: &str,
+    ) -> anyhow::Result<HashMap<AccountId, AccountId>> {
+        let keys: Vec<String> = account_ids.iter().map(
+            |account_id| {
+                get_storage_map_key(
+                    &self.metadata,
+                    "Identity",
+                    "SuperOf",
+                    &account_id,
+                )
+            }
+        ).collect();
+        debug!("Got {} keys for super accounts.", keys.len());
+        let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
+            "state_queryStorageAt",
+            JsonRpcParams::Array(
+                vec![
+                    keys.into(),
+                    block_hash.into(),
+                ]
+            ),
+        ).await?;
+        debug!("Got {} optional super accounts records.", values[0].changes.len());
+        let mut parent_account_map: HashMap<AccountId, AccountId> = HashMap::new();
+        for (storage_key, storage_data) in values[0].changes.iter() {
+            if let Some(data) = storage_data {
+                let account_id = self.account_id_from_storage_key(storage_key);
+                let mut bytes: &[u8] = &data.0;
+                let super_identity: SuperAccountId = Decode::decode(&mut bytes).unwrap();
+                parent_account_map.insert(
+                    account_id,
+                    super_identity.0,
+                );
+            }
+        }
+        debug!("Got {} super accounts. Get identities for super accounts.", parent_account_map.len());
+        Ok(parent_account_map)
+    }
+
+    pub async fn get_identities(
+        &self,
+        account_ids: &[AccountId],
+        block_hash: &str,
+    ) -> anyhow::Result<HashMap<AccountId, IdentityRegistration>> {
+        let keys: Vec<String> = account_ids.iter().map(
+            |account_id| {
+                get_storage_map_key(
+                    &self.metadata,
+                    "Identity",
+                    "IdentityOf",
+                    account_id,
+                )
+            }
+        ).collect();
+        debug!("Got {} storage keys for identities.", keys.len());
+        let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
+            "state_queryStorageAt",
+            JsonRpcParams::Array(
+                vec![
+                    keys.into(),
+                    block_hash.into(),
+                ]
+            ),
+        ).await?;
+        debug!("Got {} optional identities.", values[0].changes.len());
+        let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::new();
+        for (storage_key, storage_data) in values[0].changes.iter() {
+            let account_id = self.account_id_from_storage_key(storage_key);
+            if let Some(data) = storage_data {
+                let bytes: &[u8] = &data.0;
+                identity_map.insert(
+                    account_id,
+                    IdentityRegistration::from_bytes(bytes).unwrap(),
+                );
+            }
+        }
+        Ok(identity_map)
+    }
+
+    pub async fn get_accounts(
+        &self,
+        account_ids: &[AccountId],
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<Account>> {
+        let identity_map = {
+            self.get_identities(
+                account_ids,
+                block_hash,
+            ).await?
+        };
+        let parent_account_id_map = {
+            self.get_parent_account_ids(
+                account_ids,
+                block_hash,
+            ).await?
+        };
+        let parent_account_identity_map = {
+            let super_account_ids: Vec<AccountId> = parent_account_id_map.values().cloned().collect();
+            self.get_identities(
+                &super_account_ids,
+                block_hash,
+            ).await?
+        };
+        let accounts: Vec<Account> = account_ids.iter().cloned().map(
+            |account_id| {
+                let mut account = Account { id: account_id.clone(), ..Default::default() };
+                if let Some(identity) = identity_map.get(&account_id) {
+                    account.identity = Some(identity.clone());
+                }
+                if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
+                    let mut parent_account = Account { id: parent_account_id.clone(), ..Default::default() };
+                    if let Some(parent_account_identity) = parent_account_identity_map.get(parent_account_id) {
+                        parent_account.identity = Some(parent_account_identity.clone());
+                    }
+                    account.parent = Box::new(Some(parent_account));
+                }
+                account
+            }
+        ).collect();
+        Ok(accounts)
+    }
+
     /// Get the list of all validators at the given block.
     pub async fn get_all_inactive_validators(
         &self,
@@ -252,14 +377,19 @@ impl SubstrateClient {
         };
 
         let mut inactive_validator_map: HashMap<AccountId, InactiveValidator> = HashMap::new();
-        for key in &all_keys {
-            let account_id = self.account_id_from_storage_key_string(key);
-            let inactive_validator = InactiveValidator {
-                account: Account { id: account_id.clone(), ..Default::default() },
-                active_next_session: false,
-                ..Default::default()
-            };
-            inactive_validator_map.insert(account_id, inactive_validator);
+        {
+            let account_ids: Vec<AccountId> = all_keys.iter().map(
+                |key| self.account_id_from_storage_key_string(key)
+            ).collect();
+            let accounts = self.get_accounts(&account_ids, block_hash).await?;
+            for account in accounts {
+                let inactive_validator = InactiveValidator {
+                    account: account.clone(),
+                    active_next_session: false,
+                    ..Default::default()
+                };
+                inactive_validator_map.insert(account.id.clone(), inactive_validator);
+            }
         }
         debug!("There are {} inactive validators.", inactive_validator_map.len());
         // get next session keys
@@ -544,118 +674,6 @@ impl SubstrateClient {
                     nomination.nominator_account.id.hash(&mut hasher);
                     hasher.finish()
                 });
-            }
-        }
-        // get identities
-        {
-            let keys: Vec<String> = inactive_validator_map.values().into_iter().map(
-                |inactive_validator| {
-                    get_storage_map_key(
-                        &self.metadata,
-                        "Identity",
-                        "IdentityOf",
-                        &inactive_validator.account.id,
-                    )
-                }
-            ).collect();
-            debug!("Got {} keys for id.", keys.len());
-            let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
-                "state_queryStorageAt",
-                JsonRpcParams::Array(
-                    vec![
-                        keys.into(),
-                        block_hash.into(),
-                    ]
-                ),
-            ).await?;
-            debug!("Got {} identities. Transform.", values[0].changes.len());
-            for (storage_key, storage_data) in values[0].changes.iter() {
-                let account_id = self.account_id_from_storage_key(storage_key);
-                let validator = inactive_validator_map.get_mut(&account_id).unwrap();
-                let identity = match storage_data {
-                    Some(data) => {
-                        let bytes: &[u8] = &data.0;
-                        Some(IdentityRegistration::from_bytes(bytes).unwrap())
-                    }
-                    None => None
-                };
-                validator.account.identity = identity;
-            }
-        }
-        // get super identities
-        {
-            let keys: Vec<String> = inactive_validator_map.values().into_iter().map(
-                |inactive_validator| {
-                    get_storage_map_key(
-                        &self.metadata,
-                        "Identity",
-                        "SuperOf",
-                        &inactive_validator.account.id,
-                    )
-                }
-            ).collect();
-            debug!("Got {} keys for super id.", keys.len());
-            let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
-                "state_queryStorageAt",
-                JsonRpcParams::Array(
-                    vec![
-                        keys.into(),
-                        block_hash.into(),
-                    ]
-                ),
-            ).await?;
-            debug!("Got {} optional super ids.", values[0].changes.len());
-            let mut super_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
-            for (storage_key, storage_data) in values[0].changes.iter() {
-                if let Some(data) = storage_data {
-                    let account_id = self.account_id_from_storage_key(storage_key);
-                    let mut bytes: &[u8] = &data.0;
-                    let super_identity: SuperAccountId = Decode::decode(&mut bytes).unwrap();
-                    super_account_id_map.insert(account_id, super_identity.0);
-                }
-            }
-            debug!("Got {} super accounts. Get identities for super accounts.", super_account_id_map.len());
-            let keys: Vec<String> = super_account_id_map.values().map(
-                |super_account_entry| {
-                    get_storage_map_key(
-                        &self.metadata,
-                        "Identity",
-                        "IdentityOf",
-                        super_account_entry,
-                    )
-                }
-            ).collect();
-
-            // let storage_keys: Vec<String> = keys.iter().map(|key| key.1.clone()).collect();
-            let values: Vec<StorageChangeSet<String>> = self.ws_client.request(
-                "state_queryStorageAt",
-                JsonRpcParams::Array(
-                    vec![
-                        keys.into(),
-                        block_hash.into(),
-                    ]
-                ),
-            ).await?;
-            debug!("Got {} super identities. Transform.", values[0].changes.len());
-
-            for (storage_key, data) in &values[0].changes {
-                if let Some(data) = data {
-                    let super_account_id = self.account_id_from_storage_key(storage_key);
-                    let bytes: &[u8] = &data.0;
-                    let super_account_identity = IdentityRegistration::from_bytes(bytes).unwrap();
-                    for pair in super_account_id_map.iter() {
-                        if *pair.1 == super_account_id {
-                            let validator = inactive_validator_map.get_mut(pair.0).unwrap();
-                            let parent_identity = Some(super_account_identity.clone());
-                            let parent_account = Account {
-                                id: super_account_id.clone(),
-                                identity: parent_identity,
-                                parent: Box::new(None),
-                            };
-                            validator.account.parent = Box::new(Some(parent_account));
-                        }
-                    }
-                }
             }
         }
 
