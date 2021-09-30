@@ -1,0 +1,13 @@
+[package]
+name = "subvt-block-indexer"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.44"
+async-trait = "0.1.51"
+lazy_static = "1.4.0"
+subvt-config = { path = "../subvt-config" }
+subvt-logging = { path = "../subvt-logging" }
+subvt-service-common = { path = "../subvt-service-common" }
+tokio = { version = "1.11.0", features = ["full"] }

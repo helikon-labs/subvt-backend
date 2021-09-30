@@ -155,9 +155,9 @@ impl Service for InactiveValidatorListUpdater {
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             error!(
-            "New block subscription exited. Will refresh connection and subscription after {} seconds.",
-            delay_seconds
-        );
+                "New block subscription exited. Will refresh connection and subscription after {} seconds.",
+                delay_seconds
+            );
             std::thread::sleep(
                 std::time::Duration::from_secs(delay_seconds)
             );

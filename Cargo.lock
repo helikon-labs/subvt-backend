@@ -3193,6 +3193,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
+name = "subvt-block-indexer"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-config"
 version = "0.1.0"
 dependencies = [
