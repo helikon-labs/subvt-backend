@@ -91,15 +91,33 @@ pub struct RedisConfig {
     pub url: String,
 }
 
+/// PostgreSQL configuration. PostgreSQL is used for historical
+/// indexed blockchain data storage.
+#[derive(Clone, Debug, Deserialize)]
+pub struct PostgreSQLConfig {
+    pub url: String,
+    pub username: String,
+    pub password: String,
+}
+
+/// SubVT block indexer configuration.
+pub struct BlockIndexerConfig {
+    /// Indexing starts at this block, indexes all blocks up to
+    /// current blocks, then continues with every new block.
+    pub start_block_number: u64,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
+    pub block_indexer: BlockIndexerConfig,
+    pub env: Environment,
     pub common: CommonConfig,
-    pub substrate: SubstrateConfig,
     pub log: LogConfig,
+    pub postgres: PostgreSQLConfig,
     pub redis: RedisConfig,
     pub rpc: RPCConfig,
-    pub env: Environment,
+    pub substrate: SubstrateConfig,
 }
 
 impl Config {

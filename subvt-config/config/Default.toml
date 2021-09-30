@@ -18,4 +18,12 @@ live_network_status_port = 7888
 inactive_validator_list_port = 7889
 
 [redis]
-url = "redis://127.0.0.1:6379/"
+url = "redis://127.0.0.1:5432/"
+
+[postgres]
+url = ""
+username = ""
+password = ""
+
+[block_indexer]
+start_block_number = 123
