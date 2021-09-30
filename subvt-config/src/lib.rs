@@ -95,16 +95,22 @@ pub struct RedisConfig {
 /// indexed blockchain data storage.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PostgreSQLConfig {
-    pub url: String,
+    pub host: String,
+    pub port: u16,
+    pub database_name: String,
     pub username: String,
     pub password: String,
 }
 
 /// SubVT block indexer configuration.
+#[derive(Clone, Debug, Deserialize)]
 pub struct BlockIndexerConfig {
     /// Indexing starts at this block, indexes all blocks up to
     /// current blocks, then continues with every new block.
     pub start_block_number: u64,
+    /// Fetch this many blocks to process when indexing past
+    /// blocks.
+    pub batch_size: u16,
 }
 
 /// Whole configuration.
@@ -139,6 +145,17 @@ impl Config {
         // this makes it so SUBVT_REDIS__URL overrides redis.url
         c.merge(config::Environment::with_prefix("subvt").separator("__"))?;
         c.try_into()
+    }
+
+    pub fn get_postgres_url(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}",
+            self.postgres.username,
+            self.postgres.password,
+            self.postgres.host,
+            self.postgres.port,
+            self.postgres.database_name,
+        )
     }
 }
 

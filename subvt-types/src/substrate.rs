@@ -67,6 +67,8 @@ pub struct Account {
     pub identity: Option<IdentityRegistration>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<Account>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discovered_at: Option<u64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]

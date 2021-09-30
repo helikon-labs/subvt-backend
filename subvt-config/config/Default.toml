@@ -21,9 +21,13 @@ inactive_validator_list_port = 7889
 url = "redis://127.0.0.1:5432/"
 
 [postgres]
-url = ""
-username = ""
-password = ""
+host = "127.0.0.1"
+port = 5432
+username = "subvt"
+password = "subvt"
+database_name = "subvt"
+
 
 [block_indexer]
 start_block_number = 123
+batch_size = 100
