@@ -68,7 +68,7 @@ pub struct Account {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub discovered_at: Option<u64>,
+    pub discovered_at: Option<i64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -298,7 +298,7 @@ impl ValidatorPreferences {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct IdentityRegistration {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<String>,

@@ -33,9 +33,12 @@ use subvt_types::subvt::InactiveValidator;
 use subvt_types::substrate::SuperAccountId;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use subvt_config::Config;
+use crate::event::SubstrateEvent;
 
-mod storage;
+mod event;
 mod metadata;
+mod storage;
 
 const KEY_QUERY_PAGE_SIZE: usize = 1000;
 
@@ -49,16 +52,12 @@ pub struct SubstrateClient {
 
 impl SubstrateClient {
     /// Connect to the node and construct a new Substrate client.
-    pub async fn new(
-        rpc_ws_url: String,
-        connection_timeout_seconds: u64,
-        request_timeout_seconds: u64,
-    ) -> anyhow::Result<Self> {
+    pub async fn new(config: &Config) -> anyhow::Result<Self> {
         debug!("Constructing the Substrate client.");
         let ws_client = WsClientBuilder::default()
-            .connection_timeout(std::time::Duration::from_secs(connection_timeout_seconds))
-            .request_timeout(std::time::Duration::from_secs(request_timeout_seconds))
-            .build(rpc_ws_url.as_str()).await?;
+            .connection_timeout(std::time::Duration::from_secs(config.substrate.connection_timeout_seconds))
+            .request_timeout(std::time::Duration::from_secs(config.substrate.request_timeout_seconds))
+            .build(&config.substrate.rpc_url).await?;
         debug!("Substrate connection successful.");
         let metadata = {
             let metadata_response: String = ws_client.request(
@@ -887,6 +886,26 @@ impl SubstrateClient {
             ),
         ).await?;
         decode_hex_string(hex_string.as_str())
+    }
+
+    pub async fn get_block_events(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<SubstrateEvent>> {
+        let mut event_bytes: &[u8] = {
+            let events_hex_string: String = self.ws_client.request(
+                "state_getStorage",
+                get_rpc_storage_plain_params(
+                    "System",
+                    "Events",
+                    Some(block_hash),
+                ),
+            ).await?;
+            &hex::decode(
+                events_hex_string.trim_start_matches("0x")
+            )?
+        };
+        SubstrateEvent::decode_events(&self.metadata, &mut event_bytes)
     }
 
     async fn subscribe_to_blocks<F>(

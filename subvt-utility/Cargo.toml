@@ -6,4 +6,4 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.44"
 hex = "0.4"
-parity-scale-codec = { version = "2.3.0", default-features = false, features = ["derive", "full"] }
+parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }

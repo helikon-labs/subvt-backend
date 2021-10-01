@@ -27,7 +27,6 @@ username = "subvt"
 password = "subvt"
 database_name = "subvt"
 
-
 [block_indexer]
 start_block_number = 123
 batch_size = 100

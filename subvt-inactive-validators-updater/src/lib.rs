@@ -117,11 +117,7 @@ impl Service for InactiveValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(
-                SubstrateClient::new(
-                    CONFIG.substrate.rpc_url.clone(),
-                    CONFIG.substrate.connection_timeout_seconds,
-                    CONFIG.substrate.request_timeout_seconds,
-                ).await?
+                SubstrateClient::new(&CONFIG).await?
             );
             let is_busy = Arc::new(AtomicBool::new(false));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {

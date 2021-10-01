@@ -7,8 +7,7 @@ use lazy_static::lazy_static;
 use chrono::Utc;
 use log::{debug, error};
 use redis::Pipeline;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use subvt_config::Config;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::{substrate::BlockHeader, subvt::LiveNetworkStatus};
@@ -204,11 +203,7 @@ impl Service for LiveNetworkStatusUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(
-                SubstrateClient::new(
-                    CONFIG.substrate.rpc_url.clone(),
-                    CONFIG.substrate.connection_timeout_seconds,
-                    CONFIG.substrate.request_timeout_seconds,
-                ).await?
+                SubstrateClient::new(&CONFIG).await?
             );
             substrate_client.subscribe_to_new_blocks(|best_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
@@ -237,9 +232,9 @@ impl Service for LiveNetworkStatusUpdater {
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             error!(
-            "New block subscription exited. Will refresh connection and subscription after {} seconds.",
-            delay_seconds
-        );
+                "New block subscription exited. Will refresh connection and subscription after {} seconds.",
+                delay_seconds
+            );
             std::thread::sleep(
                 std::time::Duration::from_secs(delay_seconds)
             );

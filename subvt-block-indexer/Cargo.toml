@@ -13,4 +13,6 @@ sqlx = { version = "0.5.7", features = ["postgres", "runtime-tokio-rustls", "chr
 subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
 subvt-service-common = { path = "../subvt-service-common" }
+subvt-substrate-client = { path = "../subvt-substrate-client" }
+subvt-types = { path = "../subvt-types" }
 tokio = { version = "1.11.0", features = ["full"] }

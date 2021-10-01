@@ -10,7 +10,7 @@ frame-support = { git = "https://github.com/paritytech/substrate.git", branch = 
 hex = "0.4"
 pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
-parity-scale-codec = { version = "2.3.0", default-features = false, features = ["derive", "full"] }
+parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.66"
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
