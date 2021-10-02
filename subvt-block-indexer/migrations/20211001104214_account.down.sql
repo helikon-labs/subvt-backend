@@ -1,1 +1,1 @@
-DROP TABLE account;
+DROP TABLE account CASCADE;

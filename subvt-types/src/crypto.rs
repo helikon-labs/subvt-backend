@@ -16,7 +16,7 @@ impl AccountId {
 
 impl Display for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&hex::encode_upper(self.0))
+        f.write_str(&hex::encode(self.0))
     }
 }
 
