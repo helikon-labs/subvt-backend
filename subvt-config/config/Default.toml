@@ -28,5 +28,7 @@ password = "subvt"
 database_name = "subvt"
 
 [block_indexer]
+# min supported for Kusama is 4401243, metadata v12
+# for Polkadot it is 2005673
 start_block_number = 123
 batch_size = 100

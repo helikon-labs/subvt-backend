@@ -31,7 +31,7 @@ impl BlockIndexer {
         _db_connection_pool: &Pool<Postgres>,
         finalized_block_header: &BlockHeader,
     ) -> anyhow::Result<()> {
-        let block_number = finalized_block_header.get_number()? - 5000000;
+        let block_number = finalized_block_header.get_number()?;
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         // get block events
         let events = substrate_client.get_block_events(&block_hash).await?;
@@ -77,6 +77,8 @@ impl Service for BlockIndexer {
             let substrate_client = Arc::new(
                 SubstrateClient::new(&CONFIG).await?
             );
+            substrate_client.metadata.log_all_calls();
+            substrate_client.metadata.log_all_events();
             let db_connection_pool = Arc::new(
                 BlockIndexer::establish_db_connection().await?
             );

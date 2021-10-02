@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS block
     number            bigint                      NOT NULL,
     timestamp         bigint                      NOT NULL,
     author_account_id VARCHAR(64)                 NOT NULL,
+    era_index         bigint                      NOT NULL,
+    epoch_index       bigint                      NOT NULL,
     parent_hash       VARCHAR(64)                 NOT NULL,
     state_root        VARCHAR(64)                 NOT NULL,
     extrinsics_root   VARCHAR(64)                 NOT NULL,
@@ -19,6 +21,16 @@ CREATE TABLE IF NOT EXISTS block
     CONSTRAINT fk_account
         FOREIGN KEY (author_account_id)
             REFERENCES account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT fk_era
+        FOREIGN KEY (era_index)
+            REFERENCES era (index)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT fk_epoch
+        FOREIGN KEY (epoch_index)
+            REFERENCES era (index)
             ON DELETE RESTRICT
             ON UPDATE CASCADE
 );

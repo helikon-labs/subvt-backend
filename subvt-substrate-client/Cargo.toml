@@ -40,6 +40,6 @@ sp-version = { git = "https://github.com/paritytech/substrate.git", branch = "po
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
-thiserror = "1.0.26"
+thiserror = "1.0"
 twox-hash = { version = "1.6.0", features = ["digest_0_9"] }
 xcm = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.10" }

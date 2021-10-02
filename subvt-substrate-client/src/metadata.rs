@@ -7,13 +7,14 @@ use frame_metadata::{
     RuntimeMetadata,
     RuntimeMetadataPrefixed,
 };
+use log::debug;
 use parity_scale_codec::{
     Decode,
     Encode,
     Error as CodecError,
 };
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     convert::TryFrom,
     str::FromStr,
 };
@@ -96,6 +97,7 @@ impl Metadata {
             spec_version: version.spec_version,
             tx_version: version.transaction_version,
         };
+        metadata.check_event_primitive_argument_support()?;
         Ok(metadata)
     }
 
@@ -103,6 +105,90 @@ impl Metadata {
         self.modules.values()
             .find(|module| module.name == key)
             .ok_or_else(|| MetadataError::ModuleNotFound(key.to_string()))
+    }
+}
+
+impl Metadata {
+    pub fn log_all_calls(&self) {
+        let mut call_primitive_arg_name_set: HashSet<String> = HashSet::default();
+        debug!("METADATA ALL CALLS");
+        debug!("==========================================================");
+        for module in self.modules.values() {
+            for call in module.calls.values() {
+                let mut call_spec = module.name.clone() + "." + &call.name + "(";
+                for arg in &call.arguments {
+                    call_spec.push_str(&arg.to_string());
+                    call_spec.push_str(", ");
+                    if let ArgumentMeta::Primitive(name) = arg {
+                        call_primitive_arg_name_set.insert(name.clone());
+                    }
+                }
+                call_spec.push(')');
+                debug!("{}", call_spec);
+            }
+        }
+        debug!("==========================================================");
+        debug!("METADATA CALL ARGUMENTS PRIMITIVE SET");
+        debug!("==========================================================");
+        for (index, event_arg_name) in call_primitive_arg_name_set.iter().enumerate() {
+            debug!("#{} {}", index + 1, event_arg_name);
+        }
+        debug!("==========================================================");
+    }
+
+    pub fn log_all_events(&self) {
+        let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
+        debug!("METADATA ALL EVENTS");
+        debug!("==========================================================");
+        for module in self.modules.values() {
+            for event in module.events.values() {
+                let mut event_spec = format!("{}.{}(", module.name, event.name);
+                for arg in &event.arguments {
+                    event_spec.push_str(&arg.to_string());
+                    event_spec.push_str(", ");
+                    if let ArgumentMeta::Primitive(name) = arg {
+                        event_primitive_arg_name_set.insert(name.clone());
+                    }
+                }
+                event_spec.push(')');
+                debug!("{}", event_spec);
+            }
+        }
+        debug!("==========================================================");
+        debug!("PRIMITIVE EVENT ARG SET");
+        debug!("==========================================================");
+        for (index, event_arg_name) in event_primitive_arg_name_set.iter().enumerate() {
+            debug!("#{} {}", index + 1, event_arg_name);
+        }
+        debug!("==========================================================");
+    }
+
+    pub fn check_event_primitive_argument_support(&self) -> Result<(), crate::event::ArgumentDecodeError> {
+        debug!("Checking SubVT runtime for event primitive argument support...");
+        let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
+        for module in self.modules.values() {
+            for event in module.events.values() {
+                for arg in &event.arguments {
+                    if let ArgumentMeta::Primitive(name) = arg {
+                        event_primitive_arg_name_set.insert(name.clone());
+                    }
+                }
+            }
+        }
+        for event_arg_name in event_primitive_arg_name_set.iter() {
+            let argument_meta = ArgumentMeta::Primitive(event_arg_name.to_string());
+            let empty_bytes: Vec<u8> = Vec::new();
+            let result = crate::event::Argument::decode(
+                &argument_meta,
+                &mut empty_bytes.as_ref(),
+            );
+            if let Err(error) = result {
+                if let crate::event::ArgumentDecodeError::UnknownPrimitiveType(_) = error {
+                    return Err(error);
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -198,7 +284,7 @@ impl StorageMetadata {
 pub struct ModuleCallMetadata {
     pub index: usize,
     pub name: String,
-    pub arguments: Vec<EventArg>,
+    pub arguments: Vec<ArgumentMeta>,
     pub documentation: Vec<String>,
 }
 
@@ -206,7 +292,7 @@ pub struct ModuleCallMetadata {
 pub struct ModuleEventMetadata {
     pub index: usize,
     pub name: String,
-    pub arguments: Vec<EventArg>,
+    pub arguments: Vec<ArgumentMeta>,
     pub documentation: Vec<String>,
 }
 
@@ -216,37 +302,37 @@ pub struct ModuleEventMetadata {
 /// Used to calculate the size of a instance of an event variant without having the concrete type,
 /// so the raw bytes can be extracted from the encoded `Vec<EventRecord<E>>` (without `E` defined).
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub enum EventArg {
+pub enum ArgumentMeta {
     Primitive(String),
-    Vec(Box<EventArg>),
-    Tuple(Vec<EventArg>),
-    Option(Box<EventArg>),
+    Vec(Box<ArgumentMeta>),
+    Tuple(Vec<ArgumentMeta>),
+    Option(Box<ArgumentMeta>),
 }
 
-impl Display for EventArg {
+impl Display for ArgumentMeta {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            EventArg::Primitive(name) => write!(f, "{}", name),
-            EventArg::Vec(arg) => write!(f, "Vec<{}>", arg),
-            EventArg::Tuple(args) => {
+            ArgumentMeta::Primitive(name) => write!(f, "{}", name),
+            ArgumentMeta::Vec(arg) => write!(f, "Vec<{}>", arg),
+            ArgumentMeta::Tuple(args) => {
                 write!(f, "(")?;
                 for arg in args {
                     write!(f, "{}, ", arg)?;
                 }
                 write!(f, ")")
             }
-            EventArg::Option(arg) => write!(f, "Option<{}>", arg),
+            ArgumentMeta::Option(arg) => write!(f, "Option<{}>", arg),
         }
     }
 }
 
-impl FromStr for EventArg {
+impl FromStr for ArgumentMeta {
     type Err = ConversionError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.starts_with("Vec<") {
             if s.ends_with('>') {
-                Ok(EventArg::Vec(Box::new(s[4..s.len() - 1].parse()?)))
+                Ok(ArgumentMeta::Vec(Box::new(s[4..s.len() - 1].parse()?)))
             } else {
                 Err(ConversionError::InvalidEventArg(
                     s.to_string(),
@@ -255,7 +341,7 @@ impl FromStr for EventArg {
             }
         } else if s.starts_with("Option<") {
             if s.ends_with('>') {
-                Ok(EventArg::Option(Box::new(s[7..s.len() - 1].parse()?)))
+                Ok(ArgumentMeta::Option(Box::new(s[7..s.len() - 1].parse()?)))
             } else {
                 Err(ConversionError::InvalidEventArg(
                     s.to_string(),
@@ -269,7 +355,7 @@ impl FromStr for EventArg {
                     let arg = arg.trim().parse()?;
                     args.push(arg)
                 }
-                Ok(EventArg::Tuple(args))
+                Ok(ArgumentMeta::Tuple(args))
             } else {
                 Err(ConversionError::InvalidEventArg(
                     s.to_string(),
@@ -277,7 +363,7 @@ impl FromStr for EventArg {
                 ))
             }
         } else {
-            Ok(EventArg::Primitive(s.to_string()))
+            Ok(ArgumentMeta::Primitive(s.to_string()))
         }
     }
 }
@@ -351,7 +437,7 @@ fn convert<B: 'static, O: 'static>(
 mod v12 {
     use frame_metadata::v12::{RuntimeMetadataV12};
     use super::{
-        ConversionError, convert, EventArg, ModuleEventMetadata, ModuleCallMetadata,
+        ConversionError, convert, ArgumentMeta, ModuleEventMetadata, ModuleCallMetadata,
         ModuleConstantMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
     };
     use std::collections::HashMap;
@@ -363,7 +449,7 @@ mod v12 {
         let name = convert(event.name)?;
         let mut arguments = Vec::new();
         for arg in convert(event.arguments)? {
-            let arg = arg.parse::<EventArg>()?;
+            let arg = arg.parse::<ArgumentMeta>()?;
             arguments.push(arg);
         }
         let documentation: Vec<String> = convert(event.documentation)?;
@@ -446,7 +532,7 @@ mod v12 {
                     let arguments = convert(module_call.arguments)?;
                     for module_argument in arguments {
                         let ty = convert(module_argument.ty)?;
-                        let argument: EventArg = ty.parse()?;
+                        let argument: ArgumentMeta = ty.parse()?;
                         // arguments.push(arg);
                         call.arguments.push(argument);
                     }
@@ -510,7 +596,7 @@ mod v12 {
 mod v13 {
     use frame_metadata::v13::{RuntimeMetadataV13, StorageHasher};
     use super::{
-        ConversionError, convert, EventArg, ModuleEventMetadata, ModuleCallMetadata,
+        ConversionError, convert, ArgumentMeta, ModuleEventMetadata, ModuleCallMetadata,
         ModuleConstantMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
     };
     use std::collections::HashMap;
@@ -522,7 +608,7 @@ mod v13 {
         let name = convert(event.name)?;
         let mut arguments = Vec::new();
         for arg in convert(event.arguments)? {
-            let arg = arg.parse::<EventArg>()?;
+            let arg = arg.parse::<ArgumentMeta>()?;
             arguments.push(arg);
         }
         let documentation: Vec<String> = convert(event.documentation)?;
@@ -605,7 +691,7 @@ mod v13 {
                     let arguments = convert(module_call.arguments)?;
                     for module_argument in arguments {
                         let ty = convert(module_argument.ty)?;
-                        let argument: EventArg = ty.parse()?;
+                        let argument: ArgumentMeta = ty.parse()?;
                         // arguments.push(arg);
                         call.arguments.push(argument);
                     }
