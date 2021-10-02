@@ -36,6 +36,7 @@ impl BlockIndexer {
         // get block events
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
+        // write to database
         Ok(())
     }
 }
