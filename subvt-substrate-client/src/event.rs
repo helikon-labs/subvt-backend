@@ -62,6 +62,10 @@ impl SubstrateEvent {
         use EventDecodeError::DecodeError;
 
         let phase = frame_system::Phase::decode(bytes)?;
+        let maybe_extrinsic_index = match phase {
+            frame_system::Phase::ApplyExtrinsic(extrinsic_index) => Some(extrinsic_index),
+            _ => None
+        };
         let module_index = bytes.read_byte()?;
         let event_index = bytes.read_byte()?;
         let module = metadata.modules.get(&module_index).unwrap();
@@ -78,57 +82,42 @@ impl SubstrateEvent {
         let event_qualified_name = format!("{}.{}", module.name, event.name);
         let event = match event_qualified_name.as_str() {
             "System.ExtrinsicSuccess" => {
-                if let frame_system::Phase::ApplyExtrinsic(extrinsic_index) = phase {
-                    if let Argument::Primitive(argument_primitive) = arguments[0].clone() {
-                        if let ArgumentPrimitive::DispatchInfo(dispatch_info) = *argument_primitive {
-                            Ok(
-                                SubstrateEvent::ExtrinsicSuccess {
-                                    extrinsic_index,
-                                    dispatch_info,
-                                }
-                            )
-                        } else {
-                            Err(DecodeError("Cannot get DispatchInfo for ExtrinsicSuccess.".to_string()))
-                        }
-                    } else {
-                        Err(DecodeError("Cannot get argument primitive for ExtrinsicSuccess.".to_string()))
-                    }
-                } else {
-                    Err(DecodeError("Cannot get extrinsic index from phase.".to_string()))
-                }
+                let extrinsic_index = match maybe_extrinsic_index {
+                    Some(extrinsic_index) => extrinsic_index,
+                    _ => return Err(DecodeError("Cannot get extrinsic index from phase.".to_string()))
+                };
+                let argument_primitive = match &arguments[0] {
+                    Argument::Primitive(argument_primitive) => *argument_primitive.clone(),
+                    _ => return Err(DecodeError("Cannot get DispatchInfo argument primitive for ExtrinsicFailed.".to_string()))
+                };
+                let dispatch_info = match argument_primitive {
+                    ArgumentPrimitive::DispatchInfo(dispatch_info) => dispatch_info,
+                    _ => return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()))
+                };
+                Ok(SubstrateEvent::ExtrinsicSuccess { extrinsic_index, dispatch_info })
             }
             "System.ExtrinsicFailed" => {
-                if let frame_system::Phase::ApplyExtrinsic(extrinsic_index) = phase {
-                    let dispatch_info =
-                        if let Argument::Primitive(argument_primitive) = arguments[0].clone() {
-                            if let ArgumentPrimitive::DispatchInfo(dispatch_info) = *argument_primitive {
-                                dispatch_info
-                            } else {
-                                return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()));
-                            }
-                        } else {
-                            return Err(DecodeError("Cannot get argument primitive for ExtrinsicFailed.".to_string()));
-                        };
-                    let dispatch_error =
-                        if let Argument::Primitive(argument_primitive) = arguments[1].clone() {
-                            if let ArgumentPrimitive::DispatchError(dispatch_error) = *argument_primitive {
-                                dispatch_error
-                            } else {
-                                return Err(DecodeError("Cannot get DispatchError for ExtrinsicFailed.".to_string()));
-                            }
-                        } else {
-                            return Err(DecodeError("Cannot get argument primitive for ExtrinsicFailed.".to_string()));
-                        };
-                    Ok(
-                        SubstrateEvent::ExtrinsicFailed {
-                            extrinsic_index,
-                            dispatch_info,
-                            dispatch_error,
-                        }
-                    )
-                } else {
-                    Err(DecodeError("Cannot get extrinsic index from phase.".to_string()))
-                }
+                let extrinsic_index = match maybe_extrinsic_index {
+                    Some(extrinsic_index) => extrinsic_index,
+                    _ => return Err(DecodeError("Cannot get extrinsic index from phase.".to_string()))
+                };
+                let argument_primitive = match &arguments[0] {
+                    Argument::Primitive(argument_primitive) => *argument_primitive.clone(),
+                    _ => return Err(DecodeError("Cannot get DispatchInfo argument primitive for ExtrinsicFailed.".to_string()))
+                };
+                let dispatch_info = match argument_primitive {
+                    ArgumentPrimitive::DispatchInfo(dispatch_info) => dispatch_info,
+                    _ => return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()))
+                };
+                let argument_primitive = match &arguments[1] {
+                    Argument::Primitive(argument_primitive) => *argument_primitive.clone(),
+                    _ => return Err(DecodeError("Cannot get DispatchError argument primitive for ExtrinsicFailed.".to_string()))
+                };
+                let dispatch_error = match argument_primitive {
+                    ArgumentPrimitive::DispatchError(dispatch_error) => dispatch_error,
+                    _ => return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()))
+                };
+                Ok(SubstrateEvent::ExtrinsicFailed { extrinsic_index, dispatch_info, dispatch_error })
             }
             _ => {
                 Ok(
