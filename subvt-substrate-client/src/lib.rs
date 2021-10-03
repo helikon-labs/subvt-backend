@@ -39,6 +39,7 @@ use crate::event::SubstrateEvent;
 mod event;
 mod metadata;
 mod storage;
+mod argument;
 
 const KEY_QUERY_PAGE_SIZE: usize = 1000;
 

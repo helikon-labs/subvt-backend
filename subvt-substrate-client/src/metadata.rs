@@ -163,7 +163,7 @@ impl Metadata {
         debug!("==========================================================");
     }
 
-    pub fn check_event_primitive_argument_support(&self) -> Result<(), crate::event::ArgumentDecodeError> {
+    pub fn check_event_primitive_argument_support(&self) -> Result<(), crate::argument::ArgumentDecodeError> {
         debug!("Checking SubVT runtime for event primitive argument support...");
         let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
         for module in self.modules.values() {
@@ -178,12 +178,12 @@ impl Metadata {
         for event_arg_name in event_primitive_arg_name_set.iter() {
             let argument_meta = ArgumentMeta::Primitive(event_arg_name.to_string());
             let empty_bytes: Vec<u8> = Vec::new();
-            let result = crate::event::Argument::decode(
+            let result = crate::argument::Argument::decode(
                 &argument_meta,
                 &mut empty_bytes.as_ref(),
             );
             if let Err(error) = result {
-                if let crate::event::ArgumentDecodeError::UnknownPrimitiveType(_) = error {
+                if let crate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) = error {
                     return Err(error);
                 }
             }

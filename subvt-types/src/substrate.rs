@@ -15,6 +15,9 @@ use std::convert::From;
 use std::fmt::{Display, Formatter};
 use subvt_utility::decode_hex_string;
 
+pub type CallHash = [u8; 32];
+pub type OpaqueTimeSlot = Vec<u8>;
+
 /// Chain type.
 pub enum Chain {
     Kusama,
