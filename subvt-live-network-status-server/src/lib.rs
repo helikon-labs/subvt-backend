@@ -4,14 +4,14 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use jsonrpsee::{ws_server::{RpcModule, WsServerBuilder, WsStopHandle}};
+use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use redis::Connection;
-use std::sync::{RwLock, Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
+use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::subvt::{LiveNetworkStatus, LiveNetworkStatusDiff, LiveNetworkStatusUpdate};
-use subvt_config::Config;
 use tokio::task::JoinHandle;
 
 lazy_static! {
@@ -28,7 +28,9 @@ pub enum BusEvent {
 pub struct LiveNetworkStatusPresenter;
 
 impl LiveNetworkStatusPresenter {
-    async fn read_current_network_status(connection: &mut Connection) -> anyhow::Result<LiveNetworkStatus> {
+    async fn read_current_network_status(
+        connection: &mut Connection,
+    ) -> anyhow::Result<LiveNetworkStatus> {
         let key = format!("subvt:{}:live_network_status", CONFIG.substrate.chain);
         let status_json_string: String = redis::cmd("GET")
             .arg(key)
@@ -44,7 +46,10 @@ impl LiveNetworkStatusPresenter {
         bus: &Arc<Mutex<Bus<BusEvent>>>,
     ) -> anyhow::Result<(JoinHandle<()>, WsStopHandle)> {
         let rpc_ws_server = WsServerBuilder::default()
-            .build(format!("{}:{}", CONFIG.rpc.host, CONFIG.rpc.live_network_status_port))
+            .build(format!(
+                "{}:{}",
+                CONFIG.rpc.host, CONFIG.rpc.live_network_status_port
+            ))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let current_status = current_status.clone();
@@ -105,22 +110,20 @@ impl Service for LiveNetworkStatusPresenter {
     async fn run(&'static self) -> anyhow::Result<()> {
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let current_status = Arc::new(RwLock::new(LiveNetworkStatus::default()));
-        let redis_client = redis::Client::open(CONFIG.redis.url.as_str())
-            .context(format!("Cannot connect to Redis at URL {}.", CONFIG.redis.url))?;
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
 
         let mut pub_sub_connection = redis_client.get_connection()?;
         let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub.subscribe(
-            format!(
-                "subvt:{}:live_network_status:publish:best_block_number",
-                CONFIG.substrate.chain
-            )
-        )?;
+        pub_sub.subscribe(format!(
+            "subvt:{}:live_network_status:publish:best_block_number",
+            CONFIG.substrate.chain
+        ))?;
         let mut data_connection = redis_client.get_connection()?;
-        let (server_join_handle, server_stop_handle) = LiveNetworkStatusPresenter::run_rpc_server(
-            &current_status,
-            &bus,
-        ).await?;
+        let (server_join_handle, server_stop_handle) =
+            LiveNetworkStatusPresenter::run_rpc_server(&current_status, &bus).await?;
 
         let error: anyhow::Error = loop {
             let message = pub_sub.get_message();
@@ -140,7 +143,9 @@ impl Service for LiveNetworkStatusPresenter {
                 }
             }
             debug!("New best block #{}.", best_block_number);
-            match LiveNetworkStatusPresenter::read_current_network_status(&mut data_connection).await {
+            match LiveNetworkStatusPresenter::read_current_network_status(&mut data_connection)
+                .await
+            {
                 Ok(new_status) => {
                     {
                         let current_status = current_status.read().unwrap();
@@ -165,7 +170,9 @@ impl Service for LiveNetworkStatusPresenter {
         }
         debug!("Stop RPC server.");
         server_stop_handle.clone().stop().await?;
-        server_join_handle.await.expect("Server should be shut down.");
+        server_join_handle
+            .await
+            .expect("Server should be shut down.");
         debug!("RPC server stopped fully.");
         Err(error)
     }

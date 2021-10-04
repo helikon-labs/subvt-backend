@@ -1,18 +1,18 @@
 //! Substrate-related types.
 //! Mostly translations of the native Substrate runtime types.
 
-use chrono::{DateTime, Utc, TimeZone};
 use crate::crypto::AccountId;
+use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, Nominations, StakingLedger, ValidatorPrefs};
-use parity_scale_codec::{Encode, Decode};
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
-use std::str::FromStr;
 use std::collections::BTreeMap;
 use std::convert::From;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 use subvt_utility::decode_hex_string;
 
 pub type CallHash = [u8; 32];
@@ -39,7 +39,7 @@ impl FromStr for Chain {
             "kusama" | "ksm" => Ok(Self::Kusama),
             "polkadot" | "dot" => Ok(Self::Polkadot),
             "darwinia" => Ok(Self::Darwinia),
-            _ => panic!("Unkown chain: {}", s)
+            _ => panic!("Unkown chain: {}", s),
         }
     }
 }
@@ -116,9 +116,7 @@ pub struct BlockHeader {
 impl BlockHeader {
     /// Number from the hex string.
     pub fn get_number(&self) -> anyhow::Result<u64> {
-        let number = u64::from_str_radix(
-            self.number.trim_start_matches("0x"), 16,
-        )?;
+        let number = u64::from_str_radix(self.number.trim_start_matches("0x"), 16)?;
         Ok(number)
     }
 }
@@ -146,22 +144,17 @@ pub struct Era {
 
 impl Era {
     /// Era from a hex string (e.g. `0x0563ad5e...`).
-    pub fn from(
-        hex_string: &str,
-        era_duration_millis: u64,
-    ) -> anyhow::Result<Era> {
+    pub fn from(hex_string: &str, era_duration_millis: u64) -> anyhow::Result<Era> {
         let active_era_info: SubstrateActiveEraInfo = decode_hex_string(hex_string)?;
         let start_timestamp_millis = active_era_info.start_timestamp_millis.unwrap();
         let start_timestamp = start_timestamp_millis / 1000;
         let end_timestamp_millis = start_timestamp_millis + era_duration_millis;
         let end_timestamp = end_timestamp_millis / 1000;
-        Ok(
-            Era {
-                index: active_era_info.index,
-                start_timestamp,
-                end_timestamp,
-            }
-        )
+        Ok(Era {
+            index: active_era_info.index,
+            start_timestamp,
+            end_timestamp,
+        })
     }
 }
 
@@ -215,7 +208,10 @@ impl ValidatorStake {
         let mut nominators: Vec<NominatorStake> = Vec::new();
         for other in exposure.others {
             let stake = other.value;
-            let account = Account { id: other.who, ..Default::default() };
+            let account = Account {
+                id: other.who,
+                ..Default::default()
+            };
             nominators.push(NominatorStake { account, stake });
         }
         let validator_stake = Self {
@@ -240,35 +236,39 @@ pub struct EraStakers {
 impl EraStakers {
     /// Gets the total stake in era.
     pub fn total_stake(&self) -> Balance {
-        self.stakers.iter().map(
-            |validator_stake|
-                validator_stake.total_stake
-        ).sum()
+        self.stakers
+            .iter()
+            .map(|validator_stake| validator_stake.total_stake)
+            .sum()
     }
 
     /// Gets the minimum stake backing an active validator. Returns validator account id and stake.
     pub fn min_stake(&self) -> (Account, Balance) {
-        let validator_stake = self.stakers.iter().min_by_key(
-            |validator_stake|
-                validator_stake.total_stake
-        ).unwrap();
+        let validator_stake = self
+            .stakers
+            .iter()
+            .min_by_key(|validator_stake| validator_stake.total_stake)
+            .unwrap();
         (validator_stake.account.clone(), validator_stake.total_stake)
     }
 
     /// Gets the maximum stake backing an active validator. Returns validator account id and stake.
     pub fn max_stake(&self) -> (Account, Balance) {
-        let validator_stake = self.stakers.iter().max_by_key(
-            |validator_stake|
-                validator_stake.total_stake
-        ).unwrap();
+        let validator_stake = self
+            .stakers
+            .iter()
+            .max_by_key(|validator_stake| validator_stake.total_stake)
+            .unwrap();
         (validator_stake.account.clone(), validator_stake.total_stake)
     }
 
     /// Gets the average of all stakes backing all active validators.
     pub fn average_stake(&self) -> Balance {
-        let sum = self.stakers.iter().map(
-            |validator_stake| validator_stake.total_stake
-        ).sum::<Balance>();
+        let sum = self
+            .stakers
+            .iter()
+            .map(|validator_stake| validator_stake.total_stake)
+            .sum::<Balance>();
         sum / self.stakers.len() as Balance
     }
 
@@ -297,12 +297,10 @@ pub struct ValidatorPreferences {
 impl ValidatorPreferences {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
         let preferences: ValidatorPrefs = Decode::decode(&mut bytes)?;
-        Ok(
-            ValidatorPreferences {
-                commission_per_billion: preferences.commission.deconstruct(),
-                blocks_nominations: preferences.blocked,
-            }
-        )
+        Ok(ValidatorPreferences {
+            commission_per_billion: preferences.commission.deconstruct(),
+            blocks_nominations: preferences.blocked,
+        })
     }
 }
 
@@ -333,10 +331,11 @@ impl IdentityRegistration {
                         None
                     }
                 }
-                _ => None
+                _ => None,
             }
         }
-        let registration: Registration<Balance, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> = Decode::decode(&mut bytes)?;
+        let registration: Registration<Balance, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> =
+            Decode::decode(&mut bytes)?;
         let display = data_to_string(registration.info.display);
         let email = data_to_string(registration.info.email);
         let riot = data_to_string(registration.info.riot);
@@ -353,16 +352,14 @@ impl IdentityRegistration {
                 Judgement::Erroneous => false,
             };
         }
-        Ok(
-            IdentityRegistration {
-                display,
-                email,
-                riot,
-                twitter,
-                web,
-                confirmed,
-            }
-        )
+        Ok(IdentityRegistration {
+            display,
+            email,
+            riot,
+            twitter,
+            web,
+            confirmed,
+        })
     }
 }
 
@@ -397,14 +394,15 @@ impl Nomination {
     pub fn from_bytes(mut bytes: &[u8], account_id: AccountId) -> anyhow::Result<Self> {
         let nomination: Nominations<AccountId> = Decode::decode(&mut bytes)?;
         let submission_era_index: u32 = nomination.submitted_in;
-        Ok(
-            Nomination {
-                nominator_account: Account { id: account_id, ..Default::default() },
-                submission_era_index,
-                target_account_ids: nomination.targets,
+        Ok(Nomination {
+            nominator_account: Account {
+                id: account_id,
                 ..Default::default()
-            }
-        )
+            },
+            submission_era_index,
+            target_account_ids: nomination.targets,
+            ..Default::default()
+        })
     }
 }
 
@@ -418,10 +416,7 @@ impl From<&Vec<Nomination>> for NominationsSummary {
     fn from(nominations: &Vec<Nomination>) -> NominationsSummary {
         NominationsSummary {
             nomination_count: nominations.len() as u16,
-            total_active_amount: nominations.iter().fold(
-                0,
-                |a, b| a + b.stake.active_amount,
-            ),
+            total_active_amount: nominations.iter().fold(0, |a, b| a + b.stake.active_amount),
         }
     }
 }

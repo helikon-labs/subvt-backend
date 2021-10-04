@@ -2,12 +2,12 @@
 //! the database as a buffer or direct to the applications depending on the
 //! implementation.
 
-use serde::{Deserialize, Serialize};
 use crate::crypto::AccountId;
 use crate::substrate::{
-    Account, AccountSummary, Balance, Era, Epoch, Nomination, NominationsSummary, RewardDestination,
-    Stake, StakeSummary, ValidatorPreferences,
+    Account, AccountSummary, Balance, Epoch, Era, Nomination, NominationsSummary,
+    RewardDestination, Stake, StakeSummary, ValidatorPreferences,
 };
+use serde::{Deserialize, Serialize};
 use std::convert::From;
 use subvt_proc_macro::Diff;
 

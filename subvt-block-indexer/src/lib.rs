@@ -21,7 +21,8 @@ impl BlockIndexer {
     async fn establish_db_connection() -> anyhow::Result<Pool<Postgres>> {
         let pool = sqlx::postgres::PgPoolOptions::new()
             .max_connections(20)
-            .connect(&CONFIG.get_postgres_url()).await?;
+            .connect(&CONFIG.get_postgres_url())
+            .await?;
         Ok(pool)
     }
 
@@ -72,16 +73,11 @@ impl Service for BlockIndexer {
             .fetch_one(&pool).await?;
          */
 
-
         loop {
-            let substrate_client = Arc::new(
-                SubstrateClient::new(&CONFIG).await?
-            );
+            let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             substrate_client.metadata.log_all_calls();
             substrate_client.metadata.log_all_events();
-            let db_connection_pool = Arc::new(
-                BlockIndexer::establish_db_connection().await?
-            );
+            let db_connection_pool = Arc::new(BlockIndexer::establish_db_connection().await?);
 
             debug!("Database connection pool established.");
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
@@ -113,9 +109,7 @@ impl Service for BlockIndexer {
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
-            std::thread::sleep(
-                std::time::Duration::from_secs(delay_seconds)
-            );
+            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
         }
     }
 }

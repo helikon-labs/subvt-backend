@@ -1,7 +1,7 @@
-use parity_scale_codec::{Encode, Decode};
+use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sp_core::crypto::Ss58Codec;
-use std::convert::{From, TryInto, TryFrom};
+use std::convert::{From, TryFrom, TryInto};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -62,8 +62,8 @@ impl<'a> TryFrom<&'a [u8]> for AccountId {
 
 impl Serialize for AccountId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
+    where
+        S: serde::Serializer,
     {
         serializer.serialize_str(&self.to_string())
     }
@@ -71,8 +71,8 @@ impl Serialize for AccountId {
 
 impl<'de> Deserialize<'de> for AccountId {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: serde::Deserializer<'de>,
+    where
+        D: serde::Deserializer<'de>,
     {
         Self::from_str(&String::deserialize(deserializer)?)
             .map_err(|e| serde::de::Error::custom(format!("{:?}", e)))

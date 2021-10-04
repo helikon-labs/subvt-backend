@@ -1,25 +1,16 @@
 /// Substrate metadata. Most of this code has been adopted from [SubXT](https://github.com/paritytech/substrate-subxt).
 /// Modified, diminished and augmented as needed.
-
 use core::convert::TryInto;
-use frame_metadata::{
-    decode_different::DecodeDifferent,
-    RuntimeMetadata,
-    RuntimeMetadataPrefixed,
-};
+use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
 use log::debug;
-use parity_scale_codec::{
-    Decode,
-    Encode,
-    Error as CodecError,
-};
+use parity_scale_codec::{Decode, Encode, Error as CodecError};
+use sp_version::RuntimeVersion;
+use std::fmt::{Display, Formatter};
 use std::{
     collections::{HashMap, HashSet},
     convert::TryFrom,
     str::FromStr,
 };
-use sp_version::RuntimeVersion;
-use std::fmt::{Display, Formatter};
 
 /// Metadata error.
 #[derive(Debug, thiserror::Error)]
@@ -68,9 +59,8 @@ impl Metadata {
     pub fn from(hex_string: &str) -> anyhow::Result<Metadata> {
         let metadata_hex_string = hex_string.trim_start_matches("0x");
         let mut metadata_hex_decoded: &[u8] = &hex::decode(&metadata_hex_string)?;
-        let metadata_prefixed: RuntimeMetadataPrefixed = RuntimeMetadataPrefixed::decode(
-            &mut metadata_hex_decoded
-        )?;
+        let metadata_prefixed: RuntimeMetadataPrefixed =
+            RuntimeMetadataPrefixed::decode(&mut metadata_hex_decoded)?;
         let mut metadata: Metadata = metadata_prefixed.try_into()?;
         let babe_module = metadata.module("Babe")?;
         let expected_block_time_millis: u64 = babe_module.constant("ExpectedBlockTime")?.value()?;
@@ -102,7 +92,8 @@ impl Metadata {
     }
 
     pub fn module(&self, key: &str) -> Result<&ModuleMetadata, MetadataError> {
-        self.modules.values()
+        self.modules
+            .values()
             .find(|module| module.name == key)
             .ok_or_else(|| MetadataError::ModuleNotFound(key.to_string()))
     }
@@ -161,7 +152,9 @@ impl Metadata {
         debug!("==========================================================");
     }
 
-    pub fn check_event_primitive_argument_support(&self) -> Result<(), crate::substrate::argument::ArgumentDecodeError> {
+    pub fn check_event_primitive_argument_support(
+        &self,
+    ) -> Result<(), crate::substrate::argument::ArgumentDecodeError> {
         debug!("Checking SubVT runtime for event primitive argument support...");
         let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
         for module in self.modules.values() {
@@ -179,7 +172,9 @@ impl Metadata {
                 &mut dummy_bytes.as_ref(),
             );
             if let Err(error) = result {
-                if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) = error {
+                if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) =
+                    error
+                {
                     return Err(error);
                 }
             }
@@ -200,16 +195,13 @@ pub struct ModuleMetadata {
 
 impl ModuleMetadata {
     /// Get a constant's metadata by name.
-    pub fn constant(
-        &self,
-        key: &str,
-    ) -> Result<&ModuleConstantMetadata, MetadataError> {
+    pub fn constant(&self, key: &str) -> Result<&ModuleConstantMetadata, MetadataError> {
         self.constants
             .get(key)
             .ok_or_else(|| MetadataError::ConstantNotFound(key.to_string()))
     }
 
-    pub fn _events(&self) -> impl Iterator<Item=&ModuleEventMetadata> {
+    pub fn _events(&self) -> impl Iterator<Item = &ModuleEventMetadata> {
         self.events.values()
     }
 }
@@ -222,12 +214,8 @@ pub enum StorageEntryModifier {
 impl From<frame_metadata::v13::StorageEntryModifier> for StorageEntryModifier {
     fn from(modifier: frame_metadata::v13::StorageEntryModifier) -> Self {
         match modifier {
-            frame_metadata::v13::StorageEntryModifier::Default => {
-                StorageEntryModifier::Default
-            }
-            frame_metadata::v13::StorageEntryModifier::Optional => {
-                StorageEntryModifier::Optional
-            }
+            frame_metadata::v13::StorageEntryModifier::Default => StorageEntryModifier::Default,
+            frame_metadata::v13::StorageEntryModifier::Optional => StorageEntryModifier::Optional,
         }
     }
 }
@@ -235,12 +223,8 @@ impl From<frame_metadata::v13::StorageEntryModifier> for StorageEntryModifier {
 impl From<frame_metadata::v12::StorageEntryModifier> for StorageEntryModifier {
     fn from(modifier: frame_metadata::v12::StorageEntryModifier) -> Self {
         match modifier {
-            frame_metadata::v12::StorageEntryModifier::Default => {
-                StorageEntryModifier::Default
-            }
-            frame_metadata::v12::StorageEntryModifier::Optional => {
-                StorageEntryModifier::Optional
-            }
+            frame_metadata::v12::StorageEntryModifier::Default => StorageEntryModifier::Default,
+            frame_metadata::v12::StorageEntryModifier::Optional => StorageEntryModifier::Optional,
         }
     }
 }
@@ -447,9 +431,7 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
     }
 }
 
-fn convert<B: 'static, O: 'static>(
-    dd: DecodeDifferent<B, O>,
-) -> Result<O, ConversionError> {
+fn convert<B: 'static, O: 'static>(dd: DecodeDifferent<B, O>) -> Result<O, ConversionError> {
     match dd {
         DecodeDifferent::Decoded(value) => Ok(value),
         _ => Err(ConversionError::ExpectedDecoded),
@@ -457,11 +439,11 @@ fn convert<B: 'static, O: 'static>(
 }
 
 mod v12 {
-    use frame_metadata::v12::{RuntimeMetadataV12};
     use super::{
-        ConversionError, convert, ArgumentMeta, ModuleEventMetadata, ModuleCallMetadata,
-        ModuleConstantMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
+        convert, ArgumentMeta, ConversionError, ModuleCallMetadata, ModuleConstantMetadata,
+        ModuleEventMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
     };
+    use frame_metadata::v12::RuntimeMetadataV12;
     use std::collections::HashMap;
 
     fn convert_event(
@@ -475,7 +457,12 @@ mod v12 {
             arguments.push(arg);
         }
         let documentation: Vec<String> = convert(event.documentation)?;
-        Ok(ModuleEventMetadata { index, name, arguments, documentation })
+        Ok(ModuleEventMetadata {
+            index,
+            name,
+            arguments,
+            documentation,
+        })
     }
 
     fn convert_entry(
@@ -493,9 +480,7 @@ mod v12 {
         })
     }
 
-    fn convert_error(
-        error: frame_metadata::v12::ErrorMetadata,
-    ) -> Result<String, ConversionError> {
+    fn convert_error(error: frame_metadata::v12::ErrorMetadata) -> Result<String, ConversionError> {
         convert(error.name)
     }
 
@@ -514,7 +499,9 @@ mod v12 {
         })
     }
 
-    pub fn convert_modules(meta: RuntimeMetadataV12) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
+    pub fn convert_modules(
+        meta: RuntimeMetadataV12,
+    ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
         let mut modules = HashMap::new();
         for module in convert(meta.modules)?.into_iter() {
             let module_index = module.index;
@@ -534,11 +521,8 @@ mod v12 {
                 let module_prefix = convert(storage.prefix)?.to_string();
                 for entry in convert(storage.entries)?.into_iter() {
                     let storage_prefix = convert(entry.name.clone())?.to_string();
-                    let entry = convert_entry(
-                        module_prefix.clone(),
-                        storage_prefix.clone(),
-                        entry,
-                    )?;
+                    let entry =
+                        convert_entry(module_prefix.clone(), storage_prefix.clone(), entry)?;
                     storage_map.insert(storage_prefix, entry);
                 }
             }
@@ -594,33 +578,29 @@ mod v12 {
         match hasher {
             frame_metadata::v12::StorageHasher::Identity => bytes.to_vec(),
             frame_metadata::v12::StorageHasher::Blake2_128 => sp_core::blake2_128(bytes).to_vec(),
-            frame_metadata::v12::StorageHasher::Blake2_128Concat => {
-                sp_core::blake2_128(bytes)
-                    .iter()
-                    .chain(bytes)
-                    .cloned()
-                    .collect()
-            }
+            frame_metadata::v12::StorageHasher::Blake2_128Concat => sp_core::blake2_128(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
             frame_metadata::v12::StorageHasher::Blake2_256 => sp_core::blake2_256(bytes).to_vec(),
             frame_metadata::v12::StorageHasher::Twox128 => sp_core::twox_128(bytes).to_vec(),
             frame_metadata::v12::StorageHasher::Twox256 => sp_core::twox_256(bytes).to_vec(),
-            frame_metadata::v12::StorageHasher::Twox64Concat => {
-                sp_core::twox_64(bytes)
-                    .iter()
-                    .chain(bytes)
-                    .cloned()
-                    .collect()
-            }
+            frame_metadata::v12::StorageHasher::Twox64Concat => sp_core::twox_64(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
         }
     }
 }
 
 mod v13 {
-    use frame_metadata::v13::{RuntimeMetadataV13, StorageHasher};
     use super::{
-        ConversionError, convert, ArgumentMeta, ModuleEventMetadata, ModuleCallMetadata,
-        ModuleConstantMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
+        convert, ArgumentMeta, ConversionError, ModuleCallMetadata, ModuleConstantMetadata,
+        ModuleEventMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
     };
+    use frame_metadata::v13::{RuntimeMetadataV13, StorageHasher};
     use std::collections::HashMap;
 
     fn convert_event(
@@ -634,7 +614,12 @@ mod v13 {
             arguments.push(arg);
         }
         let documentation: Vec<String> = convert(event.documentation)?;
-        Ok(ModuleEventMetadata { index, name, arguments, documentation })
+        Ok(ModuleEventMetadata {
+            index,
+            name,
+            arguments,
+            documentation,
+        })
     }
 
     fn convert_entry(
@@ -652,9 +637,7 @@ mod v13 {
         })
     }
 
-    fn convert_error(
-        error: frame_metadata::v13::ErrorMetadata,
-    ) -> Result<String, ConversionError> {
+    fn convert_error(error: frame_metadata::v13::ErrorMetadata) -> Result<String, ConversionError> {
         convert(error.name)
     }
 
@@ -673,7 +656,9 @@ mod v13 {
         })
     }
 
-    pub fn convert_modules(meta: RuntimeMetadataV13) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
+    pub fn convert_modules(
+        meta: RuntimeMetadataV13,
+    ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
         let mut modules = HashMap::new();
         for module in convert(meta.modules)?.into_iter() {
             let module_index = module.index;
@@ -693,11 +678,8 @@ mod v13 {
                 let module_prefix = convert(storage.prefix)?.to_string();
                 for entry in convert(storage.entries)?.into_iter() {
                     let storage_prefix = convert(entry.name.clone())?.to_string();
-                    let entry = convert_entry(
-                        module_prefix.clone(),
-                        storage_prefix.clone(),
-                        entry,
-                    )?;
+                    let entry =
+                        convert_entry(module_prefix.clone(), storage_prefix.clone(), entry)?;
                     storage_map.insert(storage_prefix, entry);
                 }
             }
@@ -753,23 +735,19 @@ mod v13 {
         match hasher {
             StorageHasher::Identity => bytes.to_vec(),
             StorageHasher::Blake2_128 => sp_core::blake2_128(bytes).to_vec(),
-            StorageHasher::Blake2_128Concat => {
-                sp_core::blake2_128(bytes)
-                    .iter()
-                    .chain(bytes)
-                    .cloned()
-                    .collect()
-            }
+            StorageHasher::Blake2_128Concat => sp_core::blake2_128(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
             StorageHasher::Blake2_256 => sp_core::blake2_256(bytes).to_vec(),
             StorageHasher::Twox128 => sp_core::twox_128(bytes).to_vec(),
             StorageHasher::Twox256 => sp_core::twox_256(bytes).to_vec(),
-            StorageHasher::Twox64Concat => {
-                sp_core::twox_64(bytes)
-                    .iter()
-                    .chain(bytes)
-                    .cloned()
-                    .collect()
-            }
+            StorageHasher::Twox64Concat => sp_core::twox_64(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
         }
     }
 }

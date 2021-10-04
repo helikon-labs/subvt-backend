@@ -5,16 +5,16 @@ use anyhow::Context;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
-use std::sync::Arc;
-use subvt_config::Config;
-use subvt_substrate_client::SubstrateClient;
-use subvt_types::{substrate::BlockHeader};
-use subvt_types::subvt::InactiveValidator;
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use subvt_config::Config;
 use subvt_service_common::Service;
+use subvt_substrate_client::SubstrateClient;
+use subvt_types::substrate::BlockHeader;
+use subvt_types::subvt::InactiveValidator;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -31,31 +31,37 @@ impl InactiveValidatorListUpdater {
     ) -> anyhow::Result<()> {
         // get redis connection
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client
-            .get_connection()
-            .context(format!("Cannot connect to Redis at URL {}.", CONFIG.redis.url))?;
+        let mut redis_connection = redis_client.get_connection().context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
         // prepare first command pipeline
         let mut redis_cmd_pipeline = Pipeline::new();
         // block number and hash
         let prefix = format!("subvt:{}:inactive_validators", CONFIG.substrate.chain);
-        redis_cmd_pipeline.cmd("MSET")
+        redis_cmd_pipeline
+            .cmd("MSET")
             .arg(format!("{}:{}", prefix, "finalized_block_number"))
             .arg(finalized_block_number)
             .arg(format!("{}:{}", prefix, "finalized_block_hash"))
             .arg(finalized_block_hash.as_str());
         // validator address list
-        redis_cmd_pipeline.cmd("DEL")
+        redis_cmd_pipeline
+            .cmd("DEL")
             .arg(format!("{}:{}", prefix, "addresses"));
-        let addresses: HashSet<String> = validators.iter().map(
-            |validator|
-                validator.account.id.to_string()
-        ).collect();
-        redis_cmd_pipeline.cmd("SADD")
+        let addresses: HashSet<String> = validators
+            .iter()
+            .map(|validator| validator.account.id.to_string())
+            .collect();
+        redis_cmd_pipeline
+            .cmd("SADD")
             .arg(format!("{}:{}", prefix, "addresses"))
             .arg(addresses);
         // each validator
-        redis_cmd_pipeline.cmd("DEL")
-            .arg(format!("subvt:{}:inactive_validators:validator:*", CONFIG.substrate.chain));
+        redis_cmd_pipeline.cmd("DEL").arg(format!(
+            "subvt:{}:inactive_validators:validator:*",
+            CONFIG.substrate.chain
+        ));
         redis_cmd_pipeline.cmd("MSET");
         for validator in validators {
             let prefix = format!(
@@ -91,14 +97,18 @@ impl InactiveValidatorListUpdater {
         client: &SubstrateClient,
         finalized_block_header: &BlockHeader,
     ) -> anyhow::Result<Vec<InactiveValidator>> {
-        let finalized_block_number = finalized_block_header.get_number()
+        let finalized_block_number = finalized_block_header
+            .get_number()
             .context("Error while extracting finalized block number.")?;
-        let finalized_block_hash = client.get_block_hash(finalized_block_number).await
+        let finalized_block_hash = client
+            .get_block_hash(finalized_block_number)
+            .await
             .context("Error while fetching finalized block hash.")?;
         // validator addresses
-        let inactive_validators = client.get_all_inactive_validators(
-            finalized_block_hash.as_str()
-        ).await.context("Error while getting inactive validators.")?;
+        let inactive_validators = client
+            .get_all_inactive_validators(finalized_block_hash.as_str())
+            .await
+            .context("Error while getting inactive validators.")?;
         debug!("Fetched {} inactive validators.", inactive_validators.len());
         let start = std::time::Instant::now();
         InactiveValidatorListUpdater::update_redis(
@@ -116,9 +126,7 @@ impl InactiveValidatorListUpdater {
 impl Service for InactiveValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let substrate_client = Arc::new(
-                SubstrateClient::new(&CONFIG).await?
-            );
+            let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let is_busy = Arc::new(AtomicBool::new(false));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
@@ -154,9 +162,7 @@ impl Service for InactiveValidatorListUpdater {
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
-            std::thread::sleep(
-                std::time::Duration::from_secs(delay_seconds)
-            );
+            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
         }
     }
 }

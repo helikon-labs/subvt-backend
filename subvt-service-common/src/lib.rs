@@ -13,7 +13,9 @@ pub trait Service {
         let config = Config::default();
         subvt_logging::init(&config);
         log::debug!("Starting service...");
-        Chain::from_str(&config.substrate.chain).unwrap().sp_core_set_default_ss58_version();
+        Chain::from_str(&config.substrate.chain)
+            .unwrap()
+            .sp_core_set_default_ss58_version();
         let delay_seconds = config.common.recovery_retry_seconds;
         loop {
             let result = self.run().await;

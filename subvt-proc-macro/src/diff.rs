@@ -6,17 +6,18 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
     const KEY_ATTR_NAME: &str = "diff_key";
 
     let fields = match input.data {
-        Data::Struct(DataStruct { fields: Fields::Named(fields), .. }) => {
-            fields.named
-        }
+        Data::Struct(DataStruct {
+            fields: Fields::Named(fields),
+            ..
+        }) => fields.named,
         _ => panic!("This derive macro only works with named fields."),
     };
     let get_diff_method_statements = fields.iter().map(|field| {
         let field_ident = &field.ident;
-        let field_is_key = field.attrs.iter().any(
-            |attribute|
-                attribute.path.is_ident(KEY_ATTR_NAME)
-        );
+        let field_is_key = field
+            .attrs
+            .iter()
+            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 diff.#field_ident = other.#field_ident.clone();
@@ -31,10 +32,10 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
     });
     let apply_diff_method_statements = fields.iter().map(|field| {
         let field_ident = &field.ident;
-        let field_is_key = field.attrs.iter().any(
-            |attribute|
-                attribute.path.is_ident(KEY_ATTR_NAME)
-        );
+        let field_is_key = field
+            .attrs
+            .iter()
+            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 self.#field_ident = diff.#field_ident.clone();
@@ -50,10 +51,10 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
     let diff_fields = fields.iter().map(|field| {
         let field_name = &field.ident;
         let field_ty = &field.ty;
-        let field_is_key = field.attrs.iter().any(
-            |attribute|
-                attribute.path.is_ident(KEY_ATTR_NAME)
-        );
+        let field_is_key = field
+            .attrs
+            .iter()
+            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 pub #field_name: #field_ty,
@@ -66,10 +67,7 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
         }
     });
     let ident = input.ident;
-    let diff_ident = syn::Ident::new(
-        &format!("{}Diff", ident),
-        ident.span(),
-    );
+    let diff_ident = syn::Ident::new(&format!("{}Diff", ident), ident.span());
     let diff_struct = quote! {
         #[automatically_derived]
         #[derive(Clone, Debug, Default, Serialize)]

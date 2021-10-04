@@ -1,7 +1,7 @@
 //! SubVT runtime configuration.
 
-use std::fmt;
 use serde::Deserialize;
+use std::fmt;
 
 /// Default development configuration file relative path for other SubVT crates/modules.
 const DEV_CONFIG_FILE_PATH: &str = "../subvt-config/config/Default.toml";
@@ -131,16 +131,22 @@ impl Config {
         let env = Environment::from(
             std::env::var("SUBVT_ENV")
                 .unwrap_or_else(|_| "Production".into())
-                .as_str()
+                .as_str(),
         );
         let mut c = config::Config::new();
         c.set("env", env.to_string())?;
         if cfg!(debug_assertions) {
             c.merge(config::File::with_name(DEV_CONFIG_FILE_PATH))?;
-            c.merge(config::File::with_name(&format!("{}{}", DEV_CONFIG_FILE_PREFIX, env)))?;
+            c.merge(config::File::with_name(&format!(
+                "{}{}",
+                DEV_CONFIG_FILE_PREFIX, env
+            )))?;
         } else {
             c.merge(config::File::with_name(CONFIG_FILE_PATH))?;
-            c.merge(config::File::with_name(&format!("{}{}", CONFIG_FILE_PREFIX, env)))?;
+            c.merge(config::File::with_name(&format!(
+                "{}{}",
+                CONFIG_FILE_PREFIX, env
+            )))?;
         }
         // this makes it so SUBVT_REDIS__URL overrides redis.url
         c.merge(config::Environment::with_prefix("subvt").separator("__"))?;

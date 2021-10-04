@@ -4,9 +4,12 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use jsonrpsee::{ws_server::{RpcModule, WsServerBuilder, WsStopHandle}};
+use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
@@ -17,10 +20,7 @@ use subvt_types::{
         InactiveValidatorSummary,
     },
 };
-use std::collections::{HashMap, HashSet, hash_map::DefaultHasher};
-use std::hash::{Hash, Hasher};
 use tokio::task::JoinHandle;
-use std::str::FromStr;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -42,7 +42,10 @@ impl InactiveValidatorListPresenter {
     ) -> anyhow::Result<(JoinHandle<()>, WsStopHandle)> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
-            .build(format!("{}:{}", CONFIG.rpc.host, CONFIG.rpc.inactive_validator_list_port))
+            .build(format!(
+                "{}:{}",
+                CONFIG.rpc.host, CONFIG.rpc.inactive_validator_list_port
+            ))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let validator_map = validator_map.clone();
@@ -56,9 +59,7 @@ impl InactiveValidatorListPresenter {
                 {
                     let validator_summaries: Vec<InactiveValidatorSummary> = {
                         let validator_map = validator_map.read().unwrap();
-                        validator_map.iter().map(
-                            |value| value.1.into()
-                        ).collect()
+                        validator_map.iter().map(|value| value.1.into()).collect()
                     };
                     let update = InactiveValidatorListUpdate {
                         insert: validator_summaries,
@@ -98,21 +99,19 @@ impl Service for InactiveValidatorListPresenter {
     async fn run(&'static self) -> anyhow::Result<()> {
         let last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
-        let validator_map = Arc::new(
-            RwLock::new(HashMap::<AccountId, InactiveValidator>::new())
-        );
+        let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, InactiveValidator>::new()));
         let prefix = format!("subvt:{}:inactive_validators", CONFIG.substrate.chain);
 
-        let redis_client = redis::Client::open(CONFIG.redis.url.as_str())
-            .context(format!("Cannot connect to Redis at URL {}.", CONFIG.redis.url))?;
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
         let mut pub_sub_connection = redis_client.get_connection()?;
         let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub.subscribe(
-            format!(
-                "subvt:{}:inactive_validators:publish:finalized_block_number",
-                CONFIG.substrate.chain
-            )
-        )?;
+        pub_sub.subscribe(format!(
+            "subvt:{}:inactive_validators:publish:finalized_block_number",
+            CONFIG.substrate.chain
+        ))?;
         let mut data_connection = redis_client.get_connection()?;
         let (server_join_handle, server_stop_handle) =
             InactiveValidatorListPresenter::run_rpc_server(&validator_map, &bus).await?;
@@ -128,7 +127,10 @@ impl Service for InactiveValidatorListPresenter {
             }
             let finalized_block_number: u64 = payload.unwrap();
             if last_finalized_block_number == finalized_block_number {
-                warn!("Skip duplicate finalized block #{}.", finalized_block_number);
+                warn!(
+                    "Skip duplicate finalized block #{}.",
+                    finalized_block_number
+                );
             }
             debug!("New finalized block #{}.", finalized_block_number);
 
@@ -136,12 +138,16 @@ impl Service for InactiveValidatorListPresenter {
                 .arg(format!("{}:addresses", prefix))
                 .query(&mut data_connection)
                 .context("Can't read inactive validator addresses from Redis.")?;
-            debug!("Got {} validator addresses. Checking for changes...", validator_addresses.len());
+            debug!(
+                "Got {} validator addresses. Checking for changes...",
+                validator_addresses.len()
+            );
             let mut update = InactiveValidatorListUpdate {
                 finalized_block_number: Some(finalized_block_number),
                 ..Default::default()
             };
-            { // find the ones to remove
+            {
+                // find the ones to remove
                 let validator_map = validator_map.read().unwrap();
                 for validator_account_id in validator_map.keys() {
                     if !validator_addresses.contains(&validator_account_id.to_string()) {
@@ -149,7 +155,8 @@ impl Service for InactiveValidatorListPresenter {
                     }
                 }
             }
-            { // remove
+            {
+                // remove
                 let mut validator_map = validator_map.write().unwrap();
                 for remove_id in &update.remove_ids {
                     validator_map.remove(remove_id);
@@ -157,7 +164,8 @@ impl Service for InactiveValidatorListPresenter {
             }
             let mut new_validators: Vec<InactiveValidator> = Vec::new();
             let mut validator_updates: Vec<InactiveValidatorDiff> = Vec::new();
-            { // update/insert
+            {
+                // update/insert
                 let validator_map = validator_map.read().unwrap();
                 for validator_address in validator_addresses {
                     let validator_account_id = AccountId::from_str(&validator_address).unwrap();
@@ -179,10 +187,14 @@ impl Service for InactiveValidatorListPresenter {
                                 .arg(prefix)
                                 .query(&mut data_connection)
                                 .context("Can't read inactive validator addresses from Redis.")?;
-                            let db_validator: InactiveValidator = serde_json::from_str(&validator_json_string)?;
-                            let db_validator_summary: InactiveValidatorSummary = InactiveValidatorSummary::from(&db_validator);
+                            let db_validator: InactiveValidator =
+                                serde_json::from_str(&validator_json_string)?;
+                            let db_validator_summary: InactiveValidatorSummary =
+                                InactiveValidatorSummary::from(&db_validator);
                             let validator_summary: InactiveValidatorSummary = validator.into();
-                            update.update.push(db_validator_summary.get_diff(&validator_summary));
+                            update
+                                .update
+                                .push(db_validator_summary.get_diff(&validator_summary));
                             validator_updates.push(validator.get_diff(&db_validator));
                         }
                     } else {
@@ -190,7 +202,8 @@ impl Service for InactiveValidatorListPresenter {
                             .arg(prefix)
                             .query(&mut data_connection)
                             .context("Can't read inactive validator addresses from Redis.")?;
-                        let validator: InactiveValidator = serde_json::from_str(&validator_json_string)?;
+                        let validator: InactiveValidator =
+                            serde_json::from_str(&validator_json_string)?;
                         let validator_summary = InactiveValidatorSummary::from(&validator);
                         update.insert.push(validator_summary);
                         new_validators.push(validator);
@@ -208,11 +221,11 @@ impl Service for InactiveValidatorListPresenter {
                 }
             }
             debug!(
-            "Completed checks. Remove {} validators. {} new validators. {} updated validators.",
-            update.remove_ids.len(),
-            update.insert.len(),
-            update.update.len(),
-        );
+                "Completed checks. Remove {} validators. {} new validators. {} updated validators.",
+                update.remove_ids.len(),
+                update.insert.len(),
+                update.update.len(),
+            );
             {
                 let mut bus = bus.lock().unwrap();
                 bus.broadcast(BusEvent::Update(update));
@@ -226,7 +239,9 @@ impl Service for InactiveValidatorListPresenter {
         }
         debug!("Stopping RPC server...");
         server_stop_handle.clone().stop().await?;
-        server_join_handle.await.expect("Server can't be shut down.");
+        server_join_handle
+            .await
+            .expect("Server can't be shut down.");
         debug!("RPC server fully stopped.");
         Err(error)
     }
