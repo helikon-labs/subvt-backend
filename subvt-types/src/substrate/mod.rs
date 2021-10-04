@@ -17,6 +17,7 @@ use subvt_utility::decode_hex_string;
 
 pub type CallHash = [u8; 32];
 pub type OpaqueTimeSlot = Vec<u8>;
+pub type Balance = polkadot_core_primitives::Balance;
 
 pub mod argument;
 pub mod event;
@@ -196,21 +197,21 @@ impl Epoch {
 /// A nominator's active stake on a validator.
 pub struct NominatorStake {
     pub account: Account,
-    pub stake: u128,
+    pub stake: Balance,
 }
 
 /// Active staking information for a single active validator. Contains the validator account id,
 /// self stake, total stake and each nominator's active stake on the validator.
 pub struct ValidatorStake {
     pub account: Account,
-    pub self_stake: u128,
-    pub total_stake: u128,
+    pub self_stake: Balance,
+    pub total_stake: Balance,
     pub nominators: Vec<NominatorStake>,
 }
 
 impl ValidatorStake {
     pub fn from_bytes(mut bytes: &[u8], validator_account_id: AccountId) -> anyhow::Result<Self> {
-        let exposure: Exposure<AccountId, u128> = Decode::decode(&mut bytes)?;
+        let exposure: Exposure<AccountId, Balance> = Decode::decode(&mut bytes)?;
         let mut nominators: Vec<NominatorStake> = Vec::new();
         for other in exposure.others {
             let stake = other.value;
@@ -238,7 +239,7 @@ pub struct EraStakers {
 
 impl EraStakers {
     /// Gets the total stake in era.
-    pub fn total_stake(&self) -> u128 {
+    pub fn total_stake(&self) -> Balance {
         self.stakers.iter().map(
             |validator_stake|
                 validator_stake.total_stake
@@ -246,7 +247,7 @@ impl EraStakers {
     }
 
     /// Gets the minimum stake backing an active validator. Returns validator account id and stake.
-    pub fn min_stake(&self) -> (Account, u128) {
+    pub fn min_stake(&self) -> (Account, Balance) {
         let validator_stake = self.stakers.iter().min_by_key(
             |validator_stake|
                 validator_stake.total_stake
@@ -255,7 +256,7 @@ impl EraStakers {
     }
 
     /// Gets the maximum stake backing an active validator. Returns validator account id and stake.
-    pub fn max_stake(&self) -> (Account, u128) {
+    pub fn max_stake(&self) -> (Account, Balance) {
         let validator_stake = self.stakers.iter().max_by_key(
             |validator_stake|
                 validator_stake.total_stake
@@ -264,15 +265,15 @@ impl EraStakers {
     }
 
     /// Gets the average of all stakes backing all active validators.
-    pub fn average_stake(&self) -> u128 {
+    pub fn average_stake(&self) -> Balance {
         let sum = self.stakers.iter().map(
             |validator_stake| validator_stake.total_stake
-        ).sum::<u128>();
-        sum / self.stakers.len() as u128
+        ).sum::<Balance>();
+        sum / self.stakers.len() as Balance
     }
 
     /// Gets the median of all stakes backing all active validators.
-    pub fn median_stake(&self) -> u128 {
+    pub fn median_stake(&self) -> Balance {
         let mid = self.stakers.len() / 2;
         self.stakers[mid].total_stake
     }
@@ -335,7 +336,7 @@ impl IdentityRegistration {
                 _ => None
             }
         }
-        let registration: Registration<u128, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> = Decode::decode(&mut bytes)?;
+        let registration: Registration<Balance, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> = Decode::decode(&mut bytes)?;
         let display = data_to_string(registration.info.display);
         let email = data_to_string(registration.info.email);
         let riot = data_to_string(registration.info.riot);
@@ -410,7 +411,7 @@ impl Nomination {
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct NominationsSummary {
     pub nomination_count: u16,
-    pub total_active_amount: u128,
+    pub total_active_amount: Balance,
 }
 
 impl From<&Vec<Nomination>> for NominationsSummary {
@@ -428,14 +429,14 @@ impl From<&Vec<Nomination>> for NominationsSummary {
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Stake {
     pub stash_account_id: AccountId,
-    pub total_amount: u128,
-    pub active_amount: u128,
+    pub total_amount: Balance,
+    pub active_amount: Balance,
     pub claimed_era_indices: Vec<u32>,
 }
 
 impl Stake {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let ledger: StakingLedger<AccountId, u128> = Decode::decode(&mut bytes)?;
+        let ledger: StakingLedger<AccountId, Balance> = Decode::decode(&mut bytes)?;
         let stake = Self {
             stash_account_id: ledger.stash,
             total_amount: ledger.total,
@@ -449,7 +450,7 @@ impl Stake {
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct StakeSummary {
     pub stash_account_id: AccountId,
-    pub active_amount: u128,
+    pub active_amount: Balance,
 }
 
 impl From<&Stake> for StakeSummary {

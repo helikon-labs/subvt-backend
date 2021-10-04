@@ -17,7 +17,7 @@ use pallet_gilt::ActiveIndex;
 use pallet_identity::RegistrarIndex;
 use pallet_multisig::Timepoint;
 use pallet_scheduler::TaskAddress;
-use pallet_staking::EraIndex;
+use pallet_staking::{EraIndex, Exposure};
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, Hash};
 use polkadot_primitives::v1::{
@@ -29,6 +29,8 @@ use polkadot_runtime_parachains::ump::MessageId;
 use sp_authority_discovery::AuthorityId;
 use sp_finality_grandpa::AuthorityList;
 use sp_staking::{offence::Kind, SessionIndex};
+
+pub type IdentificationTuple = (AccountId, Exposure<AccountId, Balance>);
 
 #[derive(Clone, Debug)]
 pub enum Argument {
@@ -66,6 +68,7 @@ pub enum ArgumentPrimitive {
     GrandpaAuthorityList(AuthorityList),
     GroupIndex(GroupIndex),
     Hash(Hash),
+    IdentificationTuple(IdentificationTuple),
     MultiLocation(xcm::latest::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     OffenceKind(Kind),
@@ -288,6 +291,11 @@ impl Argument {
                         match Decode::decode(&mut *bytes) {
                             Ok(decoded) => ArgumentPrimitive::Hash(decoded),
                             Err(_) => return Err(DecodeError("Cannot decode Hash.".to_string()))
+                        }
+                    } else if name == "IdentificationTuple" {
+                        match Decode::decode(&mut *bytes) {
+                            Ok(decoded) => ArgumentPrimitive::IdentificationTuple(decoded),
+                            Err(_) => return Err(DecodeError("Cannot decode IdentificationTuple.".to_string()))
                         }
                     } else if name == "MultiLocation" {
                         match Decode::decode(&mut *bytes) {

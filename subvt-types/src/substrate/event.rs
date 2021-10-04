@@ -1,6 +1,7 @@
 use crate::{
     substrate::{
-        argument::{Argument, ArgumentPrimitive},
+        argument::{Argument, ArgumentPrimitive, IdentificationTuple},
+        Balance,
         metadata::Metadata,
     },
     crypto::AccountId,
@@ -8,46 +9,94 @@ use crate::{
 use frame_support::dispatch::{DispatchInfo, DispatchError};
 use log::{debug};
 use parity_scale_codec::{Compact, Decode, Input, Error};
+use sp_authority_discovery::AuthorityId;
+use sp_staking::SessionIndex;
+
+#[derive(Debug)]
+pub enum Balances {
+    BalanceSet { extrinsic_index: u32, account_id: AccountId, free: Balance, reserved: Balance },
+    Deposit { extrinsic_index: u32, account_id: AccountId, amount: Balance },
+    Transfer { extrinsic_index: u32, from: AccountId, to: AccountId, amount: Balance },
+}
+
+#[derive(Debug)]
+pub enum Identity {
+    /*
+    Identity.JudgementGiven(AccountId, RegistrarIndex, )
+    Identity.JudgementRequested(AccountId, RegistrarIndex, )
+    Identity.JudgementUnrequested(AccountId, RegistrarIndex, )
+    Identity.IdentitySet(AccountId, )
+    Identity.IdentityKilled(AccountId, Balance, )
+    Identity.IdentityCleared(AccountId, Balance, )
+    Identity.SubIdentityRemoved(AccountId, AccountId, Balance, )
+    Identity.SubIdentityRevoked(AccountId, AccountId, Balance, )
+    Identity.SubIdentityAdded(AccountId, AccountId, Balance, )
+     */
+}
+
+#[derive(Debug)]
+pub enum ImOnline {
+    AllGood,
+    HeartbeatReceived { extrinsic_index: u32, authority_id: AuthorityId },
+    SomeOffline { identification_tuples: Vec<IdentificationTuple> },
+}
+
+#[derive(Debug)]
+pub enum Offences {
+    /*
+    Offences.Offence(Kind, OpaqueTimeSlot, )
+     */
+}
+
+#[derive(Debug)]
+pub enum Session {
+    NewSession { session_index: SessionIndex }
+}
+
+#[derive(Debug)]
+pub enum Staking {
+    Bonded { account_id: AccountId, balance: Balance },
+    /*
+    Staking.Chilled(AccountId, )
+    Staking.EraPaid(EraIndex, Balance, Balance, )
+    Staking.Kicked(AccountId, AccountId, )
+    Staking.OldSlashingReportDiscarded(SessionIndex, )
+    Staking.PayoutStarted(EraIndex, AccountId, )
+    Staking.Rewarded(AccountId, Balance, )
+    Staking.Slashed(AccountId, Balance, )
+    Staking.StakersElected()
+    Staking.StakingElectionFailed()
+    Staking.Unbonded(AccountId, Balance, )
+    Staking.Withdrawn(AccountId, Balance, )
+     */
+}
+
+#[derive(Debug)]
+pub enum System {
+    CodeUpdated,
+    ExtrinsicFailed { extrinsic_index: u32, dispatch_error: DispatchError, dispatch_info: DispatchInfo },
+    ExtrinsicSuccess { extrinsic_index: u32, dispatch_info: DispatchInfo },
+    KilledAccount { account_id: AccountId },
+    NewAccount { account_id: AccountId },
+}
+
+#[derive(Debug)]
+pub enum Utility {
+    ItemCompleted { extrinsic_index: u32 },
+    BatchInterrupted { extrinsic_index: u32, item_index: u32, dispatch_error: DispatchError },
+    BatchCompleted { extrinsic_index: u32 },
+}
 
 #[derive(Debug)]
 pub enum SubstrateEvent {
-    // balances
-    BalanceTransfer { extrinsic_index: u32, from: AccountId, to: AccountId, amount: u128 },
-    BalanceDeposit { extrinsic_index: u32, account_id: AccountId, amount: u128 },
-    // utility
-    BatchItemCompleted { extrinsic_index: u32 },
-    BatchInterrupted { extrinsic_index: u32, item_index: u32, dispatch_error: DispatchError },
-    BatchCompleted { extrinsic_index: u32 },
-    // system
-    ExtrinsicSuccess { extrinsic_index: u32, dispatch_info: DispatchInfo },
-    ExtrinsicFailed { extrinsic_index: u32, dispatch_error: DispatchError, dispatch_info: DispatchInfo },
-    // staking
-
-    // other - not interested
+    Balances(Balances),
+    Identity(Identity),
+    Offences(Offences),
+    Session(Session),
+    Staking(Staking),
+    System(System),
+    Utility(Utility),
     Other { module_name: String, event_name: String, arguments: Vec<Argument> },
-    /*
-
-    Staking.EraPaid(EraIndex, Balance, Balance, )
-    Staking.Withdrawn(AccountId, Balance, )
-    Staking.Rewarded(AccountId, Balance, )
-    Staking.Kicked(AccountId, AccountId, )
-    Staking.StakingElectionFailed()
-    Staking.PayoutStarted(EraIndex, AccountId, )
-    Staking.OldSlashingReportDiscarded(SessionIndex, )
-    Staking.StakersElected()
-    Staking.Slashed(AccountId, Balance, )
-    Staking.Bonded(AccountId, Balance, )
-    Staking.Chilled(AccountId, )
-    Staking.Unbonded(AccountId, Balance, )
-
-    ImOnline.SomeOffline(Vec<IdentificationTuple>, )
-    ImOnline.HeartbeatReceived(AuthorityId, )
-    ImOnline.AllGood()
-
-    Session.NewSession(SessionIndex, )
-
-    Offences.Offence(Kind, OpaqueTimeSlot, )
-     */
 }
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -99,7 +148,9 @@ impl SubstrateEvent {
                     ArgumentPrimitive::DispatchInfo(dispatch_info) => dispatch_info,
                     _ => return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()))
                 };
-                Ok(SubstrateEvent::ExtrinsicSuccess { extrinsic_index, dispatch_info })
+                Ok(SubstrateEvent::System(
+                    System::ExtrinsicSuccess { extrinsic_index, dispatch_info }
+                ))
             }
             "System.ExtrinsicFailed" => {
                 let extrinsic_index = match maybe_extrinsic_index {
@@ -122,7 +173,9 @@ impl SubstrateEvent {
                     ArgumentPrimitive::DispatchError(dispatch_error) => dispatch_error,
                     _ => return Err(DecodeError("Cannot get DispatchInfo for ExtrinsicFailed.".to_string()))
                 };
-                Ok(SubstrateEvent::ExtrinsicFailed { extrinsic_index, dispatch_info, dispatch_error })
+                Ok(SubstrateEvent::System(
+                    System::ExtrinsicFailed { extrinsic_index, dispatch_info, dispatch_error }
+                ))
             }
             _ => {
                 Ok(

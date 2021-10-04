@@ -119,9 +119,8 @@ impl Metadata {
                 for arg in &call.arguments {
                     call_spec.push_str(&arg.to_string());
                     call_spec.push_str(", ");
-                    if let ArgumentMeta::Primitive(name) = arg {
-                        call_primitive_arg_name_set.insert(name.clone());
-                    }
+                    let primitive_set = arg.get_primitive_name_set();
+                    call_primitive_arg_name_set.extend(primitive_set);
                 }
                 call_spec.push(')');
                 debug!("{}", call_spec);
@@ -146,9 +145,8 @@ impl Metadata {
                 for arg in &event.arguments {
                     event_spec.push_str(&arg.to_string());
                     event_spec.push_str(", ");
-                    if let ArgumentMeta::Primitive(name) = arg {
-                        event_primitive_arg_name_set.insert(name.clone());
-                    }
+                    let primitive_set = arg.get_primitive_name_set();
+                    event_primitive_arg_name_set.extend(primitive_set);
                 }
                 event_spec.push(')');
                 debug!("{}", event_spec);
@@ -169,18 +167,16 @@ impl Metadata {
         for module in self.modules.values() {
             for event in module.events.values() {
                 for arg in &event.arguments {
-                    if let ArgumentMeta::Primitive(name) = arg {
-                        event_primitive_arg_name_set.insert(name.clone());
-                    }
+                    event_primitive_arg_name_set.extend(arg.get_primitive_name_set());
                 }
             }
         }
         for event_arg_name in event_primitive_arg_name_set.iter() {
             let argument_meta = ArgumentMeta::Primitive(event_arg_name.to_string());
-            let empty_bytes: Vec<u8> = Vec::new();
+            let dummy_bytes: Vec<u8> = Vec::new();
             let result = crate::substrate::argument::Argument::decode(
                 &argument_meta,
-                &mut empty_bytes.as_ref(),
+                &mut dummy_bytes.as_ref(),
             );
             if let Err(error) = result {
                 if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) = error {
@@ -303,10 +299,10 @@ pub struct ModuleEventMetadata {
 /// so the raw bytes can be extracted from the encoded `Vec<EventRecord<E>>` (without `E` defined).
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum ArgumentMeta {
-    Primitive(String),
-    Vec(Box<ArgumentMeta>),
-    Tuple(Vec<ArgumentMeta>),
     Option(Box<ArgumentMeta>),
+    Primitive(String),
+    Tuple(Vec<ArgumentMeta>),
+    Vec(Box<ArgumentMeta>),
 }
 
 impl Display for ArgumentMeta {
@@ -323,6 +319,32 @@ impl Display for ArgumentMeta {
             }
             ArgumentMeta::Option(arg) => write!(f, "Option<{}>", arg),
         }
+    }
+}
+
+impl ArgumentMeta {
+    pub fn get_primitive_name_set(&self) -> HashSet<String> {
+        let mut result = HashSet::new();
+        match self {
+            Self::Primitive(name) => {
+                result.insert(name.clone());
+            }
+            Self::Vec(argument_meta) => {
+                let primitive_set = argument_meta.get_primitive_name_set();
+                result.extend(primitive_set);
+            }
+            Self::Option(argument_meta) => {
+                let primitive_set = argument_meta.get_primitive_name_set();
+                result.extend(primitive_set);
+            }
+            Self::Tuple(argument_metas) => {
+                for argument_meta in argument_metas {
+                    let primitive_set = argument_meta.get_primitive_name_set();
+                    result.extend(primitive_set);
+                }
+            }
+        }
+        result
     }
 }
 

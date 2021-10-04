@@ -5153,6 +5153,7 @@ dependencies = [
  "pallet-election-provider-multi-phase",
  "pallet-gilt",
  "pallet-identity",
+ "pallet-im-online",
  "pallet-multisig",
  "pallet-scheduler",
  "pallet-staking",

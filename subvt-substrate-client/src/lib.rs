@@ -1,7 +1,7 @@
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
 
-use subvt_types::substrate::{metadata::Metadata, event::SubstrateEvent};
+use subvt_types::substrate::{Balance, metadata::Metadata, event::SubstrateEvent};
 use crate::{
     storage_utility::{
         get_rpc_storage_map_params,
@@ -773,7 +773,7 @@ impl SubstrateClient {
     pub async fn get_era_total_validator_reward(
         &self,
         era_index: u32,
-    ) -> anyhow::Result<u128> {
+    ) -> anyhow::Result<Balance> {
         let params = get_rpc_storage_map_params(
             &self.metadata,
             "Staking",

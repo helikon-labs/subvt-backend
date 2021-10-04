@@ -5,8 +5,8 @@
 use serde::{Deserialize, Serialize};
 use crate::crypto::AccountId;
 use crate::substrate::{
-    Account, AccountSummary, Era, Epoch, Nomination, NominationsSummary,
-    RewardDestination, Stake, StakeSummary, ValidatorPreferences,
+    Account, AccountSummary, Balance, Era, Epoch, Nomination, NominationsSummary, RewardDestination,
+    Stake, StakeSummary, ValidatorPreferences,
 };
 use std::convert::From;
 use subvt_proc_macro::Diff;
@@ -22,13 +22,13 @@ pub struct LiveNetworkStatus {
     pub current_epoch: Epoch,
     pub active_validator_count: u32,
     pub inactive_validator_count: u32,
-    pub last_era_total_reward: u128,
-    pub total_stake: u128,
+    pub last_era_total_reward: Balance,
+    pub total_stake: Balance,
     pub return_rate_per_million: u32,
-    pub min_stake: u128,
-    pub max_stake: u128,
-    pub average_stake: u128,
-    pub median_stake: u128,
+    pub min_stake: Balance,
+    pub max_stake: Balance,
+    pub average_stake: Balance,
+    pub median_stake: Balance,
     pub era_reward_points: u32,
 }
 
