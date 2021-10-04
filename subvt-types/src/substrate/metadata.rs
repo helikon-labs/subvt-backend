@@ -377,9 +377,9 @@ impl FromStr for ArgumentMeta {
 #[derive(Clone, Debug)]
 pub struct ModuleConstantMetadata {
     name: String,
-    ty: String,
+    _ty: String,
     value: Vec<u8>,
-    documentation: Vec<String>,
+    _documentation: Vec<String>,
 }
 
 impl ModuleConstantMetadata {
@@ -487,15 +487,11 @@ mod v12 {
     fn convert_constant(
         constant: frame_metadata::v12::ModuleConstantMetadata,
     ) -> Result<ModuleConstantMetadata, ConversionError> {
-        let name = convert(constant.name)?;
-        let ty = convert(constant.ty)?;
-        let value = convert(constant.value)?;
-        let documentation = convert(constant.documentation)?;
         Ok(ModuleConstantMetadata {
-            name,
-            ty,
-            value,
-            documentation,
+            name: convert(constant.name)?,
+            _ty: convert(constant.ty)?,
+            value: convert(constant.value)?,
+            _documentation: convert(constant.documentation)?,
         })
     }
 
@@ -644,15 +640,11 @@ mod v13 {
     fn convert_constant(
         constant: frame_metadata::v13::ModuleConstantMetadata,
     ) -> Result<ModuleConstantMetadata, ConversionError> {
-        let name = convert(constant.name)?;
-        let ty = convert(constant.ty)?;
-        let value = convert(constant.value)?;
-        let documentation = convert(constant.documentation)?;
         Ok(ModuleConstantMetadata {
-            name,
-            ty,
-            value,
-            documentation,
+            name: convert(constant.name)?,
+            _ty: convert(constant.ty)?,
+            value: convert(constant.value)?,
+            _documentation: convert(constant.documentation)?,
         })
     }
 

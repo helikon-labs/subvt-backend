@@ -16,9 +16,6 @@ jobs:
     name: Format and Clippy
     runs-on: ubuntu-latest
     steps:
-      - run: rustup update
-      - run: rustup update nightly
-      - run: rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Checkout
         uses: actions/checkout@v2
       - name: toolchain
@@ -27,6 +24,10 @@ jobs:
           toolchain: nightly
           components: clippy, rustfmt
           override: true
+      - run: rustup update
+      - run: rustup update nightly
+      - run: rustup default nightly
+      - run: rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Format
         uses: actions-rs/cargo@v1
         with:
