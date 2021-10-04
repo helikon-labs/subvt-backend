@@ -1,4 +1,8 @@
-use crate::metadata::ArgumentMeta;
+use crate::{
+    crypto::AccountId,
+    substrate::metadata::ArgumentMeta,
+    {substrate::{CallHash, OpaqueTimeSlot}},
+};
 use frame_support::{
     dispatch::{DispatchInfo, DispatchError, DispatchResult},
     traits::BalanceStatus,
@@ -25,7 +29,6 @@ use polkadot_runtime_parachains::ump::MessageId;
 use sp_authority_discovery::AuthorityId;
 use sp_finality_grandpa::AuthorityList;
 use sp_staking::{offence::Kind, SessionIndex};
-use subvt_types::{substrate::{CallHash, OpaqueTimeSlot}, crypto::AccountId};
 
 #[derive(Clone, Debug)]
 pub enum Argument {

@@ -1,9 +1,9 @@
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
 
+use subvt_types::substrate::{metadata::Metadata, event::SubstrateEvent};
 use crate::{
-    metadata::Metadata,
-    storage::{
+    storage_utility::{
         get_rpc_storage_map_params,
         get_rpc_storage_plain_params,
         get_rpc_paged_keys_params,
@@ -34,12 +34,8 @@ use subvt_types::substrate::SuperAccountId;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use subvt_config::Config;
-use crate::event::SubstrateEvent;
 
-mod event;
-mod metadata;
-mod storage;
-mod argument;
+mod storage_utility;
 
 const KEY_QUERY_PAGE_SIZE: usize = 1000;
 

@@ -1,6 +1,6 @@
 //! Substrate storage RPC access helper functions.
 
-use crate::metadata::{StorageEntryType, StorageMetadata, Metadata, StorageHasher};
+use subvt_types::substrate::metadata::{StorageEntryType, StorageMetadata, Metadata, StorageHasher};
 use jsonrpsee_types::v2::params::JsonRpcParams;
 use parity_scale_codec::{Encode};
 use jsonrpsee_types::JsonValue;

@@ -21,6 +21,7 @@ pub fn init(config: &subvt_config::Config) {
     builder.filter(Some("subvt_live_network_status_server"), log_level);
     builder.filter(Some("subvt_live_network_status_updater"), log_level);
     builder.filter(Some("subvt_substrate_client"), log_level);
+    builder.filter(Some("subvt_types"), log_level);
     builder.write_style(WriteStyle::Always);
     builder.init();
 }

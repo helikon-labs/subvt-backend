@@ -1,8 +1,13 @@
-use crate::{argument::{Argument, ArgumentPrimitive}, metadata::Metadata};
+use crate::{
+    substrate::{
+        argument::{Argument, ArgumentPrimitive},
+        metadata::Metadata,
+    },
+    crypto::AccountId,
+};
 use frame_support::dispatch::{DispatchInfo, DispatchError};
 use log::{debug};
 use parity_scale_codec::{Compact, Decode, Input, Error};
-use subvt_types::crypto::AccountId;
 
 #[derive(Debug)]
 pub enum SubstrateEvent {
@@ -124,7 +129,7 @@ impl SubstrateEvent {
                     SubstrateEvent::Other {
                         module_name: module.name.clone(),
                         event_name: event.name.clone(),
-                        arguments: Vec::new(),
+                        arguments,
                     }
                 )
             }
