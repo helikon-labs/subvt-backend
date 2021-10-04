@@ -16,6 +16,9 @@ jobs:
     name: Format and Clippy
     runs-on: ubuntu-latest
     steps:
+      - run: rustup update
+      - run: rustup update nightly
+      - run: rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Checkout
         uses: actions/checkout@v2
       - name: toolchain
