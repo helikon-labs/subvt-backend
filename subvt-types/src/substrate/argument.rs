@@ -93,6 +93,83 @@ pub enum ArgumentPrimitive {
     XcmV0Outcome(Box<xcm::v0::Outcome>),
 }
 
+macro_rules! generate_argument_primitive_decoder {
+    ([$(($name: literal, $decode_function_name: ident, $argument_primitive_enum_case_name: ident),)+]) => {
+            $(
+                pub fn $decode_function_name(bytes: &mut &[u8]) -> Result<ArgumentPrimitive, ArgumentDecodeError> {
+                    match Decode::decode(&mut *bytes) {
+                        Ok(decoded) => Ok(ArgumentPrimitive::$argument_primitive_enum_case_name(decoded)),
+                        Err(_) => Err(ArgumentDecodeError::DecodeError(format!("Cannot decode {}.", $name))),
+                    }
+                }
+            )+
+            pub fn decode(name: &str, bytes: &mut &[u8]) -> Result<ArgumentPrimitive, ArgumentDecodeError> {
+                match name {
+                    $(
+                        $name => ArgumentPrimitive::$decode_function_name(&mut *bytes),
+                    )+
+                    _ => Err(ArgumentDecodeError::UnknownPrimitiveType(name.to_string()))
+                }
+            }
+    };
+}
+
+impl ArgumentPrimitive {
+    generate_argument_primitive_decoder! {[
+        ("AccountId", decode_account_id, AccountId),
+        ("AccountIndex", decode_account_index, AccountIndex),
+        ("AuctionIndex", decode_auction_index, AuctionIndex),
+        ("AuthorityId", decode_authority_id, AuthorityId),
+        ("Balance", decode_balance, Balance),
+        ("BalanceOf<T>", decode_balance_of_t, Balance),
+        ("Status", decode_balance_status, BalanceStatus),
+        ("bool", decode_bool, Bool),
+        ("BountyIndex", decode_bounty_index, BountyIndex),
+        ("BlockNumber", decode_block_number, BlockNumber),
+        ("T::BlockNumber", decode_t_block_number, BlockNumber),
+        ("CallHash", decode_call_hash, CallHash),
+        ("DispatchInfo", decode_dispatch_info, DispatchInfo),
+        ("DispatchError", decode_dispatch_error, DispatchError),
+        ("DispatchResult", decode_dispatch_result, DispatchResult),
+        ("CandidateReceipt<Hash>", decode_candidate_receipt, CandidateReceipt),
+        ("CandidateReceipt<T::Hash>", decode_candidate_receipt_t, CandidateReceipt),
+        ("MemberCount", decode_collective_member_count, CollectiveMemberCount),
+        ("ProposalIndex", decode_collective_proposal_index, CollectiveProposalIndex),
+        ("CoreIndex", decode_core_index, CoreIndex),
+        ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
+        ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
+        ("ElectionCompute", decode_election_compute, ElectionCompute),
+        ("EraIndex", decode_era_index, EraIndex),
+        ("EthereumAddress", decode_ethereum_address, EthereumAddress),
+        ("ActiveIndex", decode_gilt_active_index, GiltActiveIndex),
+        ("AuthorityList", decode_granpa_authority_list, GrandpaAuthorityList),
+        ("GroupIndex", decode_group_index, GroupIndex),
+        ("Hash", decode_hash, Hash),
+        ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
+        ("MultiLocation", decode_multi_location, MultiLocation),
+        ("Timepoint<BlockNumber>", decode_multisig_timepoint, MultisigTimepoint),
+        ("Kind", decode_offence_kind, OffenceKind),
+        ("OpaqueTimeSlot", decode_opaque_time_slot, OpaqueTimeSlot),
+        ("HeadData", decode_parachain_head_data, ParachainHeadData),
+        ("HrmpChannelId", decode_parachain_hrmp_channel_id, ParachainHRMPChannelId),
+        ("ParaId", decode_parachain_id, ParachainId),
+        ("LeasePeriod", decode_parachain_lease_period, ParachainLeasePeriod),
+        ("MessageId", decode_parachain_ump_message_id, ParachainUMPMessageId),
+        ("u8", decode_u8, U8),
+        ("u16", decode_u16, U16),
+        ("u32", decode_u32, U32),
+        ("ProxyType", decode_proxy_type, ProxyType),
+        ("ReferendumIndex", decode_referendum_index, ReferendumIndex),
+        ("RegistrarIndex", decode_registrar_index, RegistrarIndex),
+        ("TaskAddress<BlockNumber>", decode_scheduler_task_address, SchedulerTaskAddress),
+        ("SessionIndex", decode_session_index, SessionIndex),
+        ("Weight", decode_weight, Weight),
+        ("Xcm<()>", decode_xcm, Xcm),
+        ("Outcome", decode_xcm_outcome, XcmOutcome),
+        ("xcm::v0::Outcome", decode_xcm_v0_outcome, XcmV0Outcome),
+    ]}
+}
+
 #[derive(thiserror::Error, Clone, Debug)]
 pub enum ArgumentDecodeError {
     #[error("Decode error: {0}")]
@@ -117,7 +194,7 @@ impl Argument {
                     Err(_) => {
                         return Err(DecodeError(
                             "Cannot decode length for vector argument.".to_string(),
-                        ))
+                        ));
                     }
                 };
                 let mut result: Vec<Argument> = Vec::new();
@@ -149,338 +226,18 @@ impl Argument {
                 Ok(Argument::Tuple(result))
             }
             ArgumentMeta::Primitive(name) => {
-                let argument = if name == "AccountId" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::AccountId(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode AccountId.".to_string())),
-                    }
-                } else if name == "AccountIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::AccountIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode AccountIndex.".to_string()))
-                        }
-                    }
-                } else if name == "AuctionIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::AuctionIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode AuctionIndex.".to_string()))
-                        }
-                    }
-                } else if name == "AuthorityId" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::AuthorityId(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode AuthorityId.".to_string()))
-                        }
-                    }
-                } else if name == "Balance" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Balance(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Balance.".to_string())),
-                    }
-                } else if name == "BalanceOf<T>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Balance(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode BalanceOf<T>.".to_string()))
-                        }
-                    }
-                } else if name == "Status" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::BalanceStatus(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Status.".to_string())),
-                    }
-                } else if name == "bool" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Bool(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode bool.".to_string())),
-                    }
-                } else if name == "BountyIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::BountyIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode BountyIndex.".to_string()))
-                        }
-                    }
-                } else if name == "BlockNumber" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::BlockNumber(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode BlockNumber.".to_string()))
-                        }
-                    }
-                } else if name == "T::BlockNumber" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::BlockNumber(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode T::BlockNumber.".to_string()))
-                        }
-                    }
-                } else if name == "CallHash" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CallHash(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode CallHash.".to_string())),
-                    }
-                } else if name == "DispatchInfo" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::DispatchInfo(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode DispatchInfo.".to_string()))
-                        }
-                    }
-                } else if name == "DispatchError" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::DispatchError(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode DispatchError.".to_string()))
-                        }
-                    }
-                } else if name == "DispatchResult" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::DispatchResult(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode DispatchResult.".to_string()))
-                        }
-                    }
-                } else if name == "CandidateReceipt<Hash>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CandidateReceipt(decoded),
-                        Err(_) => {
-                            return Err(DecodeError(
-                                "Cannot decode CandidateReceipt<Hash>.".to_string(),
-                            ))
-                        }
-                    }
-                } else if name == "CandidateReceipt<T::Hash>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CandidateReceipt(decoded),
-                        Err(_) => {
-                            return Err(DecodeError(
-                                "Cannot decode CandidateReceipt<T::Hash>.".to_string(),
-                            ))
-                        }
-                    }
-                } else if name == "MemberCount" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CollectiveMemberCount(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode MemberCount.".to_string()))
-                        }
-                    }
-                } else if name == "ProposalIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CollectiveProposalIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode ProposalIndex.".to_string()))
-                        }
-                    }
-                } else if name == "CoreIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::CoreIndex(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode CoreIndex.".to_string())),
-                    }
-                } else if name == "PropIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::DemocracyProposalIndex(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode PropIndex.".to_string())),
-                    }
-                } else if name == "VoteThreshold" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::DemocracyVoteThreshold(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode VoteThreshold.".to_string()))
-                        }
-                    }
-                } else if name == "ElectionCompute" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ElectionCompute(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode ElectionCompute.".to_string()))
-                        }
-                    }
-                } else if name == "EraIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::EraIndex(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode EraIndex.".to_string())),
-                    }
-                } else if name == "EthereumAddress" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::EthereumAddress(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode EthereumAddress.".to_string()))
-                        }
-                    }
-                } else if name == "ActiveIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::GiltActiveIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode ActiveIndex.".to_string()))
-                        }
-                    }
-                } else if name == "AuthorityList" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::GrandpaAuthorityList(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode AuthorityList.".to_string()))
-                        }
-                    }
-                } else if name == "GroupIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::GroupIndex(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode GroupIndex.".to_string())),
-                    }
-                } else if name == "Hash" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Hash(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Hash.".to_string())),
-                    }
-                } else if name == "IdentificationTuple" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::IdentificationTuple(decoded),
-                        Err(_) => {
-                            return Err(DecodeError(
-                                "Cannot decode IdentificationTuple.".to_string(),
-                            ))
-                        }
-                    }
-                } else if name == "MultiLocation" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::MultiLocation(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode MultiLocation.".to_string()))
-                        }
-                    }
-                } else if name == "Timepoint<BlockNumber>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::MultisigTimepoint(decoded),
-                        Err(_) => {
-                            return Err(DecodeError(
-                                "Cannot decode Timepoint<BlockNumber>.".to_string(),
-                            ))
-                        }
-                    }
-                } else if name == "Kind" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::OffenceKind(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Kind.".to_string())),
-                    }
-                } else if name == "OpaqueTimeSlot" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::OpaqueTimeSlot(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode OpaqueTimeSlot.".to_string()))
-                        }
-                    }
-                } else if name == "HeadData" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ParachainHeadData(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode HeadData.".to_string())),
-                    }
-                } else if name == "HrmpChannelId" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ParachainHRMPChannelId(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode HrmpChannelId.".to_string()))
-                        }
-                    }
-                } else if name == "ParaId" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ParachainId(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode ParaId.".to_string())),
-                    }
-                } else if name == "LeasePeriod" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ParachainLeasePeriod(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode LeasePeriod.".to_string()))
-                        }
-                    }
-                } else if name == "MessageId" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ParachainUMPMessageId(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode MessageId.".to_string())),
-                    }
-                } else if name == "u8" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::U8(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode u8.".to_string())),
-                    }
-                } else if name == "u16" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::U16(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode u16.".to_string())),
-                    }
-                } else if name == "u32" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::U32(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode u32.".to_string())),
-                    }
-                } else if name == "sp_std::marker::PhantomData<(AccountId, Event)>" {
-                    return Err(UnsupportedPrimitiveType(name.clone()));
-                } else if name == "ProxyType" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ProxyType(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode ProxyType.".to_string())),
-                    }
-                } else if name == "ReferendumIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::ReferendumIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode ReferendumIndex.".to_string()))
-                        }
-                    }
-                } else if name == "RegistrarIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::RegistrarIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode RegistrarIndex.".to_string()))
-                        }
-                    }
-                } else if name == "TaskAddress<BlockNumber>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::SchedulerTaskAddress(decoded),
-                        Err(_) => {
-                            return Err(DecodeError(
-                                "Cannot decode TaskAddress<BlockNumber>.".to_string(),
-                            ))
-                        }
-                    }
-                } else if name == "SessionIndex" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::SessionIndex(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode SessionIndex.".to_string()))
-                        }
-                    }
-                } else if name == "Weight" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Weight(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Weight.".to_string())),
-                    }
-                } else if name == "Xcm<()>" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::Xcm(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Xcm<()>.".to_string())),
-                    }
-                } else if name == "Outcome" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::XcmOutcome(decoded),
-                        Err(_) => return Err(DecodeError("Cannot decode Outcome.".to_string())),
-                    }
-                } else if name == "xcm::v0::Outcome" {
-                    match Decode::decode(&mut *bytes) {
-                        Ok(decoded) => ArgumentPrimitive::XcmV0Outcome(decoded),
-                        Err(_) => {
-                            return Err(DecodeError("Cannot decode xcm::v0::Outcome.".to_string()))
-                        }
-                    }
+                if name == "sp_std::marker::PhantomData<(AccountId, Event)>" {
+                    Err(ArgumentDecodeError::UnsupportedPrimitiveType(
+                        name.to_string(),
+                    ))
                 } else {
-                    return Err(UnknownPrimitiveType(name.clone()));
-                };
-                debug!("+-- decoded {}.", name);
-                Ok(Argument::Primitive(Box::new(argument)))
+                    match ArgumentPrimitive::decode(name, &mut *bytes) {
+                        Ok(argument_primitive) => {
+                            Ok(Argument::Primitive(Box::new(argument_primitive)))
+                        }
+                        Err(error) => Err(error),
+                    }
+                }
             }
         }
     }
