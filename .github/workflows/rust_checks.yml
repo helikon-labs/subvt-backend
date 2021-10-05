@@ -1,4 +1,4 @@
-name: Rust Checks
+name: Rust Format and Clippy Checks
 
 on:
   push:
@@ -12,13 +12,13 @@ on:
       - synchronize
 
 jobs:
-  clippy:
+  format-and-clippy:
     name: Format and Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: toolchain
+      - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
           toolchain: nightly
@@ -38,7 +38,7 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings -W clippy::cognitive_complexity
-      - name: cargo clippy --all-targets
+      - name: Clippy All Targets
         uses: actions-rs/cargo@v1
         with:
           command: clippy
