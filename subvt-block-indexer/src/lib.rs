@@ -30,14 +30,23 @@ impl BlockIndexer {
         &self,
         substrate_client: &SubstrateClient,
         _db_connection_pool: &Pool<Postgres>,
-        finalized_block_header: &BlockHeader,
+        new_block_header: &BlockHeader,
     ) -> anyhow::Result<()> {
-        let block_number = finalized_block_header.get_number()?;
+        let block_number = new_block_header.get_number()?;
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         // get block events
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
-        // write to database
+        // check runtime version - reload meta if changed
+        // get extrinsics & set timestamp
+        // check era - if changed
+        //  get active and inactive validator list
+        //  total past era points, past era points per validator
+        //
+
+        // rewards, offences, other events
+
+        // write to database -
         Ok(())
     }
 }
@@ -80,14 +89,14 @@ impl Service for BlockIndexer {
             let db_connection_pool = Arc::new(BlockIndexer::establish_db_connection().await?);
 
             debug!("Database connection pool established.");
-            substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
+            substrate_client.subscribe_to_new_blocks(|new_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
                 let db_connection_pool = Arc::clone(&db_connection_pool);
                 tokio::spawn(async move {
                     let update_result = self.index_block(
                         &substrate_client,
                         &db_connection_pool,
-                        &finalized_block_header,
+                        &new_block_header,
                     ).await;
                     match update_result {
                         Ok(_) => (),
@@ -98,7 +107,7 @@ impl Service for BlockIndexer {
                             );
                             error!(
                                 "Live network status update failed for block #{}. Will try again with the next block.",
-                                finalized_block_header.get_number().unwrap_or(0),
+                                new_block_header.get_number().unwrap_or(0),
                             );
                         }
                     }

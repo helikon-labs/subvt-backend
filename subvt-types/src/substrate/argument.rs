@@ -93,8 +93,9 @@ pub enum ArgumentPrimitive {
     XcmV0Outcome(Box<xcm::v0::Outcome>),
 }
 
-macro_rules! generate_argument_primitive_decoder {
+macro_rules! generate_argument_primitive_decoder_impl {
     ([$(($name: literal, $decode_function_name: ident, $argument_primitive_enum_case_name: ident),)+]) => {
+        impl ArgumentPrimitive {
             $(
                 pub fn $decode_function_name(bytes: &mut &[u8]) -> Result<ArgumentPrimitive, ArgumentDecodeError> {
                     match Decode::decode(&mut *bytes) {
@@ -111,64 +112,63 @@ macro_rules! generate_argument_primitive_decoder {
                     _ => Err(ArgumentDecodeError::UnknownPrimitiveType(name.to_string()))
                 }
             }
+        }
     };
 }
 
-impl ArgumentPrimitive {
-    generate_argument_primitive_decoder! {[
-        ("AccountId", decode_account_id, AccountId),
-        ("AccountIndex", decode_account_index, AccountIndex),
-        ("AuctionIndex", decode_auction_index, AuctionIndex),
-        ("AuthorityId", decode_authority_id, AuthorityId),
-        ("Balance", decode_balance, Balance),
-        ("BalanceOf<T>", decode_balance_of_t, Balance),
-        ("Status", decode_balance_status, BalanceStatus),
-        ("bool", decode_bool, Bool),
-        ("BountyIndex", decode_bounty_index, BountyIndex),
-        ("BlockNumber", decode_block_number, BlockNumber),
-        ("T::BlockNumber", decode_t_block_number, BlockNumber),
-        ("CallHash", decode_call_hash, CallHash),
-        ("DispatchInfo", decode_dispatch_info, DispatchInfo),
-        ("DispatchError", decode_dispatch_error, DispatchError),
-        ("DispatchResult", decode_dispatch_result, DispatchResult),
-        ("CandidateReceipt<Hash>", decode_candidate_receipt, CandidateReceipt),
-        ("CandidateReceipt<T::Hash>", decode_candidate_receipt_t, CandidateReceipt),
-        ("MemberCount", decode_collective_member_count, CollectiveMemberCount),
-        ("ProposalIndex", decode_collective_proposal_index, CollectiveProposalIndex),
-        ("CoreIndex", decode_core_index, CoreIndex),
-        ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
-        ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
-        ("ElectionCompute", decode_election_compute, ElectionCompute),
-        ("EraIndex", decode_era_index, EraIndex),
-        ("EthereumAddress", decode_ethereum_address, EthereumAddress),
-        ("ActiveIndex", decode_gilt_active_index, GiltActiveIndex),
-        ("AuthorityList", decode_granpa_authority_list, GrandpaAuthorityList),
-        ("GroupIndex", decode_group_index, GroupIndex),
-        ("Hash", decode_hash, Hash),
-        ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
-        ("MultiLocation", decode_multi_location, MultiLocation),
-        ("Timepoint<BlockNumber>", decode_multisig_timepoint, MultisigTimepoint),
-        ("Kind", decode_offence_kind, OffenceKind),
-        ("OpaqueTimeSlot", decode_opaque_time_slot, OpaqueTimeSlot),
-        ("HeadData", decode_parachain_head_data, ParachainHeadData),
-        ("HrmpChannelId", decode_parachain_hrmp_channel_id, ParachainHRMPChannelId),
-        ("ParaId", decode_parachain_id, ParachainId),
-        ("LeasePeriod", decode_parachain_lease_period, ParachainLeasePeriod),
-        ("MessageId", decode_parachain_ump_message_id, ParachainUMPMessageId),
-        ("u8", decode_u8, U8),
-        ("u16", decode_u16, U16),
-        ("u32", decode_u32, U32),
-        ("ProxyType", decode_proxy_type, ProxyType),
-        ("ReferendumIndex", decode_referendum_index, ReferendumIndex),
-        ("RegistrarIndex", decode_registrar_index, RegistrarIndex),
-        ("TaskAddress<BlockNumber>", decode_scheduler_task_address, SchedulerTaskAddress),
-        ("SessionIndex", decode_session_index, SessionIndex),
-        ("Weight", decode_weight, Weight),
-        ("Xcm<()>", decode_xcm, Xcm),
-        ("Outcome", decode_xcm_outcome, XcmOutcome),
-        ("xcm::v0::Outcome", decode_xcm_v0_outcome, XcmV0Outcome),
-    ]}
-}
+generate_argument_primitive_decoder_impl! {[
+    ("AccountId", decode_account_id, AccountId),
+    ("AccountIndex", decode_account_index, AccountIndex),
+    ("AuctionIndex", decode_auction_index, AuctionIndex),
+    ("AuthorityId", decode_authority_id, AuthorityId),
+    ("Balance", decode_balance, Balance),
+    ("BalanceOf<T>", decode_balance_of_t, Balance),
+    ("Status", decode_balance_status, BalanceStatus),
+    ("bool", decode_bool, Bool),
+    ("BountyIndex", decode_bounty_index, BountyIndex),
+    ("BlockNumber", decode_block_number, BlockNumber),
+    ("T::BlockNumber", decode_t_block_number, BlockNumber),
+    ("CallHash", decode_call_hash, CallHash),
+    ("DispatchInfo", decode_dispatch_info, DispatchInfo),
+    ("DispatchError", decode_dispatch_error, DispatchError),
+    ("DispatchResult", decode_dispatch_result, DispatchResult),
+    ("CandidateReceipt<Hash>", decode_candidate_receipt, CandidateReceipt),
+    ("CandidateReceipt<T::Hash>", decode_candidate_receipt_t, CandidateReceipt),
+    ("MemberCount", decode_collective_member_count, CollectiveMemberCount),
+    ("ProposalIndex", decode_collective_proposal_index, CollectiveProposalIndex),
+    ("CoreIndex", decode_core_index, CoreIndex),
+    ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
+    ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
+    ("ElectionCompute", decode_election_compute, ElectionCompute),
+    ("EraIndex", decode_era_index, EraIndex),
+    ("EthereumAddress", decode_ethereum_address, EthereumAddress),
+    ("ActiveIndex", decode_gilt_active_index, GiltActiveIndex),
+    ("AuthorityList", decode_granpa_authority_list, GrandpaAuthorityList),
+    ("GroupIndex", decode_group_index, GroupIndex),
+    ("Hash", decode_hash, Hash),
+    ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
+    ("MultiLocation", decode_multi_location, MultiLocation),
+    ("Timepoint<BlockNumber>", decode_multisig_timepoint, MultisigTimepoint),
+    ("Kind", decode_offence_kind, OffenceKind),
+    ("OpaqueTimeSlot", decode_opaque_time_slot, OpaqueTimeSlot),
+    ("HeadData", decode_parachain_head_data, ParachainHeadData),
+    ("HrmpChannelId", decode_parachain_hrmp_channel_id, ParachainHRMPChannelId),
+    ("ParaId", decode_parachain_id, ParachainId),
+    ("LeasePeriod", decode_parachain_lease_period, ParachainLeasePeriod),
+    ("MessageId", decode_parachain_ump_message_id, ParachainUMPMessageId),
+    ("u8", decode_u8, U8),
+    ("u16", decode_u16, U16),
+    ("u32", decode_u32, U32),
+    ("ProxyType", decode_proxy_type, ProxyType),
+    ("ReferendumIndex", decode_referendum_index, ReferendumIndex),
+    ("RegistrarIndex", decode_registrar_index, RegistrarIndex),
+    ("TaskAddress<BlockNumber>", decode_scheduler_task_address, SchedulerTaskAddress),
+    ("SessionIndex", decode_session_index, SessionIndex),
+    ("Weight", decode_weight, Weight),
+    ("Xcm<()>", decode_xcm, Xcm),
+    ("Outcome", decode_xcm_outcome, XcmOutcome),
+    ("xcm::v0::Outcome", decode_xcm_v0_outcome, XcmV0Outcome),
+]}
 
 #[derive(thiserror::Error, Clone, Debug)]
 pub enum ArgumentDecodeError {
