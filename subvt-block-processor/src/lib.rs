@@ -34,15 +34,6 @@ impl BlockProcessor {
     ) -> anyhow::Result<()> {
         let block_number = new_block_header.get_number()?;
         let block_hash = substrate_client.get_block_hash(block_number).await?;
-        // 1h eksik event'leri tanımla
-
-        // 1h get extrinsics => timestamp
-        // 1h get author account + persist self and parent if exists
-        // 1h get era + persist
-        // 1h get epoch + persist
-        // 1h get runtime version
-        // 1h get metadata version
-        // 1h persist block
 
         // get events
         let events = substrate_client.get_block_events(&block_hash).await?;
