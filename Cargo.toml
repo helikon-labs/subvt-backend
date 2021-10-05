@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "subvt-block-indexer",
+    "subvt-block-processor",
     "subvt-config",
     "subvt-inactive-validator-list-server",
     "subvt-inactive-validators-updater",

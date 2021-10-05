@@ -107,10 +107,10 @@ impl From<&Account> for AccountSummary {
 #[serde(rename_all = "camelCase")]
 pub struct BlockHeader {
     digest: EventDigest,
-    extrinsics_root: String,
+    pub extrinsics_root: String,
     number: String,
-    parent_hash: String,
-    state_root: String,
+    pub parent_hash: String,
+    pub state_root: String,
 }
 
 impl BlockHeader {

@@ -1,5 +1,5 @@
 [package]
-name = "subvt-block-indexer"
+name = "subvt-block-processor"
 version = "0.1.0"
 edition = "2018"
 

@@ -250,10 +250,7 @@ impl Service for LiveNetworkStatusUpdater {
                             *last_network_status = network_status;
                         }
                         Err(error) => {
-                            error!(
-                            "{:?}",
-                            error,
-                        );
+                            error!("{:?}", error);
                             error!(
                             "Live network status update failed for block #{}. Will try again with the next block.",
                             best_block_header.get_number().unwrap_or(0),

@@ -15,9 +15,9 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct BlockIndexer;
+pub struct BlockProcessor;
 
-impl BlockIndexer {
+impl BlockProcessor {
     async fn establish_db_connection() -> anyhow::Result<Pool<Postgres>> {
         let pool = sqlx::postgres::PgPoolOptions::new()
             .max_connections(20)
@@ -26,7 +26,7 @@ impl BlockIndexer {
         Ok(pool)
     }
 
-    async fn index_block(
+    async fn process_new_block(
         &self,
         substrate_client: &SubstrateClient,
         _db_connection_pool: &Pool<Postgres>,
@@ -34,25 +34,66 @@ impl BlockIndexer {
     ) -> anyhow::Result<()> {
         let block_number = new_block_header.get_number()?;
         let block_hash = substrate_client.get_block_hash(block_number).await?;
-        // get block events
+        // 1h eksik event'leri tanımla
+
+        // 1h get extrinsics => timestamp
+        // 1h get author account + persist self and parent if exists
+        // 1h get era + persist
+        // 1h get epoch + persist
+        // 1h get runtime version
+        // 1h get metadata version
+        // 1h persist block
+
+        // get events
         let events = substrate_client.get_block_events(&block_hash).await?;
+        // 2h persist events
+
+        // 1h check era change
+        // 1h check runtime change
+
         debug!("Got #{} events for block #{}.", events.len(), block_number);
-        // check runtime version - reload meta if changed
-        // get extrinsics & set timestamp
-        // check era - if changed
-        //  get active and inactive validator list
-        //  total past era points, past era points per validator
-        //
 
-        // rewards, offences, other events
+        /*
+                // write to database
+                sqlx::query(
+                    r#"
+        INSERT INTO block
+            (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, metadata_version, runtime_version)
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        "#
+                )
+                    .bind(block_hash)
+                    .bind(block_number as i64)
+                    //.bind(parent_account.discovered_at) // timestamp
+                    //.bind(parent_account.discovered_at) // author account id
+                    //.bind(parent_account.discovered_at) // era index
+                    //.bind(parent_account.discovered_at) // epoch index
+                    .bind(new_block_header.parent_hash.clone())
+                    .bind(new_block_header.state_root.clone())
+                    .bind(new_block_header.extrinsics_root.clone())
+                    //.bind(parent_account.discovered_at) // metadata version
+                    //.bind(parent_account.discovered_at) // runtime version
+                    .fetch_one(db_connection_pool)
+                    .await?;
 
-        // write to database -
+
+                 */
+        Ok(())
+    }
+
+    async fn process_finalized_block(
+        &self,
+        _substrate_client: &SubstrateClient,
+        _db_connection_pool: &Pool<Postgres>,
+        _finalized_block_header: &BlockHeader,
+    ) -> anyhow::Result<()> {
         Ok(())
     }
 }
 
 #[async_trait]
-impl Service for BlockIndexer {
+impl Service for BlockProcessor {
     async fn run(&'static self) -> anyhow::Result<()> {
         /*
         let mut parent_account = Account::default();
@@ -86,14 +127,14 @@ impl Service for BlockIndexer {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             substrate_client.metadata.log_all_calls();
             substrate_client.metadata.log_all_events();
-            let db_connection_pool = Arc::new(BlockIndexer::establish_db_connection().await?);
-
+            debug!("Getting database connection...");
+            let db_connection_pool = Arc::new(BlockProcessor::establish_db_connection().await?);
             debug!("Database connection pool established.");
             substrate_client.subscribe_to_new_blocks(|new_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
                 let db_connection_pool = Arc::clone(&db_connection_pool);
                 tokio::spawn(async move {
-                    let update_result = self.index_block(
+                    let update_result = self.process_new_block(
                         &substrate_client,
                         &db_connection_pool,
                         &new_block_header,
@@ -101,13 +142,31 @@ impl Service for BlockIndexer {
                     match update_result {
                         Ok(_) => (),
                         Err(error) => {
+                            error!("{:?}", error);
                             error!(
-                                "{:?}",
-                                error,
-                            );
-                            error!(
-                                "Live network status update failed for block #{}. Will try again with the next block.",
+                                "Block processing failed for new block #{}. Will try again with the next block.",
                                 new_block_header.get_number().unwrap_or(0),
+                            );
+                        }
+                    }
+                });
+            }).await?;
+            substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
+                let substrate_client = Arc::clone(&substrate_client);
+                let db_connection_pool = Arc::clone(&db_connection_pool);
+                tokio::spawn(async move {
+                    let update_result = self.process_finalized_block(
+                        &substrate_client,
+                        &db_connection_pool,
+                        &finalized_block_header,
+                    ).await;
+                    match update_result {
+                        Ok(_) => (),
+                        Err(error) => {
+                            error!("{:?}", error);
+                            error!(
+                                "Block processing failed for finalized block #{}. Will try again with the next block.",
+                                finalized_block_header.get_number().unwrap_or(0),
                             );
                         }
                     }
