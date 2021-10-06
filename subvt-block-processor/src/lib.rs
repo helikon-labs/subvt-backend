@@ -9,8 +9,14 @@ use std::sync::{Arc, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::crypto::AccountId;
-use subvt_types::substrate::BlockHeader;
+use subvt_types::{
+    crypto::AccountId,
+    substrate::{
+        // event::{SubstrateEvent, System},
+        extrinsic::{SubstrateExtrinsic, Timestamp},
+        BlockHeader,
+    },
+};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -102,15 +108,17 @@ impl BlockProcessor {
         .fetch_one(db_connection_pool)
         .await?;
         if era_record_count.0 == 0 {
-            debug!("ERA {} DOES NOT EXIST.", era_index);
+            debug!(
+                "Era {} does not exist. Cannot persist reward points.",
+                era_index
+            );
             return Ok(());
         }
-        debug!("ERA {} EXISTS.", era_index);
         let era_reward_points = substrate_client.get_era_reward_points(era_index).await?;
         // update era record
         sqlx::query(
             r#"
-            UPDATE era SET reward_points_total = $1
+            UPDATE era SET reward_points_total = $1, last_updated = now()
             WHERE index = $2
             "#,
         )
@@ -133,6 +141,7 @@ impl BlockProcessor {
             .execute(db_connection_pool)
             .await?;
         }
+        debug!("Era {} rewards persisted.", era_index);
         Ok(())
     }
 
@@ -146,13 +155,16 @@ impl BlockProcessor {
         let block_number = block_header.get_number()?;
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
+        let block_header = substrate_client.get_block_header(&block_hash).await?;
+        let validator_index = block_header.get_validator_index();
+        debug!("VALIDATOR_INDEX ::: {:?}", validator_index);
         let runtime_upgrade_info = substrate_client
             .get_last_runtime_upgrade_info(&block_hash)
             .await?;
         // check metadata version
         let last_runtime_version = { runtime_information.read().unwrap().runtime_version };
         if last_runtime_version != 0 && last_runtime_version != runtime_upgrade_info.spec_version {
-            // update metadata & make checks
+            // TODO update metadata & make checks
         }
         {
             runtime_information.write().unwrap().runtime_version =
@@ -199,7 +211,7 @@ impl BlockProcessor {
                 .await?;
         }
         if last_era_index != active_era.index {
-            // check if last era's validators are persisted
+            // persist active era validators
             BlockProcessor::persist_era_validators(
                 substrate_client,
                 db_connection_pool,
@@ -208,6 +220,20 @@ impl BlockProcessor {
             )
             .await?;
             // persist last era reward points
+            BlockProcessor::persist_era_reward_points(
+                substrate_client,
+                db_connection_pool,
+                active_era.index - 1,
+            )
+            .await?;
+        }
+        // update current era reward points every 10 minutes
+        let blocks_per_10_minutes = 10 * 60 * 1000
+            / substrate_client
+                .metadata
+                .runtime_config
+                .expected_block_time_millis;
+        if block_number % blocks_per_10_minutes == 0 {
             BlockProcessor::persist_era_reward_points(
                 substrate_client,
                 db_connection_pool,
@@ -223,15 +249,68 @@ impl BlockProcessor {
 
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
+        /*
+        for event in events {
+            match event {
+                SubstrateEvent::Balances(balances_event) => match balances_event {
+                    _ => (),
+                },
+                SubstrateEvent::Identity(identity_event) => match identity_event {
+                    _ => (),
+                },
+                SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
+                    _ => (),
+                },
+                SubstrateEvent::Offences(offences_event) => match offences_event {
+                    _ => (),
+                },
+                SubstrateEvent::Session(session_event) => match session_event {
+                    _ => (),
+                },
+                SubstrateEvent::Staking(staking_event) => match staking_event {
+                    _ => (),
+                },
+                SubstrateEvent::System(system_event) => match system_event {
+                    System::NewAccount {
+                        extrinsic_index: _,
+                        account_id: _,
+                    } => {}
+                    System::KilledAccount {
+                        extrinsic_index: _,
+                        account_id: _,
+                    } => {}
+                    _ => (),
+                },
+                SubstrateEvent::Utility(utility_event) => match utility_event {
+                    _ => (),
+                },
+                _ => (),
+            }
+        }
+         */
+        // TODO persist events
+
         let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
         debug!(
             "Got #{} extrinsics for block #{}.",
             extrinsics.len(),
             block_number
         );
-        // get author account + persist self and parent if exists
-        // get era + persist
-        // get epoch/session + persist
+        let mut block_timestamp: Option<u64> = None;
+        for extrinsic in extrinsics {
+            if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
+                match timestamp_extrinsic {
+                    Timestamp::Set {
+                        version: _,
+                        signature: _,
+                        timestamp,
+                    } => {
+                        block_timestamp = Some(timestamp);
+                    }
+                }
+            }
+        }
+        debug!("Block timestamp: {:?}", block_timestamp);
         // persist block
         {
             runtime_information.write().unwrap().processed_block_number = block_number;

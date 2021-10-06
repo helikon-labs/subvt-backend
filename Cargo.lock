@@ -5168,6 +5168,7 @@ dependencies = [
  "serde 1.0.130",
  "serde_json",
  "sp-authority-discovery",
+ "sp-consensus-babe",
  "sp-core",
  "sp-finality-grandpa",
  "sp-runtime",

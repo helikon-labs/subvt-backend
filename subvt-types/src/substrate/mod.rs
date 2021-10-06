@@ -4,11 +4,17 @@
 use crate::crypto::AccountId;
 use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
+use log::error;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, Nominations, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use sp_core::crypto::{AccountId32, Ss58AddressFormat};
+use sp_consensus_babe::digests::PreDigest;
+use sp_core::{
+    crypto::{AccountId32, Ss58AddressFormat},
+    H256,
+};
+use sp_runtime::DigestItem;
 use std::collections::BTreeMap;
 use std::convert::From;
 use std::fmt::{Display, Formatter};
@@ -154,6 +160,77 @@ impl BlockHeader {
     pub fn get_number(&self) -> anyhow::Result<u64> {
         let number = u64::from_str_radix(self.number.trim_start_matches("0x"), 16)?;
         Ok(number)
+    }
+
+    fn authority_index_from_log_bytes(
+        consensus_engine: &str,
+        bytes: &mut Vec<u8>,
+    ) -> Option<usize> {
+        match consensus_engine {
+            "BABE" => {
+                let mut data_vec_bytes: &[u8] = &bytes[..];
+                let digest: PreDigest = Decode::decode(&mut data_vec_bytes).unwrap();
+                let authority_index = match digest {
+                    PreDigest::Primary(digest) => digest.authority_index,
+                    PreDigest::SecondaryPlain(digest) => digest.authority_index,
+                    PreDigest::SecondaryVRF(digest) => digest.authority_index,
+                };
+                Some(authority_index as usize)
+            }
+            "aura" => {
+                error!("Consensus engine [{}] not supported.", consensus_engine);
+                None
+            }
+            "FRNK" => {
+                // GRANDPA
+                error!("Consensus engine [{}] not supported.", consensus_engine);
+                None
+            }
+            "pow_" => {
+                error!("Consensus engine [{}] not supported.", consensus_engine);
+                None
+            }
+            _ => {
+                error!("Unknown consensus engine [{}].", consensus_engine);
+                None
+            }
+        }
+    }
+
+    pub fn get_validator_index(&self) -> Option<usize> {
+        let mut validator_index: Option<usize> = None;
+        for log_string in &self.digest.logs {
+            let log_hex_string = log_string.trim_start_matches("0x");
+            let mut log_bytes: &[u8] = &hex::decode(&log_hex_string).unwrap();
+            let digest_item: DigestItem<H256> = Decode::decode(&mut log_bytes).unwrap();
+            match digest_item {
+                DigestItem::PreRuntime(consensus_engine_id, mut bytes) => {
+                    let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
+                    validator_index =
+                        BlockHeader::authority_index_from_log_bytes(consensus_engine, &mut bytes);
+                }
+                DigestItem::Consensus(consensus_engine_id, mut bytes) => {
+                    if validator_index.is_none() {
+                        let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
+                        validator_index = BlockHeader::authority_index_from_log_bytes(
+                            consensus_engine,
+                            &mut bytes,
+                        );
+                    }
+                }
+                DigestItem::Seal(consensus_engine_id, mut bytes) => {
+                    if validator_index.is_none() {
+                        let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
+                        validator_index = BlockHeader::authority_index_from_log_bytes(
+                            consensus_engine,
+                            &mut bytes,
+                        );
+                    }
+                }
+                _ => error!("Unknown log type."),
+            }
+        }
+        validator_index
     }
 }
 
