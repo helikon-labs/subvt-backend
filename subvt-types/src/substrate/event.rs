@@ -2,7 +2,11 @@ use crate::substrate::OpaqueTimeSlot;
 use crate::{
     crypto::AccountId,
     substrate::{
-        argument::{Argument, ArgumentPrimitive, IdentificationTuple},
+        argument::{
+            get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive,
+            IdentificationTuple,
+        },
+        error::DecodeError,
         metadata::Metadata,
         Balance,
     },
@@ -11,43 +15,11 @@ use frame_support::dispatch::{DispatchError, DispatchInfo};
 use log::{debug, warn};
 use pallet_identity::RegistrarIndex;
 use pallet_staking::EraIndex;
-use parity_scale_codec::{Compact, Decode, Error, Input};
+use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_authority_discovery::AuthorityId;
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
-use EventDecodeError::DecodeError;
-
-macro_rules! get_argument_primitive {
-    ($argument_expr: expr, $argument_primitive_type: ident) => {{
-        let argument_primitive = SubstrateEvent::extract_argument_primitive($argument_expr)?;
-        match argument_primitive {
-            ArgumentPrimitive::$argument_primitive_type(primitive) => Ok(primitive),
-            _ => Err(DecodeError("Cannot get argument primitive.".to_string())),
-        }?
-    }};
-}
-
-macro_rules! get_argument_vector {
-    ($argument_expr: expr, $argument_primitive_type: ident) => {{
-        let argument_vector = match $argument_expr {
-            Argument::Vec(argument_vector) => Ok(&*argument_vector),
-            _ => Err(DecodeError("Cannot get argument vector.".to_string())),
-        }?;
-        let mut result_vector = Vec::new();
-        for argument in argument_vector {
-            let argument_primitive = SubstrateEvent::extract_argument_primitive(argument)?;
-            let identification_tuple = match argument_primitive {
-                ArgumentPrimitive::$argument_primitive_type(identification_tuple) => {
-                    Ok(identification_tuple)
-                }
-                _ => Err(DecodeError("Cannot get argument primitive.".to_string())),
-            }?;
-            result_vector.push(identification_tuple);
-        }
-        result_vector
-    }};
-}
 
 #[derive(Debug)]
 pub enum Balances {
@@ -75,7 +47,7 @@ impl Balances {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "BalanceSet" => Some(SubstrateEvent::Balances(Balances::BalanceSet {
                 extrinsic_index,
@@ -156,7 +128,7 @@ impl Identity {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "IdentityCleared" => Some(SubstrateEvent::Identity(Identity::IdentityCleared {
                 extrinsic_index,
@@ -233,7 +205,7 @@ impl ImOnline {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "AllGood" => Some(SubstrateEvent::ImOnline(ImOnline::AllGood {
                 extrinsic_index,
@@ -266,7 +238,7 @@ impl Offences {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "Offence" => Some(SubstrateEvent::Offences(Offences::Offence {
                 extrinsic_index,
@@ -308,7 +280,7 @@ impl ParaInclusion {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "CandidateBacked" => Some(SubstrateEvent::ParaInclusion(Box::new(
                 ParaInclusion::CandidateBacked {
@@ -371,7 +343,7 @@ impl Paras {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "CurrentHeadUpdated" => Some(SubstrateEvent::Paras(Paras::CurrentHeadUpdated {
                 extrinsic_index,
@@ -408,7 +380,7 @@ impl Session {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "NewSession" => Some(SubstrateEvent::Session(Session::NewSession {
                 extrinsic_index,
@@ -484,7 +456,7 @@ impl Staking {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "Bonded" => Some(SubstrateEvent::Staking(Staking::Bonded {
                 extrinsic_index,
@@ -495,7 +467,7 @@ impl Staking {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
-            "EraPaid" => Some(SubstrateEvent::Staking(Staking::EraPaid {
+            "EraPaid" | "EraPayout" => Some(SubstrateEvent::Staking(Staking::EraPaid {
                 extrinsic_index,
                 era_index: get_argument_primitive!(&arguments[0], EraIndex),
                 validator_payout: get_argument_primitive!(&arguments[1], Balance),
@@ -517,17 +489,17 @@ impl Staking {
                 era_index: get_argument_primitive!(&arguments[0], EraIndex),
                 validator_account_id: get_argument_primitive!(&arguments[1], AccountId),
             })),
-            "Rewarded" => Some(SubstrateEvent::Staking(Staking::Rewarded {
+            "Rewarded" | "Reward" => Some(SubstrateEvent::Staking(Staking::Rewarded {
                 extrinsic_index,
                 nominator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Slashed" => Some(SubstrateEvent::Staking(Staking::Slashed {
+            "Slashed" | "Slash" => Some(SubstrateEvent::Staking(Staking::Slashed {
                 extrinsic_index,
                 validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "StakersElected" => Some(SubstrateEvent::Staking(Staking::StakersElected {
+            "StakersElected" | "StakingElection" => Some(SubstrateEvent::Staking(Staking::StakersElected {
                 extrinsic_index,
             })),
             "StakingElectionFailed" => {
@@ -580,7 +552,7 @@ impl System {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "CodeUpdated" => Some(SubstrateEvent::System(System::CodeUpdated {
                 extrinsic_index,
@@ -628,7 +600,7 @@ impl Utility {
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
-    ) -> Result<Option<SubstrateEvent>, EventDecodeError> {
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
             "ItemCompleted" => Some(SubstrateEvent::Utility(Utility::ItemCompleted {
                 extrinsic_index,
@@ -666,32 +638,8 @@ pub enum SubstrateEvent {
     },
 }
 
-#[derive(thiserror::Error, Clone, Debug)]
-pub enum EventDecodeError {
-    #[error("Decode error: {0}")]
-    DecodeError(String),
-}
-
-impl From<parity_scale_codec::Error> for EventDecodeError {
-    fn from(error: Error) -> Self {
-        Self::DecodeError(error.to_string())
-    }
-}
-
 impl SubstrateEvent {
-    fn extract_argument_primitive(
-        argument: &Argument,
-    ) -> Result<ArgumentPrimitive, EventDecodeError> {
-        match argument {
-            Argument::Primitive(argument_primitive) => Ok(*argument_primitive.clone()),
-            _ => Err(DecodeError(format!(
-                "Cannot extract argument primitive: {:?}",
-                argument
-            ))),
-        }
-    }
-
-    fn decode_event(metadata: &Metadata, bytes: &mut &[u8]) -> Result<Self, EventDecodeError> {
+    fn decode_event(metadata: &Metadata, bytes: &mut &[u8]) -> Result<Self, DecodeError> {
         let phase = frame_system::Phase::decode(bytes)?;
         let extrinsic_index = match phase {
             frame_system::Phase::ApplyExtrinsic(extrinsic_index) => Some(extrinsic_index),
@@ -746,7 +694,7 @@ impl SubstrateEvent {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
         let mut events: Vec<Self> = Vec::with_capacity(event_count as usize);
         for _ in 0..event_count {
-            events.push(SubstrateEvent::decode_event(metadata, bytes)?);
+            events.push(SubstrateEvent::decode_event(metadata, &mut *bytes)?);
         }
         Ok(events)
     }

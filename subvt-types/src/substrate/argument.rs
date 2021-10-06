@@ -1,7 +1,6 @@
 use crate::{
     crypto::AccountId,
-    substrate::metadata::ArgumentMeta,
-    substrate::{CallHash, OpaqueTimeSlot},
+    substrate::{error::DecodeError, metadata::ArgumentMeta, CallHash, OpaqueTimeSlot},
 };
 use frame_support::{
     dispatch::{DispatchError, DispatchInfo, DispatchResult},
@@ -69,6 +68,7 @@ pub enum ArgumentPrimitive {
     GroupIndex(GroupIndex),
     Hash(Hash),
     IdentificationTuple(IdentificationTuple),
+    Moment(Compact<u64>),
     MultiLocation(xcm::latest::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     OffenceKind(Kind),
@@ -92,6 +92,57 @@ pub enum ArgumentPrimitive {
     XcmOutcome(Box<xcm::latest::Outcome>),
     XcmV0Outcome(Box<xcm::v0::Outcome>),
 }
+
+pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
+    match argument {
+        Argument::Primitive(argument_primitive) => Ok(*argument_primitive.clone()),
+        _ => Err(DecodeError::Error(format!(
+            "Cannot extract argument primitive: {:?}",
+            argument
+        ))),
+    }
+}
+
+macro_rules! get_argument_primitive {
+    ($argument_expr: expr, $argument_primitive_type: ident) => {{
+        let argument_primitive =
+            crate::substrate::argument::extract_argument_primitive($argument_expr)?;
+        match argument_primitive {
+            ArgumentPrimitive::$argument_primitive_type(primitive) => Ok(primitive),
+            _ => Err(DecodeError::Error(
+                "Cannot get argument primitive.".to_string(),
+            )),
+        }?
+    }};
+}
+pub(crate) use get_argument_primitive;
+
+macro_rules! get_argument_vector {
+    ($argument_expr: expr, $argument_primitive_type: ident) => {{
+        let argument_vector = match $argument_expr {
+            Argument::Vec(argument_vector) => Ok(&*argument_vector),
+            _ => Err(DecodeError::Error(
+                "Cannot get argument vector.".to_string(),
+            )),
+        }?;
+        let mut result_vector = Vec::new();
+        for argument in argument_vector {
+            let argument_primitive =
+                crate::substrate::argument::extract_argument_primitive(argument)?;
+            let identification_tuple = match argument_primitive {
+                ArgumentPrimitive::$argument_primitive_type(identification_tuple) => {
+                    Ok(identification_tuple)
+                }
+                _ => Err(DecodeError::Error(
+                    "Cannot get argument primitive.".to_string(),
+                )),
+            }?;
+            result_vector.push(identification_tuple);
+        }
+        result_vector
+    }};
+}
+pub(crate) use get_argument_vector;
 
 macro_rules! generate_argument_primitive_decoder_impl {
     ([$(($name: literal, $decode_function_name: ident, $argument_primitive_enum_case_name: ident),)+]) => {
@@ -156,6 +207,7 @@ generate_argument_primitive_decoder_impl! {[
     ("ParaId", decode_parachain_id, ParachainId),
     ("LeasePeriod", decode_parachain_lease_period, ParachainLeasePeriod),
     ("MessageId", decode_parachain_ump_message_id, ParachainUMPMessageId),
+    ("Compact<T::Moment>", decode_moment, Moment),
     ("u8", decode_u8, U8),
     ("u16", decode_u16, U16),
     ("u32", decode_u32, U32),

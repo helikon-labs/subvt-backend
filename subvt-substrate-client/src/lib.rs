@@ -21,10 +21,13 @@ use subvt_types::crypto::AccountId;
 use subvt_types::substrate::SuperAccountId;
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
-use subvt_types::substrate::{event::SubstrateEvent, metadata::Metadata, Balance};
 use subvt_types::substrate::{
-    Account, BlockHeader, Chain, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
-    Nomination, RewardDestination, Stake, SystemProperties, ValidatorPreferences, ValidatorStake,
+    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, metadata::Metadata, Balance,
+};
+use subvt_types::substrate::{
+    Account, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era, EraRewardPoints, EraStakers,
+    IdentityRegistration, Nomination, RewardDestination, Stake, SystemProperties,
+    ValidatorPreferences, ValidatorStake,
 };
 use subvt_types::subvt::InactiveValidator;
 use subvt_utility::decode_hex_string;
@@ -117,6 +120,18 @@ impl SubstrateClient {
             .request("chain_getFinalizedHead", JsonRpcParams::NoParams)
             .await?;
         Ok(hash)
+    }
+
+    /// Get a block.
+    async fn get_block(&self, block_hash: &str) -> anyhow::Result<Block> {
+        let block_wrapper: BlockWrapper = self
+            .ws_client
+            .request(
+                "chain_getBlock",
+                JsonRpcParams::Array(vec![block_hash.into()]),
+            )
+            .await?;
+        Ok(block_wrapper.block)
     }
 
     /// Get active era at the given block.
@@ -882,6 +897,14 @@ impl SubstrateClient {
             &hex::decode(events_hex_string.trim_start_matches("0x"))?
         };
         SubstrateEvent::decode_events(&self.metadata, &mut event_bytes)
+    }
+
+    pub async fn get_block_extrinsics(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<SubstrateExtrinsic>> {
+        let block = self.get_block(block_hash).await?;
+        Ok(SubstrateExtrinsic::decode_extrinsics(&self.metadata, block)?)
     }
 
     async fn subscribe_to_blocks<F>(

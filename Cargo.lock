@@ -5168,6 +5168,7 @@ dependencies = [
  "sp-authority-discovery",
  "sp-core",
  "sp-finality-grandpa",
+ "sp-runtime",
  "sp-staking",
  "sp-version",
  "subvt-proc-macro",

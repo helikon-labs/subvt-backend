@@ -20,7 +20,10 @@ pub type OpaqueTimeSlot = Vec<u8>;
 pub type Balance = polkadot_core_primitives::Balance;
 
 pub mod argument;
+pub mod error;
+#[macro_use]
 pub mod event;
+pub mod extrinsic;
 pub mod metadata;
 
 /// Chain type.
@@ -102,13 +105,26 @@ impl From<&Account> for AccountSummary {
     }
 }
 
+/// Block wrapper as returned by the RPC method.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BlockWrapper {
+    pub block: Block,
+}
+
+/// Inner block response.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Block {
+    pub header: BlockHeader,
+    pub extrinsics: Vec<String>,
+}
+
 /// A block's header as fetched from the node RPC interface.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BlockHeader {
-    digest: EventDigest,
+    pub digest: EventDigest,
     pub extrinsics_root: String,
-    number: String,
+    pub number: String,
     pub parent_hash: String,
     pub state_root: String,
 }

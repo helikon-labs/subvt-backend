@@ -35,19 +35,19 @@ impl BlockProcessor {
         let block_number = new_block_header.get_number()?;
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         // check runtime change
+        // check metadata change
         // check era change => validators
         // check epoch/session change => validators
-        let events = substrate_client.get_block_events(&block_hash).await?;
 
-        // get extrinsics => timestamp
+        let events = substrate_client.get_block_events(&block_hash).await?;
+        debug!("Got #{} events for block #{}.", events.len(), block_number);
+        let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
+        debug!("Got #{} extrinsics for block #{}.", extrinsics.len(), block_number);
+
         // get author account + persist self and parent if exists
         // get era + persist
         // get epoch/session + persist
-        // get runtime version
-        // get metadata version
         // persist block
-
-        debug!("Got #{} events for block #{}.", events.len(), block_number);
 
         /*
                 // write to database

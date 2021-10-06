@@ -27,6 +27,9 @@ pub enum MetadataError {
     /// Constant is not in metadata.
     #[error("Constant {0} not found")]
     ConstantNotFound(String),
+    /// Constant is not in metadata.
+    #[error("Unknown signed extra: {0}")]
+    UnknownSignedExtra(String),
 }
 
 #[derive(Clone, Debug, Default)]
@@ -52,6 +55,7 @@ pub enum MetadataVersion {
 pub struct Metadata {
     pub version: MetadataVersion,
     pub modules: HashMap<u8, ModuleMetadata>,
+    pub extrinsic_metadata: ExtrinsicMetadata,
     pub runtime_config: RuntimeConfig,
 }
 
@@ -181,6 +185,39 @@ impl Metadata {
         }
         Ok(())
     }
+}
+
+pub enum SignedExtra {
+    CheckSpecVersion,
+    CheckTxVersion,
+    CheckGenesis,
+    CheckMortality,
+    CheckNonce,
+    CheckWeight,
+    ChargeTransactionPayment,
+    PrevalidateAttests,
+}
+
+impl SignedExtra {
+    fn from(string: &str) -> Result<Self, MetadataError> {
+        match string {
+            "CheckSpecVersion" => Ok(Self::CheckSpecVersion),
+            "CheckTxVersion" => Ok(Self::CheckTxVersion),
+            "CheckGenesis" => Ok(Self::CheckGenesis),
+            "CheckMortality" => Ok(Self::CheckMortality),
+            "CheckNonce" => Ok(Self::CheckNonce),
+            "CheckWeight" => Ok(Self::CheckWeight),
+            "ChargeTransactionPayment" => Ok(Self::ChargeTransactionPayment),
+            "PrevalidateAttests" => Ok(Self::PrevalidateAttests),
+            _ => Err(MetadataError::UnknownSignedExtra(string.to_string())),
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ExtrinsicMetadata {
+    pub version: u8,
+    pub signed_extensions: Vec<SignedExtra>,
 }
 
 pub struct ModuleMetadata {
@@ -410,9 +447,11 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
                 if metadata.0 != frame_metadata::v12::META_RESERVED {
                     return Err(ConversionError::InvalidPrefix.into());
                 }
+                let extrinsic_metadata = v12::convert_extrinsic_metadata(&meta)?;
                 Ok(Metadata {
                     version: MetadataVersion::V12,
                     modules: v12::convert_modules(meta)?,
+                    extrinsic_metadata,
                     runtime_config: Default::default(),
                 })
             }
@@ -420,9 +459,11 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
                 if metadata.0 != frame_metadata::v13::META_RESERVED {
                     return Err(ConversionError::InvalidPrefix.into());
                 }
+                let extrinsic_metadata = v13::convert_extrinsic_metadata(&meta)?;
                 Ok(Metadata {
                     version: MetadataVersion::V13,
                     modules: v13::convert_modules(meta)?,
+                    extrinsic_metadata,
                     runtime_config: Default::default(),
                 })
             }
@@ -568,6 +609,21 @@ mod v12 {
             );
         }
         Ok(modules)
+    }
+
+    pub fn convert_extrinsic_metadata(
+        meta: &RuntimeMetadataV12,
+    ) -> Result<super::ExtrinsicMetadata, super::MetadataError> {
+        let mut signed_extensions: Vec<super::SignedExtra> = Vec::new();
+        for signed_extension in &meta.extrinsic.signed_extensions {
+            signed_extensions.push(super::SignedExtra::from(
+                convert(signed_extension.clone())?.as_str(),
+            )?);
+        }
+        Ok(super::ExtrinsicMetadata {
+            version: meta.extrinsic.version,
+            signed_extensions,
+        })
     }
 
     pub fn hash(hasher: &frame_metadata::v12::StorageHasher, bytes: &[u8]) -> Vec<u8> {
@@ -721,6 +777,21 @@ mod v13 {
             );
         }
         Ok(modules)
+    }
+
+    pub fn convert_extrinsic_metadata(
+        meta: &RuntimeMetadataV13,
+    ) -> Result<super::ExtrinsicMetadata, super::MetadataError> {
+        let mut signed_extensions: Vec<super::SignedExtra> = Vec::new();
+        for signed_extension in &meta.extrinsic.signed_extensions {
+            signed_extensions.push(super::SignedExtra::from(
+                convert(signed_extension.clone())?.as_str(),
+            )?);
+        }
+        Ok(super::ExtrinsicMetadata {
+            version: meta.extrinsic.version,
+            signed_extensions,
+        })
     }
 
     pub fn hash(hasher: &StorageHasher, bytes: &[u8]) -> Vec<u8> {
