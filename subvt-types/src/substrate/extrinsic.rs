@@ -2,9 +2,9 @@ use crate::{
     crypto::AccountId,
     substrate::{
         argument::{get_argument_primitive, Argument, ArgumentPrimitive},
-        Block,
         error::DecodeError,
         metadata::Metadata,
+        Block,
     },
 };
 use frame_support::sp_runtime::MultiAddress;
@@ -103,10 +103,7 @@ impl SubstrateExtrinsic {
             debug!("Decoded extrinsic {}.{}.", module.name, call.name);
             extrinsic
         } else {
-            warn!(
-                "Non-specified extrinsic {}.{}.",
-                module.name, call.name
-            );
+            warn!("Non-specified extrinsic {}.{}.", module.name, call.name);
             SubstrateExtrinsic::Other {
                 version,
                 signature,

@@ -904,7 +904,10 @@ impl SubstrateClient {
         block_hash: &str,
     ) -> anyhow::Result<Vec<SubstrateExtrinsic>> {
         let block = self.get_block(block_hash).await?;
-        Ok(SubstrateExtrinsic::decode_extrinsics(&self.metadata, block)?)
+        Ok(SubstrateExtrinsic::decode_extrinsics(
+            &self.metadata,
+            block,
+        )?)
     }
 
     async fn subscribe_to_blocks<F>(

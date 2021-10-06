@@ -42,7 +42,11 @@ impl BlockProcessor {
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
         let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
-        debug!("Got #{} extrinsics for block #{}.", extrinsics.len(), block_number);
+        debug!(
+            "Got #{} extrinsics for block #{}.",
+            extrinsics.len(),
+            block_number
+        );
 
         // get author account + persist self and parent if exists
         // get era + persist

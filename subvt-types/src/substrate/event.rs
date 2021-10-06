@@ -499,9 +499,11 @@ impl Staking {
                 validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "StakersElected" | "StakingElection" => Some(SubstrateEvent::Staking(Staking::StakersElected {
-                extrinsic_index,
-            })),
+            "StakersElected" | "StakingElection" => {
+                Some(SubstrateEvent::Staking(Staking::StakersElected {
+                    extrinsic_index,
+                }))
+            }
             "StakingElectionFailed" => {
                 Some(SubstrateEvent::Staking(Staking::StakingElectionFailed {
                     extrinsic_index,
