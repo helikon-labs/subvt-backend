@@ -18,17 +18,14 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::SuperAccountId;
+use subvt_types::substrate::{
+    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, metadata::Metadata, Account, Balance,
+    Block, BlockHeader, BlockWrapper, Chain, Epoch, Era, EraRewardPoints, EraStakers,
+    IdentityRegistration, LastRuntimeUpgradeInfo, Nomination, RewardDestination, Stake,
+    SuperAccountId, SystemProperties, ValidatorPreferences, ValidatorStake,
+};
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
-use subvt_types::substrate::{
-    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, metadata::Metadata, Balance,
-};
-use subvt_types::substrate::{
-    Account, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era, EraRewardPoints, EraStakers,
-    IdentityRegistration, Nomination, RewardDestination, Stake, SystemProperties,
-    ValidatorPreferences, ValidatorStake,
-};
 use subvt_types::subvt::InactiveValidator;
 use subvt_utility::decode_hex_string;
 
@@ -210,6 +207,20 @@ impl SubstrateClient {
             .unwrap()
     }
 
+    /// Get the list of the account ids of all validators (active and inactive) at the given block.
+    pub async fn get_all_validator_account_ids(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let all_validator_ids: Vec<AccountId> = self
+            .get_all_keys_for_storage("Staking", "Validators", block_hash)
+            .await?
+            .into_iter()
+            .map(|key| self.account_id_from_storage_key_string(&key))
+            .collect();
+        Ok(all_validator_ids)
+    }
+
     /// Get the list of all active validators at the given block.
     pub async fn get_active_validator_account_ids(
         &self,
@@ -377,7 +388,7 @@ impl SubstrateClient {
         Ok(all_keys)
     }
 
-    /// Get the list of all validators at the given block.
+    /// Get the list of all inactive validators at the given block.
     pub async fn get_all_inactive_validators(
         &self,
         block_hash: &str,
@@ -907,6 +918,23 @@ impl SubstrateClient {
         Ok(SubstrateExtrinsic::decode_extrinsics(
             &self.metadata,
             block,
+        )?)
+    }
+
+    /// Get the number of all validation intents at the given block.
+    pub async fn get_last_runtime_upgrade_info(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<LastRuntimeUpgradeInfo> {
+        let hex_string: String = self
+            .ws_client
+            .request(
+                "state_getStorage",
+                get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(block_hash)),
+            )
+            .await?;
+        Ok(LastRuntimeUpgradeInfo::from_substrate_hex_string(
+            hex_string,
         )?)
     }
 

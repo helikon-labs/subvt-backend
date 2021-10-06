@@ -2,13 +2,13 @@
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
 
 use anyhow::Context;
+use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_service_common::Service;
@@ -100,6 +100,7 @@ impl InactiveValidatorListUpdater {
         let finalized_block_number = finalized_block_header
             .get_number()
             .context("Error while extracting finalized block number.")?;
+        debug!("Process new finalized block #{}.", finalized_block_number);
         let finalized_block_hash = client
             .get_block_hash(finalized_block_number)
             .await
@@ -127,17 +128,12 @@ impl Service for InactiveValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-            let is_busy = Arc::new(AtomicBool::new(false));
+            let busy_lock = Arc::new(Mutex::new(()));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
-                let is_busy = Arc::clone(&is_busy);
-                if is_busy.load(Ordering::Relaxed) {
-                    debug!("Busy updating. Skip finalized block #{}.", finalized_block_header.get_number().unwrap_or(0));
-                    return;
-                }
-                debug!("Process new finalized block #{}.", finalized_block_header.get_number().unwrap_or(0));
-                is_busy.store(true, Ordering::Relaxed);
+                let busy_lock = busy_lock.clone();
                 tokio::spawn(async move {
+                    let _lock = busy_lock.lock().await;
                     let update_result = InactiveValidatorListUpdater::fetch_and_update_inactive_validator_list(
                         &substrate_client,
                         &finalized_block_header,
@@ -154,7 +150,6 @@ impl Service for InactiveValidatorListUpdater {
                             );
                         }
                     }
-                    is_busy.store(false, Ordering::Relaxed);
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;

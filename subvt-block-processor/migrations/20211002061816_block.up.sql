@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS block
             ON UPDATE CASCADE,
     CONSTRAINT fk_epoch
         FOREIGN KEY (epoch_index)
-            REFERENCES era (index)
+            REFERENCES epoch (index)
             ON DELETE RESTRICT
             ON UPDATE CASCADE
 );

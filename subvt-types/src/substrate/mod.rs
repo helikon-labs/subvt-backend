@@ -26,6 +26,26 @@ pub mod event;
 pub mod extrinsic;
 pub mod metadata;
 
+pub struct LastRuntimeUpgradeInfo {
+    pub spec_version: u32,
+    pub spec_name: String,
+}
+
+impl From<frame_system::LastRuntimeUpgradeInfo> for LastRuntimeUpgradeInfo {
+    fn from(upgrade: frame_system::LastRuntimeUpgradeInfo) -> Self {
+        Self {
+            spec_version: upgrade.spec_version.0,
+            spec_name: upgrade.spec_name.to_string(),
+        }
+    }
+}
+
+impl LastRuntimeUpgradeInfo {
+    pub fn from_substrate_hex_string(hex_string: String) -> anyhow::Result<Self> {
+        Ok(decode_hex_string::<frame_system::LastRuntimeUpgradeInfo>(&hex_string)?.into())
+    }
+}
+
 /// Chain type.
 pub enum Chain {
     Kusama,

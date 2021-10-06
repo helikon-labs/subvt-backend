@@ -10,7 +10,7 @@ request_timeout_seconds = 30
 
 [log]
 subvt_level = "debug"
-other_level = "info"
+other_level = "warn"
 
 [rpc]
 host = "127.0.0.1"

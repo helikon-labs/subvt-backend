@@ -4972,6 +4972,7 @@ name = "subvt-block-processor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-lock",
  "async-trait",
  "chrono",
  "lazy_static",
@@ -5022,6 +5023,7 @@ name = "subvt-inactive-validators-updater"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-lock",
  "async-trait",
  "chrono",
  "hex",
