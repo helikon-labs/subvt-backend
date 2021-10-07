@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS era_validator
 (
     id                   SERIAL PRIMARY KEY,
     era_index            bigint                      NOT NULL,
-    validator_account_id VARCHAR(64)                 NOT NULL,
+    validator_account_id VARCHAR(66)                 NOT NULL,
     is_active            boolean                     NOT NULL DEFAULT false,
     reward_points        bigint                      NOT NULL DEFAULT 0,
     last_updated         TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

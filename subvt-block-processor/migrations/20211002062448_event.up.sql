@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS event
 (
     id           SERIAL PRIMARY KEY,
-    block_hash   VARCHAR(64) NOT NULL,
+    block_hash   VARCHAR(66) NOT NULL,
     module_index smallint NOT NULL,
     event_index  smallint NOT NULL,
     module_name  VARCHAR(2048) NOT NULL,

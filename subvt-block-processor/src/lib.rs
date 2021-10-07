@@ -9,6 +9,7 @@ use std::sync::{Arc, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
     substrate::{
@@ -156,8 +157,7 @@ impl BlockProcessor {
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
-        let validator_index = block_header.get_validator_index();
-        debug!("VALIDATOR_INDEX ::: {:?}", validator_index);
+        let maybe_validator_index = block_header.get_validator_index();
         let runtime_upgrade_info = substrate_client
             .get_last_runtime_upgrade_info(&block_hash)
             .await?;
@@ -180,7 +180,7 @@ impl BlockProcessor {
         let active_era = substrate_client.get_active_era(&block_hash).await?;
         let current_epoch = substrate_client.get_current_epoch(&block_hash).await?;
         if last_epoch_index != current_epoch.index {
-            debug!("New epoch. Persist era and epoch if not exists.");
+            debug!("New epoch. Persist era and epoch if they don't exist.");
             sqlx::query(
                 r#"
                 INSERT INTO era (index, start_timestamp, end_timestamp)
@@ -296,7 +296,7 @@ impl BlockProcessor {
             extrinsics.len(),
             block_number
         );
-        let mut block_timestamp: Option<u64> = None;
+        let mut block_timestamp: Option<u32> = None;
         for extrinsic in extrinsics {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
@@ -305,13 +305,49 @@ impl BlockProcessor {
                         signature: _,
                         timestamp,
                     } => {
-                        block_timestamp = Some(timestamp);
+                        block_timestamp = Some(timestamp as u32);
                     }
                 }
             }
         }
-        debug!("Block timestamp: {:?}", block_timestamp);
-        // persist block
+        let author_account_id = if let Some(validator_index) = maybe_validator_index {
+            substrate_client
+                .get_active_validator_account_ids(&block_hash)
+                .await?
+                .get(validator_index)
+                .map(|account_id| account_id.to_string())
+        } else {
+            None
+        };
+
+        sqlx::query(
+        r#"
+            INSERT INTO block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, finalized, metadata_version, runtime_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            ON CONFLICT (hash) DO NOTHING
+            RETURNING hash
+            "#,
+        )
+            .bind(block_hash)
+            .bind(block_number as u32)
+            .bind(block_timestamp)
+            .bind(author_account_id)
+            .bind(active_era.index)
+            .bind(current_epoch.index as u32)
+            .bind(block_header.parent_hash)
+            .bind(block_header.state_root)
+            .bind(block_header.extrinsics_root)
+            .bind(true)
+            .bind(
+                match substrate_client.metadata.version {
+                    MetadataVersion::V12 => 12,
+                    MetadataVersion::V13 => 13,
+                } as i16
+            )
+            .bind(runtime_upgrade_info.spec_version as i16)
+            .execute(db_connection_pool)
+            .await?;
+
         {
             runtime_information.write().unwrap().processed_block_number = block_number;
         }

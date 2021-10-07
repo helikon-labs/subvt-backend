@@ -16,6 +16,7 @@ impl AccountId {
 
 impl Display for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.write_str("0x")?;
         f.write_str(&hex::encode(self.0))
     }
 }
@@ -23,8 +24,9 @@ impl Display for AccountId {
 impl FromStr for AccountId {
     type Err = hex::FromHexError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let array: [u8; 32] = hex::decode(s)?.try_into().unwrap();
+    fn from_str(hex_string: &str) -> Result<Self, Self::Err> {
+        let trimmed_hex_string = hex_string.trim_start_matches("0x");
+        let array: [u8; 32] = hex::decode(trimmed_hex_string)?.try_into().unwrap();
         Ok(AccountId(array))
     }
 }

@@ -7,6 +7,7 @@ members = [
     "subvt-live-network-status-server",
     "subvt-live-network-status-updater",
     "subvt-logging",
+    "subvt-persistence",
     "subvt-proc-macro",
     "subvt-service-common",
     "subvt-substrate-client",

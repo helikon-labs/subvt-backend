@@ -5094,6 +5094,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-persistence"
+version = "0.1.0"
+
+[[package]]
 name = "subvt-proc-macro"
 version = "0.1.0"
 dependencies = [
