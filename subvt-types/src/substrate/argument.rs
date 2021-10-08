@@ -1,13 +1,14 @@
 use crate::{
     crypto::AccountId,
-    substrate::{error::DecodeError, metadata::ArgumentMeta, CallHash, OpaqueTimeSlot},
+    substrate::{
+        error::DecodeError, metadata::ArgumentMeta, CallHash, OpaqueTimeSlot, RewardDestination,
+    },
 };
 use frame_support::{
     dispatch::{DispatchError, DispatchInfo, DispatchResult},
     traits::BalanceStatus,
     weights::Weight,
 };
-use log::debug;
 use pallet_bounties::BountyIndex;
 use pallet_collective::{MemberCount, ProposalIndex};
 use pallet_democracy::{PropIndex, ReferendumIndex, VoteThreshold};
@@ -51,6 +52,9 @@ pub enum ArgumentPrimitive {
     BountyIndex(BountyIndex),
     BlockNumber(BlockNumber),
     CallHash(CallHash),
+    CompactBalance(Compact<Balance>),
+    CompactEraIndex(Compact<EraIndex>),
+    CompactU32(Compact<u32>),
     CandidateReceipt(CandidateReceipt),
     CollectiveMemberCount(MemberCount),
     CollectiveProposalIndex(ProposalIndex),
@@ -78,6 +82,7 @@ pub enum ArgumentPrimitive {
     ParachainId(Id),
     ParachainLeasePeriod(BlockNumber),
     ParachainUMPMessageId(MessageId),
+    RewardDestination(RewardDestination),
     U8(u8),
     U16(u16),
     U32(u32),
@@ -169,6 +174,8 @@ macro_rules! generate_argument_primitive_decoder_impl {
 
 generate_argument_primitive_decoder_impl! {[
     ("AccountId", decode_account_id, AccountId),
+    ("T::AccountId", decode_account_id_t, AccountId),
+    ("<T::Lookup as StaticLookup>::Source", decode_target_account_id, AccountId),
     ("AccountIndex", decode_account_index, AccountIndex),
     ("AuctionIndex", decode_auction_index, AuctionIndex),
     ("AuthorityId", decode_authority_id, AuthorityId),
@@ -180,16 +187,19 @@ generate_argument_primitive_decoder_impl! {[
     ("BlockNumber", decode_block_number, BlockNumber),
     ("T::BlockNumber", decode_t_block_number, BlockNumber),
     ("CallHash", decode_call_hash, CallHash),
-    ("DispatchInfo", decode_dispatch_info, DispatchInfo),
-    ("DispatchError", decode_dispatch_error, DispatchError),
-    ("DispatchResult", decode_dispatch_result, DispatchResult),
     ("CandidateReceipt<Hash>", decode_candidate_receipt, CandidateReceipt),
     ("CandidateReceipt<T::Hash>", decode_candidate_receipt_t, CandidateReceipt),
     ("MemberCount", decode_collective_member_count, CollectiveMemberCount),
     ("ProposalIndex", decode_collective_proposal_index, CollectiveProposalIndex),
+    ("Compact<BalanceOf<T>>", decode_compact_balance, CompactBalance),
+    ("CompactEraIndex", decode_compact_era_index, CompactEraIndex),
+    ("Compact<u32>", decode_compact_u32, CompactU32),
     ("CoreIndex", decode_core_index, CoreIndex),
     ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
+    ("DispatchInfo", decode_dispatch_info, DispatchInfo),
+    ("DispatchError", decode_dispatch_error, DispatchError),
+    ("DispatchResult", decode_dispatch_result, DispatchResult),
     ("ElectionCompute", decode_election_compute, ElectionCompute),
     ("EraIndex", decode_era_index, EraIndex),
     ("EthereumAddress", decode_ethereum_address, EthereumAddress),
@@ -250,31 +260,24 @@ impl Argument {
                     }
                 };
                 let mut result: Vec<Argument> = Vec::new();
-                debug!("+-- decode vector(");
                 for _ in 0..length.0 {
                     result.push(Argument::decode(argument_meta.as_ref(), &mut *bytes)?);
                 }
-                debug!("+-- ) end decode vector.");
                 Ok(Argument::Vec(result))
             }
-            ArgumentMeta::Option(argument_meta) => {
-                debug!("+-- decode option:");
-                match bytes.read_byte().unwrap() {
-                    0 => Ok(Argument::Option(Box::new(None))),
-                    1 => {
-                        let argument = Argument::decode(argument_meta.as_ref(), &mut *bytes)?;
-                        Ok(Argument::Option(Box::new(Some(argument))))
-                    }
-                    _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
+            ArgumentMeta::Option(argument_meta) => match bytes.read_byte().unwrap() {
+                0 => Ok(Argument::Option(Box::new(None))),
+                1 => {
+                    let argument = Argument::decode(argument_meta.as_ref(), &mut *bytes)?;
+                    Ok(Argument::Option(Box::new(Some(argument))))
                 }
-            }
+                _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
+            },
             ArgumentMeta::Tuple(argument_metas) => {
                 let mut result: Vec<Argument> = Vec::new();
-                debug!("+-- decode tuple(");
                 for argument_meta in argument_metas {
                     result.push(Argument::decode(argument_meta, &mut *bytes)?);
                 }
-                debug!("+-- ) end decode tuple.");
                 Ok(Argument::Tuple(result))
             }
             ArgumentMeta::Primitive(name) => {

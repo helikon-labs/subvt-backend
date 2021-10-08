@@ -12,11 +12,7 @@ use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
-    substrate::{
-        // event::{SubstrateEvent, System},
-        extrinsic::{SubstrateExtrinsic, Timestamp},
-        BlockHeader,
-    },
+    substrate::extrinsic::{Staking, SubstrateExtrinsic, Timestamp},
 };
 
 lazy_static! {
@@ -151,9 +147,9 @@ impl BlockProcessor {
         substrate_client: &SubstrateClient,
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
         db_connection_pool: &Pool<Postgres>,
-        block_header: &BlockHeader,
+        block_number: u64,
     ) -> anyhow::Result<()> {
-        let block_number = block_header.get_number()?;
+        let block_number = block_number - 475;
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
@@ -296,6 +292,51 @@ impl BlockProcessor {
             extrinsics.len(),
             block_number
         );
+
+        // TODO persists extrinsics
+        for extrinsic in &extrinsics {
+            match extrinsic {
+                SubstrateExtrinsic::Timestamp(timestamp_event) => match timestamp_event {
+                    Timestamp::Set {
+                        version: _,
+                        signature,
+                        timestamp,
+                    } => {
+                        if let Some(signature) = signature {
+                            debug!(
+                                "Block timestamp {} set by {}.",
+                                timestamp,
+                                signature.get_signer_account_id().unwrap().to_ss58_check()
+                            )
+                        } else {
+                            debug!("Block timestamp {} no signature.", timestamp)
+                        }
+                    }
+                },
+                SubstrateExtrinsic::Staking(staking_event) => match staking_event {
+                    Staking::Nominate {
+                        version: _,
+                        signature,
+                        targets,
+                    } => {
+                        if let Some(signature) = signature {
+                            debug!(
+                                "Nominate {} nominees sent by {}.",
+                                targets.len(),
+                                signature.get_signer_account_id().unwrap().to_ss58_check()
+                            );
+                            for target in targets {
+                                debug!("Target: {}", target.to_ss58_check());
+                            }
+                        } else {
+                            debug!("Nominate {} nominees no signature.", targets.len());
+                        }
+                    }
+                },
+                _ => (),
+            }
+        }
+
         let mut block_timestamp: Option<u32> = None;
         for extrinsic in extrinsics {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
@@ -321,7 +362,7 @@ impl BlockProcessor {
         };
 
         sqlx::query(
-        r#"
+            r#"
             INSERT INTO block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, finalized, metadata_version, runtime_version)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             ON CONFLICT (hash) DO NOTHING
@@ -372,13 +413,17 @@ impl Service for BlockProcessor {
                 let runtime_information = runtime_information.clone();
                 let db_connection_pool = db_connection_pool.clone();
                 let busy_lock = busy_lock.clone();
+                let finalized_block_number = match finalized_block_header.get_number() {
+                    Ok(block_number) => block_number,
+                    Err(_) => return error!("Cannot get block number for header: {:?}",finalized_block_header)
+                };
                 tokio::spawn(async move {
                     let _lock = busy_lock.lock().await;
                     let update_result = self.process_block(
                         &substrate_client,
                         &runtime_information,
                         &db_connection_pool,
-                        &finalized_block_header,
+                        finalized_block_number,
                     ).await;
                     match update_result {
                         Ok(_) => (),

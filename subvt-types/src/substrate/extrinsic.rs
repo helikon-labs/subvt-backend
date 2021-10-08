@@ -1,7 +1,7 @@
 use crate::{
     crypto::AccountId,
     substrate::{
-        argument::{get_argument_primitive, Argument, ArgumentPrimitive},
+        argument::{get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive},
         error::DecodeError,
         metadata::Metadata,
         Block,
@@ -41,7 +41,36 @@ impl Timestamp {
 }
 
 #[derive(Debug)]
+pub enum Staking {
+    Nominate {
+        version: u8,
+        signature: Option<Signature>,
+        targets: Vec<AccountId>,
+    },
+}
+
+impl Staking {
+    pub fn from(
+        name: &str,
+        version: u8,
+        signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            "nominate" => Some(SubstrateExtrinsic::Staking(Staking::Nominate {
+                version,
+                signature,
+                targets: get_argument_vector!(&arguments[0], AccountId),
+            })),
+            _ => None,
+        };
+        Ok(maybe_extrinsic)
+    }
+}
+
+#[derive(Debug)]
 pub enum SubstrateExtrinsic {
+    Staking(Staking),
     Timestamp(Timestamp),
     Other {
         module_name: String,
@@ -58,6 +87,15 @@ pub struct Signature {
     pub era: Option<sp_runtime::generic::Era>,
     pub nonce: Option<u64>,
     pub tip: Option<u64>,
+}
+
+impl Signature {
+    pub fn get_signer_account_id(&self) -> Option<AccountId> {
+        match &self.signer {
+            MultiAddress::Id(account_id) => Some(account_id.clone()),
+            _ => None,
+        }
+    }
 }
 
 impl SubstrateExtrinsic {
@@ -96,6 +134,13 @@ impl SubstrateExtrinsic {
                     arguments.push(Argument::decode(argument_meta, &mut *bytes).unwrap());
                 }
                 Timestamp::from(&call.name, version, signature.clone(), arguments.clone())?
+            }
+            "Staking" => {
+                let mut arguments: Vec<Argument> = Vec::new();
+                for argument_meta in &call.arguments {
+                    arguments.push(Argument::decode(argument_meta, &mut *bytes).unwrap());
+                }
+                Staking::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             _ => None,
         };
