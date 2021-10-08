@@ -17,7 +17,6 @@ use pallet_identity::RegistrarIndex;
 use pallet_staking::EraIndex;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
-use sp_authority_discovery::AuthorityId;
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
 
@@ -192,7 +191,7 @@ pub enum ImOnline {
     },
     HeartbeatReceived {
         extrinsic_index: Option<u32>,
-        authority_id: AuthorityId,
+        validator_account_id: AccountId,
     },
     SomeOffline {
         extrinsic_index: Option<u32>,
@@ -212,7 +211,7 @@ impl ImOnline {
             })),
             "HeartbeatReceived" => Some(SubstrateEvent::ImOnline(ImOnline::HeartbeatReceived {
                 extrinsic_index,
-                authority_id: get_argument_primitive!(&arguments[0], AuthorityId),
+                validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
             "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnline::SomeOffline {
                 extrinsic_index,

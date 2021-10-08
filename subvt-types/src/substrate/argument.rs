@@ -26,7 +26,6 @@ use polkadot_primitives::v1::{
 use polkadot_runtime::ProxyType;
 use polkadot_runtime_common::{auctions::AuctionIndex, claims::EthereumAddress};
 use polkadot_runtime_parachains::ump::MessageId;
-use sp_authority_discovery::AuthorityId;
 use sp_finality_grandpa::AuthorityList;
 use sp_staking::{offence::Kind, SessionIndex};
 
@@ -45,7 +44,6 @@ pub enum ArgumentPrimitive {
     AccountId(AccountId),
     AccountIndex(AccountIndex),
     AuctionIndex(AuctionIndex),
-    AuthorityId(AuthorityId),
     Balance(Balance),
     BalanceStatus(BalanceStatus),
     Bool(bool),
@@ -178,7 +176,7 @@ generate_argument_primitive_decoder_impl! {[
     ("<T::Lookup as StaticLookup>::Source", decode_target_account_id, AccountId),
     ("AccountIndex", decode_account_index, AccountIndex),
     ("AuctionIndex", decode_auction_index, AuctionIndex),
-    ("AuthorityId", decode_authority_id, AuthorityId),
+    ("AuthorityId", decode_authority_id, AccountId),
     ("Balance", decode_balance, Balance),
     ("BalanceOf<T>", decode_balance_of_t, Balance),
     ("Status", decode_balance_status, BalanceStatus),

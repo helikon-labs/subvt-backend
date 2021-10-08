@@ -12,7 +12,10 @@ use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
-    substrate::extrinsic::{Staking, SubstrateExtrinsic, Timestamp},
+    substrate::{
+        event::{ImOnline, SubstrateEvent},
+        extrinsic::{Staking, SubstrateExtrinsic, Timestamp},
+    },
 };
 
 lazy_static! {
@@ -149,7 +152,7 @@ impl BlockProcessor {
         db_connection_pool: &Pool<Postgres>,
         block_number: u64,
     ) -> anyhow::Result<()> {
-        let block_number = block_number - 475;
+        // let block_number = block_number - 160;
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
@@ -245,46 +248,6 @@ impl BlockProcessor {
 
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
-        /*
-        for event in events {
-            match event {
-                SubstrateEvent::Balances(balances_event) => match balances_event {
-                    _ => (),
-                },
-                SubstrateEvent::Identity(identity_event) => match identity_event {
-                    _ => (),
-                },
-                SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
-                    _ => (),
-                },
-                SubstrateEvent::Offences(offences_event) => match offences_event {
-                    _ => (),
-                },
-                SubstrateEvent::Session(session_event) => match session_event {
-                    _ => (),
-                },
-                SubstrateEvent::Staking(staking_event) => match staking_event {
-                    _ => (),
-                },
-                SubstrateEvent::System(system_event) => match system_event {
-                    System::NewAccount {
-                        extrinsic_index: _,
-                        account_id: _,
-                    } => {}
-                    System::KilledAccount {
-                        extrinsic_index: _,
-                        account_id: _,
-                    } => {}
-                    _ => (),
-                },
-                SubstrateEvent::Utility(utility_event) => match utility_event {
-                    _ => (),
-                },
-                _ => (),
-            }
-        }
-         */
-        // TODO persist events
 
         let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
         debug!(
@@ -369,7 +332,7 @@ impl BlockProcessor {
             RETURNING hash
             "#,
         )
-            .bind(block_hash)
+            .bind(&block_hash)
             .bind(block_number as u32)
             .bind(block_timestamp)
             .bind(author_account_id)
@@ -389,6 +352,82 @@ impl BlockProcessor {
             .execute(db_connection_pool)
             .await?;
 
+        // persist events
+        for event in events {
+            match event {
+                /*
+                SubstrateEvent::Balances(balances_event) => match balances_event {
+                    _ => (),
+                },
+                SubstrateEvent::Identity(identity_event) => match identity_event {
+                    _ => (),
+                },
+                 */
+                SubstrateEvent::ImOnline(ImOnline::HeartbeatReceived {
+                    extrinsic_index,
+                    validator_account_id,
+                }) => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    // add validator account (if not exists)
+                    sqlx::query(
+                        r#"
+                            INSERT INTO account (id)
+                            VALUES ($1)
+                            ON CONFLICT (id) DO NOTHING
+                            RETURNING id
+                            "#,
+                    )
+                    .bind(validator_account_id.to_string())
+                    .execute(db_connection_pool)
+                    .await?;
+                    // persist event
+                    sqlx::query(
+                            r#"
+                            INSERT INTO event_im_online_heartbeat_received (block_hash, extrinsic_index, account_id, era_index, epoch_index)
+                            VALUES ($1, $2, $3, $4, $5)
+                            "#)
+                            .bind(&block_hash)
+                            .bind(extrinsic_index)
+                            .bind(validator_account_id.to_string())
+                            .bind(active_era.index)
+                            .bind(current_epoch.index as u32)
+                            .bind(validator_account_id.to_string())
+                            .fetch_optional(db_connection_pool)
+                            .await?;
+                }
+                SubstrateEvent::ImOnline(ImOnline::SomeOffline {
+                    extrinsic_index: _,
+                    identification_tuples: _,
+                }) => (),
+                /*
+                SubstrateEvent::Offences(offences_event) => match offences_event {
+                    _ => (),
+                },
+                SubstrateEvent::Session(session_event) => match session_event {
+                    _ => (),
+                },
+                SubstrateEvent::Staking(staking_event) => match staking_event {
+                    _ => (),
+                },
+                SubstrateEvent::System(system_event) => match system_event {
+                    System::NewAccount {
+                        extrinsic_index: _,
+                        account_id: _,
+                    } => {}
+                    System::KilledAccount {
+                        extrinsic_index: _,
+                        account_id: _,
+                    } => {}
+                    _ => (),
+                },
+                SubstrateEvent::Utility(utility_event) => match utility_event {
+                    _ => (),
+                },
+                 */
+                _ => (),
+            }
+        }
         {
             runtime_information.write().unwrap().processed_block_number = block_number;
         }
