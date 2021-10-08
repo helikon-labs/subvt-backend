@@ -20,7 +20,7 @@ lazy_static! {
 
 #[derive(Clone, Debug)]
 pub enum BusEvent {
-    NewBlock(LiveNetworkStatusDiff),
+    NewBlock(Box<LiveNetworkStatusDiff>),
     Error,
 }
 
@@ -80,7 +80,7 @@ impl LiveNetworkStatusPresenter {
                                     network: CONFIG.substrate.chain.clone(),
                                     status: None,
                                     diff_base_block_number: None,
-                                    diff: Some(status_diff.clone()),
+                                    diff: Some(*status_diff.clone()),
                                 };
                                 let send_result = sink.send(&update);
                                 if let Err(error) = send_result {
@@ -152,7 +152,7 @@ impl Service for LiveNetworkStatusPresenter {
                         if current_status.best_block_number != 0 {
                             let diff = current_status.get_diff(&new_status);
                             let mut bus = bus.lock().unwrap();
-                            bus.broadcast(BusEvent::NewBlock(diff));
+                            bus.broadcast(BusEvent::NewBlock(Box::new(diff)));
                         }
                     }
                     let mut current_status = current_status.write().unwrap();
