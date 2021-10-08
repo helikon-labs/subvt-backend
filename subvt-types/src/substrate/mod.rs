@@ -570,7 +570,7 @@ impl From<&Stake> for StakeSummary {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Decode, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub enum RewardDestination {
     Staked,
     Stash,

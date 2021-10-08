@@ -26,6 +26,7 @@ port = 5432
 username = "subvt"
 password = "subvt"
 database_name = "subvt"
+pool_max_connections = 20
 
 [block_indexer]
 # min supported for Kusama is 4401243, metadata v12

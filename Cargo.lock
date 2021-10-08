@@ -4977,9 +4977,9 @@ dependencies = [
  "chrono",
  "lazy_static",
  "log",
- "sqlx",
  "subvt-config",
  "subvt-logging",
+ "subvt-persistence",
  "subvt-service-common",
  "subvt-substrate-client",
  "subvt-types",
@@ -5096,6 +5096,13 @@ dependencies = [
 [[package]]
 name = "subvt-persistence"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "log",
+ "sqlx",
+ "subvt-config",
+ "subvt-types",
+]
 
 [[package]]
 name = "subvt-proc-macro"

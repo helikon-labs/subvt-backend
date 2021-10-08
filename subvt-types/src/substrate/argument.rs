@@ -222,6 +222,7 @@ generate_argument_primitive_decoder_impl! {[
     ("ProxyType", decode_proxy_type, ProxyType),
     ("ReferendumIndex", decode_referendum_index, ReferendumIndex),
     ("RegistrarIndex", decode_registrar_index, RegistrarIndex),
+    ("RewardDestination<T::AccountId>", decode_reward_destination, RewardDestination),
     ("TaskAddress<BlockNumber>", decode_scheduler_task_address, SchedulerTaskAddress),
     ("SessionIndex", decode_session_index, SessionIndex),
     ("Weight", decode_weight, Weight),

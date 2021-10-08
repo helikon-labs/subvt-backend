@@ -4,9 +4,9 @@ use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
-use sqlx::{Pool, Postgres};
 use std::sync::{Arc, RwLock};
 use subvt_config::Config;
+use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::metadata::MetadataVersion;
@@ -34,80 +34,40 @@ struct RuntimeInformation {
 }
 
 impl BlockProcessor {
-    async fn establish_db_connection() -> anyhow::Result<Pool<Postgres>> {
-        let pool = sqlx::postgres::PgPoolOptions::new()
-            .max_connections(20)
-            .connect(&CONFIG.get_postgres_url())
-            .await?;
-        Ok(pool)
-    }
-
     async fn persist_era_validators(
+        &self,
         substrate_client: &SubstrateClient,
-        db_connection_pool: &Pool<Postgres>,
+        postgres: &PostgreSQLStorage,
         era_index: u32,
         block_hash: &str,
     ) -> anyhow::Result<()> {
         debug!("Persist era #{} validators.", era_index);
-        // all validator ids
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
             .await?;
-        // active validator ids
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(block_hash)
             .await?;
-        let mut db_tx = db_connection_pool.begin().await?;
         for validator_account_id in all_validator_account_ids {
             // create validator account (if not exists)
-            sqlx::query(
-                r#"
-                INSERT INTO account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                RETURNING id
-                "#,
-            )
-            .bind(validator_account_id.to_string())
-            .execute(&mut db_tx)
-            .await?;
+            postgres.save_account(&validator_account_id).await?;
             let is_active = active_validator_account_ids.contains(&validator_account_id);
             // create record (if not exists)
-            sqlx::query(
-                r#"
-                INSERT INTO era_validator (era_index, validator_account_id, is_active)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (era_index, validator_account_id) DO NOTHING
-                RETURNING id
-                "#,
-            )
-            .bind(era_index)
-            .bind(validator_account_id.to_string())
-            .bind(is_active)
-            .execute(&mut db_tx)
-            .await?;
+            postgres
+                .save_era_validator(era_index, &validator_account_id, is_active)
+                .await?;
         }
-        db_tx.commit().await?;
         debug!("Persisted era #{} validators.", era_index);
         Ok(())
     }
 
     async fn persist_era_reward_points(
+        &self,
         substrate_client: &SubstrateClient,
-        db_connection_pool: &Pool<Postgres>,
+        postgres: &PostgreSQLStorage,
         era_index: u32,
     ) -> anyhow::Result<()> {
-        // check if era exists
-        let era_record_count: (i64,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(index) FROM era
-            WHERE index = $1
-            "#,
-        )
-        .bind(era_index)
-        .fetch_one(db_connection_pool)
-        .await?;
-        if era_record_count.0 == 0 {
+        if !postgres.era_exists(era_index).await? {
             debug!(
                 "Era {} does not exist. Cannot persist reward points.",
                 era_index
@@ -115,31 +75,15 @@ impl BlockProcessor {
             return Ok(());
         }
         let era_reward_points = substrate_client.get_era_reward_points(era_index).await?;
-        // update era record
-        sqlx::query(
-            r#"
-            UPDATE era SET reward_points_total = $1, last_updated = now()
-            WHERE index = $2
-            "#,
-        )
-        .bind(era_reward_points.total)
-        .bind(era_index)
-        .execute(db_connection_pool)
-        .await?;
-        for (validator_account_id, reward) in era_reward_points.individual {
+        postgres
+            .update_era_reward_points(era_index, era_reward_points.total)
+            .await?;
+        for (validator_account_id, reward_points) in era_reward_points.individual {
             let account_id_bytes: &[u8; 32] = validator_account_id.as_ref();
             let account_id = AccountId::new(*account_id_bytes);
-            sqlx::query(
-                r#"
-                UPDATE era_validator SET reward_points = $1, last_updated = now()
-                WHERE era_index = $2 AND validator_account_id = $3
-                "#,
-            )
-            .bind(reward)
-            .bind(era_index)
-            .bind(account_id.to_string())
-            .execute(db_connection_pool)
-            .await?;
+            postgres
+                .update_era_validator_reward_points(era_index, &account_id, reward_points)
+                .await?;
         }
         debug!("Era {} rewards persisted.", era_index);
         Ok(())
@@ -149,7 +93,7 @@ impl BlockProcessor {
         &self,
         substrate_client: &SubstrateClient,
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
-        db_connection_pool: &Pool<Postgres>,
+        postgres: &PostgreSQLStorage,
         block_number: u64,
     ) -> anyhow::Result<()> {
         // let block_number = block_number - 160;
@@ -180,51 +124,23 @@ impl BlockProcessor {
         let current_epoch = substrate_client.get_current_epoch(&block_hash).await?;
         if last_epoch_index != current_epoch.index {
             debug!("New epoch. Persist era and epoch if they don't exist.");
-            sqlx::query(
-                r#"
-                INSERT INTO era (index, start_timestamp, end_timestamp)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (index) DO NOTHING
-                RETURNING index
-                "#,
-            )
-            .bind(active_era.index)
-            .bind(active_era.start_timestamp as u32)
-            .bind(active_era.end_timestamp as u32)
-            .fetch_optional(db_connection_pool)
-            .await?;
-            // check if current epoch is persisted - persist if not
-            sqlx::query(
-                r#"
-                INSERT INTO epoch (index, era_index, start_block_number, start_timestamp, end_timestamp)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (index) DO NOTHING
-                RETURNING index
-                "#)
-                .bind(current_epoch.index as u32)
-                .bind(active_era.index)
-                .bind(current_epoch.start_block_number)
-                .bind(current_epoch.start_timestamp as u32)
-                .bind(current_epoch.end_timestamp as u32)
-                .fetch_optional(db_connection_pool)
+            postgres.save_era(&active_era).await?;
+            postgres
+                .save_epoch(active_era.index, &current_epoch)
                 .await?;
         }
         if last_era_index != active_era.index {
             // persist active era validators
-            BlockProcessor::persist_era_validators(
+            self.persist_era_validators(
                 substrate_client,
-                db_connection_pool,
+                postgres,
                 active_era.index,
                 block_hash.as_str(),
             )
             .await?;
             // persist last era reward points
-            BlockProcessor::persist_era_reward_points(
-                substrate_client,
-                db_connection_pool,
-                active_era.index - 1,
-            )
-            .await?;
+            self.persist_era_reward_points(substrate_client, postgres, active_era.index - 1)
+                .await?;
         }
         // update current era reward points every 10 minutes
         let blocks_per_10_minutes = 10 * 60 * 1000
@@ -233,12 +149,8 @@ impl BlockProcessor {
                 .runtime_config
                 .expected_block_time_millis;
         if block_number % blocks_per_10_minutes == 0 {
-            BlockProcessor::persist_era_reward_points(
-                substrate_client,
-                db_connection_pool,
-                active_era.index,
-            )
-            .await?;
+            self.persist_era_reward_points(substrate_client, postgres, active_era.index)
+                .await?;
         }
         {
             let mut runtime_information = runtime_information.write().unwrap();
@@ -323,35 +235,21 @@ impl BlockProcessor {
         } else {
             None
         };
-
-        sqlx::query(
-            r#"
-            INSERT INTO block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, finalized, metadata_version, runtime_version)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            ON CONFLICT (hash) DO NOTHING
-            RETURNING hash
-            "#,
-        )
-            .bind(&block_hash)
-            .bind(block_number as u32)
-            .bind(block_timestamp)
-            .bind(author_account_id)
-            .bind(active_era.index)
-            .bind(current_epoch.index as u32)
-            .bind(block_header.parent_hash)
-            .bind(block_header.state_root)
-            .bind(block_header.extrinsics_root)
-            .bind(true)
-            .bind(
-                match substrate_client.metadata.version {
-                    MetadataVersion::V12 => 12,
-                    MetadataVersion::V13 => 13,
-                } as i16
+        let metadata_version = match substrate_client.metadata.version {
+            MetadataVersion::V12 => 12,
+            MetadataVersion::V13 => 13,
+        } as i16;
+        let runtime_version = runtime_upgrade_info.spec_version as i16;
+        postgres
+            .save_finalized_block(
+                &block_hash,
+                &block_header,
+                block_timestamp,
+                author_account_id,
+                (active_era.index, current_epoch.index as u32),
+                (metadata_version, runtime_version),
             )
-            .bind(runtime_upgrade_info.spec_version as i16)
-            .execute(db_connection_pool)
             .await?;
-
         // persist events
         for event in events {
             match event {
@@ -370,31 +268,17 @@ impl BlockProcessor {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     // add validator account (if not exists)
-                    sqlx::query(
-                        r#"
-                            INSERT INTO account (id)
-                            VALUES ($1)
-                            ON CONFLICT (id) DO NOTHING
-                            RETURNING id
-                            "#,
-                    )
-                    .bind(validator_account_id.to_string())
-                    .execute(db_connection_pool)
-                    .await?;
+                    postgres.save_account(&validator_account_id).await?;
                     // persist event
-                    sqlx::query(
-                            r#"
-                            INSERT INTO event_im_online_heartbeat_received (block_hash, extrinsic_index, account_id, era_index, epoch_index)
-                            VALUES ($1, $2, $3, $4, $5)
-                            "#)
-                            .bind(&block_hash)
-                            .bind(extrinsic_index)
-                            .bind(validator_account_id.to_string())
-                            .bind(active_era.index)
-                            .bind(current_epoch.index as u32)
-                            .bind(validator_account_id.to_string())
-                            .fetch_optional(db_connection_pool)
-                            .await?;
+                    postgres
+                        .save_heartbeart_event(
+                            &block_hash,
+                            extrinsic_index,
+                            &validator_account_id,
+                            active_era.index,
+                            current_epoch.index as u32,
+                        )
+                        .await?;
                 }
                 SubstrateEvent::ImOnline(ImOnline::SomeOffline {
                     extrinsic_index: _,
@@ -444,13 +328,11 @@ impl Service for BlockProcessor {
             let busy_lock = Arc::new(Mutex::new(()));
             substrate_client.metadata.log_all_calls();
             substrate_client.metadata.log_all_events();
-            debug!("Getting database connection...");
-            let db_connection_pool = Arc::new(BlockProcessor::establish_db_connection().await?);
-            debug!("Database connection pool established.");
+            let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let substrate_client = substrate_client.clone();
                 let runtime_information = runtime_information.clone();
-                let db_connection_pool = db_connection_pool.clone();
+                let postgres = postgres.clone();
                 let busy_lock = busy_lock.clone();
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
@@ -461,7 +343,7 @@ impl Service for BlockProcessor {
                     let update_result = self.process_block(
                         &substrate_client,
                         &runtime_information,
-                        &db_connection_pool,
+                        &postgres,
                         finalized_block_number,
                     ).await;
                     match update_result {

@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
+anyhow = "1.0.44"
+log = "0.4.14"
+subvt-config = { path = "../subvt-config" }
+subvt-types = { path = "../subvt-types" }
+sqlx = { version = "0.5.7", features = ["postgres", "runtime-tokio-rustls", "chrono"] }

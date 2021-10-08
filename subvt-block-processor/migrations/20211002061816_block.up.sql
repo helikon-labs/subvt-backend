@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS block
     parent_hash       VARCHAR(66)                 NOT NULL,
     state_root        VARCHAR(66)                 NOT NULL,
     extrinsics_root   VARCHAR(66)                 NOT NULL,
-    finalized         BOOLEAN                     NOT NULL DEFAULT FALSE,
+    is_finalized      BOOLEAN                     NOT NULL DEFAULT FALSE,
     metadata_version  smallint                    NOT NULL,
     runtime_version   smallint                    NOT NULL,
     last_updated      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

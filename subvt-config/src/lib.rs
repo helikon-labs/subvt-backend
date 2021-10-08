@@ -100,6 +100,7 @@ pub struct PostgreSQLConfig {
     pub database_name: String,
     pub username: String,
     pub password: String,
+    pub pool_max_connections: u32,
 }
 
 /// SubVT block indexer configuration.

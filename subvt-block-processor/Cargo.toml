@@ -10,9 +10,9 @@ async-trait = "0.1.51"
 chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
 lazy_static = "1.4.0"
 log = "0.4.14"
-sqlx = { version = "0.5.7", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
+subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-substrate-client = { path = "../subvt-substrate-client" }
 subvt-types = { path = "../subvt-types" }
