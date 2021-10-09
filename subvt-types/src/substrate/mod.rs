@@ -97,6 +97,24 @@ pub struct SystemProperties {
     pub token_symbol: String,
 }
 
+#[derive(Debug, Decode, Clone, Eq, PartialEq)]
+pub enum MultiAddress {
+    Id(AccountId),
+    Index(#[codec(compact)] u32),
+    Raw(Vec<u8>),
+    Address32([u8; 32]),
+    Address20([u8; 20]),
+}
+
+impl MultiAddress {
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        match self {
+            MultiAddress::Id(account_id) => Some(account_id.clone()),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Account {
     pub id: AccountId,

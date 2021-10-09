@@ -1,7 +1,8 @@
 use crate::{
     crypto::AccountId,
     substrate::{
-        error::DecodeError, metadata::ArgumentMeta, CallHash, OpaqueTimeSlot, RewardDestination,
+        error::DecodeError, metadata::ArgumentMeta, CallHash, MultiAddress, OpaqueTimeSlot,
+        RewardDestination,
     },
 };
 use frame_support::{
@@ -71,6 +72,7 @@ pub enum ArgumentPrimitive {
     Hash(Hash),
     IdentificationTuple(IdentificationTuple),
     Moment(Compact<u64>),
+    MultiAddress(MultiAddress),
     MultiLocation(xcm::latest::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     OffenceKind(Kind),
@@ -173,7 +175,6 @@ macro_rules! generate_argument_primitive_decoder_impl {
 generate_argument_primitive_decoder_impl! {[
     ("AccountId", decode_account_id, AccountId),
     ("T::AccountId", decode_account_id_t, AccountId),
-    ("<T::Lookup as StaticLookup>::Source", decode_target_account_id, AccountId),
     ("AccountIndex", decode_account_index, AccountIndex),
     ("AuctionIndex", decode_auction_index, AuctionIndex),
     ("AuthorityId", decode_authority_id, AccountId),
@@ -206,6 +207,7 @@ generate_argument_primitive_decoder_impl! {[
     ("GroupIndex", decode_group_index, GroupIndex),
     ("Hash", decode_hash, Hash),
     ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
+    ("<T::Lookup as StaticLookup>::Source", decode_target_account_id, MultiAddress),
     ("MultiLocation", decode_multi_location, MultiLocation),
     ("Timepoint<BlockNumber>", decode_multisig_timepoint, MultisigTimepoint),
     ("Kind", decode_offence_kind, OffenceKind),

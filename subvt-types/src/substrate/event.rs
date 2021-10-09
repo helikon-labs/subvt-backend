@@ -21,7 +21,7 @@ use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
 
 #[derive(Debug)]
-pub enum Balances {
+pub enum BalancesEvent {
     BalanceSet {
         extrinsic_index: Option<u32>,
         account_id: AccountId,
@@ -41,25 +41,25 @@ pub enum Balances {
     },
 }
 
-impl Balances {
+impl BalancesEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "BalanceSet" => Some(SubstrateEvent::Balances(Balances::BalanceSet {
+            "BalanceSet" => Some(SubstrateEvent::Balances(BalancesEvent::BalanceSet {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 free_amount: get_argument_primitive!(&arguments[1], Balance),
                 reserved_amount: get_argument_primitive!(&arguments[2], Balance),
             })),
-            "Deposit" => Some(SubstrateEvent::Balances(Balances::Deposit {
+            "Deposit" => Some(SubstrateEvent::Balances(BalancesEvent::Deposit {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Transfer" => Some(SubstrateEvent::Balances(Balances::Transfer {
+            "Transfer" => Some(SubstrateEvent::Balances(BalancesEvent::Transfer {
                 extrinsic_index,
                 from_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 to_account_id: get_argument_primitive!(&arguments[1], AccountId),
@@ -72,7 +72,7 @@ impl Balances {
 }
 
 #[derive(Debug)]
-pub enum Identity {
+pub enum IdentityEvent {
     IdentityCleared {
         extrinsic_index: Option<u32>,
         account_id: AccountId,
@@ -122,62 +122,68 @@ pub enum Identity {
     },
 }
 
-impl Identity {
+impl IdentityEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "IdentityCleared" => Some(SubstrateEvent::Identity(Identity::IdentityCleared {
+            "IdentityCleared" => Some(SubstrateEvent::Identity(IdentityEvent::IdentityCleared {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 returned_balance: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "IdentityKilled" => Some(SubstrateEvent::Identity(Identity::IdentityKilled {
+            "IdentityKilled" => Some(SubstrateEvent::Identity(IdentityEvent::IdentityKilled {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 slashed_balance: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "IdentitySet" => Some(SubstrateEvent::Identity(Identity::IdentitySet {
+            "IdentitySet" => Some(SubstrateEvent::Identity(IdentityEvent::IdentitySet {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
-            "JudgementGiven" => Some(SubstrateEvent::Identity(Identity::JudgementGiven {
+            "JudgementGiven" => Some(SubstrateEvent::Identity(IdentityEvent::JudgementGiven {
                 extrinsic_index,
                 target_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 registrar_index: get_argument_primitive!(&arguments[1], RegistrarIndex),
             })),
-            "JudgementRequested" => Some(SubstrateEvent::Identity(Identity::JudgementRequested {
-                extrinsic_index,
-                target_account_id: get_argument_primitive!(&arguments[0], AccountId),
-                registrar_index: get_argument_primitive!(&arguments[1], RegistrarIndex),
-            })),
-            "JudgementUnrequested" => {
-                Some(SubstrateEvent::Identity(Identity::JudgementUnrequested {
+            "JudgementRequested" => Some(SubstrateEvent::Identity(
+                IdentityEvent::JudgementRequested {
                     extrinsic_index,
                     target_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     registrar_index: get_argument_primitive!(&arguments[1], RegistrarIndex),
-                }))
-            }
-            "SubIdentityAdded" => Some(SubstrateEvent::Identity(Identity::SubIdentityAdded {
+                },
+            )),
+            "JudgementUnrequested" => Some(SubstrateEvent::Identity(
+                IdentityEvent::JudgementUnrequested {
+                    extrinsic_index,
+                    target_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    registrar_index: get_argument_primitive!(&arguments[1], RegistrarIndex),
+                },
+            )),
+            "SubIdentityAdded" => Some(SubstrateEvent::Identity(IdentityEvent::SubIdentityAdded {
                 extrinsic_index,
                 sub_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 main_account_id: get_argument_primitive!(&arguments[1], AccountId),
                 deposit: get_argument_primitive!(&arguments[2], Balance),
             })),
-            "SubIdentityRemoved" => Some(SubstrateEvent::Identity(Identity::SubIdentityRemoved {
-                extrinsic_index,
-                sub_account_id: get_argument_primitive!(&arguments[0], AccountId),
-                main_account_id: get_argument_primitive!(&arguments[1], AccountId),
-                freed_deposit: get_argument_primitive!(&arguments[2], Balance),
-            })),
-            "SubIdentityRevoked" => Some(SubstrateEvent::Identity(Identity::SubIdentityRevoked {
-                extrinsic_index,
-                sub_account_id: get_argument_primitive!(&arguments[0], AccountId),
-                main_account_id: get_argument_primitive!(&arguments[1], AccountId),
-                repatriated_deposit: get_argument_primitive!(&arguments[2], Balance),
-            })),
+            "SubIdentityRemoved" => Some(SubstrateEvent::Identity(
+                IdentityEvent::SubIdentityRemoved {
+                    extrinsic_index,
+                    sub_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    main_account_id: get_argument_primitive!(&arguments[1], AccountId),
+                    freed_deposit: get_argument_primitive!(&arguments[2], Balance),
+                },
+            )),
+            "SubIdentityRevoked" => Some(SubstrateEvent::Identity(
+                IdentityEvent::SubIdentityRevoked {
+                    extrinsic_index,
+                    sub_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    main_account_id: get_argument_primitive!(&arguments[1], AccountId),
+                    repatriated_deposit: get_argument_primitive!(&arguments[2], Balance),
+                },
+            )),
             _ => None,
         };
         Ok(maybe_event)
@@ -185,7 +191,7 @@ impl Identity {
 }
 
 #[derive(Debug)]
-pub enum ImOnline {
+pub enum ImOnlineEvent {
     AllGood {
         extrinsic_index: Option<u32>,
     },
@@ -194,27 +200,27 @@ pub enum ImOnline {
         validator_account_id: AccountId,
     },
     SomeOffline {
-        extrinsic_index: Option<u32>,
         identification_tuples: Vec<IdentificationTuple>,
     },
 }
 
-impl ImOnline {
+impl ImOnlineEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "AllGood" => Some(SubstrateEvent::ImOnline(ImOnline::AllGood {
+            "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
                 extrinsic_index,
             })),
-            "HeartbeatReceived" => Some(SubstrateEvent::ImOnline(ImOnline::HeartbeatReceived {
-                extrinsic_index,
-                validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
-            })),
-            "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnline::SomeOffline {
-                extrinsic_index,
+            "HeartbeatReceived" => {
+                Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
+                    extrinsic_index,
+                    validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                }))
+            }
+            "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
                 identification_tuples: get_argument_vector!(&arguments[0], IdentificationTuple),
             })),
             _ => None,
@@ -224,7 +230,7 @@ impl ImOnline {
 }
 
 #[derive(Debug)]
-pub enum Offences {
+pub enum OffencesEvent {
     Offence {
         extrinsic_index: Option<u32>,
         offence_kind: Kind,
@@ -232,14 +238,14 @@ pub enum Offences {
     },
 }
 
-impl Offences {
+impl OffencesEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "Offence" => Some(SubstrateEvent::Offences(Offences::Offence {
+            "Offence" => Some(SubstrateEvent::Offences(OffencesEvent::Offence {
                 extrinsic_index,
                 offence_kind: get_argument_primitive!(&arguments[0], OffenceKind),
                 time_slot: get_argument_primitive!(&arguments[1], OpaqueTimeSlot),
@@ -251,7 +257,7 @@ impl Offences {
 }
 
 #[derive(Debug)]
-pub enum ParaInclusion {
+pub enum ParachainInclusionEvent {
     CandidateBacked {
         extrinsic_index: Option<u32>,
         candidate_receipt: CandidateReceipt,
@@ -274,15 +280,15 @@ pub enum ParaInclusion {
     },
 }
 
-impl ParaInclusion {
+impl ParachainInclusionEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "CandidateBacked" => Some(SubstrateEvent::ParaInclusion(Box::new(
-                ParaInclusion::CandidateBacked {
+            "CandidateBacked" => Some(SubstrateEvent::ParachainInclusion(Box::new(
+                ParachainInclusionEvent::CandidateBacked {
                     extrinsic_index,
                     candidate_receipt: get_argument_primitive!(&arguments[0], CandidateReceipt),
                     head_data: get_argument_primitive!(&arguments[1], ParachainHeadData),
@@ -290,8 +296,8 @@ impl ParaInclusion {
                     group_index: get_argument_primitive!(&arguments[3], GroupIndex),
                 },
             ))),
-            "CandidateIncluded" => Some(SubstrateEvent::ParaInclusion(Box::new(
-                ParaInclusion::CandidateIncluded {
+            "CandidateIncluded" => Some(SubstrateEvent::ParachainInclusion(Box::new(
+                ParachainInclusionEvent::CandidateIncluded {
                     extrinsic_index,
                     candidate_receipt: get_argument_primitive!(&arguments[0], CandidateReceipt),
                     head_data: get_argument_primitive!(&arguments[1], ParachainHeadData),
@@ -299,8 +305,8 @@ impl ParaInclusion {
                     group_index: get_argument_primitive!(&arguments[3], GroupIndex),
                 },
             ))),
-            "CandidateTimedOut" => Some(SubstrateEvent::ParaInclusion(Box::new(
-                ParaInclusion::CandidateTimedOut {
+            "CandidateTimedOut" => Some(SubstrateEvent::ParachainInclusion(Box::new(
+                ParachainInclusionEvent::CandidateTimedOut {
                     extrinsic_index,
                     candidate_receipt: get_argument_primitive!(&arguments[0], CandidateReceipt),
                     head_data: get_argument_primitive!(&arguments[1], ParachainHeadData),
@@ -314,7 +320,7 @@ impl ParaInclusion {
 }
 
 #[derive(Debug)]
-pub enum Paras {
+pub enum ParachainsEvent {
     CurrentHeadUpdated {
         extrinsic_index: Option<u32>,
         parachain_id: Id,
@@ -337,29 +343,35 @@ pub enum Paras {
     },
 }
 
-impl Paras {
+impl ParachainsEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "CurrentHeadUpdated" => Some(SubstrateEvent::Paras(Paras::CurrentHeadUpdated {
+            "CurrentHeadUpdated" => Some(SubstrateEvent::Parachains(
+                ParachainsEvent::CurrentHeadUpdated {
+                    extrinsic_index,
+                    parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
+                },
+            )),
+            "CodeUpgradeScheduled" => Some(SubstrateEvent::Parachains(
+                ParachainsEvent::CodeUpgradeScheduled {
+                    extrinsic_index,
+                    parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
+                },
+            )),
+            "NewHeadNoted" => Some(SubstrateEvent::Parachains(ParachainsEvent::NewHeadNoted {
                 extrinsic_index,
                 parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
             })),
-            "CodeUpgradeScheduled" => Some(SubstrateEvent::Paras(Paras::CodeUpgradeScheduled {
-                extrinsic_index,
-                parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
-            })),
-            "NewHeadNoted" => Some(SubstrateEvent::Paras(Paras::NewHeadNoted {
-                extrinsic_index,
-                parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
-            })),
-            "CurrentCodeUpdated" => Some(SubstrateEvent::Paras(Paras::CurrentCodeUpdated {
-                extrinsic_index,
-                parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
-            })),
+            "CurrentCodeUpdated" => Some(SubstrateEvent::Parachains(
+                ParachainsEvent::CurrentCodeUpdated {
+                    extrinsic_index,
+                    parachain_id: get_argument_primitive!(&arguments[0], ParachainId),
+                },
+            )),
             _ => None,
         };
         Ok(maybe_event)
@@ -367,21 +379,21 @@ impl Paras {
 }
 
 #[derive(Debug)]
-pub enum Session {
+pub enum SessionEvent {
     NewSession {
         extrinsic_index: Option<u32>,
         session_index: SessionIndex,
     },
 }
 
-impl Session {
+impl SessionEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "NewSession" => Some(SubstrateEvent::Session(Session::NewSession {
+            "NewSession" => Some(SubstrateEvent::Session(SessionEvent::NewSession {
                 extrinsic_index,
                 session_index: get_argument_primitive!(&arguments[0], SessionIndex),
             })),
@@ -392,7 +404,7 @@ impl Session {
 }
 
 #[derive(Debug)]
-pub enum Staking {
+pub enum StakingEvent {
     Bonded {
         extrinsic_index: Option<u32>,
         account_id: AccountId,
@@ -450,70 +462,68 @@ pub enum Staking {
     },
 }
 
-impl Staking {
+impl StakingEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "Bonded" => Some(SubstrateEvent::Staking(Staking::Bonded {
+            "Bonded" => Some(SubstrateEvent::Staking(StakingEvent::Bonded {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 balance: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Chilled" => Some(SubstrateEvent::Staking(Staking::Chilled {
+            "Chilled" => Some(SubstrateEvent::Staking(StakingEvent::Chilled {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
-            "EraPaid" | "EraPayout" => Some(SubstrateEvent::Staking(Staking::EraPaid {
+            "EraPaid" | "EraPayout" => Some(SubstrateEvent::Staking(StakingEvent::EraPaid {
                 extrinsic_index,
                 era_index: get_argument_primitive!(&arguments[0], EraIndex),
                 validator_payout: get_argument_primitive!(&arguments[1], Balance),
                 remainder: get_argument_primitive!(&arguments[2], Balance),
             })),
-            "Kicked" => Some(SubstrateEvent::Staking(Staking::NominatorKicked {
+            "Kicked" => Some(SubstrateEvent::Staking(StakingEvent::NominatorKicked {
                 extrinsic_index,
                 nominator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 validator_account_id: get_argument_primitive!(&arguments[1], AccountId),
             })),
             "OldSlashingReportDiscarded" => Some(SubstrateEvent::Staking(
-                Staking::OldSlashingReportDiscarded {
+                StakingEvent::OldSlashingReportDiscarded {
                     extrinsic_index,
                     session_index: get_argument_primitive!(&arguments[0], SessionIndex),
                 },
             )),
-            "PayoutStarted" => Some(SubstrateEvent::Staking(Staking::PayoutStarted {
+            "PayoutStarted" => Some(SubstrateEvent::Staking(StakingEvent::PayoutStarted {
                 extrinsic_index,
                 era_index: get_argument_primitive!(&arguments[0], EraIndex),
                 validator_account_id: get_argument_primitive!(&arguments[1], AccountId),
             })),
-            "Rewarded" | "Reward" => Some(SubstrateEvent::Staking(Staking::Rewarded {
+            "Rewarded" | "Reward" => Some(SubstrateEvent::Staking(StakingEvent::Rewarded {
                 extrinsic_index,
                 nominator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Slashed" | "Slash" => Some(SubstrateEvent::Staking(Staking::Slashed {
+            "Slashed" | "Slash" => Some(SubstrateEvent::Staking(StakingEvent::Slashed {
                 extrinsic_index,
                 validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
             "StakersElected" | "StakingElection" => {
-                Some(SubstrateEvent::Staking(Staking::StakersElected {
+                Some(SubstrateEvent::Staking(StakingEvent::StakersElected {
                     extrinsic_index,
                 }))
             }
-            "StakingElectionFailed" => {
-                Some(SubstrateEvent::Staking(Staking::StakingElectionFailed {
-                    extrinsic_index,
-                }))
-            }
-            "Unbonded" => Some(SubstrateEvent::Staking(Staking::Unbonded {
+            "StakingElectionFailed" => Some(SubstrateEvent::Staking(
+                StakingEvent::StakingElectionFailed { extrinsic_index },
+            )),
+            "Unbonded" => Some(SubstrateEvent::Staking(StakingEvent::Unbonded {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Withdrawn" => Some(SubstrateEvent::Staking(Staking::Withdrawn {
+            "Withdrawn" => Some(SubstrateEvent::Staking(StakingEvent::Withdrawn {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
@@ -525,7 +535,7 @@ impl Staking {
 }
 
 #[derive(Debug)]
-pub enum System {
+pub enum SystemEvent {
     CodeUpdated {
         extrinsic_index: Option<u32>,
     },
@@ -548,30 +558,30 @@ pub enum System {
     },
 }
 
-impl System {
+impl SystemEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "CodeUpdated" => Some(SubstrateEvent::System(System::CodeUpdated {
+            "CodeUpdated" => Some(SubstrateEvent::System(SystemEvent::CodeUpdated {
                 extrinsic_index,
             })),
-            "ExtrinsicSuccess" => Some(SubstrateEvent::System(System::ExtrinsicSuccess {
+            "ExtrinsicSuccess" => Some(SubstrateEvent::System(SystemEvent::ExtrinsicSuccess {
                 extrinsic_index,
                 dispatch_info: get_argument_primitive!(&arguments[0], DispatchInfo),
             })),
-            "ExtrinsicFailed" => Some(SubstrateEvent::System(System::ExtrinsicFailed {
+            "ExtrinsicFailed" => Some(SubstrateEvent::System(SystemEvent::ExtrinsicFailed {
                 extrinsic_index,
                 dispatch_error: get_argument_primitive!(&arguments[0], DispatchError),
                 dispatch_info: get_argument_primitive!(&arguments[1], DispatchInfo),
             })),
-            "KilledAccount" => Some(SubstrateEvent::System(System::KilledAccount {
+            "KilledAccount" => Some(SubstrateEvent::System(SystemEvent::KilledAccount {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
-            "NewAccount" => Some(SubstrateEvent::System(System::NewAccount {
+            "NewAccount" => Some(SubstrateEvent::System(SystemEvent::NewAccount {
                 extrinsic_index,
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
@@ -582,7 +592,7 @@ impl System {
 }
 
 #[derive(Debug)]
-pub enum Utility {
+pub enum UtilityEvent {
     ItemCompleted {
         extrinsic_index: Option<u32>,
     },
@@ -596,22 +606,22 @@ pub enum Utility {
     },
 }
 
-impl Utility {
+impl UtilityEvent {
     pub fn from(
         name: &str,
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
         let maybe_event = match name {
-            "ItemCompleted" => Some(SubstrateEvent::Utility(Utility::ItemCompleted {
+            "ItemCompleted" => Some(SubstrateEvent::Utility(UtilityEvent::ItemCompleted {
                 extrinsic_index,
             })),
-            "BatchInterrupted" => Some(SubstrateEvent::Utility(Utility::BatchInterrupted {
+            "BatchInterrupted" => Some(SubstrateEvent::Utility(UtilityEvent::BatchInterrupted {
                 extrinsic_index,
                 item_index: get_argument_primitive!(&arguments[0], U32),
                 dispatch_error: get_argument_primitive!(&arguments[1], DispatchError),
             })),
-            "BatchCompleted" => Some(SubstrateEvent::Utility(Utility::BatchCompleted {
+            "BatchCompleted" => Some(SubstrateEvent::Utility(UtilityEvent::BatchCompleted {
                 extrinsic_index,
             })),
             _ => None,
@@ -622,16 +632,16 @@ impl Utility {
 
 #[derive(Debug)]
 pub enum SubstrateEvent {
-    Balances(Balances),
-    Identity(Identity),
-    ImOnline(ImOnline),
-    Offences(Offences),
-    ParaInclusion(Box<ParaInclusion>),
-    Paras(Paras),
-    Session(Session),
-    Staking(Staking),
-    System(System),
-    Utility(Utility),
+    Balances(BalancesEvent),
+    Identity(IdentityEvent),
+    ImOnline(ImOnlineEvent),
+    Offences(OffencesEvent),
+    ParachainInclusion(Box<ParachainInclusionEvent>),
+    Parachains(ParachainsEvent),
+    Session(SessionEvent),
+    Staking(StakingEvent),
+    System(SystemEvent),
+    Utility(UtilityEvent),
     Other {
         module_name: String,
         event_name: String,
@@ -660,18 +670,18 @@ impl SubstrateEvent {
         // decode events
         // debug!("Will decode {}.{}.", module.name, event.name);
         let maybe_event = match module.name.as_str() {
-            "Balances" => Balances::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Identity" => Identity::from(&event.name, extrinsic_index, arguments.clone())?,
-            "ImOnline" => ImOnline::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Offences" => Offences::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Balances" => BalancesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Identity" => IdentityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "ImOnline" => ImOnlineEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Offences" => OffencesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "ParaInclusion" => {
-                ParaInclusion::from(&event.name, extrinsic_index, arguments.clone())?
+                ParachainInclusionEvent::from(&event.name, extrinsic_index, arguments.clone())?
             }
-            "Paras" => Paras::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Session" => Session::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Staking" => Staking::from(&event.name, extrinsic_index, arguments.clone())?,
-            "System" => System::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Utility" => Utility::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Paras" => ParachainsEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Session" => SessionEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Staking" => StakingEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "System" => SystemEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Utility" => UtilityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             _ => None,
         };
         let substrate_event = if let Some(substrate_event) = maybe_event {

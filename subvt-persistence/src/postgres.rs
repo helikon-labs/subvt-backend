@@ -3,7 +3,10 @@ use sqlx::{Pool, Postgres};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::{BlockHeader, Epoch, Era};
+use subvt_types::substrate::{
+    argument::IdentificationTuple,
+    {BlockHeader, Epoch, Era},
+};
 
 pub struct PostgreSQLStorage {
     connection_pool: Pool<Postgres>,
@@ -208,26 +211,83 @@ impl PostgreSQLStorage {
         }
     }
 
-    pub async fn save_heartbeart_event(
+    pub async fn save_validator_heartbeart_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
         validator_account_id: &AccountId,
-        era_index: u32,
-        epoch_index: u32,
     ) -> anyhow::Result<()> {
+        self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_im_online_heartbeat_received (block_hash, extrinsic_index, account_id, era_index, epoch_index)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO event_validator_heartbeat_received (block_hash, extrinsic_index, validator_account_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(validator_account_id.to_string())
-            .bind(era_index)
-            .bind(epoch_index)
             .execute(&self.connection_pool)
             .await?;
+        Ok(())
+    }
+
+    pub async fn save_validator_offline_events(
+        &self,
+        block_hash: &str,
+        identification_tuples: Vec<IdentificationTuple>,
+    ) -> anyhow::Result<()> {
+        for identification_tuple in identification_tuples {
+            self.save_account(&identification_tuple.0).await?;
+            sqlx::query(
+                r#"
+                INSERT INTO event_validator_offline (block_hash, validator_account_id)
+                VALUES ($1, $2)
+                ON CONFLICT (block_hash, validator_account_id) DO NOTHING
+                "#,
+            )
+            .bind(block_hash)
+            .bind(identification_tuple.0.to_string())
+            .execute(&self.connection_pool)
+            .await?;
+        }
+        Ok(())
+    }
+
+    pub async fn save_nomination(
+        &self,
+        block_hash: &str,
+        nominator_account_id: &AccountId,
+        validator_account_ids: &[AccountId],
+    ) -> anyhow::Result<()> {
+        self.save_account(nominator_account_id).await?;
+        let mut tx = self.connection_pool.begin().await?;
+        let extrinsic_nominate_id: (i32,) = sqlx::query_as(
+            r#"
+                INSERT INTO extrinsic_nominate (block_hash, nominator_account_id)
+                VALUES ($1, $2)
+                ON CONFLICT (block_hash, nominator_account_id) DO NOTHING
+                RETURNING id
+                "#,
+        )
+        .bind(block_hash)
+        .bind(nominator_account_id.to_string())
+        .fetch_one(&mut tx)
+        .await?;
+        for validator_account_id in validator_account_ids {
+            self.save_account(validator_account_id).await?;
+            sqlx::query(
+                r#"
+                INSERT INTO extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
+                VALUES ($1, $2)
+                ON CONFLICT (extrinsic_nominate_id, validator_account_id) DO NOTHING
+                "#)
+                .bind(extrinsic_nominate_id.0)
+                .bind(validator_account_id.to_string())
+                .execute(&mut tx)
+                .await?;
+        }
+        tx.commit().await?;
         Ok(())
     }
 }

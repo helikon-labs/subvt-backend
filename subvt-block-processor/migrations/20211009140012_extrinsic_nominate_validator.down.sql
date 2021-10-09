@@ -1,0 +1,1 @@
+DROP TABLE extrinsic_nominate_validator CASCADE;

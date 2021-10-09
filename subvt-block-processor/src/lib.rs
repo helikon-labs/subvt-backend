@@ -13,8 +13,9 @@ use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
     substrate::{
-        event::{ImOnline, SubstrateEvent},
+        event::{ImOnlineEvent, SubstrateEvent, SystemEvent},
         extrinsic::{Staking, SubstrateExtrinsic, Timestamp},
+        MultiAddress,
     },
 };
 
@@ -96,7 +97,6 @@ impl BlockProcessor {
         postgres: &PostgreSQLStorage,
         block_number: u64,
     ) -> anyhow::Result<()> {
-        // let block_number = block_number - 160;
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
@@ -168,52 +168,8 @@ impl BlockProcessor {
             block_number
         );
 
-        // TODO persists extrinsics
-        for extrinsic in &extrinsics {
-            match extrinsic {
-                SubstrateExtrinsic::Timestamp(timestamp_event) => match timestamp_event {
-                    Timestamp::Set {
-                        version: _,
-                        signature,
-                        timestamp,
-                    } => {
-                        if let Some(signature) = signature {
-                            debug!(
-                                "Block timestamp {} set by {}.",
-                                timestamp,
-                                signature.get_signer_account_id().unwrap().to_ss58_check()
-                            )
-                        } else {
-                            debug!("Block timestamp {} no signature.", timestamp)
-                        }
-                    }
-                },
-                SubstrateExtrinsic::Staking(staking_event) => match staking_event {
-                    Staking::Nominate {
-                        version: _,
-                        signature,
-                        targets,
-                    } => {
-                        if let Some(signature) = signature {
-                            debug!(
-                                "Nominate {} nominees sent by {}.",
-                                targets.len(),
-                                signature.get_signer_account_id().unwrap().to_ss58_check()
-                            );
-                            for target in targets {
-                                debug!("Target: {}", target.to_ss58_check());
-                            }
-                        } else {
-                            debug!("Nominate {} nominees no signature.", targets.len());
-                        }
-                    }
-                },
-                _ => (),
-            }
-        }
-
         let mut block_timestamp: Option<u32> = None;
-        for extrinsic in extrinsics {
+        for extrinsic in &extrinsics {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
                     Timestamp::Set {
@@ -221,7 +177,7 @@ impl BlockProcessor {
                         signature: _,
                         timestamp,
                     } => {
-                        block_timestamp = Some(timestamp as u32);
+                        block_timestamp = Some(*timestamp as u32);
                     }
                 }
             }
@@ -250,7 +206,9 @@ impl BlockProcessor {
                 (metadata_version, runtime_version),
             )
             .await?;
-        // persist events
+        // process/persist events
+        let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
+        let mut _failed_extrinsic_indices: Vec<u32> = Vec::new();
         for event in events {
             match event {
                 /*
@@ -261,29 +219,29 @@ impl BlockProcessor {
                     _ => (),
                 },
                  */
-                SubstrateEvent::ImOnline(ImOnline::HeartbeatReceived {
+                SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
                     validator_account_id,
                 }) => {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    // add validator account (if not exists)
-                    postgres.save_account(&validator_account_id).await?;
                     // persist event
                     postgres
-                        .save_heartbeart_event(
+                        .save_validator_heartbeart_event(
                             &block_hash,
                             extrinsic_index,
                             &validator_account_id,
-                            active_era.index,
-                            current_epoch.index as u32,
                         )
                         .await?;
                 }
-                SubstrateEvent::ImOnline(ImOnline::SomeOffline {
-                    extrinsic_index: _,
-                    identification_tuples: _,
-                }) => (),
+                SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
+                    identification_tuples,
+                }) => {
+                    // persist event
+                    postgres
+                        .save_validator_offline_events(&block_hash, identification_tuples)
+                        .await?;
+                }
                 /*
                 SubstrateEvent::Offences(offences_event) => match offences_event {
                     _ => (),
@@ -294,7 +252,18 @@ impl BlockProcessor {
                 SubstrateEvent::Staking(staking_event) => match staking_event {
                     _ => (),
                 },
+                */
                 SubstrateEvent::System(system_event) => match system_event {
+                    SystemEvent::ExtrinsicFailed {
+                        extrinsic_index,
+                        dispatch_error: _,
+                        dispatch_info: _,
+                    } => _failed_extrinsic_indices.push(extrinsic_index.unwrap()),
+                    SystemEvent::ExtrinsicSuccess {
+                        extrinsic_index,
+                        dispatch_info: _,
+                    } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
+                    /*
                     System::NewAccount {
                         extrinsic_index: _,
                         account_id: _,
@@ -303,14 +272,48 @@ impl BlockProcessor {
                         extrinsic_index: _,
                         account_id: _,
                     } => {}
+                     */
                     _ => (),
                 },
+                /*
                 SubstrateEvent::Utility(utility_event) => match utility_event {
                     _ => (),
                 },
                  */
                 _ => (),
             }
+        }
+        // persist extrinsics
+        for (index, extrinsic) in extrinsics.iter().enumerate() {
+            if !successful_extrinsic_indices.contains(&(index as u32)) {
+                continue;
+            }
+            if let SubstrateExtrinsic::Staking(Staking::Nominate {
+                version: _,
+                signature,
+                targets,
+            }) = extrinsic
+            {
+                let maybe_nominator_account_id = match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                };
+                if let Some(nominator_account_id) = maybe_nominator_account_id {
+                    let target_account_ids: Vec<AccountId> = targets
+                        .iter()
+                        .filter_map(|target_multi_address| match target_multi_address {
+                            MultiAddress::Id(account_id) => Some(account_id.clone()),
+                            _ => {
+                                error!("Unsupported multi address type for nomination target.");
+                                None
+                            }
+                        })
+                        .collect();
+                    postgres
+                        .save_nomination(&block_hash, &nominator_account_id, &target_account_ids)
+                        .await?;
+                }
+            };
         }
         {
             runtime_information.write().unwrap().processed_block_number = block_number;
@@ -336,7 +339,7 @@ impl Service for BlockProcessor {
                 let busy_lock = busy_lock.clone();
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
-                    Err(_) => return error!("Cannot get block number for header: {:?}",finalized_block_header)
+                    Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
                 tokio::spawn(async move {
                     let _lock = busy_lock.lock().await;

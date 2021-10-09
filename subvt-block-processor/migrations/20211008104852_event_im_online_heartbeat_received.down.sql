@@ -1,1 +1,0 @@
-DROP TABLE event_im_online_heartbeat_received CASCADE;

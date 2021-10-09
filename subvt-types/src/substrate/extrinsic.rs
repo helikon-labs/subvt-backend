@@ -4,13 +4,11 @@ use crate::{
         argument::{get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive},
         error::DecodeError,
         metadata::Metadata,
-        Block,
+        Block, MultiAddress,
     },
 };
-use frame_support::sp_runtime::MultiAddress;
 use log::{debug, warn};
 use parity_scale_codec::{Compact, Decode, Input};
-use polkadot_core_primitives::AccountIndex;
 
 #[derive(Debug)]
 pub enum Timestamp {
@@ -45,7 +43,7 @@ pub enum Staking {
     Nominate {
         version: u8,
         signature: Option<Signature>,
-        targets: Vec<AccountId>,
+        targets: Vec<MultiAddress>,
     },
 }
 
@@ -60,7 +58,7 @@ impl Staking {
             "nominate" => Some(SubstrateExtrinsic::Staking(Staking::Nominate {
                 version,
                 signature,
-                targets: get_argument_vector!(&arguments[0], AccountId),
+                targets: get_argument_vector!(&arguments[0], MultiAddress),
             })),
             _ => None,
         };
@@ -82,7 +80,7 @@ pub enum SubstrateExtrinsic {
 
 #[derive(Clone, Debug)]
 pub struct Signature {
-    pub signer: MultiAddress<AccountId, AccountIndex>,
+    pub signer: MultiAddress,
     pub signature: sp_runtime::MultiSignature,
     pub era: Option<sp_runtime::generic::Era>,
     pub nonce: Option<u64>,
@@ -91,10 +89,7 @@ pub struct Signature {
 
 impl Signature {
     pub fn get_signer_account_id(&self) -> Option<AccountId> {
-        match &self.signer {
-            MultiAddress::Id(account_id) => Some(account_id.clone()),
-            _ => None,
-        }
+        self.signer.get_account_id()
     }
 }
 
@@ -106,8 +101,7 @@ impl SubstrateExtrinsic {
         let is_signed = (signed_version & sign_mask) == sign_mask;
         let version = signed_version & version_mask;
         let signature = if is_signed {
-            let signer: MultiAddress<AccountId, AccountIndex> =
-                MultiAddress::decode(&mut *bytes).unwrap();
+            let signer: MultiAddress = MultiAddress::decode(&mut *bytes).unwrap();
             let signature = sp_runtime::MultiSignature::decode(&mut *bytes).unwrap();
             let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes).unwrap();
             let nonce: Compact<u64> = Decode::decode(&mut *bytes).unwrap();
@@ -138,7 +132,8 @@ impl SubstrateExtrinsic {
             "Staking" => {
                 let mut arguments: Vec<Argument> = Vec::new();
                 for argument_meta in &call.arguments {
-                    arguments.push(Argument::decode(argument_meta, &mut *bytes).unwrap());
+                    let argument = Argument::decode(argument_meta, &mut *bytes).unwrap();
+                    arguments.push(argument);
                 }
                 Staking::from(&call.name, version, signature.clone(), arguments.clone())?
             }
