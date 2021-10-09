@@ -412,7 +412,7 @@ pub enum StakingEvent {
     },
     Chilled {
         extrinsic_index: Option<u32>,
-        account_id: AccountId,
+        validator_account_id: AccountId,
     },
     EraPaid {
         extrinsic_index: Option<u32>,
@@ -436,7 +436,7 @@ pub enum StakingEvent {
     },
     Rewarded {
         extrinsic_index: Option<u32>,
-        nominator_account_id: AccountId,
+        rewardee_account_id: AccountId,
         amount: Balance,
     },
     Slashed {
@@ -476,7 +476,7 @@ impl StakingEvent {
             })),
             "Chilled" => Some(SubstrateEvent::Staking(StakingEvent::Chilled {
                 extrinsic_index,
-                account_id: get_argument_primitive!(&arguments[0], AccountId),
+                validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
             "EraPaid" | "EraPayout" => Some(SubstrateEvent::Staking(StakingEvent::EraPaid {
                 extrinsic_index,
@@ -502,7 +502,7 @@ impl StakingEvent {
             })),
             "Rewarded" | "Reward" => Some(SubstrateEvent::Staking(StakingEvent::Rewarded {
                 extrinsic_index,
-                nominator_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                rewardee_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 amount: get_argument_primitive!(&arguments[1], Balance),
             })),
             "Slashed" | "Slash" => Some(SubstrateEvent::Staking(StakingEvent::Slashed {

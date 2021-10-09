@@ -13,17 +13,17 @@ CREATE TABLE IF NOT EXISTS block
     metadata_version  smallint                    NOT NULL,
     runtime_version   smallint                    NOT NULL,
     last_updated      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT fk_account
+    CONSTRAINT block_fk_account
         FOREIGN KEY (author_account_id)
             REFERENCES account (id)
             ON DELETE RESTRICT
             ON UPDATE CASCADE,
-    CONSTRAINT fk_era
+    CONSTRAINT block_fk_era
         FOREIGN KEY (era_index)
             REFERENCES era (index)
             ON DELETE RESTRICT
             ON UPDATE CASCADE,
-    CONSTRAINT fk_epoch
+    CONSTRAINT block_fk_epoch
         FOREIGN KEY (epoch_index)
             REFERENCES epoch (index)
             ON DELETE RESTRICT

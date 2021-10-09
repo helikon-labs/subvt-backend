@@ -5,7 +5,7 @@ use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{
     argument::IdentificationTuple,
-    {BlockHeader, Epoch, Era},
+    {Balance, BlockHeader, Epoch, Era},
 };
 
 pub struct PostgreSQLStorage {
@@ -257,6 +257,7 @@ impl PostgreSQLStorage {
     pub async fn save_nomination(
         &self,
         block_hash: &str,
+        extrinsic_index: i32,
         nominator_account_id: &AccountId,
         validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
@@ -264,13 +265,14 @@ impl PostgreSQLStorage {
         let mut tx = self.connection_pool.begin().await?;
         let extrinsic_nominate_id: (i32,) = sqlx::query_as(
             r#"
-                INSERT INTO extrinsic_nominate (block_hash, nominator_account_id)
-                VALUES ($1, $2)
-                ON CONFLICT (block_hash, nominator_account_id) DO NOTHING
-                RETURNING id
-                "#,
+            INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, nominator_account_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (block_hash, nominator_account_id) DO NOTHING
+            RETURNING id
+            "#,
         )
         .bind(block_hash)
+        .bind(extrinsic_index)
         .bind(nominator_account_id.to_string())
         .fetch_one(&mut tx)
         .await?;
@@ -289,5 +291,133 @@ impl PostgreSQLStorage {
         }
         tx.commit().await?;
         Ok(())
+    }
+
+    pub async fn save_validator_chilled_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<()> {
+        self.save_account(validator_account_id).await?;
+        sqlx::query(
+            r#"
+            INSERT INTO event_validator_chilled (block_hash, extrinsic_index, validator_account_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(validator_account_id.to_string())
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn save_era_paid_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        era_index: u32,
+        validator_payout: Balance,
+        remainder: Balance,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO event_era_paid (block_hash, extrinsic_index, era_index, validator_payout, remainder)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (era_index) DO NOTHING
+            "#)
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(era_index)
+            .bind(validator_payout.to_string())
+            .bind(remainder.to_string())
+            .execute(&self.connection_pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn save_nominator_kicked_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        validator_account_id: &AccountId,
+        nominator_account_id: &AccountId,
+    ) -> anyhow::Result<()> {
+        self.save_account(validator_account_id).await?;
+        self.save_account(nominator_account_id).await?;
+        sqlx::query(
+            r#"
+            INSERT INTO event_nominator_kicked (block_hash, extrinsic_index, validator_account_id, nominator_account_id)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (block_hash, validator_account_id, nominator_account_id) DO NOTHING
+            "#)
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(validator_account_id.to_string())
+            .bind(nominator_account_id.to_string())
+            .execute(&self.connection_pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn save_rewarded_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        rewardee_account_id: &AccountId,
+        amount: Balance,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(rewardee_account_id).await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO event_rewarded (block_hash, extrinsic_index, rewardee_account_id, amount)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (block_hash, rewardee_account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(rewardee_account_id.to_string())
+        .bind(amount.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_slashed_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        validator_account_id: &AccountId,
+        amount: Balance,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(validator_account_id).await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO event_slashed (block_hash, extrinsic_index, validator_account_id, amount)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(validator_account_id.to_string())
+        .bind(amount.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
     }
 }

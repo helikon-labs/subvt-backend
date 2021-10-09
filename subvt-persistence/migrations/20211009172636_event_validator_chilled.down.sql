@@ -1,0 +1,1 @@
+DROP TABLE event_validator_chilled CASCADE;
