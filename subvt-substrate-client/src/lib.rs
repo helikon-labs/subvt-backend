@@ -55,6 +55,10 @@ impl SubstrateClient {
             .build(&config.substrate.rpc_url)
             .await?;
         debug!("Substrate connection successful.");
+        let chain: String = ws_client
+            .request("system_chain", JsonRpcParams::NoParams)
+            .await?;
+        let chain = Chain::from_str(chain.as_str())?;
         let mut metadata = {
             let metadata_response: String = ws_client
                 .request("state_getMetadata", JsonRpcParams::NoParams)
@@ -62,7 +66,7 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         debug!("Got metadata.");
-        metadata.check_event_primitive_argument_support()?;
+        metadata.check_event_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
                 "state_getStorage",
@@ -76,10 +80,6 @@ impl SubstrateClient {
             .request("system_properties", JsonRpcParams::NoParams)
             .await?;
         debug!("Got system properties. {:?}", system_properties);
-        let chain: String = ws_client
-            .request("system_chain", JsonRpcParams::NoParams)
-            .await?;
-        let chain = Chain::from_str(chain.as_str())?;
         Ok(Self {
             chain,
             metadata,
@@ -99,7 +99,7 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
-        metadata.check_event_primitive_argument_support()?;
+        metadata.check_event_primitive_argument_support(&self.chain)?;
         metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
         Ok(())
@@ -940,7 +940,7 @@ impl SubstrateClient {
                 .await?;
             &hex::decode(events_hex_string.trim_start_matches("0x"))?
         };
-        SubstrateEvent::decode_events(&self.metadata, &mut event_bytes)
+        SubstrateEvent::decode_events(&self.chain, &self.metadata, &mut event_bytes)
     }
 
     pub async fn get_block_extrinsics(

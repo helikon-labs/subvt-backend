@@ -1,4 +1,3 @@
-use crate::substrate::OpaqueTimeSlot;
 use crate::{
     crypto::AccountId,
     substrate::{
@@ -8,7 +7,7 @@ use crate::{
         },
         error::DecodeError,
         metadata::Metadata,
-        Balance,
+        Balance, Chain, OpaqueTimeSlot,
     },
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
@@ -650,7 +649,11 @@ pub enum SubstrateEvent {
 }
 
 impl SubstrateEvent {
-    fn decode_event(metadata: &Metadata, bytes: &mut &[u8]) -> Result<Self, DecodeError> {
+    fn decode_event(
+        chain: &Chain,
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> Result<Self, DecodeError> {
         let phase = frame_system::Phase::decode(bytes)?;
         let extrinsic_index = match phase {
             frame_system::Phase::ApplyExtrinsic(extrinsic_index) => Some(extrinsic_index),
@@ -663,7 +666,7 @@ impl SubstrateEvent {
         // decode arguments
         let mut arguments: Vec<Argument> = Vec::new();
         for argument_meta in &event.arguments {
-            arguments.push(Argument::decode(argument_meta, &mut *bytes).unwrap());
+            arguments.push(Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap());
         }
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
@@ -701,11 +704,15 @@ impl SubstrateEvent {
         Ok(substrate_event)
     }
 
-    pub fn decode_events(metadata: &Metadata, bytes: &mut &[u8]) -> anyhow::Result<Vec<Self>> {
+    pub fn decode_events(
+        chain: &Chain,
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Vec<Self>> {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
         let mut events: Vec<Self> = Vec::with_capacity(event_count as usize);
         for _ in 0..event_count {
-            events.push(SubstrateEvent::decode_event(metadata, &mut *bytes)?);
+            events.push(SubstrateEvent::decode_event(chain, metadata, &mut *bytes)?);
         }
         Ok(events)
     }

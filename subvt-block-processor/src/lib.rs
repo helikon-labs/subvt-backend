@@ -128,6 +128,8 @@ impl BlockProcessor {
                     .last_runtime_upgrade_info
                     .spec_version
             );
+            // substrate_client.metadata.log_all_calls();
+            // substrate_client.metadata.log_all_events();
         }
         let metadata_version = match substrate_client.metadata.version {
             MetadataVersion::V12 => 12,
@@ -220,7 +222,10 @@ impl BlockProcessor {
         } else {
             None
         };
-        let runtime_version = runtime_upgrade_info.spec_version as i16;
+        let runtime_version = substrate_client
+            .metadata
+            .last_runtime_upgrade_info
+            .spec_version as i16;
         postgres
             .save_finalized_block(
                 &block_hash,
@@ -424,15 +429,13 @@ impl Service for BlockProcessor {
             let block_processor_substrate_client =
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
-            // substrate_client.metadata.log_all_calls();
-            // substrate_client.metadata.log_all_events();
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
-
-            /*
+            // block_subscription_substrate_client.metadata.log_all_calls();
+            // block_subscription_substrate_client.metadata.log_all_events();
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 6000000..6001000 {
+                for block_number in 6945230..6946230 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,
@@ -453,7 +456,6 @@ impl Service for BlockProcessor {
                     }
                 }
             }
-             */
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let block_processor_substrate_client = block_processor_substrate_client.clone();

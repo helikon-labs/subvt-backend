@@ -1,8 +1,9 @@
 use crate::{
     crypto::AccountId,
     substrate::{
-        error::DecodeError, metadata::ArgumentMeta, CallHash, MultiAddress, OpaqueTimeSlot,
-        RewardDestination, SlotRange,
+        error::DecodeError,
+        metadata::{ArgumentMeta, Metadata},
+        CallHash, Chain, MultiAddress, OpaqueTimeSlot, RewardDestination, SlotRange,
     },
 };
 use frame_support::{
@@ -115,9 +116,10 @@ macro_rules! get_argument_primitive {
             crate::substrate::argument::extract_argument_primitive($argument_expr)?;
         match argument_primitive {
             ArgumentPrimitive::$argument_primitive_type(primitive) => Ok(primitive),
-            _ => Err(DecodeError::Error(
-                "Cannot get argument primitive.".to_string(),
-            )),
+            _ => Err(DecodeError::Error(format!(
+                "Cannot get argument primitive {:?}.",
+                argument_primitive
+            ))),
         }?
     }};
 }
@@ -135,15 +137,14 @@ macro_rules! get_argument_vector {
         for argument in argument_vector {
             let argument_primitive =
                 crate::substrate::argument::extract_argument_primitive(argument)?;
-            let identification_tuple = match argument_primitive {
-                ArgumentPrimitive::$argument_primitive_type(identification_tuple) => {
-                    Ok(identification_tuple)
-                }
-                _ => Err(DecodeError::Error(
-                    "Cannot get argument primitive.".to_string(),
-                )),
+            let element = match argument_primitive {
+                ArgumentPrimitive::$argument_primitive_type(element) => Ok(element),
+                _ => Err(DecodeError::Error(format!(
+                    "Cannot get argument primitive {:?}.",
+                    argument_primitive
+                ))),
             }?;
-            result_vector.push(identification_tuple);
+            result_vector.push(element);
         }
         result_vector
     }};
@@ -208,7 +209,6 @@ generate_argument_primitive_decoder_impl! {[
     ("GroupIndex", decode_group_index, GroupIndex),
     ("Hash", decode_hash, Hash),
     ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
-    ("<T::Lookup as StaticLookup>::Source", decode_target_account_id, MultiAddress),
     ("MultiLocation", decode_multi_location, MultiLocation),
     ("Timepoint<BlockNumber>", decode_multisig_timepoint, MultisigTimepoint),
     ("Kind", decode_offence_kind, OffenceKind),
@@ -247,6 +247,8 @@ pub enum ArgumentDecodeError {
 
 impl Argument {
     pub fn decode(
+        chain: &Chain,
+        metadata: &Metadata,
         argument_meta: &ArgumentMeta,
         bytes: &mut &[u8],
     ) -> anyhow::Result<Self, ArgumentDecodeError> {
@@ -264,14 +266,20 @@ impl Argument {
                 };
                 let mut result: Vec<Argument> = Vec::new();
                 for _ in 0..length.0 {
-                    result.push(Argument::decode(argument_meta.as_ref(), &mut *bytes)?);
+                    result.push(Argument::decode(
+                        chain,
+                        metadata,
+                        argument_meta.as_ref(),
+                        &mut *bytes,
+                    )?);
                 }
                 Ok(Argument::Vec(result))
             }
             ArgumentMeta::Option(argument_meta) => match bytes.read_byte().unwrap() {
                 0 => Ok(Argument::Option(Box::new(None))),
                 1 => {
-                    let argument = Argument::decode(argument_meta.as_ref(), &mut *bytes)?;
+                    let argument =
+                        Argument::decode(chain, metadata, argument_meta.as_ref(), &mut *bytes)?;
                     Ok(Argument::Option(Box::new(Some(argument))))
                 }
                 _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
@@ -279,7 +287,12 @@ impl Argument {
             ArgumentMeta::Tuple(argument_metas) => {
                 let mut result: Vec<Argument> = Vec::new();
                 for argument_meta in argument_metas {
-                    result.push(Argument::decode(argument_meta, &mut *bytes)?);
+                    result.push(Argument::decode(
+                        chain,
+                        metadata,
+                        argument_meta,
+                        &mut *bytes,
+                    )?);
                 }
                 Ok(Argument::Tuple(result))
             }
@@ -288,6 +301,34 @@ impl Argument {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
                     ))
+                } else if name == "<T::Lookup as StaticLookup>::Source" {
+                    if metadata.is_signer_address_multi(chain) {
+                        match MultiAddress::decode(&mut *bytes) {
+                            Ok(multi_address) => {
+                                Ok(Argument::Primitive(
+                                    Box::new(ArgumentPrimitive::MultiAddress(multi_address))
+                                ))
+                            },
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode MultiAddress for <T::Lookup as StaticLookup>::Source."
+                                    .to_string(),
+                            )),
+                        }
+                    } else {
+                        match AccountId::decode(&mut *bytes) {
+                            Ok(account_id) =>  {
+                                Ok(Argument::Primitive(Box::new(
+                                    ArgumentPrimitive::MultiAddress(
+                                        MultiAddress::Id(account_id)
+                                    ),
+                                )))
+                            } ,
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode AccountId for <T::Lookup as StaticLookup>::Source."
+                                    .to_string(),
+                            )),
+                        }
+                    }
                 } else {
                     match ArgumentPrimitive::decode(name, &mut *bytes) {
                         Ok(argument_primitive) => {
