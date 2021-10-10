@@ -134,14 +134,17 @@ impl SubstrateExtrinsic {
             "Timestamp" => {
                 let mut arguments: Vec<Argument> = Vec::new();
                 for argument_meta in &call.arguments {
-                    arguments.push(Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap());
+                    arguments.push(
+                        Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap(),
+                    );
                 }
                 Timestamp::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             "Staking" => {
                 let mut arguments: Vec<Argument> = Vec::new();
                 for argument_meta in &call.arguments {
-                    let argument = Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap();
+                    let argument =
+                        Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap();
                     arguments.push(argument);
                 }
                 Staking::from(&call.name, version, signature.clone(), arguments.clone())?

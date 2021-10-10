@@ -316,13 +316,9 @@ impl Argument {
                         }
                     } else {
                         match AccountId::decode(&mut *bytes) {
-                            Ok(account_id) =>  {
-                                Ok(Argument::Primitive(Box::new(
-                                    ArgumentPrimitive::MultiAddress(
-                                        MultiAddress::Id(account_id)
-                                    ),
-                                )))
-                            } ,
+                            Ok(account_id) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::MultiAddress(MultiAddress::Id(account_id)),
+                            ))),
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode AccountId for <T::Lookup as StaticLookup>::Source."
                                     .to_string(),
