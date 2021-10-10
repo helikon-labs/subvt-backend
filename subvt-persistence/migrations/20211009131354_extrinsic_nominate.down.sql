@@ -1,1 +1,1 @@
-DROP TABLE extrinsic_nominate CASCADE;
+ DROP TABLE extrinsic_nominate CASCADE;

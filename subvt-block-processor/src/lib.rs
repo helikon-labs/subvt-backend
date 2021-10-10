@@ -211,14 +211,6 @@ impl BlockProcessor {
         let mut _failed_extrinsic_indices: Vec<u32> = Vec::new();
         for event in events {
             match event {
-                /*
-                SubstrateEvent::Balances(balances_event) => match balances_event {
-                    _ => (),
-                },
-                SubstrateEvent::Identity(identity_event) => match identity_event {
-                    _ => (),
-                },
-                 */
                 SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
                     validator_account_id,
@@ -333,23 +325,28 @@ impl BlockProcessor {
                         extrinsic_index,
                         dispatch_info: _,
                     } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
-                    /*
-                    System::NewAccount {
-                        extrinsic_index: _,
-                        account_id: _,
-                    } => {}
-                    System::KilledAccount {
-                        extrinsic_index: _,
-                        account_id: _,
-                    } => {}
-                     */
+                    SystemEvent::NewAccount {
+                        extrinsic_index,
+                        account_id,
+                    } => {
+                        let extrinsic_index =
+                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                        postgres
+                            .save_new_account_event(&block_hash, extrinsic_index, &account_id)
+                            .await?;
+                    }
+                    SystemEvent::KilledAccount {
+                        extrinsic_index,
+                        account_id,
+                    } => {
+                        let extrinsic_index =
+                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                        postgres
+                            .save_killed_account_event(&block_hash, extrinsic_index, &account_id)
+                            .await?;
+                    }
                     _ => (),
                 },
-                /*
-                SubstrateEvent::Utility(utility_event) => match utility_event {
-                    _ => (),
-                },
-                 */
                 _ => (),
             }
         }

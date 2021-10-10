@@ -262,8 +262,7 @@ impl PostgreSQLStorage {
         validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
         self.save_account(nominator_account_id).await?;
-        let mut tx = self.connection_pool.begin().await?;
-        let extrinsic_nominate_id: (i32,) = sqlx::query_as(
+        let maybe_extrinsic_nominate_id: Option<(i32,)> = sqlx::query_as(
             r#"
             INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, nominator_account_id)
             VALUES ($1, $2, $3)
@@ -274,22 +273,23 @@ impl PostgreSQLStorage {
         .bind(block_hash)
         .bind(extrinsic_index)
         .bind(nominator_account_id.to_string())
-        .fetch_one(&mut tx)
+        .fetch_optional(&self.connection_pool)
         .await?;
-        for validator_account_id in validator_account_ids {
-            self.save_account(validator_account_id).await?;
-            sqlx::query(
-                r#"
+        if let Some(extrinsic_nominate_id) = maybe_extrinsic_nominate_id {
+            for validator_account_id in validator_account_ids {
+                self.save_account(validator_account_id).await?;
+                sqlx::query(
+                    r#"
                 INSERT INTO extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
                 VALUES ($1, $2)
                 ON CONFLICT (extrinsic_nominate_id, validator_account_id) DO NOTHING
                 "#)
-                .bind(extrinsic_nominate_id.0)
-                .bind(validator_account_id.to_string())
-                .execute(&mut tx)
-                .await?;
+                    .bind(extrinsic_nominate_id.0)
+                    .bind(validator_account_id.to_string())
+                    .execute(&self.connection_pool)
+                    .await?;
+            }
         }
-        tx.commit().await?;
         Ok(())
     }
 
@@ -412,6 +412,92 @@ impl PostgreSQLStorage {
         .bind(extrinsic_index)
         .bind(validator_account_id.to_string())
         .bind(amount.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_new_account_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<String>> {
+        self.save_account(account_id).await?;
+        let mut tx = self.connection_pool.begin().await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO event_new_account (block_hash, extrinsic_index, account_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (block_hash, account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(account_id.to_string())
+        .fetch_optional(&mut tx)
+        .await?;
+        if maybe_result.is_none() {
+            return Ok(None);
+        }
+        // update account
+        let maybe_result: Option<(String,)> = sqlx::query_as(
+            r#"
+            UPDATE account SET discovered_at_block_hash = $1, last_updated = now()
+            WHERE id = $2
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_killed_account_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<String>> {
+        self.save_account(account_id).await?;
+        let mut tx = self.connection_pool.begin().await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO event_killed_account (block_hash, extrinsic_index, account_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (block_hash, account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(account_id.to_string())
+        .fetch_optional(&mut tx)
+        .await?;
+        if maybe_result.is_none() {
+            return Ok(None);
+        }
+        // update account
+        let maybe_result: Option<(String,)> = sqlx::query_as(
+            r#"
+            UPDATE account SET killed_at_block_hash = $1, last_updated = now()
+            WHERE id = $2
+            RETURNING id
+            "#,
+        )
+        .bind(block_hash)
+        .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {

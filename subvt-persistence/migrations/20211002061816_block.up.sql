@@ -29,3 +29,16 @@ CREATE TABLE IF NOT EXISTS block
             ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
+
+ALTER TABLE account
+    ADD CONSTRAINT account_fk_discovered_block
+        FOREIGN KEY (discovered_at_block_hash)
+            REFERENCES block (hash)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE;
+ALTER TABLE account
+    ADD CONSTRAINT account_fk_killed_block
+        FOREIGN KEY (killed_at_block_hash)
+            REFERENCES block (hash)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE;
