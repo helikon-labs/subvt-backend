@@ -90,7 +90,7 @@ impl BlockProcessor {
 
     async fn process_block(
         &self,
-        substrate_client: &SubstrateClient,
+        substrate_client: &mut SubstrateClient,
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLStorage,
         block_number: u64,
@@ -106,9 +106,8 @@ impl BlockProcessor {
         if substrate_client.metadata.runtime_config.spec_version
             != runtime_upgrade_info.spec_version
         {
-            // TODO update metadata & make checks
             debug!("Different runtime version than client's. Will reset metadata.");
-            // substrate_client.set_metadata_at_block(&block_hash).await?;
+            substrate_client.set_metadata_at_block(&block_hash).await?;
             debug!(
                 "Runtime {} metadata fetched.",
                 substrate_client.metadata.runtime_config.spec_version
@@ -395,47 +394,52 @@ impl BlockProcessor {
 impl Service for BlockProcessor {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
+            let block_subscription_substrate_client = SubstrateClient::new(&CONFIG).await?;
+            let block_processor_substrate_client =
+                Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
-            let busy_lock = Arc::new(Mutex::new(()));
             // substrate_client.metadata.log_all_calls();
             // substrate_client.metadata.log_all_events();
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
             /*
-            for block_number in 7000000..7001000 {
-                let update_result = self
-                    .process_block(
-                        &substrate_client,
-                        &runtime_information,
-                        &postgres,
-                        block_number,
-                    )
-                    .await;
-                match update_result {
-                    Ok(_) => (),
-                    Err(error) => {
-                        error!("{:?}", error);
-                        error!(
-                            "Block processing failed for finalized block #{}.",
+            {
+                let mut block_processor_substrate_client =
+                    block_processor_substrate_client.lock().await;
+                for block_number in 5000000..5001000 {
+                    let update_result = self
+                        .process_block(
+                            &mut block_processor_substrate_client,
+                            &runtime_information,
+                            &postgres,
                             block_number,
-                        );
+                        )
+                        .await;
+                    match update_result {
+                        Ok(_) => (),
+                        Err(error) => {
+                            error!("{:?}", error);
+                            error!(
+                                "Block processing failed for finalized block #{}.",
+                                block_number,
+                            );
+                        }
                     }
                 }
             }
              */
-            substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
-                let substrate_client = substrate_client.clone();
+
+            block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
+                let block_processor_substrate_client = block_processor_substrate_client.clone();
                 let runtime_information = runtime_information.clone();
                 let postgres = postgres.clone();
-                let busy_lock = busy_lock.clone();
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
                     Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
                 tokio::spawn(async move {
-                    let _lock = busy_lock.lock().await;
+                    let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
                     let update_result = self.process_block(
-                        &substrate_client,
+                        &mut block_processor_substrate_client,
                         &runtime_information,
                         &postgres,
                         finalized_block_number,

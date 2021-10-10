@@ -38,7 +38,7 @@ pub struct RuntimeConfig {
     pub epoch_duration_blocks: u64,
     pub epoch_duration_millis: u64,
     pub sessions_per_era: u32,
-    pub max_nominations: u32,
+    pub max_nominations: Option<u32>,
     pub era_duration_blocks: u64,
     pub era_duration_millis: u64,
     pub spec_name: String,
@@ -73,7 +73,12 @@ impl Metadata {
         // staking
         let staking_module = metadata.module("Staking")?;
         let sessions_per_era: u32 = staking_module.constant("SessionsPerEra")?.value()?;
-        let max_nominations: u32 = staking_module.constant("MaxNominations")?.value()?;
+        let mut max_nominations: Option<u32> = None;
+        if let Ok(encoded_value) = staking_module.constant("MaxNominations") {
+            if let Ok(value) = Decode::decode(&mut &encoded_value.value[..]) {
+                max_nominations = Some(value);
+            }
+        }
         let era_duration_blocks = epoch_duration_blocks * sessions_per_era as u64;
         let era_duration_millis = era_duration_blocks * expected_block_time_millis;
         // system
