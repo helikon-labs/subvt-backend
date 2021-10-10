@@ -30,8 +30,6 @@ pub struct BlockProcessor;
 struct RuntimeInformation {
     pub era_index: u32,
     pub epoch_index: u64,
-    pub runtime_version: u32,
-    pub processed_block_number: u64,
 }
 
 impl BlockProcessor {
@@ -105,14 +103,21 @@ impl BlockProcessor {
             .get_last_runtime_upgrade_info(&block_hash)
             .await?;
         // check metadata version
-        let last_runtime_version = { runtime_information.read().unwrap().runtime_version };
-        if last_runtime_version != 0 && last_runtime_version != runtime_upgrade_info.spec_version {
-            // TODO update metadata & make checks
-        }
+        if substrate_client.metadata.runtime_config.spec_version
+            != runtime_upgrade_info.spec_version
         {
-            runtime_information.write().unwrap().runtime_version =
-                runtime_upgrade_info.spec_version;
+            // TODO update metadata & make checks
+            debug!("Different runtime version than client's. Will reset metadata.");
+            // substrate_client.set_metadata_at_block(&block_hash).await?;
+            debug!(
+                "Runtime {} metadata fetched.",
+                substrate_client.metadata.runtime_config.spec_version
+            );
         }
+        let metadata_version = match substrate_client.metadata.version {
+            MetadataVersion::V12 => 12,
+            MetadataVersion::V13 => 13,
+        } as i16;
         let (last_era_index, last_epoch_index) = {
             let runtime_information = runtime_information.read().unwrap();
             (
@@ -121,13 +126,13 @@ impl BlockProcessor {
             )
         };
         let active_era = substrate_client.get_active_era(&block_hash).await?;
-        let current_epoch = substrate_client.get_current_epoch(&block_hash).await?;
-        if last_epoch_index != current_epoch.index {
-            debug!("New epoch. Persist era and epoch if they don't exist.");
+        let current_epoch_index = substrate_client
+            .get_current_epoch_index(&block_hash)
+            .await?;
+
+        if last_epoch_index != current_epoch_index {
+            debug!("New epoch. Persist era if it doesn't exist.");
             postgres.save_era(&active_era).await?;
-            postgres
-                .save_epoch(active_era.index, &current_epoch)
-                .await?;
         }
         if last_era_index != active_era.index {
             // persist active era validators
@@ -155,9 +160,8 @@ impl BlockProcessor {
         {
             let mut runtime_information = runtime_information.write().unwrap();
             runtime_information.era_index = active_era.index;
-            runtime_information.epoch_index = current_epoch.index;
+            runtime_information.epoch_index = current_epoch_index;
         }
-
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
 
@@ -191,10 +195,6 @@ impl BlockProcessor {
         } else {
             None
         };
-        let metadata_version = match substrate_client.metadata.version {
-            MetadataVersion::V12 => 12,
-            MetadataVersion::V13 => 13,
-        } as i16;
         let runtime_version = runtime_upgrade_info.spec_version as i16;
         postgres
             .save_finalized_block(
@@ -202,7 +202,7 @@ impl BlockProcessor {
                 &block_header,
                 block_timestamp,
                 author_account_id,
-                (active_era.index, current_epoch.index as u32),
+                (active_era.index, current_epoch_index as u32),
                 (metadata_version, runtime_version),
             )
             .await?;
@@ -387,9 +387,6 @@ impl BlockProcessor {
                 }
             };
         }
-        {
-            runtime_information.write().unwrap().processed_block_number = block_number;
-        }
         Ok(())
     }
 }
@@ -401,9 +398,31 @@ impl Service for BlockProcessor {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let busy_lock = Arc::new(Mutex::new(()));
-            substrate_client.metadata.log_all_calls();
-            substrate_client.metadata.log_all_events();
+            // substrate_client.metadata.log_all_calls();
+            // substrate_client.metadata.log_all_events();
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
+            /*
+            for block_number in 7000000..7001000 {
+                let update_result = self
+                    .process_block(
+                        &substrate_client,
+                        &runtime_information,
+                        &postgres,
+                        block_number,
+                    )
+                    .await;
+                match update_result {
+                    Ok(_) => (),
+                    Err(error) => {
+                        error!("{:?}", error);
+                        error!(
+                            "Block processing failed for finalized block #{}.",
+                            block_number,
+                        );
+                    }
+                }
+            }
+             */
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let substrate_client = substrate_client.clone();
                 let runtime_information = runtime_information.clone();

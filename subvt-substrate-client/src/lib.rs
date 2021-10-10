@@ -78,6 +78,21 @@ impl SubstrateClient {
         })
     }
 
+    pub async fn set_metadata_at_block(&mut self, block_hash: &str) -> anyhow::Result<()> {
+        let metadata = {
+            let metadata_response: String = self
+                .ws_client
+                .request(
+                    "state_getMetadata",
+                    JsonRpcParams::Array(vec![block_hash.into()]),
+                )
+                .await?;
+            Metadata::from(metadata_response.as_str())?
+        };
+        self.metadata = metadata;
+        Ok(())
+    }
+
     pub async fn get_current_block_hash(&self) -> anyhow::Result<String> {
         let hash = self
             .ws_client
@@ -147,18 +162,20 @@ impl SubstrateClient {
         Ok(active_era_info)
     }
 
+    pub async fn get_current_epoch_index(&self, block_hash: &str) -> anyhow::Result<u64> {
+        let hex_string: String = self
+            .ws_client
+            .request(
+                "state_getStorage",
+                get_rpc_storage_plain_params("Babe", "EpochIndex", Some(block_hash)),
+            )
+            .await?;
+        Ok(decode_hex_string(hex_string.as_str())?)
+    }
+
     /// Get current epoch at the given block.
     pub async fn get_current_epoch(&self, block_hash: &str) -> anyhow::Result<Epoch> {
-        let index: u64 = {
-            let hex_string: String = self
-                .ws_client
-                .request(
-                    "state_getStorage",
-                    get_rpc_storage_plain_params("Babe", "EpochIndex", Some(block_hash)),
-                )
-                .await?;
-            decode_hex_string(hex_string.as_str())?
-        };
+        let index = self.get_current_epoch_index(block_hash).await?;
         let start_block_number = {
             let hex_string: String = self
                 .ws_client

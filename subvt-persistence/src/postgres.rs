@@ -5,7 +5,7 @@ use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{
     argument::IdentificationTuple,
-    {Balance, BlockHeader, Epoch, Era},
+    {Balance, BlockHeader, Era},
 };
 
 pub struct PostgreSQLStorage {
@@ -58,28 +58,6 @@ impl PostgreSQLStorage {
         .bind(era.end_timestamp as u32)
         .fetch_optional(&self.connection_pool)
         .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn save_epoch(&self, era_index: u32, epoch: &Epoch) -> anyhow::Result<Option<i64>> {
-        let maybe_result: Option<(i64, )> = sqlx::query_as(
-            r#"
-                INSERT INTO epoch (index, era_index, start_block_number, start_timestamp, end_timestamp)
-                VALUES ($1, $2, $3, $4, $5)
-                ON CONFLICT (index) DO NOTHING
-                RETURNING index
-                "#)
-            .bind(epoch.index as u32)
-            .bind(era_index)
-            .bind(epoch.start_block_number)
-            .bind(epoch.start_timestamp as u32)
-            .bind(epoch.end_timestamp as u32)
-            .fetch_optional(&self.connection_pool)
-            .await?;
         if let Some(result) = maybe_result {
             Ok(Some(result.0))
         } else {
