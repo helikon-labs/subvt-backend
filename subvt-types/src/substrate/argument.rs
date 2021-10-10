@@ -2,7 +2,7 @@ use crate::{
     crypto::AccountId,
     substrate::{
         error::DecodeError, metadata::ArgumentMeta, CallHash, MultiAddress, OpaqueTimeSlot,
-        RewardDestination,
+        RewardDestination, SlotRange,
     },
 };
 use frame_support::{
@@ -92,6 +92,7 @@ pub enum ArgumentPrimitive {
     RegistrarIndex(RegistrarIndex),
     SchedulerTaskAddress(TaskAddress<BlockNumber>),
     SessionIndex(SessionIndex),
+    SlotRange(SlotRange),
     Weight(Weight),
     Xcm(xcm::latest::Xcm<()>),
     XcmOutcome(Box<xcm::latest::Outcome>),
@@ -227,6 +228,7 @@ generate_argument_primitive_decoder_impl! {[
     ("RewardDestination<T::AccountId>", decode_reward_destination, RewardDestination),
     ("TaskAddress<BlockNumber>", decode_scheduler_task_address, SchedulerTaskAddress),
     ("SessionIndex", decode_session_index, SessionIndex),
+    ("SlotRange", decode_slot_range, SlotRange),
     ("Weight", decode_weight, Weight),
     ("Xcm<()>", decode_xcm, Xcm),
     ("Outcome", decode_xcm_outcome, XcmOutcome),

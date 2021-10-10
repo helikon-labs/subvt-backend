@@ -55,13 +55,23 @@ impl SubstrateClient {
             .build(&config.substrate.rpc_url)
             .await?;
         debug!("Substrate connection successful.");
-        let metadata = {
+        let mut metadata = {
             let metadata_response: String = ws_client
                 .request("state_getMetadata", JsonRpcParams::NoParams)
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
-        debug!("Got metadata. {:?}", metadata.runtime_config);
+        debug!("Got metadata.");
+        metadata.check_event_primitive_argument_support()?;
+        let last_runtime_upgrade_hex_string: String = ws_client
+            .request(
+                "state_getStorage",
+                get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", None),
+            )
+            .await?;
+        metadata.last_runtime_upgrade_info =
+            LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
+        debug!("Got last runtime upgrade info.");
         let system_properties: SystemProperties = ws_client
             .request("system_properties", JsonRpcParams::NoParams)
             .await?;
@@ -79,7 +89,7 @@ impl SubstrateClient {
     }
 
     pub async fn set_metadata_at_block(&mut self, block_hash: &str) -> anyhow::Result<()> {
-        let metadata = {
+        let mut metadata = {
             let metadata_response: String = self
                 .ws_client
                 .request(
@@ -89,6 +99,8 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
+        metadata.check_event_primitive_argument_support()?;
+        metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
         Ok(())
     }
@@ -157,7 +169,7 @@ impl SubstrateClient {
             .await?;
         let active_era_info = Era::from(
             hex_string.as_str(),
-            self.metadata.runtime_config.era_duration_millis,
+            self.metadata.constants.era_duration_millis,
         )?;
         Ok(active_era_info)
     }
@@ -203,7 +215,7 @@ impl SubstrateClient {
         };
         let start_timestamp = start_timestamp_millis / 1000;
         let end_timestamp_millis =
-            start_timestamp_millis + self.metadata.runtime_config.epoch_duration_millis;
+            start_timestamp_millis + self.metadata.constants.epoch_duration_millis;
         let end_timestamp = end_timestamp_millis / 1000;
         Ok(Epoch {
             index,

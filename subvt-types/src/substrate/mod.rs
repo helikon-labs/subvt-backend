@@ -32,6 +32,7 @@ pub mod event;
 pub mod extrinsic;
 pub mod metadata;
 
+#[derive(Default)]
 pub struct LastRuntimeUpgradeInfo {
     pub spec_version: u32,
     pub spec_name: String,
@@ -627,4 +628,18 @@ impl RewardDestination {
         };
         Ok(destination)
     }
+}
+
+#[derive(Clone, Debug, Decode)]
+pub enum SlotRange {
+    ZeroZero,
+    ZeroOne,
+    ZeroTwo,
+    ZeroThree,
+    OneOne,
+    OneTwo,
+    OneThree,
+    TwoTwo,
+    TwoThree,
+    ThreeThree,
 }

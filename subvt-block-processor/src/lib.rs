@@ -103,14 +103,27 @@ impl BlockProcessor {
             .get_last_runtime_upgrade_info(&block_hash)
             .await?;
         // check metadata version
-        if substrate_client.metadata.runtime_config.spec_version
+        if substrate_client
+            .metadata
+            .last_runtime_upgrade_info
+            .spec_version
             != runtime_upgrade_info.spec_version
         {
-            debug!("Different runtime version than client's. Will reset metadata.");
+            debug!(
+                "Different runtime version #{} than client's #{}. Will reset metadata.",
+                runtime_upgrade_info.spec_version,
+                substrate_client
+                    .metadata
+                    .last_runtime_upgrade_info
+                    .spec_version
+            );
             substrate_client.set_metadata_at_block(&block_hash).await?;
             debug!(
                 "Runtime {} metadata fetched.",
-                substrate_client.metadata.runtime_config.spec_version
+                substrate_client
+                    .metadata
+                    .last_runtime_upgrade_info
+                    .spec_version
             );
         }
         let metadata_version = match substrate_client.metadata.version {
@@ -150,7 +163,7 @@ impl BlockProcessor {
         let blocks_per_10_minutes = 10 * 60 * 1000
             / substrate_client
                 .metadata
-                .runtime_config
+                .constants
                 .expected_block_time_millis;
         if block_number % blocks_per_10_minutes == 0 {
             self.persist_era_reward_points(substrate_client, postgres, active_era.index)
@@ -401,11 +414,11 @@ impl Service for BlockProcessor {
             // substrate_client.metadata.log_all_calls();
             // substrate_client.metadata.log_all_events();
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
-            /*
+
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 5000000..5001000 {
+                for block_number in 8800000..8801000 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,
@@ -426,7 +439,6 @@ impl Service for BlockProcessor {
                     }
                 }
             }
-             */
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let block_processor_substrate_client = block_processor_substrate_client.clone();

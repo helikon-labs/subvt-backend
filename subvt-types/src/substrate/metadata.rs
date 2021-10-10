@@ -1,10 +1,10 @@
+use crate::substrate::LastRuntimeUpgradeInfo;
 /// Substrate metadata. Most of this code has been adopted from [SubXT](https://github.com/paritytech/substrate-subxt).
 /// Modified, diminished and augmented as needed.
 use core::convert::TryInto;
 use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
 use log::debug;
 use parity_scale_codec::{Decode, Encode, Error as CodecError};
-use sp_version::RuntimeVersion;
 use std::fmt::{Display, Formatter};
 use std::{
     collections::{HashMap, HashSet},
@@ -33,17 +33,13 @@ pub enum MetadataError {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct RuntimeConfig {
+pub struct MetadataConstants {
     pub expected_block_time_millis: u64,
     pub epoch_duration_blocks: u64,
     pub epoch_duration_millis: u64,
     pub sessions_per_era: u32,
-    pub max_nominations: Option<u32>,
     pub era_duration_blocks: u64,
     pub era_duration_millis: u64,
-    pub spec_name: String,
-    pub spec_version: u32,
-    pub tx_version: u32,
 }
 
 pub enum MetadataVersion {
@@ -56,7 +52,8 @@ pub struct Metadata {
     pub version: MetadataVersion,
     pub modules: HashMap<u8, ModuleMetadata>,
     pub extrinsic_metadata: ExtrinsicMetadata,
-    pub runtime_config: RuntimeConfig,
+    pub constants: MetadataConstants,
+    pub last_runtime_upgrade_info: LastRuntimeUpgradeInfo,
 }
 
 impl Metadata {
@@ -73,30 +70,16 @@ impl Metadata {
         // staking
         let staking_module = metadata.module("Staking")?;
         let sessions_per_era: u32 = staking_module.constant("SessionsPerEra")?.value()?;
-        let mut max_nominations: Option<u32> = None;
-        if let Ok(encoded_value) = staking_module.constant("MaxNominations") {
-            if let Ok(value) = Decode::decode(&mut &encoded_value.value[..]) {
-                max_nominations = Some(value);
-            }
-        }
         let era_duration_blocks = epoch_duration_blocks * sessions_per_era as u64;
         let era_duration_millis = era_duration_blocks * expected_block_time_millis;
-        // system
-        let system_module = metadata.module("System")?;
-        let version: RuntimeVersion = system_module.constant("Version")?.value()?;
-        metadata.runtime_config = RuntimeConfig {
+        metadata.constants = MetadataConstants {
             expected_block_time_millis,
             epoch_duration_blocks,
             epoch_duration_millis,
             sessions_per_era,
-            max_nominations,
             era_duration_blocks,
             era_duration_millis,
-            spec_name: String::from(version.spec_name),
-            spec_version: version.spec_version,
-            tx_version: version.transaction_version,
         };
-        metadata.check_event_primitive_argument_support()?;
         Ok(metadata)
     }
 
@@ -457,7 +440,8 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
                     version: MetadataVersion::V12,
                     modules: v12::convert_modules(meta)?,
                     extrinsic_metadata,
-                    runtime_config: Default::default(),
+                    constants: Default::default(),
+                    last_runtime_upgrade_info: Default::default(),
                 })
             }
             RuntimeMetadata::V13(meta) => {
@@ -469,7 +453,8 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
                     version: MetadataVersion::V13,
                     modules: v13::convert_modules(meta)?,
                     extrinsic_metadata,
-                    runtime_config: Default::default(),
+                    constants: Default::default(),
+                    last_runtime_upgrade_info: Default::default(),
                 })
             }
             _ => Err(ConversionError::InvalidVersion.into()),

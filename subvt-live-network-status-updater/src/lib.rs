@@ -162,7 +162,7 @@ impl LiveNetworkStatusUpdater {
                 .await
                 .context("Error while getting last era's active stakers.")?;
             let total_stake = era_stakers.total_stake();
-            let era_duration_seconds = client.metadata.runtime_config.era_duration_millis / 1000;
+            let era_duration_seconds = client.metadata.constants.era_duration_millis / 1000;
             let year_seconds = (365 * 24 + 6) * 60 * 60;
             let eras_per_year = (year_seconds / era_duration_seconds) as u128;
             let return_rate_per_million =
