@@ -1,3 +1,4 @@
+use crate::substrate::Chain;
 use crate::{
     crypto::AccountId,
     substrate::{
@@ -9,7 +10,6 @@ use crate::{
 };
 use log::{debug, warn};
 use parity_scale_codec::{Compact, Decode, Input};
-use crate::substrate::Chain;
 
 #[derive(Debug)]
 pub enum Timestamp {
@@ -95,7 +95,11 @@ impl Signature {
 }
 
 impl SubstrateExtrinsic {
-    fn decode_extrinsic(chain: &Chain, metadata: &Metadata, bytes: &mut &[u8]) -> Result<Self, DecodeError> {
+    fn decode_extrinsic(
+        chain: &Chain,
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> Result<Self, DecodeError> {
         let signed_version = bytes.read_byte().unwrap();
         let sign_mask = 0b10000000;
         let version_mask = 0b00000100;
@@ -159,13 +163,19 @@ impl SubstrateExtrinsic {
         Ok(extrinsic)
     }
 
-    pub fn decode_extrinsics(chain: &Chain, metadata: &Metadata, block: Block) -> anyhow::Result<Vec<Self>> {
+    pub fn decode_extrinsics(
+        chain: &Chain,
+        metadata: &Metadata,
+        block: Block,
+    ) -> anyhow::Result<Vec<Self>> {
         let mut extrinsics: Vec<Self> = Vec::new();
         for extrinsic_hex_string in block.extrinsics {
             let mut raw_bytes: &[u8] = &hex::decode(extrinsic_hex_string.trim_start_matches("0x"))?;
             let byte_vector: Vec<u8> = Decode::decode(&mut raw_bytes).unwrap();
             let mut bytes: &[u8] = byte_vector.as_ref();
-            extrinsics.push(SubstrateExtrinsic::decode_extrinsic(chain, metadata, &mut bytes)?);
+            extrinsics.push(SubstrateExtrinsic::decode_extrinsic(
+                chain, metadata, &mut bytes,
+            )?);
         }
         Ok(extrinsics)
     }
