@@ -64,6 +64,7 @@ impl BlockProcessor {
         &self,
         substrate_client: &SubstrateClient,
         postgres: &PostgreSQLStorage,
+        block_hash: &str,
         era_index: u32,
     ) -> anyhow::Result<()> {
         if !postgres.era_exists(era_index).await? {
@@ -73,7 +74,9 @@ impl BlockProcessor {
             );
             return Ok(());
         }
-        let era_reward_points = substrate_client.get_era_reward_points(era_index).await?;
+        let era_reward_points = substrate_client
+            .get_era_reward_points(era_index, block_hash)
+            .await?;
         postgres
             .update_era_reward_points(era_index, era_reward_points.total)
             .await?;
@@ -156,8 +159,13 @@ impl BlockProcessor {
             )
             .await?;
             // persist last era reward points
-            self.persist_era_reward_points(substrate_client, postgres, active_era.index - 1)
-                .await?;
+            self.persist_era_reward_points(
+                substrate_client,
+                postgres,
+                &block_hash,
+                active_era.index - 1,
+            )
+            .await?;
         }
         // update current era reward points every 10 minutes
         let blocks_per_10_minutes = 10 * 60 * 1000
@@ -166,8 +174,13 @@ impl BlockProcessor {
                 .constants
                 .expected_block_time_millis;
         if block_number % blocks_per_10_minutes == 0 {
-            self.persist_era_reward_points(substrate_client, postgres, active_era.index)
-                .await?;
+            self.persist_era_reward_points(
+                substrate_client,
+                postgres,
+                &block_hash,
+                active_era.index,
+            )
+            .await?;
         }
         {
             let mut runtime_information = runtime_information.write().unwrap();
@@ -415,10 +428,11 @@ impl Service for BlockProcessor {
             // substrate_client.metadata.log_all_events();
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
 
+            /*
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 8800000..8801000 {
+                for block_number in 6000000..6001000 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,
@@ -439,6 +453,7 @@ impl Service for BlockProcessor {
                     }
                 }
             }
+             */
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let block_processor_substrate_client = block_processor_substrate_client.clone();

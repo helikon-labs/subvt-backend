@@ -1,4 +1,4 @@
-use crate::substrate::LastRuntimeUpgradeInfo;
+use crate::substrate::{LastRuntimeUpgradeInfo, Chain};
 /// Substrate metadata. Most of this code has been adopted from [SubXT](https://github.com/paritytech/substrate-subxt).
 /// Modified, diminished and augmented as needed.
 use core::convert::TryInto;
@@ -92,6 +92,16 @@ impl Metadata {
 }
 
 impl Metadata {
+    pub fn is_signer_address_multi(&self, chain: &Chain) -> bool {
+        match chain {
+            Chain::Kusama => self.last_runtime_upgrade_info.spec_version >= 2028,
+            Chain::Polkadot => self.last_runtime_upgrade_info.spec_version >= 28,
+            _ => true,
+        }
+    }
+}
+
+impl Metadata {
     pub fn log_all_calls(&self) {
         let mut call_primitive_arg_name_set: HashSet<String> = HashSet::default();
         debug!("METADATA ALL CALLS");
@@ -165,7 +175,7 @@ impl Metadata {
             );
             if let Err(error) = result {
                 if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) =
-                    error
+                error
                 {
                     return Err(error);
                 }
@@ -226,7 +236,7 @@ impl ModuleMetadata {
             .ok_or_else(|| MetadataError::ConstantNotFound(key.to_string()))
     }
 
-    pub fn _events(&self) -> impl Iterator<Item = &ModuleEventMetadata> {
+    pub fn _events(&self) -> impl Iterator<Item=&ModuleEventMetadata> {
         self.events.values()
     }
 }

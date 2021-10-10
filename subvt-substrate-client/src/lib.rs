@@ -901,13 +901,17 @@ impl SubstrateClient {
 
     /// Get total and individual era reward points earned by validators at the given era.
     /// Will give the points earned so far for an active era.
-    pub async fn get_era_reward_points(&self, era_index: u32) -> anyhow::Result<EraRewardPoints> {
+    pub async fn get_era_reward_points(
+        &self,
+        era_index: u32,
+        block_hash: &str,
+    ) -> anyhow::Result<EraRewardPoints> {
         let params = get_rpc_storage_map_params(
             &self.metadata,
             "Staking",
             "ErasRewardPoints",
             &era_index,
-            None,
+            Some(block_hash),
         );
         let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
         Ok(decode_hex_string(hex_string.as_str())?)
@@ -945,6 +949,7 @@ impl SubstrateClient {
     ) -> anyhow::Result<Vec<SubstrateExtrinsic>> {
         let block = self.get_block(block_hash).await?;
         Ok(SubstrateExtrinsic::decode_extrinsics(
+            &self.chain,
             &self.metadata,
             block,
         )?)

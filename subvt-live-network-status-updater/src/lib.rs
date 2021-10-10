@@ -201,7 +201,7 @@ impl LiveNetworkStatusUpdater {
     );
         // era reward points so far
         let era_reward_points = client
-            .get_era_reward_points(era.index)
+            .get_era_reward_points(era.index, &best_block_hash)
             .await
             .context("Error while getting current era reward points.")?
             .total;
