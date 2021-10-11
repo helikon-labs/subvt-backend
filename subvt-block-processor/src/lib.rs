@@ -435,7 +435,7 @@ impl Service for BlockProcessor {
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 6800580..6946230 {
+                for block_number in 6801174..6946230 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,

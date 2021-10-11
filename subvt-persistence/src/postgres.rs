@@ -411,7 +411,6 @@ impl PostgreSQLStorage {
         account_id: &AccountId,
     ) -> anyhow::Result<Option<String>> {
         self.save_account(account_id).await?;
-        let mut tx = self.connection_pool.begin().await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
             INSERT INTO event_new_account (block_hash, extrinsic_index, account_id)
@@ -423,7 +422,7 @@ impl PostgreSQLStorage {
         .bind(block_hash)
         .bind(extrinsic_index)
         .bind(account_id.to_string())
-        .fetch_optional(&mut tx)
+        .fetch_optional(&self.connection_pool)
         .await?;
         if maybe_result.is_none() {
             return Ok(None);
@@ -454,7 +453,6 @@ impl PostgreSQLStorage {
         account_id: &AccountId,
     ) -> anyhow::Result<Option<String>> {
         self.save_account(account_id).await?;
-        let mut tx = self.connection_pool.begin().await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
             INSERT INTO event_killed_account (block_hash, extrinsic_index, account_id)
@@ -466,7 +464,7 @@ impl PostgreSQLStorage {
         .bind(block_hash)
         .bind(extrinsic_index)
         .bind(account_id.to_string())
-        .fetch_optional(&mut tx)
+        .fetch_optional(&self.connection_pool)
         .await?;
         if maybe_result.is_none() {
             return Ok(None);
