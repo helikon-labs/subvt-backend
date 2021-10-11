@@ -15,12 +15,14 @@ pallet-collective = { git = "https://github.com/paritytech/substrate.git", branc
 pallet-bounties = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-democracy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
+pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-gilt = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-multisig = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 pallet-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
+pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.10" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.10" }
@@ -33,7 +35,9 @@ sp-authority-discovery = { git = "https://github.com/paritytech/substrate.git", 
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 sp-finality-grandpa = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
+sp-npos-elections = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
+sp-session = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 sp-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 sp-version = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.10" }
 subvt-proc-macro = { path = "../subvt-proc-macro" }

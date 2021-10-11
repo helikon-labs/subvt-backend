@@ -130,23 +130,37 @@ impl SubstrateExtrinsic {
         let call_index: u8 = Decode::decode(&mut *bytes).unwrap();
         let module = metadata.modules.get(&module_index).unwrap();
         let call = module.calls.get(&call_index).unwrap();
+        let mut arguments: Vec<Argument> = Vec::new();
+        if module.name == "Utility" && (call.name == "batch" || call.name == "batch_all") {
+            debug!("{}.{} extrinsic. Skip.", module.name, call.name);
+            /*
+            while bytes.len() > 0 {
+                match SubstrateExtrinsic::decode_extrinsic(chain, metadata, &mut *bytes) {
+                    Ok(x) => {
+                        warn!("Batch extrinsic decode success: {:?}", x);
+                    },
+                    Err(error) => {
+                        warn!("Batch extrinsic decode error: {:?}", error);
+                    }
+                }
+            }
+             */
+            return Ok(SubstrateExtrinsic::Other {
+                version,
+                signature,
+                module_name: module.name.clone(),
+                call_name: call.name.clone(),
+            });
+        }
+        for argument_meta in &call.arguments {
+            let argument = Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap();
+            arguments.push(argument);
+        }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
             ("Timestamp", "set") => {
-                let mut arguments: Vec<Argument> = Vec::new();
-                for argument_meta in &call.arguments {
-                    arguments.push(
-                        Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap(),
-                    );
-                }
                 Timestamp::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             ("Staking", "nominate") => {
-                let mut arguments: Vec<Argument> = Vec::new();
-                for argument_meta in &call.arguments {
-                    let argument =
-                        Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap();
-                    arguments.push(argument);
-                }
                 Staking::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             _ => None,
