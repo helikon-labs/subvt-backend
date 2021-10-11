@@ -157,10 +157,15 @@ impl PostgreSQLStorage {
         block_hash: &str,
         block_header: &BlockHeader,
         block_timestamp: Option<u32>,
-        author_account_id_hex: Option<String>,
+        maybe_author_account_id: Option<AccountId>,
         (era_index, epoch_index): (u32, u32),
         (metadata_version, runtime_version): (i16, i16),
     ) -> anyhow::Result<Option<String>> {
+        let mut maybe_author_account_id_hex: Option<String> = None;
+        if let Some(author_account_id) = maybe_author_account_id {
+            maybe_author_account_id_hex = Some(author_account_id.to_string());
+            self.save_account(&author_account_id).await?;
+        }
         let maybe_result: Option<(String, )> = sqlx::query_as(
             r#"
             INSERT INTO block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, is_finalized, metadata_version, runtime_version)
@@ -171,7 +176,7 @@ impl PostgreSQLStorage {
             .bind(block_hash)
             .bind(block_header.get_number()? as u32)
             .bind(block_timestamp)
-            .bind(author_account_id_hex)
+            .bind(maybe_author_account_id_hex)
             .bind(era_index)
             .bind(epoch_index)
             .bind(&block_header.parent_hash)

@@ -213,12 +213,12 @@ impl BlockProcessor {
                 }
             }
         }
-        let author_account_id = if let Some(validator_index) = maybe_validator_index {
+        let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
             substrate_client
                 .get_active_validator_account_ids(&block_hash)
                 .await?
                 .get(validator_index)
-                .map(|account_id| account_id.to_string())
+                .map(|a| a.to_owned())
         } else {
             None
         };
@@ -231,7 +231,7 @@ impl BlockProcessor {
                 &block_hash,
                 &block_header,
                 block_timestamp,
-                author_account_id,
+                maybe_author_account_id,
                 (active_era.index, current_epoch_index as u32),
                 (metadata_version, runtime_version),
             )
@@ -435,7 +435,7 @@ impl Service for BlockProcessor {
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 6945230..6946230 {
+                for block_number in 5000782..6946230 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,

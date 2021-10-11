@@ -130,8 +130,8 @@ impl SubstrateExtrinsic {
         let call_index: u8 = Decode::decode(&mut *bytes).unwrap();
         let module = metadata.modules.get(&module_index).unwrap();
         let call = module.calls.get(&call_index).unwrap();
-        let maybe_extrinsic = match module.name.as_str() {
-            "Timestamp" => {
+        let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
+            ("Timestamp", "set") => {
                 let mut arguments: Vec<Argument> = Vec::new();
                 for argument_meta in &call.arguments {
                     arguments.push(
@@ -140,7 +140,7 @@ impl SubstrateExtrinsic {
                 }
                 Timestamp::from(&call.name, version, signature.clone(), arguments.clone())?
             }
-            "Staking" => {
+            ("Staking", "nominate") => {
                 let mut arguments: Vec<Argument> = Vec::new();
                 for argument_meta in &call.arguments {
                     let argument =
