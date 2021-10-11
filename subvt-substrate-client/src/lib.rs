@@ -55,13 +55,20 @@ impl SubstrateClient {
             .build(&config.substrate.rpc_url)
             .await?;
         debug!("Substrate connection successful.");
+        // get current block hash
+        let block_hash: String = ws_client
+            .request("chain_getBlockHash", JsonRpcParams::NoParams)
+            .await?;
         let chain: String = ws_client
             .request("system_chain", JsonRpcParams::NoParams)
             .await?;
         let chain = Chain::from_str(chain.as_str())?;
         let mut metadata = {
             let metadata_response: String = ws_client
-                .request("state_getMetadata", JsonRpcParams::NoParams)
+                .request(
+                    "state_getMetadata",
+                    JsonRpcParams::Array(vec![block_hash.clone().into()]),
+                )
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
@@ -70,7 +77,7 @@ impl SubstrateClient {
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
                 "state_getStorage",
-                get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", None),
+                get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(&block_hash)),
             )
             .await?;
         metadata.last_runtime_upgrade_info =
