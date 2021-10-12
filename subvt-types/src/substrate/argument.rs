@@ -69,6 +69,7 @@ pub enum ArgumentPrimitive {
     Bool(bool),
     BountyIndex(BountyIndex),
     BlockNumber(BlockNumber),
+    Call(SubstrateExtrinsic),
     CallHash(CallHash),
     ChangesTrieConfiguration(ChangesTrieConfiguration),
     CompactAuctionIndex(Compact<AuctionIndex>),
@@ -158,7 +159,6 @@ pub enum ArgumentPrimitive {
     SlotRange(SlotRange),
     SolutionOrSnapshotSize(SolutionOrSnapshotSize),
     StatementKind(StatementKind),
-    SubstrateExtrinsic(SubstrateExtrinsic),
     ValidationCode(ValidationCode),
     ValidatorPrefs(ValidatorPrefs),
     VersionedMultiAssets(Box<xcm::VersionedMultiAssets>),
@@ -246,13 +246,6 @@ macro_rules! generate_argument_primitive_decoder_impl {
 }
 
 generate_argument_primitive_decoder_impl! {[
-    // call types
-    ("Box<<T as Config>::Call>", decode_substrate_call_1, SubstrateExtrinsic),
-    ("<T as Config>::Call", decode_substrate_call_2, SubstrateExtrinsic),
-    ("Box<Xcm<T::Call>>", decode_substrate_call_3, SubstrateExtrinsic),
-    ("Box<VersionedXcm<T::Call>>", decode_substrate_call_4, SubstrateExtrinsic),
-    ("Box<<T as Config<I>>::Proposal>", decode_substrate_call_5, SubstrateExtrinsic),
-    // other types
     ("AccountId", decode_account_id, AccountId),
     ("T::AccountId", decode_account_id_t, AccountId),
     ("AccountIndex", decode_account_index_1, AccountIndex),
@@ -389,17 +382,17 @@ pub enum ArgumentDecodeError {
 }
 
 impl Argument {
-    pub fn decode<I: Input>(
+    pub fn decode(
         chain: &Chain,
         metadata: &Metadata,
         argument_meta: &ArgumentMeta,
-        input: &mut I,
+        bytes: &mut &[u8],
     ) -> anyhow::Result<Self, ArgumentDecodeError> {
         use ArgumentDecodeError::*;
 
         match argument_meta {
             ArgumentMeta::Vec(argument_meta) => {
-                let length: Compact<u32> = match Decode::decode(input) {
+                let length: Compact<u32> = match Decode::decode(bytes) {
                     Ok(length) => length,
                     Err(_) => {
                         return Err(DecodeError(
@@ -413,16 +406,16 @@ impl Argument {
                         chain,
                         metadata,
                         argument_meta.as_ref(),
-                        &mut *input,
+                        &mut *bytes,
                     )?);
                 }
                 Ok(Argument::Vec(result))
             }
-            ArgumentMeta::Option(argument_meta) => match input.read_byte().unwrap() {
+            ArgumentMeta::Option(argument_meta) => match bytes.read_byte().unwrap() {
                 0 => Ok(Argument::Option(Box::new(None))),
                 1 => {
                     let argument =
-                        Argument::decode(chain, metadata, argument_meta.as_ref(), &mut *input)?;
+                        Argument::decode(chain, metadata, argument_meta.as_ref(), &mut *bytes)?;
                     Ok(Argument::Option(Box::new(Some(argument))))
                 }
                 _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
@@ -434,7 +427,7 @@ impl Argument {
                         chain,
                         metadata,
                         argument_meta,
-                        &mut *input,
+                        &mut *bytes,
                     )?);
                 }
                 Ok(Argument::Tuple(result))
@@ -447,21 +440,37 @@ impl Argument {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
                     ))
+                } else if name == "Box<<T as Config>::Call>"
+                    || name == "<T as Config>::Call"
+                    || name == "Box<Xcm<T::Call>>"
+                    || name == "Box<VersionedXcm<T::Call>>"
+                    || name == "Box<<T as Config<I>>::Proposal>"
+                {
+                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, false, &mut *bytes)
+                    {
+                        Ok(extrinsic) => Ok(Argument::Primitive(Box::new(
+                            ArgumentPrimitive::Call(extrinsic),
+                        ))),
+                        Err(decode_error) => Err(ArgumentDecodeError::DecodeError(format!(
+                            "Cannot decode call type {}: {:?}",
+                            name, decode_error
+                        ))),
+                    }
                 } else if name == "<T::Lookup as StaticLookup>::Source" {
                     if metadata.is_signer_address_multi(chain) {
-                        match MultiAddress::decode(&mut *input) {
+                        match MultiAddress::decode(&mut *bytes) {
                             Ok(multi_address) => {
                                 Ok(Argument::Primitive(
                                     Box::new(ArgumentPrimitive::MultiAddress(multi_address))
                                 ))
-                            },
+                            }
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode MultiAddress for <T::Lookup as StaticLookup>::Source."
                                     .to_string(),
                             )),
                         }
                     } else {
-                        match AccountId::decode(&mut *input) {
+                        match AccountId::decode(&mut *bytes) {
                             Ok(account_id) => Ok(Argument::Primitive(Box::new(
                                 ArgumentPrimitive::MultiAddress(MultiAddress::Id(account_id)),
                             ))),
@@ -472,7 +481,7 @@ impl Argument {
                         }
                     }
                 } else {
-                    match ArgumentPrimitive::decode(name, &mut *input) {
+                    match ArgumentPrimitive::decode(name, &mut *bytes) {
                         Ok(argument_primitive) => {
                             Ok(Argument::Primitive(Box::new(argument_primitive)))
                         }

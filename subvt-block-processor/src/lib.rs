@@ -204,7 +204,6 @@ impl BlockProcessor {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
                     TimestampExtrinsic::Set {
-                        version: _,
                         signature: _,
                         timestamp,
                     } => {
@@ -385,11 +384,8 @@ impl BlockProcessor {
             if !successful_extrinsic_indices.contains(&(index as u32)) {
                 continue;
             }
-            if let SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
-                version: _,
-                signature,
-                targets,
-            }) = extrinsic
+            if let SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate { signature, targets }) =
+                extrinsic
             {
                 let maybe_nominator_account_id = match signature {
                     Some(signature) => signature.get_signer_account_id(),
@@ -438,7 +434,7 @@ impl Service for BlockProcessor {
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 9000249..9001000 {
+                for block_number in 9000260..9001000 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,

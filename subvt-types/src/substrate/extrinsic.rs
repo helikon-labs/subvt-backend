@@ -4,17 +4,16 @@ use crate::{
     substrate::{
         argument::{get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive},
         error::DecodeError,
-        metadata::Metadata,
+        metadata::{ArgumentMeta, Metadata},
         Block, MultiAddress,
     },
 };
 use log::{debug, warn};
-use parity_scale_codec::{Compact, Decode, Error, Input};
+use parity_scale_codec::{Compact, Decode, Input};
 
 #[derive(Clone, Debug)]
 pub enum TimestampExtrinsic {
     Set {
-        version: u8,
         signature: Option<Signature>,
         timestamp: u64,
     },
@@ -23,13 +22,11 @@ pub enum TimestampExtrinsic {
 impl TimestampExtrinsic {
     pub fn from(
         name: &str,
-        version: u8,
         signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_event = match name {
             "set" => Some(SubstrateExtrinsic::Timestamp(TimestampExtrinsic::Set {
-                version,
                 signature,
                 timestamp: get_argument_primitive!(&arguments[0], Moment).0,
             })),
@@ -42,7 +39,6 @@ impl TimestampExtrinsic {
 #[derive(Clone, Debug)]
 pub enum StakingExtrinsic {
     Nominate {
-        version: u8,
         signature: Option<Signature>,
         targets: Vec<MultiAddress>,
     },
@@ -51,13 +47,11 @@ pub enum StakingExtrinsic {
 impl StakingExtrinsic {
     pub fn from(
         name: &str,
-        version: u8,
         signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
             "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
-                version,
                 signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
             })),
@@ -68,27 +62,46 @@ impl StakingExtrinsic {
 }
 
 #[derive(Clone, Debug)]
-pub enum SubstrateExtrinsic {
-    Staking(StakingExtrinsic),
-    Timestamp(TimestampExtrinsic),
-    Other {
-        module_name: String,
-        call_name: String,
-        version: u8,
+pub enum UtilityExtrinsic {
+    Batch {
         signature: Option<Signature>,
+        calls: Vec<SubstrateExtrinsic>,
     },
 }
 
-impl Decode for SubstrateExtrinsic {
-    fn decode<I: Input>(_input: &mut I) -> Result<Self, Error> {
-        let extrinsic = SubstrateExtrinsic::Other {
-            module_name: "random_module_name".to_string(),
-            call_name: "random_call_name".to_string(),
-            version: 2,
-            signature: None,
+impl UtilityExtrinsic {
+    pub fn from(
+        name: &str,
+        signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            "batch" | "batch_all" => {
+                let mut calls: Vec<SubstrateExtrinsic> = Vec::new();
+                for argument in arguments {
+                    calls.push(get_argument_primitive!(&argument, Call))
+                }
+                Some(SubstrateExtrinsic::Utility(UtilityExtrinsic::Batch {
+                    signature,
+                    calls,
+                }))
+            }
+            _ => None,
         };
-        Ok(extrinsic)
+        Ok(maybe_extrinsic)
     }
+}
+
+#[derive(Clone, Debug)]
+pub enum SubstrateExtrinsic {
+    Staking(StakingExtrinsic),
+    Timestamp(TimestampExtrinsic),
+    Utility(UtilityExtrinsic),
+    Other {
+        module_name: String,
+        call_name: String,
+        signature: Option<Signature>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -107,75 +120,97 @@ impl Signature {
 }
 
 impl SubstrateExtrinsic {
-    fn decode_extrinsic<I: Input>(
+    pub fn decode_extrinsic(
         chain: &Chain,
         metadata: &Metadata,
-        input: &mut I,
+        skip_signature: bool,
+        bytes: &mut &[u8],
     ) -> Result<Self, DecodeError> {
-        let signed_version = input.read_byte().unwrap();
-        let sign_mask = 0b10000000;
-        let version_mask = 0b00000100;
-        let is_signed = (signed_version & sign_mask) == sign_mask;
-        let version = signed_version & version_mask;
-        let signature = if is_signed {
-            let signer = if metadata.is_signer_address_multi(chain) {
-                MultiAddress::decode(&mut *input).unwrap()
+        let mut signature: Option<Signature> = None;
+        if !skip_signature {
+            let signed_version = bytes.read_byte()?;
+            let sign_mask = 0b10000000;
+            let version_mask = 0b00000100;
+            let is_signed = (signed_version & sign_mask) == sign_mask;
+            let _version = signed_version & version_mask;
+            signature = if is_signed {
+                let signer = if metadata.is_signer_address_multi(chain) {
+                    MultiAddress::decode(&mut *bytes)?
+                } else {
+                    MultiAddress::Id(Decode::decode(&mut *bytes)?)
+                };
+                let signature = sp_runtime::MultiSignature::decode(&mut *bytes)?;
+                let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes)?;
+                let nonce: Compact<u64> = Decode::decode(&mut *bytes)?;
+                let tip: Compact<u64> = Decode::decode(&mut *bytes)?;
+                let signature = Signature {
+                    signer,
+                    signature,
+                    era: Some(era),
+                    nonce: Some(nonce.0),
+                    tip: Some(tip.0),
+                };
+                Some(signature)
             } else {
-                MultiAddress::Id(Decode::decode(&mut *input).unwrap())
+                None
             };
-            let signature = sp_runtime::MultiSignature::decode(&mut *input).unwrap();
-            let era: sp_runtime::generic::Era = Decode::decode(&mut *input).unwrap();
-            let nonce: Compact<u64> = Decode::decode(&mut *input).unwrap();
-            let tip: Compact<u64> = Decode::decode(&mut *input).unwrap();
-            let signature = Signature {
-                signer,
-                signature,
-                era: Some(era),
-                nonce: Some(nonce.0),
-                tip: Some(tip.0),
-            };
-            Some(signature)
+        }
+        let module_index: u8 = Decode::decode(&mut *bytes)?;
+        let call_index: u8 = Decode::decode(&mut *bytes)?;
+        let module = if let Some(module) = metadata.modules.get(&module_index) {
+            module
         } else {
-            None
+            return Err(DecodeError::Error(format!(
+                "Cannot find module at index {}.",
+                module_index
+            )));
         };
-        let module_index: u8 = Decode::decode(&mut *input).unwrap();
-        let call_index: u8 = Decode::decode(&mut *input).unwrap();
-        let module = metadata.modules.get(&module_index).unwrap();
-        let call = module.calls.get(&call_index).unwrap();
+        let call = if let Some(call) = module.calls.get(&call_index) {
+            call
+        } else {
+            return Err(DecodeError::Error(format!(
+                "Cannot find call at index {} for module {}.",
+                call_index, module.name
+            )));
+        };
         let mut arguments: Vec<Argument> = Vec::new();
-        /*
-        if module.name == "Utility" && (call.name == "batch" || call.name == "batch_all") {
-            debug!("{}.{} extrinsic. Skip.", module.name, call.name);
-            /*
-            while bytes.len() > 0 {
-                match SubstrateExtrinsic::decode_extrinsic(chain, metadata, &mut *bytes) {
-                    Ok(x) => {
-                        warn!("Batch extrinsic decode success: {:?}", x);
-                    },
-                    Err(error) => {
-                        warn!("Batch extrinsic decode error: {:?}", error);
+        for argument_meta in &call.arguments {
+            if let ArgumentMeta::Vec(inner_argument_meta) = argument_meta {
+                let inner_argument_meta = *inner_argument_meta.clone();
+                if let ArgumentMeta::Primitive(name) = inner_argument_meta {
+                    if name == "<T as Config>::Call" {
+                        // skip signed signature - inner calls won't be signed
+                        bytes.read_byte()?;
+                        loop {
+                            let extrinsic_result = SubstrateExtrinsic::decode_extrinsic(
+                                chain,
+                                metadata,
+                                true,
+                                &mut *bytes,
+                            );
+                            match extrinsic_result {
+                                Ok(extrinsic) => arguments.push(Argument::Primitive(Box::new(
+                                    ArgumentPrimitive::Call(extrinsic),
+                                ))),
+                                Err(_) => break,
+                            }
+                        }
+                        continue;
                     }
                 }
             }
-             */
-            return Ok(SubstrateExtrinsic::Other {
-                version,
-                signature,
-                module_name: module.name.clone(),
-                call_name: call.name.clone(),
-            });
-        }
-         */
-        for argument_meta in &call.arguments {
-            let argument = Argument::decode(chain, metadata, argument_meta, &mut *input).unwrap();
+            let argument = Argument::decode(chain, metadata, argument_meta, &mut *bytes)?;
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
             ("Timestamp", "set") => {
-                TimestampExtrinsic::from(&call.name, version, signature.clone(), arguments.clone())?
+                TimestampExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Staking", "nominate") => {
-                StakingExtrinsic::from(&call.name, version, signature.clone(), arguments.clone())?
+                StakingExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            }
+            ("Utility", "batch") | ("Utility", "batch_all") => {
+                UtilityExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             _ => None,
         };
@@ -185,7 +220,6 @@ impl SubstrateExtrinsic {
         } else {
             warn!("Non-specified extrinsic {}.{}.", module.name, call.name);
             SubstrateExtrinsic::Other {
-                version,
                 signature,
                 module_name: module.name.clone(),
                 call_name: call.name.clone(),
@@ -205,7 +239,7 @@ impl SubstrateExtrinsic {
             let byte_vector: Vec<u8> = Decode::decode(&mut raw_bytes).unwrap();
             let mut bytes: &[u8] = byte_vector.as_ref();
             extrinsics.push(SubstrateExtrinsic::decode_extrinsic(
-                chain, metadata, &mut bytes,
+                chain, metadata, false, &mut bytes,
             )?);
         }
         Ok(extrinsics)
