@@ -86,15 +86,9 @@ impl UtilityExtrinsic {
                     calls.push(get_argument_primitive!(&argument, Call))
                 }
                 let extrinsic = if name == "batch" {
-                    UtilityExtrinsic::Batch {
-                        signature,
-                        calls,
-                    }
+                    UtilityExtrinsic::Batch { signature, calls }
                 } else {
-                    UtilityExtrinsic::BatchAll {
-                        signature,
-                        calls,
-                    }
+                    UtilityExtrinsic::BatchAll { signature, calls }
                 };
                 Some(SubstrateExtrinsic::Utility(extrinsic))
             }
