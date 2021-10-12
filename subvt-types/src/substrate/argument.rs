@@ -21,7 +21,7 @@ use pallet_democracy::{AccountVote, Conviction, PropIndex, ReferendumIndex, Vote
 use pallet_election_provider_multi_phase::{ElectionCompute, SolutionOrSnapshotSize};
 use pallet_elections_phragmen::Renouncing;
 use pallet_gilt::ActiveIndex;
-use pallet_identity::{Data, IdentityFields, Judgement, RegistrarIndex};
+use pallet_identity::{Data, IdentityInfo, IdentityFields, Judgement, RegistrarIndex};
 use pallet_im_online::Heartbeat;
 use pallet_multisig::{OpaqueCall, Timepoint};
 use pallet_scheduler::TaskAddress;
@@ -33,12 +33,12 @@ use polkadot_primitives::v1::{
     Balance, BlockNumber, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id,
     InherentData, ValidationCode,
 };
-use polkadot_runtime::ProxyType;
+use polkadot_runtime::{MaxAdditionalFields, ProxyType};
 use polkadot_runtime_common::{
     auctions::AuctionIndex,
     claims::{EcdsaSignature, EthereumAddress, StatementKind},
 };
-use polkadot_runtime_parachains::ump::MessageId;
+use polkadot_runtime_parachains::ump::{MessageId, OverweightIndex};
 use sp_consensus_babe::{digests::NextConfigDescriptor, EquivocationProof};
 use sp_core::{sr25519::Signature, ChangesTrieConfiguration};
 use sp_finality_grandpa::AuthorityList;
@@ -59,18 +59,6 @@ pub enum Argument {
 
 #[derive(Clone, Debug)]
 pub enum ArgumentPrimitive {
-    /*
-    missing primitive argument types:
-
-    Box<<T as Config>::Call>
-    <T as Config>::Call
-    Box<Xcm<T::Call>>
-    Box<RawSolution<CompactOf<T>>>
-    Box<IdentityInfo<T::MaxAdditionalFields>>
-    CallHashOf<T>
-    Box<<T as Config<I>>::Proposal>
-    MultiAsset
-     */
     AccountId(AccountId),
     AccountIndex(AccountIndex),
     AuctionIndex(AuctionIndex),
@@ -124,12 +112,14 @@ pub enum ArgumentPrimitive {
     IdentificationTuple(IdentificationTuple),
     IdentityData(Data),
     IdentityFields(IdentityFields),
+    IdentityInfo(Box<IdentityInfo<MaxAdditionalFields>>),
     IdentityJudgement(Judgement<Balance>),
     ImOnlineSignature(Signature),
     Key(Key),
     KeyOwnerProof(MembershipProof),
     KeyValue(KeyValue),
     Moment(Compact<u64>),
+    MultiAsset(xcm::v0::prelude::MultiAsset),
     MultiAddress(MultiAddress),
     MultiLocation(xcm::latest::MultiLocation),
     MultisigOpaqueCall(OpaqueCall),
@@ -145,6 +135,7 @@ pub enum ArgumentPrimitive {
     ParachainLeasePeriod(BlockNumber),
     ParachainCompactLeasePeriod(Compact<BlockNumber>),
     ParachainUMPMessageId(MessageId),
+    ParachainUMPOverweightIndex(OverweightIndex),
     Perbill(Perbill),
     Percent(Percent),
     RewardDestination(RewardDestination),
@@ -265,7 +256,8 @@ generate_argument_primitive_decoder_impl! {[
     ("BountyIndex", decode_bounty_index, BountyIndex),
     ("BlockNumber", decode_block_number, BlockNumber),
     ("T::BlockNumber", decode_t_block_number, BlockNumber),
-    ("CallHash", decode_call_hash, CallHash),
+    ("CallHash", decode_call_hash_1, CallHash),
+    ("CallHashOf<T>", decode_call_hash_2, CallHash),
     ("ChangesTrieConfiguration", decode_changes_trie_configuration, ChangesTrieConfiguration),
     ("CandidateReceipt<Hash>", decode_candidate_receipt_1, CandidateReceipt),
     ("CandidateReceipt<T::Hash>", decode_candidate_receipt_2, CandidateReceipt),
@@ -313,6 +305,7 @@ generate_argument_primitive_decoder_impl! {[
     ("IdentificationTuple", decode_identification_tuple, IdentificationTuple),
     ("Data", decode_identity_data, IdentityData),
     ("IdentityFields", decode_identity_fields, IdentityFields),
+    ("Box<IdentityInfo<T::MaxAdditionalFields>>", decode_identity_info, IdentityInfo),
     ("Judgement", decode_identity_judgement_1, IdentityJudgement),
     ("Judgement<BalanceOf<T>>", decode_identity_judgement_2, IdentityJudgement),
     ("<T::AuthorityId as RuntimeAppPublic>::Signature", decode_im_online_signature, ImOnlineSignature),
@@ -320,6 +313,7 @@ generate_argument_primitive_decoder_impl! {[
     ("T::KeyOwnerProof", decode_key_owner_proof, KeyOwnerProof),
     ("KeyValue", decode_key_value, KeyValue),
     ("ParachainsInherentData<T::Header>", decode_parachains_inherent_data, ParachainsInherentData),
+    ("MultiAsset", decode_multi_asset, MultiAsset),
     ("MultiLocation", decode_multi_location, MultiLocation),
     ("OpaqueCall", decode_multisig_opaque_call, MultisigOpaqueCall),
     ("Timepoint<BlockNumber>", decode_multisig_timepoint_1, MultisigTimepoint),
@@ -335,6 +329,7 @@ generate_argument_primitive_decoder_impl! {[
     ("LeasePeriodOf<T>", decode_parachain_lease_period_2, ParachainLeasePeriod),
     ("Compact<LeasePeriodOf<T>>", decode_parachain_compact_lease_period, ParachainCompactLeasePeriod),
     ("MessageId", decode_parachain_ump_message_id, ParachainUMPMessageId),
+    ("OverweightIndex", decode_parachain_ump_overweight_index, ParachainUMPOverweightIndex),
     ("Compact<T::Moment>", decode_moment, Moment),
     ("u8", decode_u8, U8),
     ("[u8; 32]", decode_u8_array_32, U8Array32),
@@ -362,7 +357,8 @@ generate_argument_primitive_decoder_impl! {[
     ("VestingInfo<BalanceOf<T>, T::BlockNumber>", decode_vesting_info, VestingInfo),
     ("Weight", decode_weight, Weight),
     ("Xcm<()>", decode_xcm, Xcm),
-    ("Outcome", decode_xcm_outcome, XcmOutcome),
+    ("Outcome", decode_xcm_outcome_1, XcmOutcome),
+    ("xcm::latest::Outcome", decode_xcm_outcome_2, XcmOutcome),
     ("xcm::v0::Outcome", decode_xcm_v0_outcome, XcmV0Outcome),
 ]}
 
@@ -428,7 +424,8 @@ impl Argument {
                 Ok(Argument::Tuple(result))
             }
             ArgumentMeta::Primitive(name) => {
-                if name == "sp_std::marker::PhantomData<(AccountId, Event)>" {
+                if name == "sp_std::marker::PhantomData<(AccountId, Event)>"
+                    || name == "Box<RawSolution<CompactOf<T>>>" {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
                     ))

@@ -14,7 +14,7 @@ use subvt_types::{
     crypto::AccountId,
     substrate::{
         event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent},
-        extrinsic::{Staking, SubstrateExtrinsic, Timestamp},
+        extrinsic::{StakingExtrinsic, SubstrateExtrinsic, TimestampExtrinsic},
         MultiAddress,
     },
 };
@@ -203,7 +203,7 @@ impl BlockProcessor {
         for extrinsic in &extrinsics {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
-                    Timestamp::Set {
+                    TimestampExtrinsic::Set {
                         version: _,
                         signature: _,
                         timestamp,
@@ -385,7 +385,7 @@ impl BlockProcessor {
             if !successful_extrinsic_indices.contains(&(index as u32)) {
                 continue;
             }
-            if let SubstrateExtrinsic::Staking(Staking::Nominate {
+            if let SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
                 version: _,
                 signature,
                 targets,

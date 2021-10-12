@@ -12,7 +12,7 @@ use log::{debug, warn};
 use parity_scale_codec::{Compact, Decode, Input};
 
 #[derive(Debug)]
-pub enum Timestamp {
+pub enum TimestampExtrinsic {
     Set {
         version: u8,
         signature: Option<Signature>,
@@ -20,7 +20,7 @@ pub enum Timestamp {
     },
 }
 
-impl Timestamp {
+impl TimestampExtrinsic {
     pub fn from(
         name: &str,
         version: u8,
@@ -28,7 +28,7 @@ impl Timestamp {
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_event = match name {
-            "set" => Some(SubstrateExtrinsic::Timestamp(Timestamp::Set {
+            "set" => Some(SubstrateExtrinsic::Timestamp(TimestampExtrinsic::Set {
                 version,
                 signature,
                 timestamp: get_argument_primitive!(&arguments[0], Moment).0,
@@ -40,7 +40,7 @@ impl Timestamp {
 }
 
 #[derive(Debug)]
-pub enum Staking {
+pub enum StakingExtrinsic {
     Nominate {
         version: u8,
         signature: Option<Signature>,
@@ -48,7 +48,7 @@ pub enum Staking {
     },
 }
 
-impl Staking {
+impl StakingExtrinsic {
     pub fn from(
         name: &str,
         version: u8,
@@ -56,7 +56,7 @@ impl Staking {
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
-            "nominate" => Some(SubstrateExtrinsic::Staking(Staking::Nominate {
+            "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
                 version,
                 signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
@@ -69,8 +69,8 @@ impl Staking {
 
 #[derive(Debug)]
 pub enum SubstrateExtrinsic {
-    Staking(Staking),
-    Timestamp(Timestamp),
+    Staking(StakingExtrinsic),
+    Timestamp(TimestampExtrinsic),
     Other {
         module_name: String,
         call_name: String,
@@ -158,10 +158,10 @@ impl SubstrateExtrinsic {
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
             ("Timestamp", "set") => {
-                Timestamp::from(&call.name, version, signature.clone(), arguments.clone())?
+                TimestampExtrinsic::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             ("Staking", "nominate") => {
-                Staking::from(&call.name, version, signature.clone(), arguments.clone())?
+                StakingExtrinsic::from(&call.name, version, signature.clone(), arguments.clone())?
             }
             _ => None,
         };
