@@ -161,6 +161,9 @@ pub enum ArgumentPrimitive {
     SubstrateExtrinsic(SubstrateExtrinsic),
     ValidationCode(ValidationCode),
     ValidatorPrefs(ValidatorPrefs),
+    VersionedMultiAssets(Box<xcm::VersionedMultiAssets>),
+    VersionedMultiLocation(xcm::VersionedMultiLocation),
+    VersionedXcm(Box<xcm::VersionedXcm<()>>),
     VestingInfo(VestingInfo<Balance, BlockNumber>),
     Weight(Weight),
     Xcm(xcm::latest::Xcm<()>),
@@ -247,7 +250,8 @@ generate_argument_primitive_decoder_impl! {[
     ("Box<<T as Config>::Call>", decode_substrate_call_1, SubstrateExtrinsic),
     ("<T as Config>::Call", decode_substrate_call_2, SubstrateExtrinsic),
     ("Box<Xcm<T::Call>>", decode_substrate_call_3, SubstrateExtrinsic),
-    ("Box<<T as Config<I>>::Proposal>", decode_substrate_call_4, SubstrateExtrinsic),
+    ("Box<VersionedXcm<T::Call>>", decode_substrate_call_4, SubstrateExtrinsic),
+    ("Box<<T as Config<I>>::Proposal>", decode_substrate_call_5, SubstrateExtrinsic),
     // other types
     ("AccountId", decode_account_id, AccountId),
     ("T::AccountId", decode_account_id_t, AccountId),
@@ -300,7 +304,8 @@ generate_argument_primitive_decoder_impl! {[
     ("ElectionCompute", decode_election_compute, ElectionCompute),
     ("ElectionScore", decode_election_score, ElectionScore),
     ("Supports<T::AccountId>", decode_election_supports, ElectionSupports),
-    ("Box<EquivocationProof<T::Hash, T::BlockNumber>>", decode_equivocation_proof, EquivocationProof),
+    ("Box<EquivocationProof<T::Hash, T::BlockNumber>>", decode_equivocation_proof_1, EquivocationProof),
+    ("Box<EquivocationProof<T::Header>>", decode_equivocation_proof_2, EquivocationProof),
     ("EraIndex", decode_era_index, EraIndex),
     ("EthereumAddress", decode_ethereum_address, EthereumAddress),
     ("ActiveIndex", decode_gilt_active_index, GiltActiveIndex),
@@ -362,6 +367,9 @@ generate_argument_primitive_decoder_impl! {[
     ("StatementKind", decode_statement_kind, StatementKind),
     ("ValidationCode", decode_validation_code, ValidationCode),
     ("ValidatorPrefs", decode_validator_prefs, ValidatorPrefs),
+    ("Box<VersionedMultiAssets>", decode_versioned_multi_assets, VersionedMultiAssets),
+    ("Box<VersionedMultiLocation>", decode_versioned_multi_location, VersionedMultiLocation),
+    ("Box<VersionedXcm<()>>", decode_versioned_xcm, VersionedXcm),
     ("VestingInfo<BalanceOf<T>, T::BlockNumber>", decode_vesting_info, VestingInfo),
     ("Weight", decode_weight, Weight),
     ("Xcm<()>", decode_xcm, Xcm),
@@ -434,6 +442,7 @@ impl Argument {
             ArgumentMeta::Primitive(name) => {
                 if name == "sp_std::marker::PhantomData<(AccountId, Event)>"
                     || name == "Box<RawSolution<CompactOf<T>>>"
+                    || name == "Box<RawSolution<SolutionOf<T>>>"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
