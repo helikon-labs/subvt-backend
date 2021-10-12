@@ -67,6 +67,10 @@ pub enum UtilityExtrinsic {
         signature: Option<Signature>,
         calls: Vec<SubstrateExtrinsic>,
     },
+    BatchAll {
+        signature: Option<Signature>,
+        calls: Vec<SubstrateExtrinsic>,
+    },
 }
 
 impl UtilityExtrinsic {
@@ -81,10 +85,18 @@ impl UtilityExtrinsic {
                 for argument in arguments {
                     calls.push(get_argument_primitive!(&argument, Call))
                 }
-                Some(SubstrateExtrinsic::Utility(UtilityExtrinsic::Batch {
-                    signature,
-                    calls,
-                }))
+                let extrinsic = if name == "batch" {
+                    UtilityExtrinsic::Batch {
+                        signature,
+                        calls,
+                    }
+                } else {
+                    UtilityExtrinsic::BatchAll {
+                        signature,
+                        calls,
+                    }
+                };
+                Some(SubstrateExtrinsic::Utility(extrinsic))
             }
             _ => None,
         };
