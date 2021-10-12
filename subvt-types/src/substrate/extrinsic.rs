@@ -9,9 +9,9 @@ use crate::{
     },
 };
 use log::{debug, warn};
-use parity_scale_codec::{Compact, Decode, Input};
+use parity_scale_codec::{Compact, Decode, Error, Input};
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TimestampExtrinsic {
     Set {
         version: u8,
@@ -39,7 +39,7 @@ impl TimestampExtrinsic {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum StakingExtrinsic {
     Nominate {
         version: u8,
@@ -67,7 +67,7 @@ impl StakingExtrinsic {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum SubstrateExtrinsic {
     Staking(StakingExtrinsic),
     Timestamp(TimestampExtrinsic),
@@ -77,6 +77,18 @@ pub enum SubstrateExtrinsic {
         version: u8,
         signature: Option<Signature>,
     },
+}
+
+impl Decode for SubstrateExtrinsic {
+    fn decode<I: Input>(_input: &mut I) -> Result<Self, Error> {
+        let extrinsic = SubstrateExtrinsic::Other {
+            module_name: "random_module_name".to_string(),
+            call_name: "random_call_name".to_string(),
+            version: 2,
+            signature: None,
+        };
+        Ok(extrinsic)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -95,26 +107,26 @@ impl Signature {
 }
 
 impl SubstrateExtrinsic {
-    fn decode_extrinsic(
+    fn decode_extrinsic<I: Input>(
         chain: &Chain,
         metadata: &Metadata,
-        bytes: &mut &[u8],
+        input: &mut I,
     ) -> Result<Self, DecodeError> {
-        let signed_version = bytes.read_byte().unwrap();
+        let signed_version = input.read_byte().unwrap();
         let sign_mask = 0b10000000;
         let version_mask = 0b00000100;
         let is_signed = (signed_version & sign_mask) == sign_mask;
         let version = signed_version & version_mask;
         let signature = if is_signed {
             let signer = if metadata.is_signer_address_multi(chain) {
-                MultiAddress::decode(&mut *bytes).unwrap()
+                MultiAddress::decode(&mut *input).unwrap()
             } else {
-                MultiAddress::Id(Decode::decode(&mut *bytes).unwrap())
+                MultiAddress::Id(Decode::decode(&mut *input).unwrap())
             };
-            let signature = sp_runtime::MultiSignature::decode(&mut *bytes).unwrap();
-            let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes).unwrap();
-            let nonce: Compact<u64> = Decode::decode(&mut *bytes).unwrap();
-            let tip: Compact<u64> = Decode::decode(&mut *bytes).unwrap();
+            let signature = sp_runtime::MultiSignature::decode(&mut *input).unwrap();
+            let era: sp_runtime::generic::Era = Decode::decode(&mut *input).unwrap();
+            let nonce: Compact<u64> = Decode::decode(&mut *input).unwrap();
+            let tip: Compact<u64> = Decode::decode(&mut *input).unwrap();
             let signature = Signature {
                 signer,
                 signature,
@@ -126,11 +138,12 @@ impl SubstrateExtrinsic {
         } else {
             None
         };
-        let module_index: u8 = Decode::decode(&mut *bytes).unwrap();
-        let call_index: u8 = Decode::decode(&mut *bytes).unwrap();
+        let module_index: u8 = Decode::decode(&mut *input).unwrap();
+        let call_index: u8 = Decode::decode(&mut *input).unwrap();
         let module = metadata.modules.get(&module_index).unwrap();
         let call = module.calls.get(&call_index).unwrap();
         let mut arguments: Vec<Argument> = Vec::new();
+        /*
         if module.name == "Utility" && (call.name == "batch" || call.name == "batch_all") {
             debug!("{}.{} extrinsic. Skip.", module.name, call.name);
             /*
@@ -152,8 +165,9 @@ impl SubstrateExtrinsic {
                 call_name: call.name.clone(),
             });
         }
+         */
         for argument_meta in &call.arguments {
-            let argument = Argument::decode(chain, metadata, argument_meta, &mut *bytes).unwrap();
+            let argument = Argument::decode(chain, metadata, argument_meta, &mut *input).unwrap();
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {

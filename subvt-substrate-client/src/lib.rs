@@ -73,7 +73,7 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         debug!("Got metadata.");
-        metadata.check_event_primitive_argument_support(&chain)?;
+        metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
                 "state_getStorage",
@@ -106,7 +106,7 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
-        metadata.check_event_primitive_argument_support(&self.chain)?;
+        metadata.check_primitive_argument_support(&self.chain)?;
         metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
         Ok(())

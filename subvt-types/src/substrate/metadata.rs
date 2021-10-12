@@ -1,6 +1,6 @@
-use crate::substrate::{Chain, LastRuntimeUpgradeInfo};
 /// Substrate metadata. Most of this code has been adopted from [SubXT](https://github.com/paritytech/substrate-subxt).
 /// Modified, diminished and augmented as needed.
+use crate::substrate::{argument::Argument, Chain, LastRuntimeUpgradeInfo};
 use core::convert::TryInto;
 use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
 use log::debug;
@@ -154,28 +154,28 @@ impl Metadata {
         debug!("==========================================================");
     }
 
-    pub fn check_event_primitive_argument_support(
+    pub fn check_primitive_argument_support(
         &self,
         chain: &Chain,
     ) -> Result<(), crate::substrate::argument::ArgumentDecodeError> {
         debug!("Checking SubVT runtime for event primitive argument support...");
-        let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
+        let mut primitive_arg_name_set: HashSet<String> = HashSet::default();
         for module in self.modules.values() {
             for event in module.events.values() {
                 for arg in &event.arguments {
-                    event_primitive_arg_name_set.extend(arg.get_primitive_name_set());
+                    primitive_arg_name_set.extend(arg.get_primitive_name_set());
+                }
+            }
+            for call in module.calls.values() {
+                for arg in &call.arguments {
+                    primitive_arg_name_set.extend(arg.get_primitive_name_set());
                 }
             }
         }
-        for event_arg_name in event_primitive_arg_name_set.iter() {
+        for event_arg_name in primitive_arg_name_set.iter() {
             let argument_meta = ArgumentMeta::Primitive(event_arg_name.to_string());
             let dummy_bytes: Vec<u8> = Vec::new();
-            let result = crate::substrate::argument::Argument::decode(
-                chain,
-                self,
-                &argument_meta,
-                &mut dummy_bytes.as_ref(),
-            );
+            let result = Argument::decode(chain, self, &argument_meta, &mut dummy_bytes.as_ref());
             if let Err(error) = result {
                 if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) =
                     error
