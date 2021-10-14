@@ -121,7 +121,7 @@ pub enum ArgumentPrimitive {
     KeyOwnerProof(MembershipProof),
     KeyValue(KeyValue),
     Moment(Compact<u64>),
-    MultiAsset(xcm::v0::prelude::MultiAsset),
+    MultiAsset(Box<xcm::v0::prelude::MultiAsset>),
     MultiAddress(MultiAddress),
     MultiLocation(xcm::latest::MultiLocation),
     MultisigOpaqueCall(OpaqueCall),
