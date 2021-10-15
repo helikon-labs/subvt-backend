@@ -128,12 +128,13 @@ impl BlockProcessor {
                     .last_runtime_upgrade_info
                     .spec_version
             );
-            substrate_client.metadata.log_all_calls();
-            substrate_client.metadata.log_all_events();
+            //substrate_client.metadata.log_all_calls();
+            //substrate_client.metadata.log_all_events();
         }
         let metadata_version = match substrate_client.metadata.version {
             MetadataVersion::V12 => 12,
             MetadataVersion::V13 => 13,
+            MetadataVersion::V14 => 14,
         } as i16;
         let (last_era_index, last_epoch_index) = {
             let runtime_information = runtime_information.read().unwrap();
@@ -426,15 +427,11 @@ impl Service for BlockProcessor {
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
-            block_subscription_substrate_client.metadata.log_all_calls();
-            block_subscription_substrate_client
-                .metadata
-                .log_all_events();
 
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 9000260..9001000 {
+                for block_number in 7000000..7001000 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,

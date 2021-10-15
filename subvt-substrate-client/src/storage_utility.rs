@@ -97,6 +97,23 @@ where
             };
             StorageMetadata::hash_key(&StorageHasher::V13(hasher.clone()), key)
         }
+        StorageEntryType::V14(storage_entry_type) => {
+            let maybe_hasher = match storage_entry_type {
+                frame_metadata::v14::StorageEntryType::Map { hashers, .. } => hashers.get(0),
+                _ => panic!(
+                    "Unexpected storage entry type. Expected map, got: {:?}",
+                    storage_entry_type
+                ),
+            };
+            if let Some(hasher) = maybe_hasher {
+                StorageMetadata::hash_key(&StorageHasher::V14(hasher.clone()), key)
+            } else {
+                panic!(
+                    "Cannot get hasher for map storage {}.{}.",
+                    module_name, storage_name
+                );
+            }
+        }
     };
     key_hash
 }
@@ -218,6 +235,22 @@ where
                 StorageMetadata::hash_key(&StorageHasher::V13(hasher_1.clone()), key_1);
             let key_2_hash =
                 StorageMetadata::hash_key(&StorageHasher::V13(hasher_2.clone()), key_2);
+            (key_1_hash, key_2_hash)
+        }
+        StorageEntryType::V14(storage_entry_type) => {
+            let (hasher_1, hasher_2) = match storage_entry_type {
+                frame_metadata::v14::StorageEntryType::Map { hashers, .. } => {
+                    (hashers.get(0).unwrap(), hashers.get(1).unwrap())
+                }
+                _ => panic!(
+                    "Unexpected storage entry type. Expected map, got: {:?}",
+                    storage_entry_type
+                ),
+            };
+            let key_1_hash =
+                StorageMetadata::hash_key(&StorageHasher::V14(hasher_1.clone()), key_1);
+            let key_2_hash =
+                StorageMetadata::hash_key(&StorageHasher::V14(hasher_2.clone()), key_2);
             (key_1_hash, key_2_hash)
         }
     };

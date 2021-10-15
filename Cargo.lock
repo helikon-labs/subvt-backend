@@ -4879,6 +4879,7 @@ dependencies = [
  "polkadot-runtime",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
+ "scale-info",
  "serde 1.0.130",
  "serde_json",
  "sp-authority-discovery",

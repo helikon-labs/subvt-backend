@@ -28,7 +28,7 @@ impl TimestampExtrinsic {
         let maybe_event = match name {
             "set" => Some(SubstrateExtrinsic::Timestamp(TimestampExtrinsic::Set {
                 signature,
-                timestamp: get_argument_primitive!(&arguments[0], Moment).0,
+                timestamp: get_argument_primitive!(&arguments[0], CompactMoment).0,
             })),
             _ => None,
         };

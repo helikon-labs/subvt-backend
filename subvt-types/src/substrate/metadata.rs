@@ -5,6 +5,7 @@ use core::convert::TryInto;
 use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
 use log::debug;
 use parity_scale_codec::{Decode, Encode, Error as CodecError};
+use scale_info::form::PortableForm;
 use std::fmt::{Display, Formatter};
 use std::{
     collections::{HashMap, HashSet},
@@ -45,6 +46,7 @@ pub struct MetadataConstants {
 pub enum MetadataVersion {
     V12,
     V13,
+    V14,
 }
 
 /// Runtime metadata.
@@ -188,6 +190,7 @@ impl Metadata {
     }
 }
 
+#[derive(Debug)]
 pub enum SignedExtra {
     CheckSpecVersion,
     CheckTxVersion,
@@ -215,7 +218,7 @@ impl SignedExtra {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ExtrinsicMetadata {
     pub version: u8,
     pub signed_extensions: Vec<SignedExtra>,
@@ -244,18 +247,10 @@ impl ModuleMetadata {
     }
 }
 
+#[derive(Debug)]
 pub enum StorageEntryModifier {
     Optional,
     Default,
-}
-
-impl From<frame_metadata::v13::StorageEntryModifier> for StorageEntryModifier {
-    fn from(modifier: frame_metadata::v13::StorageEntryModifier) -> Self {
-        match modifier {
-            frame_metadata::v13::StorageEntryModifier::Default => StorageEntryModifier::Default,
-            frame_metadata::v13::StorageEntryModifier::Optional => StorageEntryModifier::Optional,
-        }
-    }
 }
 
 impl From<frame_metadata::v12::StorageEntryModifier> for StorageEntryModifier {
@@ -267,16 +262,38 @@ impl From<frame_metadata::v12::StorageEntryModifier> for StorageEntryModifier {
     }
 }
 
+impl From<frame_metadata::v13::StorageEntryModifier> for StorageEntryModifier {
+    fn from(modifier: frame_metadata::v13::StorageEntryModifier) -> Self {
+        match modifier {
+            frame_metadata::v13::StorageEntryModifier::Default => StorageEntryModifier::Default,
+            frame_metadata::v13::StorageEntryModifier::Optional => StorageEntryModifier::Optional,
+        }
+    }
+}
+
+impl From<frame_metadata::v14::StorageEntryModifier> for StorageEntryModifier {
+    fn from(modifier: frame_metadata::v14::StorageEntryModifier) -> Self {
+        match modifier {
+            frame_metadata::v14::StorageEntryModifier::Default => StorageEntryModifier::Default,
+            frame_metadata::v14::StorageEntryModifier::Optional => StorageEntryModifier::Optional,
+        }
+    }
+}
+
 pub enum StorageHasher {
     V12(frame_metadata::v12::StorageHasher),
     V13(frame_metadata::v13::StorageHasher),
+    V14(frame_metadata::v14::StorageHasher),
 }
 
+#[derive(Debug)]
 pub enum StorageEntryType {
     V12(frame_metadata::v12::StorageEntryType),
     V13(frame_metadata::v13::StorageEntryType),
+    V14(frame_metadata::v14::StorageEntryType<PortableForm>),
 }
 
+#[derive(Debug)]
 pub struct StorageMetadata {
     pub module_prefix: String,
     pub storage_prefix: String,
@@ -290,6 +307,7 @@ impl StorageMetadata {
         match hasher {
             StorageHasher::V12(hasher) => v12::hash(hasher, bytes),
             StorageHasher::V13(hasher) => v13::hash(hasher, bytes),
+            StorageHasher::V14(hasher) => v14::hash(hasher, bytes),
         }
     }
 
@@ -465,6 +483,19 @@ impl TryFrom<RuntimeMetadataPrefixed> for Metadata {
                 Ok(Metadata {
                     version: MetadataVersion::V13,
                     modules: v13::convert_modules(meta)?,
+                    extrinsic_metadata,
+                    constants: Default::default(),
+                    last_runtime_upgrade_info: Default::default(),
+                })
+            }
+            RuntimeMetadata::V14(meta) => {
+                if metadata.0 != frame_metadata::v14::META_RESERVED {
+                    return Err(ConversionError::InvalidPrefix.into());
+                }
+                let extrinsic_metadata = v14::convert_extrinsic_metadata(&meta)?;
+                Ok(Metadata {
+                    version: MetadataVersion::V14,
+                    modules: v14::convert_modules(meta)?,
                     extrinsic_metadata,
                     constants: Default::default(),
                     last_runtime_upgrade_info: Default::default(),
@@ -655,7 +686,7 @@ mod v13 {
         convert, ArgumentMeta, ConversionError, ModuleCallMetadata, ModuleConstantMetadata,
         ModuleEventMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
     };
-    use frame_metadata::v13::{RuntimeMetadataV13, StorageHasher};
+    use frame_metadata::v13::RuntimeMetadataV13;
     use std::collections::HashMap;
 
     fn convert_event(
@@ -797,19 +828,252 @@ mod v13 {
         })
     }
 
-    pub fn hash(hasher: &StorageHasher, bytes: &[u8]) -> Vec<u8> {
+    pub fn hash(hasher: &frame_metadata::v13::StorageHasher, bytes: &[u8]) -> Vec<u8> {
         match hasher {
-            StorageHasher::Identity => bytes.to_vec(),
-            StorageHasher::Blake2_128 => sp_core::blake2_128(bytes).to_vec(),
-            StorageHasher::Blake2_128Concat => sp_core::blake2_128(bytes)
+            frame_metadata::v13::StorageHasher::Identity => bytes.to_vec(),
+            frame_metadata::v13::StorageHasher::Blake2_128 => sp_core::blake2_128(bytes).to_vec(),
+            frame_metadata::v13::StorageHasher::Blake2_128Concat => sp_core::blake2_128(bytes)
                 .iter()
                 .chain(bytes)
                 .cloned()
                 .collect(),
-            StorageHasher::Blake2_256 => sp_core::blake2_256(bytes).to_vec(),
-            StorageHasher::Twox128 => sp_core::twox_128(bytes).to_vec(),
-            StorageHasher::Twox256 => sp_core::twox_256(bytes).to_vec(),
-            StorageHasher::Twox64Concat => sp_core::twox_64(bytes)
+            frame_metadata::v13::StorageHasher::Blake2_256 => sp_core::blake2_256(bytes).to_vec(),
+            frame_metadata::v13::StorageHasher::Twox128 => sp_core::twox_128(bytes).to_vec(),
+            frame_metadata::v13::StorageHasher::Twox256 => sp_core::twox_256(bytes).to_vec(),
+            frame_metadata::v13::StorageHasher::Twox64Concat => sp_core::twox_64(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
+        }
+    }
+}
+
+mod v14 {
+    use super::{
+        ArgumentMeta, ModuleCallMetadata, ModuleConstantMetadata, ModuleEventMetadata,
+        ModuleMetadata, StorageEntryType, StorageMetadata,
+    };
+    use frame_metadata::v14::RuntimeMetadataV14;
+    use scale_info::form::PortableForm;
+    use scale_info::{Type, TypeDef};
+    use std::collections::HashMap;
+    use std::str::FromStr;
+
+    /*
+    fn convert_constant(
+        constant: frame_metadata::v14::PalletConstantMetadata<PortableForm>,
+    ) -> Result<ModuleConstantMetadata, ConversionError> {
+        let c_type = constant.ty;
+        Ok(ModuleConstantMetadata {
+            name: constant.name,
+            _ty: convert(constant.ty)?,
+            value: constant.value,
+            _documentation: constant.docs,
+        })
+    }
+
+     */
+
+    fn convert_type(meta: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
+        let ty = match ty.type_def() {
+            TypeDef::Primitive(primitive) => format!("{:?}", primitive).to_lowercase(),
+            TypeDef::Composite(_) => ty.path().segments().join("::"),
+            TypeDef::Sequence(sequence) => {
+                let ty = meta.types.resolve(sequence.type_param().id()).unwrap();
+                format!("Vec<{}>", convert_type(meta, ty))
+            }
+            TypeDef::Array(array) => {
+                let ty = meta.types.resolve(array.type_param().id()).unwrap();
+                format!("[{}; {}]", convert_type(meta, ty), array.len())
+            }
+            _ => panic!("Unsupported type: {:?}", ty),
+        };
+        ty
+    }
+
+    fn convert_calls(calls_ty: &Type<PortableForm>) -> HashMap<u8, ModuleCallMetadata> {
+        let mut call_map = HashMap::new();
+        match calls_ty.type_def() {
+            TypeDef::Variant(variant) => {
+                for call_variant in variant.variants() {
+                    let mut arguments = Vec::new();
+                    for field in call_variant.fields() {
+                        let argument_meta = ArgumentMeta::from_str(
+                            field
+                                .type_name()
+                                .expect("Cannot get type name for call argument."),
+                        )
+                        .expect("Cannot get argument meta from call argument type name.");
+                        arguments.push(argument_meta);
+                    }
+                    let call_meta = ModuleCallMetadata {
+                        index: call_variant.index() as usize,
+                        name: call_variant.name().clone(),
+                        arguments,
+                        documentation: Vec::from(call_variant.docs()),
+                    };
+                    call_map.insert(call_variant.index(), call_meta);
+                }
+            }
+            _ => panic!("Unexpected type in calls definition: {:?}", calls_ty),
+        }
+        call_map
+    }
+
+    fn convert_events(events_ty: &Type<PortableForm>) -> HashMap<u8, ModuleEventMetadata> {
+        let mut event_map = HashMap::new();
+        match events_ty.type_def() {
+            TypeDef::Variant(variant) => {
+                for event_variant in variant.variants() {
+                    let mut arguments = Vec::new();
+                    for field in event_variant.fields() {
+                        let argument_meta = ArgumentMeta::from_str(
+                            field
+                                .type_name()
+                                .expect("Cannot get type name for event argument."),
+                        )
+                        .expect("Cannot get argument meta from event argument type name.");
+                        arguments.push(argument_meta);
+                    }
+                    let event_meta = ModuleEventMetadata {
+                        index: event_variant.index() as usize,
+                        name: event_variant.name().clone(),
+                        arguments,
+                        documentation: Vec::from(event_variant.docs()),
+                    };
+                    event_map.insert(event_variant.index(), event_meta);
+                }
+            }
+            _ => panic!("Unexpected type in events definition: {:?}", events_ty),
+        }
+        event_map
+    }
+
+    pub fn convert_modules(
+        meta: RuntimeMetadataV14,
+    ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
+        let mut modules = HashMap::new();
+        for pallet in &meta.pallets {
+            let module_index = pallet.index;
+            let module_name = &pallet.name;
+            // constants
+            let mut constant_map = HashMap::new();
+            for constant in &pallet.constants {
+                let ty = meta.types.resolve(constant.ty.id()).unwrap();
+                // name type value documentation
+                let constant_meta = ModuleConstantMetadata {
+                    name: constant.name.clone(),
+                    _ty: convert_type(&meta, ty),
+                    value: constant.value.clone(),
+                    _documentation: constant.docs.clone(),
+                };
+                constant_map.insert(constant.name.clone(), constant_meta);
+            }
+            // storage
+            let mut storage_map = HashMap::new();
+            if let Some(storage_meta) = &pallet.storage {
+                for entry in &storage_meta.entries {
+                    let module_prefix = storage_meta.prefix.clone();
+                    let storage_prefix = entry.name.clone();
+                    let storage_entry = StorageMetadata {
+                        module_prefix,
+                        storage_prefix: storage_prefix.clone(),
+                        modifier: entry.modifier.clone().into(),
+                        ty: StorageEntryType::V14(entry.ty.clone()),
+                        default: entry.default.clone(),
+                    };
+                    storage_map.insert(storage_prefix, storage_entry);
+                }
+            }
+            // calls
+            let call_map = if let Some(calls_meta) = &pallet.calls {
+                let calls_type = meta
+                    .types
+                    .resolve(calls_meta.ty.id())
+                    .expect("Cannot access module call type.");
+                convert_calls(calls_type)
+            } else {
+                HashMap::new()
+            };
+            // events
+            let event_map = if let Some(events_meta) = &pallet.event {
+                let events_type = meta
+                    .types
+                    .resolve(events_meta.ty.id())
+                    .expect("Cannot access module event type.");
+                convert_events(events_type)
+            } else {
+                HashMap::new()
+            };
+            modules.insert(
+                module_index,
+                ModuleMetadata {
+                    index: module_index,
+                    name: module_name.clone(),
+                    storage: storage_map,
+                    constants: constant_map,
+                    calls: call_map,
+                    events: event_map,
+                    errors: HashMap::new(),
+                },
+            );
+        }
+        /*
+        for module in convert(meta.modules)?.into_iter() {
+            let module_index = module.index;
+            let module_name = convert(module.name.clone())?.to_string();
+
+            let mut error_map = HashMap::new();
+            for (index, error) in convert(module.errors)?.into_iter().enumerate() {
+                error_map.insert(index as u8, convert_error(error)?);
+            }
+
+            modules.insert(
+                module_index,
+                ModuleMetadata {
+                    index: module.index,
+                    name: module_name.clone(),
+                    storage: storage_map,
+                    constants: constant_map,
+                    calls: call_map,
+                    events: event_map,
+                    errors: error_map,
+                },
+            );
+        }
+         */
+        Ok(modules)
+    }
+
+    pub fn convert_extrinsic_metadata(
+        meta: &RuntimeMetadataV14,
+    ) -> Result<super::ExtrinsicMetadata, super::MetadataError> {
+        let mut signed_extensions: Vec<super::SignedExtra> = Vec::new();
+        for signed_extension in &meta.extrinsic.signed_extensions {
+            signed_extensions.push(super::SignedExtra::from(
+                signed_extension.identifier.clone().as_str(),
+            )?);
+        }
+        Ok(super::ExtrinsicMetadata {
+            version: meta.extrinsic.version,
+            signed_extensions,
+        })
+    }
+
+    pub fn hash(hasher: &frame_metadata::v14::StorageHasher, bytes: &[u8]) -> Vec<u8> {
+        match hasher {
+            frame_metadata::v14::StorageHasher::Identity => bytes.to_vec(),
+            frame_metadata::v14::StorageHasher::Blake2_128 => sp_core::blake2_128(bytes).to_vec(),
+            frame_metadata::v14::StorageHasher::Blake2_128Concat => sp_core::blake2_128(bytes)
+                .iter()
+                .chain(bytes)
+                .cloned()
+                .collect(),
+            frame_metadata::v14::StorageHasher::Blake2_256 => sp_core::blake2_256(bytes).to_vec(),
+            frame_metadata::v14::StorageHasher::Twox128 => sp_core::twox_128(bytes).to_vec(),
+            frame_metadata::v14::StorageHasher::Twox256 => sp_core::twox_256(bytes).to_vec(),
+            frame_metadata::v14::StorageHasher::Twox64Concat => sp_core::twox_64(bytes)
                 .iter()
                 .chain(bytes)
                 .cloned()
