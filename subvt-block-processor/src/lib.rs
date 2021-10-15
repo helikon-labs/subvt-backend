@@ -428,10 +428,11 @@ impl Service for BlockProcessor {
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
 
+            /*
             {
                 let mut block_processor_substrate_client =
                     block_processor_substrate_client.lock().await;
-                for block_number in 7000000..7001000 {
+                for block_number in 9625120..9701000 {
                     let update_result = self
                         .process_block(
                             &mut block_processor_substrate_client,
@@ -452,6 +453,7 @@ impl Service for BlockProcessor {
                     }
                 }
             }
+             */
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let block_processor_substrate_client = block_processor_substrate_client.clone();

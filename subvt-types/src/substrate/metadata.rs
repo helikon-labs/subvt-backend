@@ -892,19 +892,29 @@ mod v14 {
         ty
     }
 
-    fn convert_calls(calls_ty: &Type<PortableForm>) -> HashMap<u8, ModuleCallMetadata> {
+    fn convert_calls(
+        meta: &RuntimeMetadataV14,
+        calls_ty: &Type<PortableForm>,
+    ) -> HashMap<u8, ModuleCallMetadata> {
         let mut call_map = HashMap::new();
         match calls_ty.type_def() {
             TypeDef::Variant(variant) => {
                 for call_variant in variant.variants() {
                     let mut arguments = Vec::new();
                     for field in call_variant.fields() {
-                        let argument_meta = ArgumentMeta::from_str(
-                            field
-                                .type_name()
-                                .expect("Cannot get type name for call argument."),
-                        )
-                        .expect("Cannot get argument meta from call argument type name.");
+                        let type_name = field
+                            .type_name()
+                            .expect("Cannot get type name for call argument.");
+                        let ty = meta.types.resolve(field.ty().id()).unwrap();
+                        let argument_meta = match ty.type_def() {
+                            TypeDef::Compact(_) => {
+                                ArgumentMeta::from_str(&format!("Compact<{}>", type_name))
+                            }
+                            _ => ArgumentMeta::from_str(type_name),
+                        }
+                        .unwrap_or_else(|_| {
+                            panic!("Cannot get call argument meta for {}.", type_name)
+                        });
                         arguments.push(argument_meta);
                     }
                     let call_meta = ModuleCallMetadata {
@@ -921,19 +931,29 @@ mod v14 {
         call_map
     }
 
-    fn convert_events(events_ty: &Type<PortableForm>) -> HashMap<u8, ModuleEventMetadata> {
+    fn convert_events(
+        meta: &RuntimeMetadataV14,
+        events_ty: &Type<PortableForm>,
+    ) -> HashMap<u8, ModuleEventMetadata> {
         let mut event_map = HashMap::new();
         match events_ty.type_def() {
             TypeDef::Variant(variant) => {
                 for event_variant in variant.variants() {
                     let mut arguments = Vec::new();
                     for field in event_variant.fields() {
-                        let argument_meta = ArgumentMeta::from_str(
-                            field
-                                .type_name()
-                                .expect("Cannot get type name for event argument."),
-                        )
-                        .expect("Cannot get argument meta from event argument type name.");
+                        let type_name = field
+                            .type_name()
+                            .expect("Cannot get type name for event argument.");
+                        let ty = meta.types.resolve(field.ty().id()).unwrap();
+                        let argument_meta = match ty.type_def() {
+                            TypeDef::Compact(_) => {
+                                ArgumentMeta::from_str(&format!("Compact<{}>", type_name))
+                            }
+                            _ => ArgumentMeta::from_str(type_name),
+                        }
+                        .unwrap_or_else(|_| {
+                            panic!("Cannot get event argument meta for {}.", type_name)
+                        });
                         arguments.push(argument_meta);
                     }
                     let event_meta = ModuleEventMetadata {
@@ -992,7 +1012,7 @@ mod v14 {
                     .types
                     .resolve(calls_meta.ty.id())
                     .expect("Cannot access module call type.");
-                convert_calls(calls_type)
+                convert_calls(&meta, calls_type)
             } else {
                 HashMap::new()
             };
@@ -1002,7 +1022,7 @@ mod v14 {
                     .types
                     .resolve(events_meta.ty.id())
                     .expect("Cannot access module event type.");
-                convert_events(events_type)
+                convert_events(&meta, events_type)
             } else {
                 HashMap::new()
             };

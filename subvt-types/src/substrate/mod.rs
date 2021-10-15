@@ -30,6 +30,7 @@ pub mod error;
 #[macro_use]
 pub mod event;
 pub mod extrinsic;
+pub mod legacy;
 pub mod metadata;
 
 #[derive(Default)]

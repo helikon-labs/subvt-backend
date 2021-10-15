@@ -3,6 +3,7 @@ use crate::{
     substrate::{
         error::DecodeError,
         extrinsic::SubstrateExtrinsic,
+        legacy::{DefunctVoter, ElectionSize, ReadySolution, ValidatorIndex},
         metadata::{ArgumentMeta, Metadata},
         CallHash, Chain, MultiAddress, OpaqueTimeSlot, RewardDestination, SlotRange,
     },
@@ -92,6 +93,7 @@ pub enum ArgumentPrimitive {
     CompactParachainId(Compact<Id>),
     CompactWeight(Compact<Weight>),
     CoreIndex(CoreIndex),
+    DefunctVoter(DefunctVoter),
     DemocracyConviction(Conviction),
     DemocracyProposalIndex(PropIndex),
     DemocracyVoteThreshold(VoteThreshold),
@@ -102,6 +104,7 @@ pub enum ArgumentPrimitive {
     EcdsaSignature(EcdsaSignature),
     ElectionCompute(ElectionCompute),
     ElectionScore(ElectionScore),
+    ElectionSize(ElectionSize),
     ElectionSupports(Supports<AccountId>),
     EquivocationProof(Box<EquivocationProof<Header>>),
     EraIndex(EraIndex),
@@ -149,6 +152,7 @@ pub enum ArgumentPrimitive {
     U64(u64),
     _PhantomData,
     ProxyType(ProxyType),
+    ReadySolution(ReadySolution),
     ReferendumIndex(ReferendumIndex),
     RegistrarIndex(RegistrarIndex),
     Renouncing(Renouncing),
@@ -161,6 +165,7 @@ pub enum ArgumentPrimitive {
     SolutionOrSnapshotSize(SolutionOrSnapshotSize),
     StatementKind(StatementKind),
     ValidationCode(ValidationCode),
+    ValidatorIndex(ValidatorIndex),
     ValidatorPrefs(ValidatorPrefs),
     VersionedMultiAssets(Box<xcm::VersionedMultiAssets>),
     VersionedMultiLocation(xcm::VersionedMultiLocation),
@@ -262,6 +267,7 @@ generate_argument_primitive_decoder_impl! {[
     ("AuthorityId", decode_authority_id_1, AccountId),
     ("T::AuthorityId", decode_authority_id_2, AccountId),
     ("Balance", decode_balance_1, Balance),
+    ("BalanceOf<T>", decode_balance_2, Balance),
     ("BalanceOf<T, I>", decode_balance_3, Balance),
     ("T::Balance", decode_balance_4, Balance),
     ("Status", decode_balance_status, BalanceStatus),
@@ -281,7 +287,6 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<BalanceOf<T>>", decode_compact_balance_1, CompactBalance),
     ("Compact<T::Balance>", decode_compact_balance_2, CompactBalance),
     ("Compact<BalanceOf<T, I>>", decode_compact_balance_4, CompactBalance),
-    ("BalanceOf<T>", decode_compact_balance_5, CompactBalance),
     ("Compact<T::BlockNumber>", decode_compact_block_number, CompactBlockNumber),
     ("Compact<BountyIndex>", decode_compact_bounty_index, CompactBountyIndex),
     ("Compact<EraIndex>", decode_compact_era_index, CompactEraIndex),
@@ -295,6 +300,7 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<u32>", decode_compact_u32, CompactU32),
     ("Compact<Weight>", decode_compact_weight, CompactWeight),
     ("CoreIndex", decode_core_index, CoreIndex),
+    ("DefunctVoter<<T::Lookup as StaticLookup>::Source>", decode_defunct_voter, DefunctVoter),
     ("Conviction", decode_democracy_conviction, DemocracyConviction),
     ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
@@ -304,10 +310,13 @@ generate_argument_primitive_decoder_impl! {[
     ("DispatchResult", decode_dispatch_result, DispatchResult),
     ("EcdsaSignature", decode_ecdsa_signature, EcdsaSignature),
     ("ElectionCompute", decode_election_compute, ElectionCompute),
+    ("ElectionSize", decode_election_size, ElectionSize),
     ("ElectionScore", decode_election_score, ElectionScore),
     ("Supports<T::AccountId>", decode_election_supports, ElectionSupports),
-    ("Box<EquivocationProof<T::Hash, T::BlockNumber>>", decode_equivocation_proof_1, EquivocationProof),
-    ("Box<EquivocationProof<T::Header>>", decode_equivocation_proof_2, EquivocationProof),
+    ("EquivocationProof<T::Hash, T::BlockNumber>", decode_equivocation_proof_1, EquivocationProof),
+    ("Box<EquivocationProof<T::Hash, T::BlockNumber>>", decode_equivocation_proof_2, EquivocationProof),
+    ("Box<EquivocationProof<T::Header>>", decode_equivocation_proof_3, EquivocationProof),
+    ("EquivocationProof<T::Header>", decode_equivocation_proof_4, EquivocationProof),
     ("EraIndex", decode_era_index, EraIndex),
     ("EthereumAddress", decode_ethereum_address, EthereumAddress),
     ("ActiveIndex", decode_gilt_active_index, GiltActiveIndex),
@@ -322,7 +331,8 @@ generate_argument_primitive_decoder_impl! {[
     ("IdentificationTuple<T>", decode_identification_tuple_2, IdentificationTuple),
     ("Data", decode_identity_data, IdentityData),
     ("IdentityFields", decode_identity_fields, IdentityFields),
-    ("Box<IdentityInfo<T::MaxAdditionalFields>>", decode_identity_info, IdentityInfo),
+    ("Box<IdentityInfo<T::MaxAdditionalFields>>", decode_identity_info_1, IdentityInfo),
+    ("IdentityInfo", decode_identity_info_2, IdentityInfo),
     ("Judgement", decode_identity_judgement_1, IdentityJudgement),
     ("Judgement<BalanceOf<T>>", decode_identity_judgement_2, IdentityJudgement),
     ("<T::AuthorityId as RuntimeAppPublic>::Signature", decode_im_online_signature, ImOnlineSignature),
@@ -360,6 +370,7 @@ generate_argument_primitive_decoder_impl! {[
     ("Perquintill", decode_perquintill, Perquintill),
     ("ProxyType", decode_proxy_type_1, ProxyType),
     ("T::ProxyType", decode_proxy_type_2, ProxyType),
+    ("ReadySolution<T::AccountId>", decode_ready_solution, ReadySolution),
     ("ReferendumIndex", decode_referendum_index, ReferendumIndex),
     ("RegistrarIndex", decode_registrar_index, RegistrarIndex),
     ("Renouncing", decode_renouncing, Renouncing),
@@ -374,6 +385,7 @@ generate_argument_primitive_decoder_impl! {[
     ("SolutionOrSnapshotSize", decode_solution_or_snapshot_size, SolutionOrSnapshotSize),
     ("StatementKind", decode_statement_kind, StatementKind),
     ("ValidationCode", decode_validation_code, ValidationCode),
+    ("ValidatorIndex", decode_validation_index, ValidatorIndex),
     ("ValidatorPrefs", decode_validator_prefs, ValidatorPrefs),
     ("Box<VersionedMultiAssets>", decode_versioned_multi_assets_1, VersionedMultiAssets),
     ("VersionedMultiAssets", decode_versioned_multi_assets_2, VersionedMultiAssets),
@@ -459,15 +471,20 @@ impl Argument {
                 if name == "sp_std::marker::PhantomData<(AccountId, Event)>"
                     || name == "Box<RawSolution<CompactOf<T>>>"
                     || name == "Box<RawSolution<SolutionOf<T>>>"
+                    || name == "RawSolution<CompactOf<T>>"
+                    || name == "CompactAssignments"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
                     ))
                 } else if name == "Box<<T as Config>::Call>"
+                    || name == "Box<<T as Trait>::Call>"
+                    || name == "<T as Trait>::Call"
                     || name == "<T as Config>::Call"
                     || name == "Box<Xcm<T::Call>>"
                     || name == "Box<VersionedXcm<T::Call>>"
                     || name == "Box<<T as Config<I>>::Proposal>"
+                    || name == "Box<<T as Trait<I>>::Proposal>"
                 {
                     match SubstrateExtrinsic::decode_extrinsic(chain, metadata, false, &mut *bytes)
                     {
