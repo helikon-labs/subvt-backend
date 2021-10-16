@@ -860,21 +860,6 @@ mod v14 {
     use std::collections::HashMap;
     use std::str::FromStr;
 
-    /*
-    fn convert_constant(
-        constant: frame_metadata::v14::PalletConstantMetadata<PortableForm>,
-    ) -> Result<ModuleConstantMetadata, ConversionError> {
-        let c_type = constant.ty;
-        Ok(ModuleConstantMetadata {
-            name: constant.name,
-            _ty: convert(constant.ty)?,
-            value: constant.value,
-            _documentation: constant.docs,
-        })
-    }
-
-     */
-
     fn convert_type(meta: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
         let ty = match ty.type_def() {
             TypeDef::Primitive(primitive) => format!("{:?}", primitive).to_lowercase(),
@@ -970,6 +955,19 @@ mod v14 {
         event_map
     }
 
+    fn convert_errors(errors_ty: &Type<PortableForm>) -> HashMap<u8, String> {
+        let mut error_map = HashMap::new();
+        match errors_ty.type_def() {
+            TypeDef::Variant(variant) => {
+                for error_variant in variant.variants() {
+                    error_map.insert(error_variant.index(), error_variant.name().to_string());
+                }
+            }
+            _ => panic!("Unexpected type in errors definition: {:?}", errors_ty),
+        }
+        error_map
+    }
+
     pub fn convert_modules(
         meta: RuntimeMetadataV14,
     ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
@@ -1026,6 +1024,16 @@ mod v14 {
             } else {
                 HashMap::new()
             };
+            // errors
+            let error_map = if let Some(errors_meta) = &pallet.error {
+                let errors_type = meta
+                    .types
+                    .resolve(errors_meta.ty.id())
+                    .expect("Cannot access module error type.");
+                convert_errors(errors_type)
+            } else {
+                HashMap::new()
+            };
             modules.insert(
                 module_index,
                 ModuleMetadata {
@@ -1035,34 +1043,10 @@ mod v14 {
                     constants: constant_map,
                     calls: call_map,
                     events: event_map,
-                    errors: HashMap::new(),
-                },
-            );
-        }
-        /*
-        for module in convert(meta.modules)?.into_iter() {
-            let module_index = module.index;
-            let module_name = convert(module.name.clone())?.to_string();
-
-            let mut error_map = HashMap::new();
-            for (index, error) in convert(module.errors)?.into_iter().enumerate() {
-                error_map.insert(index as u8, convert_error(error)?);
-            }
-
-            modules.insert(
-                module_index,
-                ModuleMetadata {
-                    index: module.index,
-                    name: module_name.clone(),
-                    storage: storage_map,
-                    constants: constant_map,
-                    calls: call_map,
-                    events: event_map,
                     errors: error_map,
                 },
             );
         }
-         */
         Ok(modules)
     }
 
