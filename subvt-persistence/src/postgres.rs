@@ -487,4 +487,15 @@ impl PostgreSQLStorage {
             Ok(None)
         }
     }
+
+    pub async fn get_processed_block_height(&self) -> anyhow::Result<i64> {
+        let processed_block_height: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COALESCE(MAX(number), -1) from block
+            "#,
+        )
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(processed_block_height.0)
+    }
 }

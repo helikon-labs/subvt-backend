@@ -4,7 +4,10 @@ use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
-use std::sync::{Arc, RwLock};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, RwLock,
+};
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
@@ -427,58 +430,73 @@ impl Service for BlockProcessor {
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
-
-            /*
-            {
-                let mut block_processor_substrate_client =
-                    block_processor_substrate_client.lock().await;
-                for block_number in 9625120..9701000 {
-                    let update_result = self
-                        .process_block(
-                            &mut block_processor_substrate_client,
-                            &runtime_information,
-                            &postgres,
-                            block_number,
-                        )
-                        .await;
-                    match update_result {
-                        Ok(_) => (),
-                        Err(error) => {
-                            error!("{:?}", error);
-                            error!(
-                                "Block processing failed for finalized block #{}.",
-                                block_number,
-                            );
-                        }
-                    }
-                }
-            }
-             */
+            let is_indexing_past_blocks = Arc::new(AtomicBool::new(false));
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
-                let block_processor_substrate_client = block_processor_substrate_client.clone();
-                let runtime_information = runtime_information.clone();
-                let postgres = postgres.clone();
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
                     Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
+                let block_processor_substrate_client = block_processor_substrate_client.clone();
+                let runtime_information = runtime_information.clone();
+                let postgres = postgres.clone();
+                if is_indexing_past_blocks.load(Ordering::Relaxed) {
+                    debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
+                    return;
+                }
+                let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);
+
                 tokio::spawn(async move {
                     let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
-                    let update_result = self.process_block(
-                        &mut block_processor_substrate_client,
-                        &runtime_information,
-                        &postgres,
-                        finalized_block_number,
-                    ).await;
-                    match update_result {
-                        Ok(_) => (),
+                    let processed_block_height = match postgres.get_processed_block_height().await {
+                        Ok(processed_block_height) => processed_block_height,
                         Err(error) => {
-                            error!("{:?}", error);
-                            error!(
+                            error!("Cannot get processed block height from the database: {:?}", error);
+                            return;
+                        }
+                    };
+                    if ((processed_block_height + 1) as u64) < finalized_block_number {
+                        is_indexing_past_blocks.store(true, Ordering::Relaxed);
+                        let mut block_number = std::cmp::max(
+                            (processed_block_height + 1) as u64,
+                            CONFIG.block_indexer.start_block_number
+                        );
+                        while block_number <= finalized_block_number {
+                            let update_result = self.process_block(
+                                &mut block_processor_substrate_client,
+                                &runtime_information,
+                                &postgres,
+                                block_number,
+                            ).await;
+                            match update_result {
+                                Ok(_) => block_number += 1,
+                                Err(error) => {
+                                    error!("{:?}", error);
+                                    error!(
+                                        "History block processing failed for block #{}.",
+                                        block_number,
+                                    );
+                                    break;
+                                }
+                            }
+                        }
+                        is_indexing_past_blocks.store(false, Ordering::Relaxed);
+                    } else {
+                        let update_result = self.process_block(
+                            &mut block_processor_substrate_client,
+                            &runtime_information,
+                            &postgres,
+                            finalized_block_number,
+                        ).await;
+                        match update_result {
+                            Ok(_) => (),
+                            Err(error) => {
+                                error!("{:?}", error);
+                                error!(
                                 "Block processing failed for finalized block #{}. Will try again with the next block.",
                                 finalized_block_header.get_number().unwrap_or(0),
                             );
+                            }
                         }
                     }
                 });
