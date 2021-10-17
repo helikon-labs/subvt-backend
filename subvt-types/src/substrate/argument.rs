@@ -392,11 +392,13 @@ generate_argument_primitive_decoder_impl! {[
     ("Box<VersionedMultiLocation>", decode_versioned_multi_location_1, VersionedMultiLocation),
     ("VersionedMultiLocation", decode_versioned_multi_location_2, VersionedMultiLocation),
     ("Box<VersionedXcm<()>>", decode_versioned_xcm_1, VersionedXcm),
-    ("Box<VersionedXcm<<T as SysConfig>::Call>>", decode_versioned_xcm_2, VersionedXcm),
+    ("Box<VersionedXcm<T::Call>>", decode_versioned_xcm_2, VersionedXcm),
+    ("Box<VersionedXcm<<T as SysConfig>::Call>>", decode_versioned_xcm_3, VersionedXcm),
     ("VestingInfo<BalanceOf<T>, T::BlockNumber>", decode_vesting_info, VestingInfo),
     ("VoteWeight", decode_vote_weight, VoteWeight),
     ("Weight", decode_weight, Weight),
-    ("Xcm<()>", decode_xcm, Xcm),
+    ("Xcm<()>", decode_xcm_1, Xcm),
+    ("Box<Xcm<T::Call>>", decode_xcm_2, Xcm),
     ("XcmError", decode_xcm_error, XcmError),
     ("Outcome", decode_xcm_outcome_1, XcmOutcome),
     ("xcm::latest::Outcome", decode_xcm_outcome_2, XcmOutcome),
@@ -481,8 +483,6 @@ impl Argument {
                     || name == "Box<<T as Trait>::Call>"
                     || name == "<T as Trait>::Call"
                     || name == "<T as Config>::Call"
-                    || name == "Box<Xcm<T::Call>>"
-                    || name == "Box<VersionedXcm<T::Call>>"
                     || name == "Box<<T as Config<I>>::Proposal>"
                     || name == "Box<<T as Trait<I>>::Proposal>"
                 {

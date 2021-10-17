@@ -44,7 +44,7 @@ pub struct SubstrateClient {
 impl SubstrateClient {
     /// Connect to the node and construct a new Substrate client.
     pub async fn new(config: &Config) -> anyhow::Result<Self> {
-        debug!("Constructing the Substrate client.");
+        debug!("Constructing Substrate client.");
         let ws_client = WsClientBuilder::default()
             .connection_timeout(std::time::Duration::from_secs(
                 config.substrate.connection_timeout_seconds,
@@ -73,8 +73,8 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         debug!("Got metadata.");
-        //metadata.log_all_calls();
-        //metadata.log_all_events();
+        // metadata.log_all_calls();
+        // metadata.log_all_events();
         metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(

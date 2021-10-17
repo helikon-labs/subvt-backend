@@ -8,7 +8,7 @@ use crate::{
         Block, MultiAddress,
     },
 };
-use log::{debug, warn};
+use log::{debug, error, warn};
 use parity_scale_codec::{Compact, Decode, Input};
 
 #[derive(Clone, Debug)]
@@ -182,6 +182,9 @@ impl SubstrateExtrinsic {
         let mut arguments: Vec<Argument> = Vec::new();
         for argument_meta in &call.arguments {
             if let ArgumentMeta::Vec(inner_argument_meta) = argument_meta {
+                // vector of calls should be handled differently,
+                // the encoding doesn't include the length of the calls as it would in the case
+                // of any other vector encoding, they're just concat.ed one after another
                 let inner_argument_meta = *inner_argument_meta.clone();
                 if let ArgumentMeta::Primitive(name) = inner_argument_meta {
                     if name == "<T as Config>::Call" {
@@ -224,7 +227,10 @@ impl SubstrateExtrinsic {
             debug!("Decoded extrinsic {}.{}.", module.name, call.name);
             extrinsic
         } else {
-            warn!("Non-specified extrinsic {}.{}.", module.name, call.name);
+            warn!(
+                "Decoded non-specified extrinsic {}.{}.",
+                module.name, call.name
+            );
             SubstrateExtrinsic::Other {
                 signature,
                 module_name: module.name.clone(),
@@ -240,13 +246,19 @@ impl SubstrateExtrinsic {
         block: Block,
     ) -> anyhow::Result<Vec<Self>> {
         let mut extrinsics: Vec<Self> = Vec::new();
-        for extrinsic_hex_string in block.extrinsics {
+        for (extrinsic_index, extrinsic_hex_string) in block.extrinsics.iter().enumerate() {
             let mut raw_bytes: &[u8] = &hex::decode(extrinsic_hex_string.trim_start_matches("0x"))?;
             let byte_vector: Vec<u8> = Decode::decode(&mut raw_bytes).unwrap();
             let mut bytes: &[u8] = byte_vector.as_ref();
-            extrinsics.push(SubstrateExtrinsic::decode_extrinsic(
-                chain, metadata, false, &mut bytes,
-            )?);
+            match SubstrateExtrinsic::decode_extrinsic(chain, metadata, false, &mut bytes) {
+                Ok(extrinsic) => extrinsics.push(extrinsic),
+                Err(error) => error!(
+                    "Error decoding extrinsic #{} for block #{}: {:?}",
+                    extrinsic_index,
+                    block.header.get_number().unwrap(),
+                    error
+                ),
+            }
         }
         Ok(extrinsics)
     }
