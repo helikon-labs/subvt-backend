@@ -485,6 +485,18 @@ impl Argument {
                     || name == "Box<<T as Trait<I>>::Proposal>"
                     || name == "OpaqueCall"
                 {
+                    if name == "OpaqueCall" {
+                        let vector_length_result: Result<Compact<u64>, _> =
+                            Decode::decode(&mut *bytes);
+                        match vector_length_result {
+                            Ok(_) => (),
+                            Err(_) => {
+                                return Err(ArgumentDecodeError::DecodeError(
+                                    "Cannot decode byte vector length for OpaqueCall.".to_string(),
+                                ))
+                            }
+                        }
+                    }
                     match SubstrateExtrinsic::decode_extrinsic(chain, metadata, true, &mut *bytes) {
                         Ok(extrinsic) => Ok(Argument::Primitive(Box::new(
                             ArgumentPrimitive::Call(extrinsic),
