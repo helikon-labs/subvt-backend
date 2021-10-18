@@ -1,11 +1,11 @@
 //! See `./lib.rs` for details.
 
 use lazy_static::lazy_static;
-use subvt_live_network_status_server::LiveNetworkStatusServer;
+use subvt_app_services::AppServices;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: LiveNetworkStatusServer = LiveNetworkStatusServer::default();
+    static ref SERVICE: AppServices = AppServices::default();
 }
 
 #[tokio::main]

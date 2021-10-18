@@ -25,7 +25,7 @@ use pallet_elections_phragmen::Renouncing;
 use pallet_gilt::ActiveIndex;
 use pallet_identity::{Data, IdentityFields, IdentityInfo, Judgement, RegistrarIndex};
 use pallet_im_online::Heartbeat;
-use pallet_multisig::{OpaqueCall, Timepoint};
+use pallet_multisig::Timepoint;
 use pallet_scheduler::TaskAddress;
 use pallet_staking::{EraIndex, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
@@ -127,7 +127,6 @@ pub enum ArgumentPrimitive {
     MultiAsset(Box<xcm::v0::prelude::MultiAsset>),
     MultiAddress(MultiAddress),
     MultiLocation(xcm::latest::MultiLocation),
-    MultisigOpaqueCall(OpaqueCall),
     MultisigTimepoint(Timepoint<BlockNumber>),
     MultiSignature(MultiSignature),
     MultiSigner(MultiSigner),
@@ -343,7 +342,6 @@ generate_argument_primitive_decoder_impl! {[
     ("MultiAsset", decode_multi_asset, MultiAsset),
     ("MultiLocation", decode_multi_location_1, MultiLocation),
     ("Box<MultiLocation>", decode_multi_location_2, MultiLocation),
-    ("OpaqueCall", decode_multisig_opaque_call, MultisigOpaqueCall),
     ("Timepoint<BlockNumber>", decode_multisig_timepoint_1, MultisigTimepoint),
     ("Timepoint<T::BlockNumber>", decode_multisig_timepoint_2, MultisigTimepoint),
     ("MultiSignature", decode_multisignature, MultiSignature),
@@ -485,9 +483,9 @@ impl Argument {
                     || name == "<T as Config>::Call"
                     || name == "Box<<T as Config<I>>::Proposal>"
                     || name == "Box<<T as Trait<I>>::Proposal>"
+                    || name == "OpaqueCall"
                 {
-                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, false, &mut *bytes)
-                    {
+                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, true, &mut *bytes) {
                         Ok(extrinsic) => Ok(Argument::Primitive(Box::new(
                             ArgumentPrimitive::Call(extrinsic),
                         ))),

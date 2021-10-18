@@ -1,11 +1,11 @@
 //! See `./lib.rs` for details.
 
 use lazy_static::lazy_static;
-use subvt_live_network_status_server::LiveNetworkStatusServer;
 use subvt_service_common::Service;
+use subvt_thousand_validators_updater::ThousandValidatorsUpdater;
 
 lazy_static! {
-    static ref SERVICE: LiveNetworkStatusServer = LiveNetworkStatusServer::default();
+    static ref SERVICE: ThousandValidatorsUpdater = ThousandValidatorsUpdater::default();
 }
 
 #[tokio::main]

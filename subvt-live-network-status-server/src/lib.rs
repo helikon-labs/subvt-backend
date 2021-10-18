@@ -25,9 +25,9 @@ pub enum BusEvent {
 }
 
 #[derive(Default)]
-pub struct LiveNetworkStatusPresenter;
+pub struct LiveNetworkStatusServer;
 
-impl LiveNetworkStatusPresenter {
+impl LiveNetworkStatusServer {
     async fn read_current_network_status(
         connection: &mut Connection,
     ) -> anyhow::Result<LiveNetworkStatus> {
@@ -106,7 +106,7 @@ impl LiveNetworkStatusPresenter {
 }
 
 #[async_trait]
-impl Service for LiveNetworkStatusPresenter {
+impl Service for LiveNetworkStatusServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let current_status = Arc::new(RwLock::new(LiveNetworkStatus::default()));
@@ -123,7 +123,7 @@ impl Service for LiveNetworkStatusPresenter {
         ))?;
         let mut data_connection = redis_client.get_connection()?;
         let (server_join_handle, server_stop_handle) =
-            LiveNetworkStatusPresenter::run_rpc_server(&current_status, &bus).await?;
+            LiveNetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
         let error: anyhow::Error = loop {
             let message = pub_sub.get_message();
@@ -143,9 +143,7 @@ impl Service for LiveNetworkStatusPresenter {
                 }
             }
             debug!("New best block #{}.", best_block_number);
-            match LiveNetworkStatusPresenter::read_current_network_status(&mut data_connection)
-                .await
-            {
+            match LiveNetworkStatusServer::read_current_network_status(&mut data_connection).await {
                 Ok(new_status) => {
                     {
                         let current_status = current_status.read().unwrap();

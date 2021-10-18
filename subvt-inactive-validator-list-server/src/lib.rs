@@ -33,9 +33,9 @@ pub enum BusEvent {
 }
 
 #[derive(Default)]
-pub struct InactiveValidatorListPresenter;
+pub struct InactiveValidatorListServer;
 
-impl InactiveValidatorListPresenter {
+impl InactiveValidatorListServer {
     pub async fn run_rpc_server(
         validator_map: &Arc<RwLock<HashMap<AccountId, InactiveValidator>>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
@@ -95,7 +95,7 @@ impl InactiveValidatorListPresenter {
 }
 
 #[async_trait]
-impl Service for InactiveValidatorListPresenter {
+impl Service for InactiveValidatorListServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
@@ -114,7 +114,7 @@ impl Service for InactiveValidatorListPresenter {
         ))?;
         let mut data_connection = redis_client.get_connection()?;
         let (server_join_handle, server_stop_handle) =
-            InactiveValidatorListPresenter::run_rpc_server(&validator_map, &bus).await?;
+            InactiveValidatorListServer::run_rpc_server(&validator_map, &bus).await?;
 
         let error: anyhow::Error = loop {
             let message = pub_sub.get_message();

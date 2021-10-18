@@ -4669,6 +4669,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
+name = "subvt-active-validator-list-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
+name = "subvt-app-services"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-block-processor"
 version = "0.1.0"
 dependencies = [
@@ -4795,6 +4825,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-notifier"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-persistence"
 version = "0.1.0"
 dependencies = [
@@ -4812,6 +4857,21 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "subvt-report-services"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
 ]
 
 [[package]]
@@ -4848,6 +4908,21 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "twox-hash",
+]
+
+[[package]]
+name = "subvt-thousand-validators-updater"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
 ]
 
 [[package]]
