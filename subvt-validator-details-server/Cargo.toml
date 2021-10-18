@@ -1,0 +1,17 @@
+[package]
+name = "subvt-validator-details-server"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.44"
+async-trait = "0.1.51"
+config = "0.11.0"
+lazy_static = "1.4.0"
+subvt-config = { path = "../subvt-config" }
+subvt-service-common = { path = "../subvt-service-common" }
+subvt-types = { path = "../subvt-types" }
+subvt-logging = { path = "../subvt-logging" }
+tokio = { version = "1.11.0", features = ["full"] }
