@@ -241,20 +241,22 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: i32,
+        is_batch: bool,
         nominator_account_id: &AccountId,
         validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
         self.save_account(nominator_account_id).await?;
         let maybe_extrinsic_nominate_id: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, nominator_account_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, is_batch, nominator_account_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, nominator_account_id) DO NOTHING
             RETURNING id
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(is_batch)
         .bind(nominator_account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -497,5 +499,62 @@ impl PostgreSQLStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(processed_block_height.0)
+    }
+
+    pub async fn save_batch_item_completed_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO event_batch_item_completed (block_hash, extrinsic_index)
+            VALUES ($1, $2)
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn save_batch_interrupted_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+        item_index: i32,
+        dispatch_error_debug: String,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO event_batch_interrupted (block_hash, extrinsic_index, item_index, dispatch_error_debug)
+            VALUES ($1, $2, $3, $4)
+            "#)
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(item_index)
+            .bind(dispatch_error_debug)
+            .execute(&self.connection_pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn save_batch_completed_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: Option<i32>,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO event_batch_completed (block_hash, extrinsic_index)
+            VALUES ($1, $2)
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
     }
 }

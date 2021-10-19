@@ -6,6 +6,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.44"
 async-lock = "2.4.0"
+async-recursion = "0.3.2"
 async-trait = "0.1.51"
 chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
 lazy_static = "1.4.0"

@@ -644,6 +644,7 @@ pub enum SubstrateEvent {
     Other {
         module_name: String,
         event_name: String,
+        extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     },
 }
@@ -698,6 +699,7 @@ impl SubstrateEvent {
             SubstrateEvent::Other {
                 module_name: module.name.clone(),
                 event_name: event.name.clone(),
+                extrinsic_index,
                 arguments,
             }
         };

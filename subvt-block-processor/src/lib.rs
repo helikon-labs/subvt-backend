@@ -1,6 +1,7 @@
 //! Indexes historical block data into the PostreSQL database instance.
 
 use async_lock::Mutex;
+use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
@@ -16,8 +17,8 @@ use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
     substrate::{
-        event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent},
-        extrinsic::{StakingExtrinsic, SubstrateExtrinsic, TimestampExtrinsic},
+        event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent, UtilityEvent},
+        extrinsic::{StakingExtrinsic, SubstrateExtrinsic, TimestampExtrinsic, UtilityExtrinsic},
         MultiAddress,
     },
 };
@@ -91,6 +92,249 @@ impl BlockProcessor {
                 .await?;
         }
         debug!("Era {} rewards persisted.", era_index);
+        Ok(())
+    }
+
+    async fn process_event(
+        &self,
+        postgres: &PostgreSQLStorage,
+        block_hash: &str,
+        successful_extrinsic_indices: &mut Vec<u32>,
+        failed_extrinsic_indices: &mut Vec<u32>,
+        event: SubstrateEvent,
+    ) -> anyhow::Result<()> {
+        match event {
+            SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
+                extrinsic_index,
+                validator_account_id,
+            }) => {
+                let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                postgres
+                    .save_validator_heartbeart_event(
+                        block_hash,
+                        extrinsic_index,
+                        &validator_account_id,
+                    )
+                    .await?;
+            }
+            SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
+                identification_tuples,
+            }) => {
+                postgres
+                    .save_validator_offline_events(block_hash, identification_tuples)
+                    .await?;
+            }
+            SubstrateEvent::Staking(staking_event) => match staking_event {
+                StakingEvent::Chilled {
+                    extrinsic_index,
+                    validator_account_id,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_validator_chilled_event(
+                            block_hash,
+                            extrinsic_index,
+                            &validator_account_id,
+                        )
+                        .await?;
+                }
+                StakingEvent::EraPaid {
+                    extrinsic_index,
+                    era_index,
+                    validator_payout,
+                    remainder,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_era_paid_event(
+                            block_hash,
+                            extrinsic_index,
+                            era_index,
+                            validator_payout,
+                            remainder,
+                        )
+                        .await?;
+                }
+                StakingEvent::NominatorKicked {
+                    extrinsic_index,
+                    nominator_account_id,
+                    validator_account_id,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_nominator_kicked_event(
+                            block_hash,
+                            extrinsic_index,
+                            &validator_account_id,
+                            &nominator_account_id,
+                        )
+                        .await?;
+                }
+                StakingEvent::Rewarded {
+                    extrinsic_index,
+                    rewardee_account_id,
+                    amount,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_rewarded_event(
+                            block_hash,
+                            extrinsic_index,
+                            &rewardee_account_id,
+                            amount,
+                        )
+                        .await?;
+                }
+                StakingEvent::Slashed {
+                    extrinsic_index,
+                    validator_account_id,
+                    amount,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_slashed_event(
+                            block_hash,
+                            extrinsic_index,
+                            &validator_account_id,
+                            amount,
+                        )
+                        .await?;
+                }
+                _ => (),
+            },
+            SubstrateEvent::System(system_event) => match system_event {
+                SystemEvent::ExtrinsicFailed {
+                    extrinsic_index,
+                    dispatch_error: _,
+                    dispatch_info: _,
+                } => failed_extrinsic_indices.push(extrinsic_index.unwrap()),
+                SystemEvent::ExtrinsicSuccess {
+                    extrinsic_index,
+                    dispatch_info: _,
+                } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
+                SystemEvent::NewAccount {
+                    extrinsic_index,
+                    account_id,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_new_account_event(block_hash, extrinsic_index, &account_id)
+                        .await?;
+                }
+                SystemEvent::KilledAccount {
+                    extrinsic_index,
+                    account_id,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_killed_account_event(block_hash, extrinsic_index, &account_id)
+                        .await?;
+                }
+                _ => (),
+            },
+            SubstrateEvent::Utility(utility_event) => match utility_event {
+                UtilityEvent::ItemCompleted { extrinsic_index } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_batch_item_completed_event(block_hash, extrinsic_index)
+                        .await?;
+                }
+                UtilityEvent::BatchInterrupted {
+                    extrinsic_index,
+                    item_index,
+                    dispatch_error,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_batch_interrupted_event(
+                            block_hash,
+                            extrinsic_index,
+                            item_index as i32,
+                            format!("{:?}", dispatch_error),
+                        )
+                        .await?;
+                }
+                UtilityEvent::BatchCompleted { extrinsic_index } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_batch_completed_event(block_hash, extrinsic_index)
+                        .await?;
+                }
+            },
+            _ => (),
+        }
+        Ok(())
+    }
+
+    #[async_recursion]
+    async fn process_extrinsic(
+        &self,
+        postgres: &PostgreSQLStorage,
+        block_hash: &str,
+        index: usize,
+        is_batch: bool,
+        extrinsic: &SubstrateExtrinsic,
+    ) -> anyhow::Result<()> {
+        match extrinsic {
+            SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate { signature, targets }) => {
+                let maybe_nominator_account_id = match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                };
+                if let Some(nominator_account_id) = maybe_nominator_account_id {
+                    let target_account_ids: Vec<AccountId> = targets
+                        .iter()
+                        .filter_map(|target_multi_address| match target_multi_address {
+                            MultiAddress::Id(account_id) => Some(account_id.clone()),
+                            _ => {
+                                error!("Unsupported multi address type for nomination target.");
+                                None
+                            }
+                        })
+                        .collect();
+                    postgres
+                        .save_nomination(
+                            block_hash,
+                            index as i32,
+                            is_batch,
+                            &nominator_account_id,
+                            &target_account_ids,
+                        )
+                        .await?;
+                }
+            }
+            SubstrateExtrinsic::Utility(utility_extrinsic) => match utility_extrinsic {
+                UtilityExtrinsic::Batch {
+                    signature: _,
+                    calls,
+                } => {
+                    for call in calls {
+                        self.process_extrinsic(postgres, block_hash, index, true, call)
+                            .await?;
+                    }
+                }
+                UtilityExtrinsic::BatchAll {
+                    signature: _,
+                    calls,
+                } => {
+                    for call in calls {
+                        self.process_extrinsic(postgres, block_hash, index, true, call)
+                            .await?;
+                    }
+                }
+            },
+            _ => (),
+        }
         Ok(())
     }
 
@@ -195,7 +439,6 @@ impl BlockProcessor {
         }
         let events = substrate_client.get_block_events(&block_hash).await?;
         debug!("Got #{} events for block #{}.", events.len(), block_number);
-
         let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
         debug!(
             "Got #{} extrinsics for block #{}.",
@@ -241,181 +484,25 @@ impl BlockProcessor {
             .await?;
         // process/persist events
         let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
-        let mut _failed_extrinsic_indices: Vec<u32> = Vec::new();
+        let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
         for event in events {
-            match event {
-                SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
-                    extrinsic_index,
-                    validator_account_id,
-                }) => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_validator_heartbeart_event(
-                            &block_hash,
-                            extrinsic_index,
-                            &validator_account_id,
-                        )
-                        .await?;
-                }
-                SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
-                    identification_tuples,
-                }) => {
-                    postgres
-                        .save_validator_offline_events(&block_hash, identification_tuples)
-                        .await?;
-                }
-                SubstrateEvent::Staking(staking_event) => match staking_event {
-                    StakingEvent::Chilled {
-                        extrinsic_index,
-                        validator_account_id,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_validator_chilled_event(
-                                &block_hash,
-                                extrinsic_index,
-                                &validator_account_id,
-                            )
-                            .await?;
-                    }
-                    StakingEvent::EraPaid {
-                        extrinsic_index,
-                        era_index,
-                        validator_payout,
-                        remainder,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_era_paid_event(
-                                &block_hash,
-                                extrinsic_index,
-                                era_index,
-                                validator_payout,
-                                remainder,
-                            )
-                            .await?;
-                    }
-                    StakingEvent::NominatorKicked {
-                        extrinsic_index,
-                        nominator_account_id,
-                        validator_account_id,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_nominator_kicked_event(
-                                &block_hash,
-                                extrinsic_index,
-                                &validator_account_id,
-                                &nominator_account_id,
-                            )
-                            .await?;
-                    }
-                    StakingEvent::Rewarded {
-                        extrinsic_index,
-                        rewardee_account_id,
-                        amount,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_rewarded_event(
-                                &block_hash,
-                                extrinsic_index,
-                                &rewardee_account_id,
-                                amount,
-                            )
-                            .await?;
-                    }
-                    StakingEvent::Slashed {
-                        extrinsic_index,
-                        validator_account_id,
-                        amount,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_slashed_event(
-                                &block_hash,
-                                extrinsic_index,
-                                &validator_account_id,
-                                amount,
-                            )
-                            .await?;
-                    }
-                    _ => (),
-                },
-                SubstrateEvent::System(system_event) => match system_event {
-                    SystemEvent::ExtrinsicFailed {
-                        extrinsic_index,
-                        dispatch_error: _,
-                        dispatch_info: _,
-                    } => _failed_extrinsic_indices.push(extrinsic_index.unwrap()),
-                    SystemEvent::ExtrinsicSuccess {
-                        extrinsic_index,
-                        dispatch_info: _,
-                    } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
-                    SystemEvent::NewAccount {
-                        extrinsic_index,
-                        account_id,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_new_account_event(&block_hash, extrinsic_index, &account_id)
-                            .await?;
-                    }
-                    SystemEvent::KilledAccount {
-                        extrinsic_index,
-                        account_id,
-                    } => {
-                        let extrinsic_index =
-                            extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                        postgres
-                            .save_killed_account_event(&block_hash, extrinsic_index, &account_id)
-                            .await?;
-                    }
-                    _ => (),
-                },
-                _ => (),
-            }
+            self.process_event(
+                postgres,
+                block_hash.as_str(),
+                &mut successful_extrinsic_indices,
+                &mut failed_extrinsic_indices,
+                event,
+            )
+            .await?;
         }
         // persist extrinsics
         for (index, extrinsic) in extrinsics.iter().enumerate() {
+            // check events for batch & batch_all
             if !successful_extrinsic_indices.contains(&(index as u32)) {
                 continue;
             }
-            if let SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate { signature, targets }) =
-                extrinsic
-            {
-                let maybe_nominator_account_id = match signature {
-                    Some(signature) => signature.get_signer_account_id(),
-                    _ => None,
-                };
-                if let Some(nominator_account_id) = maybe_nominator_account_id {
-                    let target_account_ids: Vec<AccountId> = targets
-                        .iter()
-                        .filter_map(|target_multi_address| match target_multi_address {
-                            MultiAddress::Id(account_id) => Some(account_id.clone()),
-                            _ => {
-                                error!("Unsupported multi address type for nomination target.");
-                                None
-                            }
-                        })
-                        .collect();
-                    postgres
-                        .save_nomination(
-                            &block_hash,
-                            index as i32,
-                            &nominator_account_id,
-                            &target_account_ids,
-                        )
-                        .await?;
-                }
-            };
+            self.process_extrinsic(postgres, block_hash.as_str(), index, false, extrinsic)
+                .await?
         }
         Ok(())
     }
