@@ -667,7 +667,12 @@ impl SubstrateEvent {
         // decode arguments
         let mut arguments: Vec<Argument> = Vec::new();
         for argument_meta in &event.arguments {
-            arguments.push(Argument::decode(chain, metadata, argument_meta, &mut *bytes)?);
+            arguments.push(Argument::decode(
+                chain,
+                metadata,
+                argument_meta,
+                &mut *bytes,
+            )?);
         }
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
