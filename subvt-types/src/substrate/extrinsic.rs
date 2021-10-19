@@ -82,8 +82,8 @@ impl UtilityExtrinsic {
         let maybe_extrinsic = match name {
             "batch" | "batch_all" => {
                 let mut calls: Vec<SubstrateExtrinsic> = Vec::new();
-                for argument in arguments {
-                    calls.push(get_argument_primitive!(&argument, Call))
+                for call in get_argument_vector!(&arguments[0], Call) {
+                    calls.push(call);
                 }
                 let extrinsic = if name == "batch" {
                     UtilityExtrinsic::Batch { signature, calls }
@@ -188,6 +188,7 @@ impl SubstrateExtrinsic {
                 let inner_argument_meta = *inner_argument_meta.clone();
                 if let ArgumentMeta::Primitive(name) = inner_argument_meta {
                     if name == "<T as Config>::Call" {
+                        let mut call_args: Vec<Argument> = Vec::new();
                         // skip signed signature - inner calls won't be signed
                         bytes.read_byte()?;
                         loop {
@@ -198,12 +199,13 @@ impl SubstrateExtrinsic {
                                 &mut *bytes,
                             );
                             match extrinsic_result {
-                                Ok(extrinsic) => arguments.push(Argument::Primitive(Box::new(
+                                Ok(extrinsic) => call_args.push(Argument::Primitive(Box::new(
                                     ArgumentPrimitive::Call(extrinsic),
                                 ))),
                                 Err(_) => break,
                             }
                         }
+                        arguments.push(Argument::Vec(call_args));
                         continue;
                     }
                 }
