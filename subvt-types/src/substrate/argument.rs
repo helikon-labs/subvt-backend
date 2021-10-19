@@ -227,6 +227,7 @@ macro_rules! get_optional_argument_primitive {
             crate::substrate::argument::extract_optional_argument_primitive($argument_expr)?;
         match optional_argument_primitive {
             Some(ArgumentPrimitive::$argument_primitive_type(primitive)) => Ok(Some(primitive)),
+            None => Ok(None),
             _ => Err(DecodeError::Error(format!(
                 "Cannot get optional argument primitive {:?}.",
                 optional_argument_primitive
