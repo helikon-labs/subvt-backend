@@ -191,6 +191,21 @@ pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimiti
     }
 }
 
+pub fn extract_optional_argument_primitive(
+    argument: &Argument,
+) -> Result<Option<ArgumentPrimitive>, DecodeError> {
+    match argument {
+        Argument::Option(argument_option) => match &**argument_option {
+            Some(argument) => Ok(Some(extract_argument_primitive(argument)?)),
+            None => Ok(None),
+        },
+        _ => Err(DecodeError::Error(format!(
+            "Cannot extract optional argument primitive: {:?}",
+            argument
+        ))),
+    }
+}
+
 macro_rules! get_argument_primitive {
     ($argument_expr: expr, $argument_primitive_type: ident) => {{
         let argument_primitive =
@@ -205,6 +220,21 @@ macro_rules! get_argument_primitive {
     }};
 }
 pub(crate) use get_argument_primitive;
+
+macro_rules! get_optional_argument_primitive {
+    ($argument_expr: expr, $argument_primitive_type: ident) => {{
+        let optional_argument_primitive =
+            crate::substrate::argument::extract_optional_argument_primitive($argument_expr)?;
+        match optional_argument_primitive {
+            Some(ArgumentPrimitive::$argument_primitive_type(primitive)) => Ok(Some(primitive)),
+            _ => Err(DecodeError::Error(format!(
+                "Cannot get optional argument primitive {:?}.",
+                optional_argument_primitive
+            ))),
+        }?
+    }};
+}
+pub(crate) use get_optional_argument_primitive;
 
 macro_rules! get_argument_vector {
     ($argument_expr: expr, $argument_primitive_type: ident) => {{

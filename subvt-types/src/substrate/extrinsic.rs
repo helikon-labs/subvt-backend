@@ -2,14 +2,159 @@ use crate::substrate::Chain;
 use crate::{
     crypto::AccountId,
     substrate::{
-        argument::{get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive},
+        argument::{
+            get_argument_primitive, get_argument_vector, get_optional_argument_primitive, Argument,
+            ArgumentPrimitive,
+        },
         error::DecodeError,
         metadata::{ArgumentMeta, Metadata},
         Block, MultiAddress,
     },
 };
 use log::{debug, error, warn};
+use pallet_multisig::Timepoint;
 use parity_scale_codec::{Compact, Decode, Input};
+use polkadot_core_primitives::BlockNumber;
+use polkadot_runtime::ProxyType;
+
+#[derive(Clone, Debug)]
+pub enum MultisigExtrinsic {
+    AsMulti {
+        signature: Option<Signature>,
+        threshold: u16,
+        other_signatories: Vec<AccountId>,
+        maybe_timepoint: Option<Timepoint<BlockNumber>>,
+        call: Box<SubstrateExtrinsic>,
+        store_call: bool,
+        max_weight: u64,
+    },
+    AsMultiThreshold1 {
+        other_signatories: Vec<AccountId>,
+        call: Box<SubstrateExtrinsic>,
+    },
+}
+
+impl MultisigExtrinsic {
+    pub fn from(
+        name: &str,
+        signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            "as_multi" => {
+                if arguments.len() < 6 {
+                    return Err(
+                        DecodeError::Error(
+                            format!(
+                                "Cannot decode Multisign.as_multi extrinsic. Not enough parameters. Expected 6, found {}.",
+                                arguments.len()
+                            )
+                        )
+                    );
+                }
+                Some(SubstrateExtrinsic::Multisig(MultisigExtrinsic::AsMulti {
+                    signature,
+                    threshold: get_argument_primitive!(&arguments[0], U16),
+                    other_signatories: get_argument_vector!(&arguments[1], AccountId),
+                    maybe_timepoint: get_optional_argument_primitive!(
+                        &arguments[2],
+                        MultisigTimepoint
+                    ),
+                    call: Box::new(get_argument_primitive!(&arguments[3], Call)),
+                    store_call: get_argument_primitive!(&arguments[4], Bool),
+                    max_weight: get_argument_primitive!(&arguments[5], U64),
+                }))
+            }
+            "as_multi_threshold_1" => {
+                if arguments.len() < 2 {
+                    return Err(
+                        DecodeError::Error(
+                            format!(
+                                "Cannot decode Multisig.as_multi extrinsic. Not enough parameters. Expected 2, found {}.",
+                                arguments.len()
+                            )
+                        )
+                    );
+                }
+                Some(SubstrateExtrinsic::Multisig(
+                    MultisigExtrinsic::AsMultiThreshold1 {
+                        other_signatories: get_argument_vector!(&arguments[0], AccountId),
+                        call: Box::new(get_argument_primitive!(&arguments[1], Call)),
+                    },
+                ))
+            }
+            _ => None,
+        };
+        Ok(maybe_extrinsic)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ProxyExtrinsic {
+    Proxy {
+        signature: Option<Signature>,
+        real_account_id: AccountId,
+        force_proxy_type: Option<ProxyType>,
+        call: Box<SubstrateExtrinsic>,
+    },
+    ProxyAnnounced {
+        signature: Option<Signature>,
+        delegate_account_id: AccountId,
+        real_account_id: AccountId,
+        force_proxy_type: Option<ProxyType>,
+        call: Box<SubstrateExtrinsic>,
+    },
+}
+
+impl ProxyExtrinsic {
+    pub fn from(
+        name: &str,
+        signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            "proxy" => {
+                if arguments.len() < 3 {
+                    return Err(
+                        DecodeError::Error(
+                            format!(
+                                "Cannot decode Proxy.proxy extrinsic. Not enough parameters. Expected 3, found {}.",
+                                arguments.len()
+                            )
+                        )
+                    );
+                }
+                Some(SubstrateExtrinsic::Proxy(ProxyExtrinsic::Proxy {
+                    signature,
+                    real_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    force_proxy_type: get_optional_argument_primitive!(&arguments[1], ProxyType),
+                    call: Box::new(get_argument_primitive!(&arguments[2], Call)),
+                }))
+            }
+            "proxy_announced" => {
+                if arguments.len() < 4 {
+                    return Err(
+                        DecodeError::Error(
+                            format!(
+                                "Cannot decode Proxy.proxy extrinsic. Not enough parameters. Expected 4, found {}.",
+                                arguments.len()
+                            )
+                        )
+                    );
+                }
+                Some(SubstrateExtrinsic::Proxy(ProxyExtrinsic::ProxyAnnounced {
+                    signature,
+                    delegate_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    real_account_id: get_argument_primitive!(&arguments[1], AccountId),
+                    force_proxy_type: get_optional_argument_primitive!(&arguments[2], ProxyType),
+                    call: Box::new(get_argument_primitive!(&arguments[3], Call)),
+                }))
+            }
+            _ => None,
+        };
+        Ok(maybe_extrinsic)
+    }
+}
 
 #[derive(Clone, Debug)]
 pub enum TimestampExtrinsic {
@@ -100,6 +245,8 @@ impl UtilityExtrinsic {
 
 #[derive(Clone, Debug)]
 pub enum SubstrateExtrinsic {
+    Multisig(MultisigExtrinsic),
+    Proxy(ProxyExtrinsic),
     Staking(StakingExtrinsic),
     Timestamp(TimestampExtrinsic),
     Utility(UtilityExtrinsic),
@@ -214,11 +361,17 @@ impl SubstrateExtrinsic {
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
-            ("Timestamp", "set") => {
-                TimestampExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            ("Multisig", "as_multi") | ("Multisig", "as_multi_threshold_1") => {
+                MultisigExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Staking", "nominate") => {
                 StakingExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            }
+            ("Proxy", "proxy") | ("Proxy", "proxy_announced") => {
+                ProxyExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            }
+            ("Timestamp", "set") => {
+                TimestampExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Utility", "batch") | ("Utility", "batch_all") => {
                 UtilityExtrinsic::from(&call.name, signature.clone(), arguments.clone())?

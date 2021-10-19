@@ -18,7 +18,10 @@ use subvt_types::{
     crypto::AccountId,
     substrate::{
         event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent, UtilityEvent},
-        extrinsic::{StakingExtrinsic, SubstrateExtrinsic, TimestampExtrinsic, UtilityExtrinsic},
+        extrinsic::{
+            MultisigExtrinsic, ProxyExtrinsic, StakingExtrinsic, SubstrateExtrinsic,
+            TimestampExtrinsic, UtilityExtrinsic,
+        },
         MultiAddress,
     },
 };
@@ -282,10 +285,53 @@ impl BlockProcessor {
         postgres: &PostgreSQLStorage,
         block_hash: &str,
         index: usize,
-        is_batch: bool,
+        is_nested_call: bool,
+        is_successful: bool,
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<()> {
         match extrinsic {
+            SubstrateExtrinsic::Multisig(multisig_extrinsic) => match multisig_extrinsic {
+                MultisigExtrinsic::AsMulti {
+                    signature: _,
+                    threshold: _,
+                    other_signatories: _,
+                    maybe_timepoint: _,
+                    call,
+                    store_call: _,
+                    max_weight: _,
+                } => {
+                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
+                        .await?;
+                }
+                MultisigExtrinsic::AsMultiThreshold1 {
+                    other_signatories: _,
+                    call,
+                } => {
+                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
+                        .await?;
+                }
+            },
+            SubstrateExtrinsic::Proxy(proxy_extrinsic) => match proxy_extrinsic {
+                ProxyExtrinsic::Proxy {
+                    signature: _,
+                    real_account_id: _,
+                    force_proxy_type: _,
+                    call,
+                } => {
+                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
+                        .await?;
+                }
+                ProxyExtrinsic::ProxyAnnounced {
+                    signature: _,
+                    delegate_account_id: _,
+                    real_account_id: _,
+                    force_proxy_type: _,
+                    call,
+                } => {
+                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
+                        .await?;
+                }
+            },
             SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate { signature, targets }) => {
                 let maybe_nominator_account_id = match signature {
                     Some(signature) => signature.get_signer_account_id(),
@@ -306,7 +352,8 @@ impl BlockProcessor {
                         .save_nomination(
                             block_hash,
                             index as i32,
-                            is_batch,
+                            is_nested_call,
+                            is_successful,
                             &nominator_account_id,
                             &target_account_ids,
                         )
@@ -319,8 +366,15 @@ impl BlockProcessor {
                     calls,
                 } => {
                     for call in calls {
-                        self.process_extrinsic(postgres, block_hash, index, true, call)
-                            .await?;
+                        self.process_extrinsic(
+                            postgres,
+                            block_hash,
+                            index,
+                            true,
+                            is_successful,
+                            call,
+                        )
+                        .await?;
                     }
                 }
                 UtilityExtrinsic::BatchAll {
@@ -328,8 +382,15 @@ impl BlockProcessor {
                     calls,
                 } => {
                     for call in calls {
-                        self.process_extrinsic(postgres, block_hash, index, true, call)
-                            .await?;
+                        self.process_extrinsic(
+                            postgres,
+                            block_hash,
+                            index,
+                            true,
+                            is_successful,
+                            call,
+                        )
+                        .await?;
                     }
                 }
             },
@@ -498,11 +559,16 @@ impl BlockProcessor {
         // persist extrinsics
         for (index, extrinsic) in extrinsics.iter().enumerate() {
             // check events for batch & batch_all
-            if !successful_extrinsic_indices.contains(&(index as u32)) {
-                continue;
-            }
-            self.process_extrinsic(postgres, block_hash.as_str(), index, false, extrinsic)
-                .await?
+            let is_successful = successful_extrinsic_indices.contains(&(index as u32));
+            self.process_extrinsic(
+                postgres,
+                block_hash.as_str(),
+                index,
+                false,
+                is_successful,
+                extrinsic,
+            )
+            .await?
         }
         Ok(())
     }

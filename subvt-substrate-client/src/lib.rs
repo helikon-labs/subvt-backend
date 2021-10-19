@@ -108,6 +108,8 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
+        // metadata.log_all_calls();
+        // metadata.log_all_events();
         metadata.check_primitive_argument_support(&self.chain)?;
         metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
