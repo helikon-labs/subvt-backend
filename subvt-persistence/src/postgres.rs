@@ -5,7 +5,7 @@ use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{
     argument::IdentificationTuple,
-    {Balance, BlockHeader, Era},
+    ValidatorPreferences, {Balance, BlockHeader, Era},
 };
 
 pub struct PostgreSQLStorage {
@@ -84,6 +84,34 @@ impl PostgreSQLStorage {
         .bind(is_active)
         .fetch_optional(&self.connection_pool)
         .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_era_validator_preferences(
+        &self,
+        era_index: u32,
+        validator_account_id: &AccountId,
+        validator_preferences: &ValidatorPreferences,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(validator_account_id).await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO era_validator_preferences (era_index, validator_account_id, commission_per_billion, blocks_nominations)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (era_index, validator_account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+            .bind(era_index)
+            .bind(validator_account_id.to_string())
+            .bind(validator_preferences.commission_per_billion)
+            .bind(validator_preferences.blocks_nominations)
+            .fetch_optional(&self.connection_pool)
+            .await?;
         if let Some(result) = maybe_result {
             Ok(Some(result.0))
         } else {

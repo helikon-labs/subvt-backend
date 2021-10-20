@@ -462,6 +462,7 @@ impl BlockProcessor {
         }
         if last_era_index != active_era.index {
             // persist active era validators
+            debug!("Persist era #{} validators.", active_era.index);
             self.persist_era_validators(
                 substrate_client,
                 postgres,
@@ -469,6 +470,20 @@ impl BlockProcessor {
                 block_hash.as_str(),
             )
             .await?;
+            // persist era validator preferences
+            debug!("Persist era #{} validator preferences.", active_era.index);
+            let era_validator_prefs = substrate_client
+                .get_era_validator_prefs(active_era.index, &block_hash)
+                .await?;
+            for (validator_account_id, validator_preferences) in era_validator_prefs.iter() {
+                postgres
+                    .save_era_validator_preferences(
+                        active_era.index,
+                        validator_account_id,
+                        validator_preferences,
+                    )
+                    .await?;
+            }
             // persist last era reward points
             self.persist_era_reward_points(
                 substrate_client,

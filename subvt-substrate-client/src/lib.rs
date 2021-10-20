@@ -19,10 +19,11 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{
-    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, metadata::Metadata, Account, Balance,
-    Block, BlockHeader, BlockWrapper, Chain, Epoch, Era, EraRewardPoints, EraStakers,
-    IdentityRegistration, LastRuntimeUpgradeInfo, Nomination, RewardDestination, Stake,
-    SuperAccountId, SystemProperties, ValidatorPreferences, ValidatorStake,
+    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
+    metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era,
+    EraRewardPoints, EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo, Nomination,
+    RewardDestination, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
+    ValidatorStake,
 };
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
@@ -981,6 +982,74 @@ impl SubstrateClient {
         Ok(LastRuntimeUpgradeInfo::from_substrate_hex_string(
             hex_string,
         )?)
+    }
+
+    pub async fn get_era_validator_prefs(
+        &self,
+        era_index: u32,
+        block_hash: &str,
+    ) -> anyhow::Result<HashMap<AccountId, ValidatorPreferences>> {
+        let mut all_keys: Vec<String> = Vec::new();
+        loop {
+            let last = all_keys.last();
+            let mut keys: Vec<String> = self
+                .ws_client
+                .request(
+                    "state_getKeysPaged",
+                    get_rpc_paged_map_keys_params(
+                        &self.metadata,
+                        "Staking",
+                        "ErasValidatorPrefs",
+                        &era_index,
+                        KEY_QUERY_PAGE_SIZE,
+                        if let Some(last) = last {
+                            Some(last.as_str())
+                        } else {
+                            None
+                        },
+                        Some(block_hash),
+                    ),
+                )
+                .await?;
+            let keys_length = keys.len();
+            all_keys.append(&mut keys);
+            if keys_length < KEY_QUERY_PAGE_SIZE {
+                break;
+            }
+        }
+        let mut validator_prefs_map: HashMap<AccountId, ValidatorPreferences> = HashMap::new();
+        for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
+            let chunk_values: Vec<StorageChangeSet<String>> = self
+                .ws_client
+                .request(
+                    "state_queryStorageAt",
+                    JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
+                )
+                .await?;
+
+            for (storage_key, data) in chunk_values[0].changes.iter() {
+                if let Some(data) = data {
+                    let validator_account_id = self.account_id_from_storage_key(storage_key);
+                    let bytes: &[u8] = &data.0;
+                    let mut bytes_clone: &[u8] = &data.0.clone();
+                    let validator_prefs = match ValidatorPreferences::from_bytes(bytes) {
+                        Ok(validator_preferences) => validator_preferences,
+                        Err(_) => {
+                            let legacy_validator_prefs: LegacyValidatorPrefs =
+                                Decode::decode(&mut bytes_clone)?;
+                            ValidatorPreferences {
+                                commission_per_billion: legacy_validator_prefs
+                                    .commission
+                                    .deconstruct(),
+                                blocks_nominations: false,
+                            }
+                        }
+                    };
+                    validator_prefs_map.insert(validator_account_id, validator_prefs);
+                }
+            }
+        }
+        Ok(validator_prefs_map)
     }
 
     async fn subscribe_to_blocks<F>(
