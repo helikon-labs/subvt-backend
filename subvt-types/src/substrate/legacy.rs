@@ -2,6 +2,7 @@ use crate::crypto::AccountId;
 use pallet_election_provider_multi_phase::ElectionCompute;
 use parity_scale_codec::{Compact, Decode};
 use sp_npos_elections::ElectionScore;
+use sp_runtime::Perbill;
 
 pub type ValidatorIndex = u16;
 pub type NominatorIndex = u32;
@@ -32,4 +33,10 @@ pub struct ReadySolution {
 pub struct SolutionSupport {
     _total: ExtendedBalance,
     _voters: Vec<(AccountId, ExtendedBalance)>,
+}
+
+#[derive(Clone, Debug, Decode)]
+pub struct LegacyValidatorPrefs {
+    #[codec(compact)]
+    pub commission: Perbill,
 }

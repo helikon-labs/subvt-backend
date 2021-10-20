@@ -3,7 +3,7 @@ use crate::{
     substrate::{
         error::DecodeError,
         extrinsic::SubstrateExtrinsic,
-        legacy::{DefunctVoter, ElectionSize, ReadySolution, ValidatorIndex},
+        legacy::{DefunctVoter, ElectionSize, LegacyValidatorPrefs, ReadySolution, ValidatorIndex},
         metadata::{ArgumentMeta, Metadata},
         CallHash, Chain, MultiAddress, OpaqueTimeSlot, RewardDestination, SlotRange,
     },
@@ -166,6 +166,7 @@ pub enum ArgumentPrimitive {
     ValidationCode(ValidationCode),
     ValidatorIndex(ValidatorIndex),
     ValidatorPrefs(ValidatorPrefs),
+    LegacyValidatorPrefs(LegacyValidatorPrefs),
     VersionedMultiAssets(Box<xcm::VersionedMultiAssets>),
     VersionedMultiLocation(xcm::VersionedMultiLocation),
     VersionedXcm(Box<xcm::VersionedXcm<()>>),
@@ -415,7 +416,6 @@ generate_argument_primitive_decoder_impl! {[
     ("StatementKind", decode_statement_kind, StatementKind),
     ("ValidationCode", decode_validation_code, ValidationCode),
     ("ValidatorIndex", decode_validation_index, ValidatorIndex),
-    ("ValidatorPrefs", decode_validator_prefs, ValidatorPrefs),
     ("Box<VersionedMultiAssets>", decode_versioned_multi_assets_1, VersionedMultiAssets),
     ("VersionedMultiAssets", decode_versioned_multi_assets_2, VersionedMultiAssets),
     ("Box<VersionedMultiLocation>", decode_versioned_multi_location_1, VersionedMultiLocation),
@@ -558,6 +558,26 @@ impl Argument {
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode AccountId for <T::Lookup as StaticLookup>::Source."
                                     .to_string(),
+                            )),
+                        }
+                    }
+                } else if name == "ValidatorPrefs" {
+                    if metadata.is_validator_prefs_legacy(chain) {
+                        match LegacyValidatorPrefs::decode(&mut *bytes) {
+                            Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::LegacyValidatorPrefs(legacy_validator_prefs),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode LegacyValidatorPrefs.".to_string(),
+                            )),
+                        }
+                    } else {
+                        match ValidatorPrefs::decode(&mut *bytes) {
+                            Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::ValidatorPrefs(legacy_validator_prefs),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode ValidatorPrefs.".to_string(),
                             )),
                         }
                     }

@@ -101,6 +101,14 @@ impl Metadata {
             _ => true,
         }
     }
+
+    pub fn is_validator_prefs_legacy(&self, chain: &Chain) -> bool {
+        match chain {
+            Chain::Kusama => self.last_runtime_upgrade_info.spec_version <= 2027,
+            Chain::Polkadot => self.last_runtime_upgrade_info.spec_version <= 27,
+            _ => true,
+        }
+    }
 }
 
 impl Metadata {

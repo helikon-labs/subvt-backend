@@ -11,7 +11,7 @@ use crate::{
         Block, MultiAddress,
     },
 };
-use log::{debug, error, warn};
+use log::{debug, error};
 use pallet_multisig::Timepoint;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::BlockNumber;
@@ -62,7 +62,7 @@ impl MultisigExtrinsic {
                     ),
                     call: Box::new(get_argument_primitive!(&arguments[3], Call)),
                     store_call: get_argument_primitive!(&arguments[4], Bool),
-                    max_weight: get_argument_primitive!(&arguments[5], U64),
+                    max_weight: get_argument_primitive!(&arguments[5], Weight),
                 }))
             }
             "as_multi_threshold_1" => {
@@ -382,7 +382,7 @@ impl SubstrateExtrinsic {
             debug!("Decoded extrinsic {}.{}.", module.name, call.name);
             extrinsic
         } else {
-            warn!(
+            debug!(
                 "Decoded non-specified extrinsic {}.{}.",
                 module.name, call.name
             );

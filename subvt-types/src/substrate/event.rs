@@ -11,10 +11,10 @@ use crate::{
     },
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
-use log::{debug, warn};
+use log::{debug, error};
 use pallet_identity::RegistrarIndex;
 use pallet_staking::EraIndex;
-use parity_scale_codec::{Compact, Decode, Input};
+use parity_scale_codec::{Compact, Decode};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
@@ -660,10 +660,24 @@ impl SubstrateEvent {
             frame_system::Phase::ApplyExtrinsic(extrinsic_index) => Some(extrinsic_index),
             _ => None,
         };
-        let module_index = bytes.read_byte()?;
-        let event_index = bytes.read_byte()?;
-        let module = metadata.modules.get(&module_index).unwrap();
-        let event = module.events.get(&event_index).unwrap();
+        let module_index: u8 = Decode::decode(&mut *bytes)?;
+        let event_index: u8 = Decode::decode(&mut *bytes)?;
+        let module = if let Some(module) = metadata.modules.get(&module_index) {
+            module
+        } else {
+            return Err(DecodeError::Error(format!(
+                "Cannot find module at index {}.",
+                module_index
+            )));
+        };
+        let event = if let Some(event) = module.events.get(&event_index) {
+            event
+        } else {
+            return Err(DecodeError::Error(format!(
+                "Cannot find event at index {} for module {}.",
+                event_index, module.name
+            )));
+        };
         // decode arguments
         let mut arguments: Vec<Argument> = Vec::new();
         for argument_meta in &event.arguments {
@@ -697,7 +711,7 @@ impl SubstrateEvent {
             debug!("Decoded event {}.{}.", module.name, event.name);
             substrate_event
         } else {
-            warn!(
+            debug!(
                 "Decoded non-specified event {}.{}.",
                 module.name, event.name
             );
@@ -718,8 +732,11 @@ impl SubstrateEvent {
     ) -> anyhow::Result<Vec<Self>> {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
         let mut events: Vec<Self> = Vec::with_capacity(event_count as usize);
-        for _ in 0..event_count {
-            events.push(SubstrateEvent::decode_event(chain, metadata, &mut *bytes)?);
+        for event_index in 0..event_count {
+            match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
+                Ok(event) => events.push(event),
+                Err(error) => error!("Error decoding event #{}: {:?}", event_index, error),
+            }
         }
         Ok(events)
     }
