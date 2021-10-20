@@ -462,7 +462,6 @@ impl BlockProcessor {
         }
         if last_era_index != active_era.index {
             // persist active era validators
-            debug!("Persist era #{} validators.", active_era.index);
             self.persist_era_validators(
                 substrate_client,
                 postgres,
