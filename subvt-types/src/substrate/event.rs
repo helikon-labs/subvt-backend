@@ -7,7 +7,7 @@ use crate::{
         },
         error::DecodeError,
         metadata::Metadata,
-        Balance, Chain, OpaqueTimeSlot,
+        Balance, Block, Chain, OpaqueTimeSlot,
     },
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
@@ -728,6 +728,7 @@ impl SubstrateEvent {
     pub fn decode_events(
         chain: &Chain,
         metadata: &Metadata,
+        block: Block,
         bytes: &mut &[u8],
     ) -> anyhow::Result<Vec<Self>> {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
@@ -735,7 +736,12 @@ impl SubstrateEvent {
         for event_index in 0..event_count {
             match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
                 Ok(event) => events.push(event),
-                Err(error) => error!("Error decoding event #{}: {:?}", event_index, error),
+                Err(error) => error!(
+                    "Error decoding event #{} for block #{}: {:?}",
+                    event_index,
+                    block.header.get_number().unwrap(),
+                    error
+                ),
             }
         }
         Ok(events)

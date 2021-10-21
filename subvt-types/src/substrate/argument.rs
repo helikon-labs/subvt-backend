@@ -126,7 +126,7 @@ pub enum ArgumentPrimitive {
     KeyValue(KeyValue),
     MultiAsset(Box<xcm::v0::prelude::MultiAsset>),
     MultiAddress(MultiAddress),
-    MultiLocation(xcm::latest::MultiLocation),
+    MultiLocation(xcm::v0::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     MultiSignature(MultiSignature),
     MultiSigner(MultiSigner),

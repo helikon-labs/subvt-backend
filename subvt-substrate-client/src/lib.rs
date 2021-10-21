@@ -942,6 +942,7 @@ impl SubstrateClient {
     }
 
     pub async fn get_block_events(&self, block_hash: &str) -> anyhow::Result<Vec<SubstrateEvent>> {
+        let block = self.get_block(block_hash).await?;
         let mut event_bytes: &[u8] = {
             let events_hex_string: String = self
                 .ws_client
@@ -952,7 +953,7 @@ impl SubstrateClient {
                 .await?;
             &hex::decode(events_hex_string.trim_start_matches("0x"))?
         };
-        SubstrateEvent::decode_events(&self.chain, &self.metadata, &mut event_bytes)
+        SubstrateEvent::decode_events(&self.chain, &self.metadata, block, &mut event_bytes)
     }
 
     pub async fn get_block_extrinsics(
@@ -960,11 +961,7 @@ impl SubstrateClient {
         block_hash: &str,
     ) -> anyhow::Result<Vec<SubstrateExtrinsic>> {
         let block = self.get_block(block_hash).await?;
-        Ok(SubstrateExtrinsic::decode_extrinsics(
-            &self.chain,
-            &self.metadata,
-            block,
-        )?)
+        SubstrateExtrinsic::decode_extrinsics(&self.chain, &self.metadata, block)
     }
 
     /// Get the number of all validation intents at the given block.
