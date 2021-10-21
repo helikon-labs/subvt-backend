@@ -20,5 +20,11 @@ CREATE TABLE IF NOT EXISTS era_validator
             ON UPDATE CASCADE
 );
 
-CREATE INDEX era_validator_era_index_validator_account_id
-ON era_validator (era_index, validator_account_id);
+CREATE INDEX era_validator_idx_era_index
+    ON era_validator (era_index);
+
+CREATE INDEX era_validator_idx_validator_account_id
+    ON era_validator (validator_account_id);
+
+CREATE INDEX era_validator_idx_era_index_validator_account_id
+    ON era_validator (era_index, validator_account_id);
