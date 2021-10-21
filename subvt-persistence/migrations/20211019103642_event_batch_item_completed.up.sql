@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS event_batch_item_completed
     CONSTRAINT event_batch_item_completed_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

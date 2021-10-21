@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS block
     CONSTRAINT block_fk_account
         FOREIGN KEY (author_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT block_fk_era
         FOREIGN KEY (era_index)
             REFERENCES era (index)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 

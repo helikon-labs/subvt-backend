@@ -5,6 +5,7 @@ use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
+use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
@@ -54,16 +55,32 @@ impl BlockProcessor {
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(block_hash)
             .await?;
-        for validator_account_id in all_validator_account_ids {
-            // create validator account (if not exists)
-            postgres.save_account(&validator_account_id).await?;
-            let is_active = active_validator_account_ids.contains(&validator_account_id);
-            // create record (if not exists)
-            postgres
-                .save_era_validator(era_index, &validator_account_id, is_active)
-                .await?;
-        }
+        postgres
+            .save_era_validators(
+                era_index,
+                &active_validator_account_ids,
+                &all_validator_account_ids,
+            )
+            .await?;
         debug!("Persisted era #{} validators.", era_index);
+        Ok(())
+    }
+
+    async fn persist_era_validator_preferences(
+        &self,
+        substrate_client: &SubstrateClient,
+        postgres: &PostgreSQLStorage,
+        era_index: u32,
+        block_hash: &str,
+    ) -> anyhow::Result<()> {
+        debug!("Persist era #{} validator preferences.", era_index);
+        let era_validator_prefs = substrate_client
+            .get_era_validator_prefs(era_index, block_hash)
+            .await?;
+        postgres
+            .save_era_validator_preferences(era_index, &era_validator_prefs)
+            .await?;
+        debug!("Persisted era #{} validator preferences.", era_index);
         Ok(())
     }
 
@@ -87,13 +104,18 @@ impl BlockProcessor {
         postgres
             .update_era_reward_points(era_index, era_reward_points.total)
             .await?;
-        for (validator_account_id, reward_points) in era_reward_points.individual {
-            let account_id_bytes: &[u8; 32] = validator_account_id.as_ref();
-            let account_id = AccountId::new(*account_id_bytes);
-            postgres
-                .update_era_validator_reward_points(era_index, &account_id, reward_points)
-                .await?;
-        }
+        let mut era_reward_points_map: HashMap<AccountId, u32> = HashMap::new();
+        era_reward_points
+            .individual
+            .iter()
+            .for_each(|(account_id_32, reward_points)| {
+                let account_id_bytes: &[u8; 32] = account_id_32.as_ref();
+                let account_id = AccountId::new(*account_id_bytes);
+                era_reward_points_map.insert(account_id, *reward_points);
+            });
+        postgres
+            .update_era_validator_reward_points(era_index, era_reward_points_map)
+            .await?;
         debug!("Era {} rewards persisted.", era_index);
         Ok(())
     }
@@ -461,7 +483,6 @@ impl BlockProcessor {
             postgres.save_era(&active_era).await?;
         }
         if last_era_index != active_era.index {
-            // persist active era validators
             self.persist_era_validators(
                 substrate_client,
                 postgres,
@@ -469,21 +490,13 @@ impl BlockProcessor {
                 block_hash.as_str(),
             )
             .await?;
-            // persist era validator preferences
-            debug!("Persist era #{} validator preferences.", active_era.index);
-            let era_validator_prefs = substrate_client
-                .get_era_validator_prefs(active_era.index, &block_hash)
-                .await?;
-            for (validator_account_id, validator_preferences) in era_validator_prefs.iter() {
-                postgres
-                    .save_era_validator_preferences(
-                        active_era.index,
-                        validator_account_id,
-                        validator_preferences,
-                    )
-                    .await?;
-            }
-            // persist last era reward points
+            self.persist_era_validator_preferences(
+                substrate_client,
+                postgres,
+                active_era.index,
+                block_hash.as_str(),
+            )
+            .await?;
             self.persist_era_reward_points(
                 substrate_client,
                 postgres,

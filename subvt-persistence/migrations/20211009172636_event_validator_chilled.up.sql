@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS event_validator_chilled
     CONSTRAINT event_validator_chilled_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_validator_chilled_fk_account
         FOREIGN KEY (validator_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

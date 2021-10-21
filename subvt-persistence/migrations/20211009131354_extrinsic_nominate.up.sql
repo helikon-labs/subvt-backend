@@ -12,11 +12,11 @@ CREATE TABLE IF NOT EXISTS extrinsic_nominate
     CONSTRAINT extrinsic_nominate_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT extrinsic_nominate_fk_nominator
         FOREIGN KEY (nominator_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

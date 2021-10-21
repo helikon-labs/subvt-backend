@@ -1,5 +1,6 @@
 use log::debug;
 use sqlx::{Pool, Postgres};
+use std::collections::HashMap;
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
@@ -65,58 +66,78 @@ impl PostgreSQLStorage {
         }
     }
 
-    pub async fn save_era_validator(
+    pub async fn save_era_validators(
         &self,
         era_index: u32,
-        validator_account_id: &AccountId,
-        is_active: bool,
-    ) -> anyhow::Result<Option<i32>> {
-        let maybe_result: Option<(i32,)> = sqlx::query_as(
-            r#"
-            INSERT INTO era_validator (era_index, validator_account_id, is_active)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (era_index, validator_account_id) DO NOTHING
-            RETURNING id
-            "#,
-        )
-        .bind(era_index)
-        .bind(validator_account_id.to_string())
-        .bind(is_active)
-        .fetch_optional(&self.connection_pool)
-        .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
+        active_validator_account_ids: &[AccountId],
+        all_validator_account_ids: &[AccountId],
+    ) -> anyhow::Result<()> {
+        let mut transaction = self.connection_pool.begin().await?;
+        for validator_account_id in all_validator_account_ids {
+            // create validator account (if not exists)
+            sqlx::query(
+                r#"
+                INSERT INTO account (id)
+                VALUES ($1)
+                ON CONFLICT (id) DO NOTHING
+                "#,
+            )
+            .bind(validator_account_id.to_string())
+            .execute(&mut transaction)
+            .await?;
+            let is_active = active_validator_account_ids.contains(validator_account_id);
+            // create record (if not exists)
+            sqlx::query(
+                r#"
+                INSERT INTO era_validator (era_index, validator_account_id, is_active)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (era_index, validator_account_id) DO NOTHING
+                "#,
+            )
+            .bind(era_index)
+            .bind(validator_account_id.to_string())
+            .bind(is_active)
+            .execute(&mut transaction)
+            .await?;
         }
+        transaction.commit().await?;
+        Ok(())
     }
 
     pub async fn save_era_validator_preferences(
         &self,
         era_index: u32,
-        validator_account_id: &AccountId,
-        validator_preferences: &ValidatorPreferences,
-    ) -> anyhow::Result<Option<i32>> {
-        self.save_account(validator_account_id).await?;
-        let maybe_result: Option<(i32,)> = sqlx::query_as(
-            r#"
-            INSERT INTO era_validator_preferences (era_index, validator_account_id, commission_per_billion, blocks_nominations)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (era_index, validator_account_id) DO NOTHING
-            RETURNING id
-            "#,
-        )
+        era_validator_preferences: &HashMap<AccountId, ValidatorPreferences>,
+    ) -> anyhow::Result<()> {
+        let mut transaction = self.connection_pool.begin().await?;
+        for (validator_account_id, validator_preferences) in era_validator_preferences.iter() {
+            // create validator account (if not exists)
+            sqlx::query(
+                r#"
+                INSERT INTO account (id)
+                VALUES ($1)
+                ON CONFLICT (id) DO NOTHING
+                "#,
+            )
+            .bind(validator_account_id.to_string())
+            .execute(&mut transaction)
+            .await?;
+            sqlx::query(
+                r#"
+                INSERT INTO era_validator_preferences (era_index, validator_account_id, commission_per_billion, blocks_nominations)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (era_index, validator_account_id) DO NOTHING
+                "#,
+            )
             .bind(era_index)
             .bind(validator_account_id.to_string())
             .bind(validator_preferences.commission_per_billion)
             .bind(validator_preferences.blocks_nominations)
-            .fetch_optional(&self.connection_pool)
+            .execute(&mut transaction)
             .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
         }
+        transaction.commit().await?;
+        Ok(())
     }
 
     pub async fn era_exists(&self, era_index: u32) -> anyhow::Result<bool> {
@@ -158,26 +179,24 @@ impl PostgreSQLStorage {
     pub async fn update_era_validator_reward_points(
         &self,
         era_index: u32,
-        validator_account_id: &AccountId,
-        reward_points: u32,
-    ) -> anyhow::Result<Option<i32>> {
-        let maybe_result: Option<(i32,)> = sqlx::query_as(
-            r#"
-            UPDATE era_validator SET reward_points = $1, last_updated = now()
-            WHERE era_index = $2 AND validator_account_id = $3
-            RETURNING id
-            "#,
-        )
-        .bind(reward_points)
-        .bind(era_index)
-        .bind(validator_account_id.to_string())
-        .fetch_optional(&self.connection_pool)
-        .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
+        era_reward_points_map: HashMap<AccountId, u32>,
+    ) -> anyhow::Result<()> {
+        let mut transaction = self.connection_pool.begin().await?;
+        for (validator_account_id, reward_points) in era_reward_points_map {
+            sqlx::query(
+                r#"
+                UPDATE era_validator SET reward_points = $1, last_updated = now()
+                WHERE era_index = $2 AND validator_account_id = $3
+                "#,
+            )
+            .bind(reward_points)
+            .bind(era_index)
+            .bind(validator_account_id.to_string())
+            .execute(&mut transaction)
+            .await?;
         }
+        transaction.commit().await?;
+        Ok(())
     }
 
     pub async fn save_finalized_block(

@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS event_rewarded
     CONSTRAINT event_rewarded_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_rewarded_fk_rewardee
         FOREIGN KEY (rewardee_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

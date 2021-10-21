@@ -10,16 +10,16 @@ CREATE TABLE IF NOT EXISTS event_nominator_kicked
     CONSTRAINT event_nominator_kicked_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_nominator_kicked_fk_validator
         FOREIGN KEY (validator_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_nominator_kicked_fk_nominator
         FOREIGN KEY (nominator_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

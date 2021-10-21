@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS event_validator_heartbeat_received
     CONSTRAINT event_validator_heartbeat_received_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_validator_heartbeat_received_fk_validator_account
         FOREIGN KEY (validator_account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

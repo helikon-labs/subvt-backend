@@ -11,11 +11,11 @@ CREATE TABLE IF NOT EXISTS event_era_paid
     CONSTRAINT event_era_paid_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT event_era_paid_fk_era
         FOREIGN KEY (era_index)
             REFERENCES era (index)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );

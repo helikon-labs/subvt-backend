@@ -10,11 +10,11 @@ CREATE TABLE IF NOT EXISTS event_new_account
     CONSTRAINT extrinsic_new_account_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT extrinsic_new_account_fk_account
         FOREIGN KEY (account_id)
             REFERENCES account (id)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );
