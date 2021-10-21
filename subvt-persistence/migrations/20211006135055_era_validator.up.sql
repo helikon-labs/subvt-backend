@@ -19,3 +19,6 @@ CREATE TABLE IF NOT EXISTS era_validator
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX era_validator_era_index_validator_account_id
+ON era_validator (era_index, validator_account_id);
