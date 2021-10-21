@@ -354,34 +354,61 @@ impl BlockProcessor {
                         .await?;
                 }
             },
-            SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate { signature, targets }) => {
-                let maybe_nominator_account_id = match signature {
-                    Some(signature) => signature.get_signer_account_id(),
-                    _ => None,
-                };
-                if let Some(nominator_account_id) = maybe_nominator_account_id {
-                    let target_account_ids: Vec<AccountId> = targets
-                        .iter()
-                        .filter_map(|target_multi_address| match target_multi_address {
-                            MultiAddress::Id(account_id) => Some(account_id.clone()),
-                            _ => {
-                                error!("Unsupported multi address type for nomination target.");
-                                None
-                            }
-                        })
-                        .collect();
-                    postgres
-                        .save_nomination(
-                            block_hash,
-                            index as i32,
-                            is_nested_call,
-                            is_successful,
-                            &nominator_account_id,
-                            &target_account_ids,
-                        )
-                        .await?;
+            SubstrateExtrinsic::Staking(staking_extrinsic) => match staking_extrinsic {
+                StakingExtrinsic::Nominate { signature, targets } => {
+                    let maybe_nominator_account_id = match signature {
+                        Some(signature) => signature.get_signer_account_id(),
+                        _ => None,
+                    };
+                    if let Some(nominator_account_id) = maybe_nominator_account_id {
+                        let target_account_ids: Vec<AccountId> = targets
+                            .iter()
+                            .filter_map(|target_multi_address| match target_multi_address {
+                                MultiAddress::Id(account_id) => Some(account_id.clone()),
+                                _ => {
+                                    error!("Unsupported multi address type for nomination target.");
+                                    None
+                                }
+                            })
+                            .collect();
+                        postgres
+                            .save_nomination(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                &nominator_account_id,
+                                &target_account_ids,
+                            )
+                            .await?;
+                    } else {
+                        error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
+                    }
                 }
-            }
+                StakingExtrinsic::Validate {
+                    signature,
+                    preferences,
+                } => {
+                    let maybe_controller_account_id = match signature {
+                        Some(signature) => signature.get_signer_account_id(),
+                        _ => None,
+                    };
+                    if let Some(controller_account_id) = maybe_controller_account_id {
+                        postgres
+                            .save_validate_extrinsic(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                &controller_account_id,
+                                preferences,
+                            )
+                            .await?;
+                    } else {
+                        error!("Cannot get controller account id from signature for extrinsic #{} Staking.validate.", index);
+                    }
+                }
+            },
             SubstrateExtrinsic::Utility(utility_extrinsic) => match utility_extrinsic {
                 UtilityExtrinsic::Batch {
                     signature: _,

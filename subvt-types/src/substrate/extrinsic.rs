@@ -8,7 +8,7 @@ use crate::{
         },
         error::DecodeError,
         metadata::{ArgumentMeta, Metadata},
-        Block, MultiAddress,
+        Block, MultiAddress, ValidatorPreferences,
     },
 };
 use log::{debug, error};
@@ -187,6 +187,10 @@ pub enum StakingExtrinsic {
         signature: Option<Signature>,
         targets: Vec<MultiAddress>,
     },
+    Validate {
+        signature: Option<Signature>,
+        preferences: ValidatorPreferences,
+    },
 }
 
 impl StakingExtrinsic {
@@ -199,6 +203,10 @@ impl StakingExtrinsic {
             "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
                 signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
+            })),
+            "validate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
+                signature,
+                preferences: get_argument_primitive!(&arguments[0], ValidatorPreferences),
             })),
             _ => None,
         };
@@ -364,7 +372,7 @@ impl SubstrateExtrinsic {
             ("Multisig", "as_multi") | ("Multisig", "as_multi_threshold_1") => {
                 MultisigExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
-            ("Staking", "nominate") => {
+            ("Staking", "nominate") | ("Staking", "validate") => {
                 StakingExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Proxy", "proxy") | ("Proxy", "proxy_announced") => {

@@ -6,6 +6,7 @@ use crate::{
         legacy::{DefunctVoter, ElectionSize, LegacyValidatorPrefs, ReadySolution, ValidatorIndex},
         metadata::{ArgumentMeta, Metadata},
         CallHash, Chain, MultiAddress, OpaqueTimeSlot, RewardDestination, SlotRange,
+        ValidatorPreferences,
     },
 };
 use frame_support::{
@@ -165,8 +166,7 @@ pub enum ArgumentPrimitive {
     StatementKind(StatementKind),
     ValidationCode(ValidationCode),
     ValidatorIndex(ValidatorIndex),
-    ValidatorPrefs(ValidatorPrefs),
-    LegacyValidatorPrefs(LegacyValidatorPrefs),
+    ValidatorPreferences(ValidatorPreferences),
     VersionedMultiAssets(Box<xcm::VersionedMultiAssets>),
     VersionedMultiLocation(xcm::VersionedMultiLocation),
     VersionedXcm(Box<xcm::VersionedXcm<()>>),
@@ -565,7 +565,12 @@ impl Argument {
                     if metadata.is_validator_prefs_legacy(chain) {
                         match LegacyValidatorPrefs::decode(&mut *bytes) {
                             Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::LegacyValidatorPrefs(legacy_validator_prefs),
+                                ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
+                                    commission_per_billion: legacy_validator_prefs
+                                        .commission
+                                        .deconstruct(),
+                                    blocks_nominations: false,
+                                }),
                             ))),
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode LegacyValidatorPrefs.".to_string(),
@@ -573,8 +578,13 @@ impl Argument {
                         }
                     } else {
                         match ValidatorPrefs::decode(&mut *bytes) {
-                            Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::ValidatorPrefs(legacy_validator_prefs),
+                            Ok(validator_prefs) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
+                                    commission_per_billion: validator_prefs
+                                        .commission
+                                        .deconstruct(),
+                                    blocks_nominations: validator_prefs.blocked,
+                                }),
                             ))),
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode ValidatorPrefs.".to_string(),

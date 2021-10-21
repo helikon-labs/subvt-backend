@@ -129,12 +129,12 @@ impl PostgreSQLStorage {
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
-            .bind(era_index)
-            .bind(validator_account_id.to_string())
-            .bind(validator_preferences.commission_per_billion)
-            .bind(validator_preferences.blocks_nominations)
-            .execute(&mut transaction)
-            .await?;
+                .bind(era_index)
+                .bind(validator_account_id.to_string())
+                .bind(validator_preferences.commission_per_billion)
+                .bind(validator_preferences.blocks_nominations)
+                .execute(&mut transaction)
+                .await?;
         }
         transaction.commit().await?;
         Ok(())
@@ -294,7 +294,7 @@ impl PostgreSQLStorage {
         validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
         self.save_account(nominator_account_id).await?;
-        let maybe_extrinsic_nominate_id: Option<(i32,)> = sqlx::query_as(
+        let maybe_extrinsic_nominate_id: Option<(i32, )> = sqlx::query_as(
             r#"
             INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, nominator_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5)
@@ -302,13 +302,13 @@ impl PostgreSQLStorage {
             RETURNING id
             "#,
         )
-        .bind(block_hash)
-        .bind(extrinsic_index)
-        .bind(is_nested_call)
-        .bind(nominator_account_id.to_string())
-        .bind(is_successful)
-        .fetch_optional(&self.connection_pool)
-        .await?;
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(nominator_account_id.to_string())
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
         if let Some(extrinsic_nominate_id) = maybe_extrinsic_nominate_id {
             for validator_account_id in validator_account_ids {
                 self.save_account(validator_account_id).await?;
@@ -605,5 +605,39 @@ impl PostgreSQLStorage {
         .execute(&self.connection_pool)
         .await?;
         Ok(())
+    }
+
+    pub async fn save_validate_extrinsic(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        is_nested_call: bool,
+        is_successful: bool,
+        controller_account_id: &AccountId,
+        validator_preferences: &ValidatorPreferences,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(controller_account_id).await?;
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO extrinsic_validate (block_hash, extrinsic_index, is_nested_call, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ON CONFLICT (block_hash, controller_account_id) DO NOTHING
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(controller_account_id.to_string())
+            .bind(validator_preferences.commission_per_billion)
+            .bind(validator_preferences.blocks_nominations)
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
     }
 }
