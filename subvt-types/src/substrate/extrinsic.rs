@@ -284,11 +284,11 @@ impl SubstrateExtrinsic {
     pub fn decode_extrinsic(
         chain: &Chain,
         metadata: &Metadata,
-        skip_signature: bool,
+        signature: &Option<Signature>,
         bytes: &mut &[u8],
     ) -> Result<Self, DecodeError> {
-        let mut signature: Option<Signature> = None;
-        if !skip_signature {
+        let mut signature = signature.clone();
+        if signature.is_none() {
             let signed_version = bytes.read_byte()?;
             let sign_mask = 0b10000000;
             let version_mask = 0b00000100;
@@ -350,7 +350,7 @@ impl SubstrateExtrinsic {
                             let extrinsic_result = SubstrateExtrinsic::decode_extrinsic(
                                 chain,
                                 metadata,
-                                true,
+                                &signature,
                                 &mut *bytes,
                             );
                             match extrinsic_result {
@@ -365,7 +365,7 @@ impl SubstrateExtrinsic {
                     }
                 }
             }
-            let argument = Argument::decode(chain, metadata, argument_meta, &mut *bytes)?;
+            let argument = Argument::decode(chain, metadata, argument_meta, &signature, &mut *bytes)?;
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
@@ -413,7 +413,7 @@ impl SubstrateExtrinsic {
             let mut raw_bytes: &[u8] = &hex::decode(extrinsic_hex_string.trim_start_matches("0x"))?;
             let byte_vector: Vec<u8> = Decode::decode(&mut raw_bytes).unwrap();
             let mut bytes: &[u8] = byte_vector.as_ref();
-            match SubstrateExtrinsic::decode_extrinsic(chain, metadata, false, &mut bytes) {
+            match SubstrateExtrinsic::decode_extrinsic(chain, metadata, &None, &mut bytes) {
                 Ok(extrinsic) => extrinsics.push(extrinsic),
                 Err(error) => error!(
                     "Error decoding extrinsic #{} for block #{}: {:?}",

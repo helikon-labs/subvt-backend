@@ -452,6 +452,7 @@ impl Argument {
         chain: &Chain,
         metadata: &Metadata,
         argument_meta: &ArgumentMeta,
+        extrinsic_signature: &Option<crate::substrate::extrinsic::Signature>,
         bytes: &mut &[u8],
     ) -> anyhow::Result<Self, ArgumentDecodeError> {
         use ArgumentDecodeError::*;
@@ -472,6 +473,7 @@ impl Argument {
                         chain,
                         metadata,
                         argument_meta.as_ref(),
+                        extrinsic_signature,
                         &mut *bytes,
                     )?);
                 }
@@ -481,7 +483,7 @@ impl Argument {
                 0 => Ok(Argument::Option(Box::new(None))),
                 1 => {
                     let argument =
-                        Argument::decode(chain, metadata, argument_meta.as_ref(), &mut *bytes)?;
+                        Argument::decode(chain, metadata, argument_meta.as_ref(), extrinsic_signature, &mut *bytes)?;
                     Ok(Argument::Option(Box::new(Some(argument))))
                 }
                 _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
@@ -493,6 +495,7 @@ impl Argument {
                         chain,
                         metadata,
                         argument_meta,
+                        extrinsic_signature,
                         &mut *bytes,
                     )?);
                 }
@@ -528,7 +531,7 @@ impl Argument {
                             }
                         }
                     }
-                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, true, &mut *bytes) {
+                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, extrinsic_signature, &mut *bytes) {
                         Ok(extrinsic) => Ok(Argument::Primitive(Box::new(
                             ArgumentPrimitive::Call(extrinsic),
                         ))),

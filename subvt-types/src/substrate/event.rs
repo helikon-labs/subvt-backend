@@ -685,6 +685,7 @@ impl SubstrateEvent {
                 chain,
                 metadata,
                 argument_meta,
+                &None,
                 &mut *bytes,
             )?);
         }
