@@ -185,7 +185,13 @@ impl Metadata {
         for event_arg_name in primitive_arg_name_set.iter() {
             let argument_meta = ArgumentMeta::Primitive(event_arg_name.to_string());
             let dummy_bytes: Vec<u8> = Vec::new();
-            let result = Argument::decode(chain, self, &argument_meta, &None, &mut dummy_bytes.as_ref());
+            let result = Argument::decode(
+                chain,
+                self,
+                &argument_meta,
+                &None,
+                &mut dummy_bytes.as_ref(),
+            );
             if let Err(error) = result {
                 if let crate::substrate::argument::ArgumentDecodeError::UnknownPrimitiveType(_) =
                     error

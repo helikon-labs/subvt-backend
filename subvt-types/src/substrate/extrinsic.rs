@@ -365,7 +365,8 @@ impl SubstrateExtrinsic {
                     }
                 }
             }
-            let argument = Argument::decode(chain, metadata, argument_meta, &signature, &mut *bytes)?;
+            let argument =
+                Argument::decode(chain, metadata, argument_meta, &signature, &mut *bytes)?;
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {

@@ -482,8 +482,13 @@ impl Argument {
             ArgumentMeta::Option(argument_meta) => match bytes.read_byte().unwrap() {
                 0 => Ok(Argument::Option(Box::new(None))),
                 1 => {
-                    let argument =
-                        Argument::decode(chain, metadata, argument_meta.as_ref(), extrinsic_signature, &mut *bytes)?;
+                    let argument = Argument::decode(
+                        chain,
+                        metadata,
+                        argument_meta.as_ref(),
+                        extrinsic_signature,
+                        &mut *bytes,
+                    )?;
                     Ok(Argument::Option(Box::new(Some(argument))))
                 }
                 _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
@@ -531,7 +536,12 @@ impl Argument {
                             }
                         }
                     }
-                    match SubstrateExtrinsic::decode_extrinsic(chain, metadata, extrinsic_signature, &mut *bytes) {
+                    match SubstrateExtrinsic::decode_extrinsic(
+                        chain,
+                        metadata,
+                        extrinsic_signature,
+                        &mut *bytes,
+                    ) {
                         Ok(extrinsic) => Ok(Argument::Primitive(Box::new(
                             ArgumentPrimitive::Call(extrinsic),
                         ))),
