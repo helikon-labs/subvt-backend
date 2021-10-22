@@ -8,14 +8,13 @@ use crate::{
         },
         error::DecodeError,
         metadata::{ArgumentMeta, Metadata},
-        Block, MultiAddress, ValidatorPreferences,
+        Block, MultiAddress, ProxyType, ValidatorPreferences,
     },
 };
 use log::{debug, error};
 use pallet_multisig::Timepoint;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::BlockNumber;
-use polkadot_runtime::ProxyType;
 
 #[derive(Clone, Debug)]
 pub enum MultisigExtrinsic {

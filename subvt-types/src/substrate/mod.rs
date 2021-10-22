@@ -644,3 +644,14 @@ pub enum SlotRange {
     TwoThree,
     ThreeThree,
 }
+
+#[derive(Clone, Debug, Decode)]
+pub enum ProxyType {
+    Any,
+    NonTransfer,
+    Governance,
+    Staking,
+    IdentityJudgement,
+    CancelProxy,
+    Auction,
+}

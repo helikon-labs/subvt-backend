@@ -5,7 +5,7 @@ use crate::{
         extrinsic::SubstrateExtrinsic,
         legacy::{DefunctVoter, ElectionSize, LegacyValidatorPrefs, ReadySolution, ValidatorIndex},
         metadata::{ArgumentMeta, Metadata},
-        CallHash, Chain, MultiAddress, OpaqueTimeSlot, RewardDestination, SlotRange,
+        CallHash, Chain, MultiAddress, OpaqueTimeSlot, ProxyType, RewardDestination, SlotRange,
         ValidatorPreferences,
     },
 };
@@ -36,7 +36,7 @@ use polkadot_primitives::v1::{
     Balance, BlockNumber, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id,
     InherentData, ValidationCode,
 };
-use polkadot_runtime::{MaxAdditionalFields, ProxyType};
+use polkadot_runtime::MaxAdditionalFields;
 use polkadot_runtime_common::{
     auctions::AuctionIndex,
     claims::{EcdsaSignature, EthereumAddress, StatementKind},
