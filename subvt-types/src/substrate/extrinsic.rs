@@ -345,8 +345,8 @@ impl SubstrateExtrinsic {
                     if name == "<T as Config>::Call" {
                         let mut call_args: Vec<Argument> = Vec::new();
                         // skip signed signature - inner calls won't be signed
-                        bytes.read_byte()?;
-                        loop {
+                        let call_count: Compact<u64> = Decode::decode(&mut *bytes).unwrap();
+                        for _ in 0..call_count.0 {
                             let extrinsic_result = SubstrateExtrinsic::decode_extrinsic(
                                 chain,
                                 metadata,
@@ -357,7 +357,7 @@ impl SubstrateExtrinsic {
                                 Ok(extrinsic) => call_args.push(Argument::Primitive(Box::new(
                                     ArgumentPrimitive::Call(extrinsic),
                                 ))),
-                                Err(_) => break,
+                                Err(error) => return Err(error),
                             }
                         }
                         arguments.push(Argument::Vec(call_args));
