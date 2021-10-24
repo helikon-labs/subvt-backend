@@ -5,6 +5,7 @@ proc-macro = true
 name = "subvt-proc-macro"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.56.0"
 
 [dependencies]
 proc-macro2 = "1.0.30"
