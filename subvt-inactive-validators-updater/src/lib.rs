@@ -66,8 +66,7 @@ impl InactiveValidatorListUpdater {
         for validator in validators {
             let prefix = format!(
                 "subvt:{}:inactive_validators:validator:{}",
-                CONFIG.substrate.chain,
-                validator.account.id.to_string()
+                CONFIG.substrate.chain, validator.account.id
             );
             // calculate hash
             let hash = {
