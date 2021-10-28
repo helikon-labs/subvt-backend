@@ -666,7 +666,7 @@ impl Service for BlockProcessor {
                         is_indexing_past_blocks.store(true, Ordering::Relaxed);
                         let mut block_number = std::cmp::max(
                             (processed_block_height + 1) as u64,
-                            CONFIG.block_indexer.start_block_number
+                            CONFIG.block_processor.start_block_number
                         );
                         while block_number <= finalized_block_number {
                             let update_result = self.process_block(

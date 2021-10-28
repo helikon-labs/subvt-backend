@@ -11,7 +11,7 @@ This is the repository for the complete SubVT backend services:
 - Network status live data server.
 - Active and inactive validator lists and details server.
 - Era and validator reports server.
-- Block indexer.
+- Block processor.
 - Push, email, SMS and GSM notification services.
 
 SubVT is in heavy progress, and this repository is subject to frequent change.

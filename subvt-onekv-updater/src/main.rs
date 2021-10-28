@@ -2,10 +2,10 @@
 
 use lazy_static::lazy_static;
 use subvt_service_common::Service;
-use subvt_thousand_validators_updater::ThousandValidatorsUpdater;
+use subvt_onekv_updater::OneKVUpdater;
 
 lazy_static! {
-    static ref SERVICE: ThousandValidatorsUpdater = ThousandValidatorsUpdater::default();
+    static ref SERVICE: OneKVUpdater = OneKVUpdater::default();
 }
 
 #[tokio::main]

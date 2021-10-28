@@ -103,21 +103,18 @@ pub struct PostgreSQLConfig {
     pub pool_max_connections: u32,
 }
 
-/// SubVT block indexer configuration.
+/// SubVT block processor configuration.
 #[derive(Clone, Debug, Deserialize)]
-pub struct BlockIndexerConfig {
+pub struct BlockProcessorConfig {
     /// Indexing starts at this block, indexes all blocks up to
     /// current blocks, then continues with every new block.
     pub start_block_number: u64,
-    /// Fetch this many blocks to process when indexing past
-    /// blocks.
-    pub batch_size: u16,
 }
 
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
-    pub block_indexer: BlockIndexerConfig,
+    pub block_processor: BlockProcessorConfig,
     pub env: Environment,
     pub common: CommonConfig,
     pub log: LogConfig,

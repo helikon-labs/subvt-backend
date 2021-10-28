@@ -4824,6 +4824,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-onekv-updater"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-persistence"
 version = "0.1.0"
 dependencies = [
@@ -4892,21 +4907,6 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "twox-hash",
-]
-
-[[package]]
-name = "subvt-thousand-validators-updater"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "config",
- "lazy_static",
- "subvt-config",
- "subvt-logging",
- "subvt-service-common",
- "subvt-types",
- "tokio",
 ]
 
 [[package]]

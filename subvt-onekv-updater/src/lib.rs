@@ -11,10 +11,10 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct ThousandValidatorsUpdater;
+pub struct OneKVUpdater;
 
 #[async_trait]
-impl Service for ThousandValidatorsUpdater {
+impl Service for OneKVUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         Ok(())
     }
