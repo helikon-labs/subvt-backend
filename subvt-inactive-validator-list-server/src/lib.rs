@@ -20,7 +20,6 @@ use subvt_types::{
         InactiveValidatorSummary,
     },
 };
-use tokio::task::JoinHandle;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -39,7 +38,7 @@ impl InactiveValidatorListServer {
     pub async fn run_rpc_server(
         validator_map: &Arc<RwLock<HashMap<AccountId, InactiveValidator>>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<(JoinHandle<()>, WsStopHandle)> {
+    ) -> anyhow::Result<WsStopHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
             .build(format!(
@@ -88,9 +87,7 @@ impl InactiveValidatorListServer {
                 Ok(())
             },
         )?;
-        let stop_handle = rpc_ws_server.stop_handle();
-        let join_handle = tokio::spawn(rpc_ws_server.start(rpc_module));
-        Ok((join_handle, stop_handle))
+        Ok(rpc_ws_server.start(rpc_module)?)
     }
 }
 
@@ -113,7 +110,7 @@ impl Service for InactiveValidatorListServer {
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
-        let (server_join_handle, server_stop_handle) =
+        let server_stop_handle =
             InactiveValidatorListServer::run_rpc_server(&validator_map, &bus).await?;
 
         let error: anyhow::Error = loop {
@@ -238,10 +235,7 @@ impl Service for InactiveValidatorListServer {
             bus.broadcast(BusEvent::Error);
         }
         debug!("Stopping RPC server...");
-        server_stop_handle.clone().stop().await?;
-        server_join_handle
-            .await
-            .expect("Server can't be shut down.");
+        server_stop_handle.stop()?;
         debug!("RPC server fully stopped.");
         Err(error)
     }

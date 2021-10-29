@@ -125,9 +125,9 @@ pub struct Account {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub discovered_at: Option<i64>,
+    pub discovered_at: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub killed_at: Option<i64>,
+    pub killed_at: Option<u64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -137,6 +137,10 @@ pub struct AccountSummary {
     pub identity: Option<IdentityRegistrationSummary>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<AccountSummary>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub discovered_at: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub killed_at: Option<u64>,
 }
 
 impl From<&Account> for AccountSummary {
@@ -149,6 +153,8 @@ impl From<&Account> for AccountSummary {
             } else {
                 Box::new(None)
             },
+            discovered_at: account.discovered_at,
+            killed_at: account.killed_at,
         }
     }
 }

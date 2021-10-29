@@ -153,7 +153,7 @@ impl Config {
 
     pub fn get_postgres_url(&self) -> String {
         format!(
-            "postgres://{}:{}@{}:{}/{}",
+            "postgres://{}:{}@{}:{}/{}?sslmode=disable",
             self.postgres.username,
             self.postgres.password,
             self.postgres.host,

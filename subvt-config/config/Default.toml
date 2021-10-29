@@ -3,7 +3,7 @@ recovery_retry_seconds = 5
 
 [substrate]
 chain = "kusama"
-rpc_url = "wss://kusama.api.onfinality.io/ws?apikey=03dc81bd-8c6e-42e0-b5e8-2262168de1fc"
+rpc_url = "wss://kusama.api.onfinality.io:443/ws?apikey=xyz"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30

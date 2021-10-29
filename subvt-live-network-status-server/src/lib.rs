@@ -12,7 +12,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::subvt::{LiveNetworkStatus, LiveNetworkStatusDiff, LiveNetworkStatusUpdate};
-use tokio::task::JoinHandle;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -44,7 +43,7 @@ impl LiveNetworkStatusServer {
     async fn run_rpc_server(
         current_status: &Arc<RwLock<LiveNetworkStatus>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<(JoinHandle<()>, WsStopHandle)> {
+    ) -> anyhow::Result<WsStopHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .build(format!(
                 "{}:{}",
@@ -99,9 +98,7 @@ impl LiveNetworkStatusServer {
                 Ok(())
             },
         )?;
-        let stop_handle = rpc_ws_server.stop_handle();
-        let join_handle = tokio::spawn(rpc_ws_server.start(rpc_module));
-        Ok((join_handle, stop_handle))
+        Ok(rpc_ws_server.start(rpc_module)?)
     }
 }
 
@@ -122,7 +119,7 @@ impl Service for LiveNetworkStatusServer {
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
-        let (server_join_handle, server_stop_handle) =
+        let server_stop_handle =
             LiveNetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
         let error: anyhow::Error = loop {
@@ -167,10 +164,7 @@ impl Service for LiveNetworkStatusServer {
             bus.broadcast(BusEvent::Error);
         }
         debug!("Stop RPC server.");
-        server_stop_handle.clone().stop().await?;
-        server_join_handle
-            .await
-            .expect("Server should be shut down.");
+        server_stop_handle.clone().stop()?;
         debug!("RPC server stopped fully.");
         Err(error)
     }

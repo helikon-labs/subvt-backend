@@ -640,4 +640,36 @@ impl PostgreSQLStorage {
             Ok(None)
         }
     }
+
+    pub async fn get_account_discovered_and_killed_timestamp(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<(Option<u64>, Option<u64>)> {
+        let discovered_at_timestamp: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT block.timestamp
+            FROM block, account
+            WHERE account.discovered_at_block_hash = block.hash
+            AND account.id = $1
+            "#,
+        )
+        .bind(account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        let killed_at_timestamp: Option<(i64,)> = sqlx::query_as(
+            r#"
+            SELECT block.timestamp
+            FROM block, account
+            WHERE account.killed_at_block_hash = block.hash
+            AND account.id = $1
+            "#,
+        )
+        .bind(account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok((
+            discovered_at_timestamp.map(|s| s.0 as u64),
+            killed_at_timestamp.map(|s| s.0 as u64),
+        ))
+    }
 }

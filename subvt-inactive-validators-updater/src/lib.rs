@@ -11,6 +11,7 @@ use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use subvt_config::Config;
+use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::BlockHeader;
@@ -94,6 +95,7 @@ impl InactiveValidatorListUpdater {
 
     async fn fetch_and_update_inactive_validator_list(
         client: &SubstrateClient,
+        postgres: &PostgreSQLStorage,
         finalized_block_header: &BlockHeader,
     ) -> anyhow::Result<Vec<InactiveValidator>> {
         let finalized_block_number = finalized_block_header
@@ -105,11 +107,24 @@ impl InactiveValidatorListUpdater {
             .await
             .context("Error while fetching finalized block hash.")?;
         // validator addresses
-        let inactive_validators = client
+        let mut inactive_validators = client
             .get_all_inactive_validators(finalized_block_hash.as_str())
             .await
             .context("Error while getting inactive validators.")?;
         debug!("Fetched {} inactive validators.", inactive_validators.len());
+        // enrich data with data from the relational database
+        for inactive_validator in inactive_validators.iter_mut() {
+            // get account discovered and killed dates
+            let timestamps = postgres
+                .get_account_discovered_and_killed_timestamp(&inactive_validator.account.id)
+                .await?;
+            inactive_validator.account.discovered_at = timestamps.0;
+            inactive_validator.account.killed_at = timestamps.1;
+            // get inclusion rates
+            // get faults
+            // get unclaimed eras
+            // get era points total and average
+        }
         let start = std::time::Instant::now();
         InactiveValidatorListUpdater::update_redis(
             finalized_block_number,
@@ -126,15 +141,18 @@ impl InactiveValidatorListUpdater {
 impl Service for InactiveValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
+            let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let busy_lock = Arc::new(Mutex::new(()));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
                 let busy_lock = busy_lock.clone();
+                let postgres = postgres.clone();
                 tokio::spawn(async move {
                     let _lock = busy_lock.lock().await;
                     let update_result = InactiveValidatorListUpdater::fetch_and_update_inactive_validator_list(
                         &substrate_client,
+                        &postgres,
                         &finalized_block_header,
                     ).await;
                     match update_result {

@@ -2,11 +2,13 @@ use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_map_key,
 };
-use jsonrpsee::ws_client::{WsClient, WsClientBuilder};
-use jsonrpsee_types::{
-    traits::{Client, SubscriptionClient},
-    v2::params::JsonRpcParams,
-    Subscription,
+use jsonrpsee::{
+    rpc_params,
+    types::{
+        traits::{Client, SubscriptionClient},
+        Subscription,
+    },
+    ws_client::{WsClient, WsClientBuilder},
 };
 use log::{debug, error};
 use parity_scale_codec::Decode;
@@ -57,19 +59,12 @@ impl SubstrateClient {
             .await?;
         debug!("Substrate connection successful.");
         // get current block hash
-        let block_hash: String = ws_client
-            .request("chain_getBlockHash", JsonRpcParams::NoParams)
-            .await?;
-        let chain: String = ws_client
-            .request("system_chain", JsonRpcParams::NoParams)
-            .await?;
+        let block_hash: String = ws_client.request("chain_getBlockHash", None).await?;
+        let chain: String = ws_client.request("system_chain", None).await?;
         let chain = Chain::from_str(chain.as_str())?;
         let mut metadata = {
             let metadata_response: String = ws_client
-                .request(
-                    "state_getMetadata",
-                    JsonRpcParams::Array(vec![block_hash.clone().into()]),
-                )
+                .request("state_getMetadata", rpc_params!(&block_hash))
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
@@ -86,9 +81,8 @@ impl SubstrateClient {
         metadata.last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
         debug!("Got last runtime upgrade info.");
-        let system_properties: SystemProperties = ws_client
-            .request("system_properties", JsonRpcParams::NoParams)
-            .await?;
+        let system_properties: SystemProperties =
+            ws_client.request("system_properties", None).await?;
         debug!("Got system properties. {:?}", system_properties);
         Ok(Self {
             chain,
@@ -102,10 +96,7 @@ impl SubstrateClient {
         let mut metadata = {
             let metadata_response: String = self
                 .ws_client
-                .request(
-                    "state_getMetadata",
-                    JsonRpcParams::Array(vec![block_hash.into()]),
-                )
+                .request("state_getMetadata", rpc_params!(&block_hash))
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
@@ -118,10 +109,7 @@ impl SubstrateClient {
     }
 
     pub async fn get_current_block_hash(&self) -> anyhow::Result<String> {
-        let hash = self
-            .ws_client
-            .request("chain_getBlockHash", JsonRpcParams::NoParams)
-            .await?;
+        let hash = self.ws_client.request("chain_getBlockHash", None).await?;
         Ok(hash)
     }
 
@@ -129,10 +117,7 @@ impl SubstrateClient {
     pub async fn get_block_hash(&self, block_number: u64) -> anyhow::Result<String> {
         let hash = self
             .ws_client
-            .request(
-                "chain_getBlockHash",
-                JsonRpcParams::Array(vec![block_number.into()]),
-            )
+            .request("chain_getBlockHash", rpc_params!(block_number))
             .await?;
         Ok(hash)
     }
@@ -141,10 +126,7 @@ impl SubstrateClient {
     pub async fn get_block_header(&self, block_hash: &str) -> anyhow::Result<BlockHeader> {
         let header = self
             .ws_client
-            .request(
-                "chain_getHeader",
-                JsonRpcParams::Array(vec![block_hash.into()]),
-            )
+            .request("chain_getHeader", rpc_params!(&block_hash))
             .await?;
         Ok(header)
     }
@@ -153,7 +135,7 @@ impl SubstrateClient {
     pub async fn get_finalized_block_hash(&self) -> anyhow::Result<String> {
         let hash: String = self
             .ws_client
-            .request("chain_getFinalizedHead", JsonRpcParams::NoParams)
+            .request("chain_getFinalizedHead", None)
             .await?;
         Ok(hash)
     }
@@ -162,10 +144,7 @@ impl SubstrateClient {
     async fn get_block(&self, block_hash: &str) -> anyhow::Result<Block> {
         let block_wrapper: BlockWrapper = self
             .ws_client
-            .request(
-                "chain_getBlock",
-                JsonRpcParams::Array(vec![block_hash.into()]),
-            )
+            .request("chain_getBlock", rpc_params!(&block_hash))
             .await?;
         Ok(block_wrapper.block)
     }
@@ -294,10 +273,7 @@ impl SubstrateClient {
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request(
-                "state_queryStorageAt",
-                JsonRpcParams::Array(vec![keys.into(), block_hash.into()]),
-            )
+            .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
         debug!(
             "Got {} optional super accounts records.",
@@ -336,10 +312,7 @@ impl SubstrateClient {
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request(
-                "state_queryStorageAt",
-                JsonRpcParams::Array(vec![keys.into(), block_hash.into()]),
-            )
+            .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
         debug!("Got {} optional identities.", values[0].changes.len());
         let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::new();
@@ -490,10 +463,7 @@ impl SubstrateClient {
             for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
 
                 for (storage_key, data) in chunk_values[0].changes.iter() {
@@ -543,10 +513,7 @@ impl SubstrateClient {
             for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
 
                 for (storage_key, data) in chunk_values[0].changes.iter() {
@@ -579,10 +546,7 @@ impl SubstrateClient {
             for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
 
                 for (storage_key, data) in chunk_values[0].changes.iter() {
@@ -632,10 +596,7 @@ impl SubstrateClient {
             for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
                 for (storage_key, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
@@ -685,10 +646,7 @@ impl SubstrateClient {
             for chunk in controller_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
                 for (storage_key, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
@@ -752,10 +710,7 @@ impl SubstrateClient {
             for chunk in ledger_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
-                    .request(
-                        "state_queryStorageAt",
-                        JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                    )
+                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                     .await?;
                 for (_, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
@@ -795,10 +750,7 @@ impl SubstrateClient {
             debug!("start :: get validator prefs all");
             let values: Vec<StorageChangeSet<String>> = self
                 .ws_client
-                .request(
-                    "state_queryStorageAt",
-                    JsonRpcParams::Array(vec![all_keys.into(), block_hash.into()]),
-                )
+                .request("state_queryStorageAt", rpc_params!(all_keys, &block_hash))
                 .await?;
             for (storage_key, data) in values[0].changes.iter() {
                 if let Some(data) = data {
@@ -889,10 +841,7 @@ impl SubstrateClient {
         for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
             let chunk_values: Vec<StorageChangeSet<String>> = self
                 .ws_client
-                .request(
-                    "state_queryStorageAt",
-                    JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                )
+                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                 .await?;
 
             for (storage_key, data) in chunk_values[0].changes.iter() {
@@ -1018,10 +967,7 @@ impl SubstrateClient {
         for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
             let chunk_values: Vec<StorageChangeSet<String>> = self
                 .ws_client
-                .request(
-                    "state_queryStorageAt",
-                    JsonRpcParams::Array(vec![chunk.into(), block_hash.into()]),
-                )
+                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
                 .await?;
 
             for (storage_key, data) in chunk_values[0].changes.iter() {
@@ -1060,11 +1006,7 @@ impl SubstrateClient {
     {
         let mut subscription: Subscription<BlockHeader> = self
             .ws_client
-            .subscribe(
-                subscribe_method_name,
-                JsonRpcParams::NoParams,
-                unsubscribe_method_name,
-            )
+            .subscribe(subscribe_method_name, None, unsubscribe_method_name)
             .await?;
         loop {
             let block_header = subscription.next().await?;
