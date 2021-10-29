@@ -1,7 +1,7 @@
 [workspace]
 members = [
-	"subvt-active-validator-list-server",
-	"subvt-app-services",
+    "subvt-active-validator-list-server",
+    "subvt-app-services",
     "subvt-block-processor",
     "subvt-config",
     "subvt-inactive-validator-list-server",
@@ -9,14 +9,14 @@ members = [
     "subvt-live-network-status-server",
     "subvt-live-network-status-updater",
     "subvt-logging",
-	"subvt-notifier",
+    "subvt-notifier",
     "subvt-onekv-updater",
     "subvt-persistence",
     "subvt-proc-macro",
-	"subvt-report-services",
+    "subvt-report-services",
     "subvt-service-common",
     "subvt-substrate-client",
     "subvt-types",
     "subvt-utility",
-	"subvt-validator-details-server",
+    "subvt-validator-details-server",
 ]
