@@ -19,3 +19,6 @@ CREATE TABLE IF NOT EXISTS event_slashed
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX event_slashed_idx_validator_account_id
+    ON event_slashed (validator_account_id);

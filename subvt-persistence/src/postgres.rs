@@ -672,4 +672,53 @@ impl PostgreSQLStorage {
             killed_at_timestamp.map(|s| s.0 as u64),
         ))
     }
+
+    /*
+    pub async fn get_validator_slashes(
+        &self,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<Vec<Slash>> {
+        let rows = sqlx::query!(
+            r#"
+            SELECT block_hash, extrinsic_index, amount
+            FROM event_slashed
+            WHERE validator_account_id = $1
+            "#,
+            validator_account_id.to_string()
+        )
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut slashes = Vec::new();
+        for row in rows {
+            let block_hash: String = row.block_hash;
+            let extrinsic_index = row.extrinsic_index.unwrap() as u32;
+            let amount: u128 = row.amount.parse::<u128>().unwrap();
+            slashes.push(Slash {
+                block_hash,
+                extrinsic_index,
+                validator_account_id: validator_account_id.clone(),
+                amount,
+            });
+        }
+        Ok(slashes)
+    }
+    */
+
+    pub async fn get_validator_active_inactive_era_counts(
+        &self,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<(u32, u32)> {
+        let inclusion_counts: (i64, i64) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT active_era.era_index) AS active_era_count, COUNT(DISTINCT inactive_era.era_index) AS inactive_era_count
+            FROM era_validator active_era, era_validator inactive_era
+            WHERE active_era.validator_account_id = $1 AND inactive_era.validator_account_id = $1
+            AND active_era.is_active = true AND inactive_era.is_active = false
+            "#,
+        )
+        .bind(validator_account_id.to_string())
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok((inclusion_counts.0 as u32, inclusion_counts.1 as u32))
+    }
 }

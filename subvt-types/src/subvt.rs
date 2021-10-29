@@ -57,6 +57,8 @@ pub struct InactiveValidator {
     pub nominations: Vec<Nomination>,
     pub oversubscribed: bool,
     pub slashed: bool,
+    pub active_era_count: u32,
+    pub inactive_era_count: u32,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
