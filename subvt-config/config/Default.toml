@@ -31,7 +31,7 @@ pool_max_connections = 20
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 7010030
+start_block_number = 9861959
 
 [onekv]
 onekv_candidate_endpoint = "https://kusama.w3f.community/candidate/"

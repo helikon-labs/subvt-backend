@@ -561,7 +561,7 @@ impl BlockProcessor {
             block_number
         );
 
-        let mut block_timestamp: Option<u32> = None;
+        let mut block_timestamp: Option<u64> = None;
         for extrinsic in &extrinsics {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
@@ -569,7 +569,7 @@ impl BlockProcessor {
                         signature: _,
                         timestamp,
                     } => {
-                        block_timestamp = Some(*timestamp as u32);
+                        block_timestamp = Some(*timestamp);
                     }
                 }
             }

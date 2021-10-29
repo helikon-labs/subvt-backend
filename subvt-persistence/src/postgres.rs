@@ -55,8 +55,8 @@ impl PostgreSQLStorage {
             "#,
         )
         .bind(era.index)
-        .bind(era.start_timestamp as u32)
-        .bind(era.end_timestamp as u32)
+        .bind(era.start_timestamp as i64)
+        .bind(era.end_timestamp as i64)
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
@@ -203,7 +203,7 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         block_header: &BlockHeader,
-        block_timestamp: Option<u32>,
+        block_timestamp: Option<u64>,
         maybe_author_account_id: Option<AccountId>,
         (era_index, epoch_index): (u32, u32),
         (metadata_version, runtime_version): (i16, i16),
@@ -222,7 +222,7 @@ impl PostgreSQLStorage {
             "#)
             .bind(block_hash)
             .bind(block_header.get_number()? as u32)
-            .bind(block_timestamp)
+            .bind(block_timestamp.map(|timestamp| timestamp as i64))
             .bind(maybe_author_account_id_hex)
             .bind(era_index)
             .bind(epoch_index)

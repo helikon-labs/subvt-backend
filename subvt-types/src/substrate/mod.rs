@@ -126,6 +126,8 @@ pub struct Account {
     pub parent: Box<Option<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub discovered_at: Option<i64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub killed_at: Option<i64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -279,10 +281,8 @@ impl Era {
     /// Era from a hex string (e.g. `0x0563ad5e...`).
     pub fn from(hex_string: &str, era_duration_millis: u64) -> anyhow::Result<Era> {
         let active_era_info: SubstrateActiveEraInfo = decode_hex_string(hex_string)?;
-        let start_timestamp_millis = active_era_info.start_timestamp_millis.unwrap();
-        let start_timestamp = start_timestamp_millis / 1000;
-        let end_timestamp_millis = start_timestamp_millis + era_duration_millis;
-        let end_timestamp = end_timestamp_millis / 1000;
+        let start_timestamp = active_era_info.start_timestamp_millis.unwrap();
+        let end_timestamp = start_timestamp + era_duration_millis;
         Ok(Era {
             index: active_era_info.index,
             start_timestamp,
