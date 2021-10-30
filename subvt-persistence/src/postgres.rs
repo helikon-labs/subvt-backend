@@ -641,6 +641,40 @@ impl PostgreSQLStorage {
         }
     }
 
+    pub async fn save_payout_stakers_extrinsic(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        is_nested_call: bool,
+        is_successful: bool,
+        (caller_account_id, validator_account_id): (&AccountId, &AccountId),
+        era_index: u32,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(caller_account_id).await?;
+        self.save_account(validator_account_id).await?;
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(caller_account_id.to_string())
+            .bind(validator_account_id.to_string())
+            .bind(era_index)
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn get_account_discovered_and_killed_timestamp(
         &self,
         account_id: &AccountId,

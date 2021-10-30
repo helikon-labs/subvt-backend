@@ -385,6 +385,32 @@ impl BlockProcessor {
                         error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
                     }
                 }
+                StakingExtrinsic::PayoutStakers {
+                    signature,
+                    validator_account_id,
+                    era_index,
+                } => {
+                    let maybe_caller_account_id = match signature {
+                        Some(signature) => signature.get_signer_account_id(),
+                        _ => None,
+                    };
+                    if let Some(caller_account_id) = maybe_caller_account_id {
+                        // ignore the errors here - may fail due to non-existent era foreign key
+                        //  past eras may not have been saved
+                        let _ = postgres
+                            .save_payout_stakers_extrinsic(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                (&caller_account_id, validator_account_id),
+                                *era_index,
+                            )
+                            .await;
+                    } else {
+                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
+                    }
+                }
                 StakingExtrinsic::Validate {
                     signature,
                     preferences,

@@ -13,6 +13,7 @@ use crate::{
 };
 use log::{debug, error};
 use pallet_multisig::Timepoint;
+use pallet_staking::EraIndex;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::BlockNumber;
 
@@ -186,6 +187,11 @@ pub enum StakingExtrinsic {
         signature: Option<Signature>,
         targets: Vec<MultiAddress>,
     },
+    PayoutStakers {
+        signature: Option<Signature>,
+        validator_account_id: AccountId,
+        era_index: EraIndex,
+    },
     Validate {
         signature: Option<Signature>,
         preferences: ValidatorPreferences,
@@ -203,6 +209,13 @@ impl StakingExtrinsic {
                 signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
             })),
+            "payout_stakers" => Some(SubstrateExtrinsic::Staking(
+                StakingExtrinsic::PayoutStakers {
+                    signature,
+                    validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    era_index: get_argument_primitive!(&arguments[1], EraIndex),
+                },
+            )),
             "validate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
                 signature,
                 preferences: get_argument_primitive!(&arguments[0], ValidatorPreferences),
@@ -372,7 +385,7 @@ impl SubstrateExtrinsic {
             ("Multisig", "as_multi") | ("Multisig", "as_multi_threshold_1") => {
                 MultisigExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
-            ("Staking", "nominate") | ("Staking", "validate") => {
+            ("Staking", "nominate") | ("Staking", "payout_stakers") | ("Staking", "validate") => {
                 StakingExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Proxy", "proxy") | ("Proxy", "proxy_announced") => {
