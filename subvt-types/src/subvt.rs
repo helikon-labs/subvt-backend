@@ -56,9 +56,12 @@ pub struct InactiveValidator {
     pub active_next_session: bool,
     pub nominations: Vec<Nomination>,
     pub oversubscribed: bool,
-    pub slashed: bool,
-    pub active_era_count: u32,
-    pub inactive_era_count: u32,
+    pub active_era_count: u64,
+    pub inactive_era_count: u64,
+    pub slash_count: u64,
+    pub offline_offence_count: u64,
+    pub total_reward_points: u64,
+    pub unclaimed_era_indices: Vec<u32>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
@@ -70,7 +73,7 @@ pub struct InactiveValidatorSummary {
     pub active_next_session: bool,
     pub nominations: NominationsSummary,
     pub oversubscribed: bool,
-    pub slashed: bool,
+    pub slash_count: u64,
 }
 
 impl From<&InactiveValidator> for InactiveValidatorSummary {
@@ -82,7 +85,7 @@ impl From<&InactiveValidator> for InactiveValidatorSummary {
             active_next_session: validator.active_next_session,
             nominations: NominationsSummary::from(&validator.nominations),
             oversubscribed: validator.oversubscribed,
-            slashed: validator.slashed,
+            slash_count: validator.slash_count,
         }
     }
 }

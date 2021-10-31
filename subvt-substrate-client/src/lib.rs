@@ -10,7 +10,7 @@ use jsonrpsee::{
     },
     ws_client::{WsClient, WsClientBuilder},
 };
-use log::{debug, error};
+use log::{debug, error, trace};
 use parity_scale_codec::Decode;
 use sp_core::storage::{StorageChangeSet, StorageKey};
 use std::collections::hash_map::DefaultHasher;
@@ -267,7 +267,7 @@ impl SubstrateClient {
                 get_storage_map_key(&self.metadata, "Identity", "SuperOf", &account_id)
             })
             .collect();
-        debug!("Got {} keys for super accounts.", keys.len());
+        trace!("Got {} keys for super accounts.", keys.len());
         if keys.is_empty() {
             return Ok(HashMap::new());
         }
@@ -275,7 +275,7 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
-        debug!(
+        trace!(
             "Got {} optional super accounts records.",
             values[0].changes.len()
         );
@@ -288,7 +288,7 @@ impl SubstrateClient {
                 parent_account_map.insert(account_id, super_identity.0);
             }
         }
-        debug!(
+        trace!(
             "Got {} super accounts. Get identities for super accounts.",
             parent_account_map.len()
         );
@@ -527,39 +527,6 @@ impl SubstrateClient {
                 }
             }
             debug!("Got reward destinations.");
-        }
-        // get slashings
-        {
-            debug!("Get slashings.");
-            let keys: Vec<String> = inactive_validator_map
-                .values()
-                .map(|validator| {
-                    get_storage_map_key(
-                        &self.metadata,
-                        "Staking",
-                        "ValidatorSlashInEra",
-                        &validator.account.id,
-                    )
-                })
-                .collect();
-            let mut number_of_slashed_validators = 0;
-            for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
-                let chunk_values: Vec<StorageChangeSet<String>> = self
-                    .ws_client
-                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
-                    .await?;
-
-                for (storage_key, data) in chunk_values[0].changes.iter() {
-                    if data.is_some() {
-                        let account_id = self.account_id_from_storage_key(storage_key);
-                        if let Some(validator) = inactive_validator_map.get_mut(&account_id) {
-                            number_of_slashed_validators += 1;
-                            validator.slashed = true;
-                        }
-                    }
-                }
-            }
-            debug!("Got {} slashings.", number_of_slashed_validators);
         }
 
         // get nominations

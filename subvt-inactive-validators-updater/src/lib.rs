@@ -115,22 +115,20 @@ impl InactiveValidatorListUpdater {
         // enrich data with data from the relational database
         debug!("Get database content.");
         for inactive_validator in inactive_validators.iter_mut() {
-            // get account discovered and killed dates
-            let timestamps = postgres
-                .get_account_discovered_and_killed_timestamp(&inactive_validator.account.id)
+            let db_validator_info = postgres
+                .get_validator_info(&inactive_validator.account.id)
                 .await?;
-            inactive_validator.account.discovered_at = timestamps.0;
-            inactive_validator.account.killed_at = timestamps.1;
-            // get inclusion counts
-            let active_inactive_era_counts = postgres
-                .get_validator_active_inactive_era_counts(&inactive_validator.account.id)
-                .await?;
-            inactive_validator.active_era_count = active_inactive_era_counts.0;
-            inactive_validator.inactive_era_count = active_inactive_era_counts.1;
-            // get faults
-            // get unclaimed eras
-            // get era points total and average
+            inactive_validator.account.discovered_at = db_validator_info.discovered_at;
+            inactive_validator.account.killed_at = db_validator_info.killed_at;
+            inactive_validator.slash_count = db_validator_info.slash_count;
+            inactive_validator.offline_offence_count = db_validator_info.offline_offence_count;
+            inactive_validator.active_era_count = db_validator_info.active_era_count;
+            inactive_validator.inactive_era_count = db_validator_info.inactive_era_count;
+            inactive_validator.total_reward_points = db_validator_info.total_reward_points;
+            inactive_validator.unclaimed_era_indices =
+                db_validator_info.unclaimed_era_indices.clone();
         }
+        debug!("Got database content.");
         let start = std::time::Instant::now();
         InactiveValidatorListUpdater::update_redis(
             finalized_block_number,

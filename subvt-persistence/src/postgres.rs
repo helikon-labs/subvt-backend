@@ -3,11 +3,25 @@ use sqlx::{Pool, Postgres};
 use std::collections::HashMap;
 use std::str::FromStr;
 use subvt_config::Config;
-use subvt_types::crypto::AccountId;
-use subvt_types::substrate::{
-    argument::IdentificationTuple,
-    ValidatorPreferences, {Balance, BlockHeader, Era},
+use subvt_types::{
+    crypto::AccountId,
+    rdb::ValidatorInfo,
+    substrate::{
+        argument::IdentificationTuple,
+        ValidatorPreferences, {Balance, BlockHeader, Era},
+    },
 };
+
+type PostgresValidatorInfo = (
+    Option<i64>,
+    Option<i64>,
+    i64,
+    i64,
+    i64,
+    i64,
+    i64,
+    Option<String>,
+);
 
 pub struct PostgreSQLStorage {
     connection_pool: Pool<Postgres>,
@@ -675,84 +689,36 @@ impl PostgreSQLStorage {
         }
     }
 
-    pub async fn get_account_discovered_and_killed_timestamp(
-        &self,
-        account_id: &AccountId,
-    ) -> anyhow::Result<(Option<u64>, Option<u64>)> {
-        let discovered_at_timestamp: Option<(i64,)> = sqlx::query_as(
-            r#"
-            SELECT block.timestamp
-            FROM block, account
-            WHERE account.discovered_at_block_hash = block.hash
-            AND account.id = $1
-            "#,
-        )
-        .bind(account_id.to_string())
-        .fetch_optional(&self.connection_pool)
-        .await?;
-        let killed_at_timestamp: Option<(i64,)> = sqlx::query_as(
-            r#"
-            SELECT block.timestamp
-            FROM block, account
-            WHERE account.killed_at_block_hash = block.hash
-            AND account.id = $1
-            "#,
-        )
-        .bind(account_id.to_string())
-        .fetch_optional(&self.connection_pool)
-        .await?;
-        Ok((
-            discovered_at_timestamp.map(|s| s.0 as u64),
-            killed_at_timestamp.map(|s| s.0 as u64),
-        ))
-    }
-
-    /*
-    pub async fn get_validator_slashes(
+    pub async fn get_validator_info(
         &self,
         validator_account_id: &AccountId,
-    ) -> anyhow::Result<Vec<Slash>> {
-        let rows = sqlx::query!(
+    ) -> anyhow::Result<ValidatorInfo> {
+        let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT block_hash, extrinsic_index, amount
-            FROM event_slashed
-            WHERE validator_account_id = $1
-            "#,
-            validator_account_id.to_string()
-        )
-        .fetch_all(&self.connection_pool)
-        .await?;
-        let mut slashes = Vec::new();
-        for row in rows {
-            let block_hash: String = row.block_hash;
-            let extrinsic_index = row.extrinsic_index.unwrap() as u32;
-            let amount: u128 = row.amount.parse::<u128>().unwrap();
-            slashes.push(Slash {
-                block_hash,
-                extrinsic_index,
-                validator_account_id: validator_account_id.clone(),
-                amount,
-            });
-        }
-        Ok(slashes)
-    }
-    */
-
-    pub async fn get_validator_active_inactive_era_counts(
-        &self,
-        validator_account_id: &AccountId,
-    ) -> anyhow::Result<(u32, u32)> {
-        let inclusion_counts: (i64, i64) = sqlx::query_as(
-            r#"
-            SELECT COUNT(DISTINCT active_era.era_index) AS active_era_count, COUNT(DISTINCT inactive_era.era_index) AS inactive_era_count
-            FROM era_validator active_era, era_validator inactive_era
-            WHERE active_era.validator_account_id = $1 AND inactive_era.validator_account_id = $1
-            AND active_era.is_active = true AND inactive_era.is_active = false
-            "#,
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras
+            FROM get_validator_info($1)
+            "#
         )
         .bind(validator_account_id.to_string())
         .fetch_one(&self.connection_pool)
         .await?;
-        Ok((inclusion_counts.0 as u32, inclusion_counts.1 as u32))
+        let mut unclaimed_era_indices: Vec<u32> = Vec::new();
+        if let Some(concated_string) = validator_info.7 {
+            for unclaimed_era_index_string in concated_string.split(',') {
+                if let Ok(unclaimed_era_index) = unclaimed_era_index_string.parse::<u32>() {
+                    unclaimed_era_indices.push(unclaimed_era_index);
+                }
+            }
+        }
+        Ok(ValidatorInfo {
+            discovered_at: validator_info.0.map(|value| value as u64),
+            killed_at: validator_info.1.map(|value| value as u64),
+            slash_count: validator_info.2 as u64,
+            offline_offence_count: validator_info.3 as u64,
+            active_era_count: validator_info.4 as u64,
+            inactive_era_count: validator_info.5 as u64,
+            total_reward_points: validator_info.6 as u64,
+            unclaimed_era_indices,
+        })
     }
 }
