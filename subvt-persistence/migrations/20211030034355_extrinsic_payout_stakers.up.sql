@@ -39,3 +39,9 @@ CREATE INDEX extrinsic_payout_stakers_idx_validator_account_id
 
 CREATE INDEX extrinsic_payout_stakers_idx_era_index
     ON extrinsic_payout_stakers (era_index);
+
+CREATE INDEX extrinsic_payout_stakers_idx_is_successful
+    ON extrinsic_payout_stakers (is_successful);
+
+CREATE INDEX extrinsic_payout_stakers_idx_validator_era_successful
+    ON extrinsic_payout_stakers (validator_account_id, era_index, is_successful);

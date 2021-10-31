@@ -19,3 +19,9 @@ CREATE TABLE IF NOT EXISTS event_rewarded
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX event_rewarded_idx_block_hash
+    ON event_rewarded (block_hash);
+
+CREATE INDEX event_rewarded_idx_rewardee_account_id
+    ON event_rewarded (rewardee_account_id);
