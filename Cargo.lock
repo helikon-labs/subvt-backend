@@ -5050,6 +5050,7 @@ dependencies = [
  "reqwest",
  "subvt-config",
  "subvt-logging",
+ "subvt-persistence",
  "subvt-service-common",
  "subvt-types",
  "tokio",

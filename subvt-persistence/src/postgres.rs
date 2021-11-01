@@ -5,6 +5,7 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::{
     crypto::AccountId,
+    onekv,
     rdb::ValidatorInfo,
     substrate::{
         argument::IdentificationTuple,
@@ -720,5 +721,38 @@ impl PostgreSQLStorage {
             total_reward_points: validator_info.6 as u64,
             unclaimed_era_indices,
         })
+    }
+
+    pub async fn save_onekv_candidate(
+        &self,
+        candidate_details: &onekv::CandidateDetails,
+    ) -> anyhow::Result<Option<i32>> {
+        let validator_account_id = AccountId::from_ss58_check(&candidate_details.stash_address)?;
+        let kusama_account_id = if !candidate_details.kusama_stash_address.is_empty() {
+            let kusama_account_id =
+                AccountId::from_ss58_check(&candidate_details.kusama_stash_address)?;
+            Some(kusama_account_id)
+        } else {
+            None
+        };
+        self.save_account(&validator_account_id).await?;
+        let maybe_result: Option<(i32,)> = sqlx::query_as(
+            r#"
+            INSERT INTO onekv_candidate (validator_account_id, kusama_account_id, name, rank)
+            VALUES ($1, $2, $3, $4)
+            RETURNING id
+            "#,
+        )
+        .bind(validator_account_id.to_string())
+        .bind(kusama_account_id.map(|account_id| account_id.to_string()))
+        .bind(&candidate_details.name)
+        .bind(candidate_details.rank)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
     }
 }

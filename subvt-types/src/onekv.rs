@@ -35,7 +35,7 @@ pub struct CandidateDetails {
     pub offline_since: u64,
     pub online_since: u64,
     pub node_refs: u32,
-    pub rank: i32,
+    pub rank: i64,
     pub rank_events: Vec<RankEvent>,
     pub reward_destination: String,
     pub score: Option<Score>,

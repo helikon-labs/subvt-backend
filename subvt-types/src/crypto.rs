@@ -5,12 +5,26 @@ use std::convert::{From, TryFrom, TryInto};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
+use crate::substrate::error::DecodeError;
+
 #[derive(Clone, Debug, Encode, Default, Decode, Eq, Hash, PartialEq)]
 pub struct AccountId([u8; 32]);
 
 impl AccountId {
     pub fn to_ss58_check(&self) -> String {
         sp_core::crypto::AccountId32::new(self.0).to_ss58check()
+    }
+
+    pub fn from_ss58_check(address: &str) -> Result<Self, DecodeError> {
+        if let Ok(account_id) = sp_core::crypto::AccountId32::from_ss58check(address) {
+            let account_id_bytes: [u8; 32] = account_id.into();
+            Ok(Self(account_id_bytes))
+        } else {
+            Err(DecodeError::Error(format!(
+                "Cannot get account id from SS58 encoded address {}.",
+                address
+            )))
+        }
     }
 }
 
