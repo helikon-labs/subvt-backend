@@ -20,6 +20,7 @@ pub fn init(config: &subvt_config::Config) {
     builder.filter(Some("subvt_inactive_validators_updater"), log_level);
     builder.filter(Some("subvt_live_network_status_server"), log_level);
     builder.filter(Some("subvt_live_network_status_updater"), log_level);
+    builder.filter(Some("subvt_onekv_updater"), log_level);
     builder.filter(Some("subvt_persistence"), log_level);
     builder.filter(Some("subvt_report_services"), log_level);
     builder.filter(Some("subvt_substrate_client"), log_level);

@@ -252,9 +252,9 @@ impl Service for LiveNetworkStatusUpdater {
                         Err(error) => {
                             error!("{:?}", error);
                             error!(
-                            "Live network status update failed for block #{}. Will try again with the next block.",
-                            best_block_header.get_number().unwrap_or(0),
-                        );
+                                "Live network status update failed for block #{}. Will try again with the next block.",
+                                best_block_header.get_number().unwrap_or(0),
+                            );
                         }
                     }
                 });

@@ -111,6 +111,14 @@ pub struct BlockProcessorConfig {
     pub start_block_number: u64,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct OneKVConfig {
+    pub candidate_list_endpoint: String,
+    pub candidate_details_endpoint: String,
+    pub refresh_seconds: u64,
+    pub request_timeout_seconds: u64,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -118,6 +126,7 @@ pub struct Config {
     pub env: Environment,
     pub common: CommonConfig,
     pub log: LogConfig,
+    pub onekv: OneKVConfig,
     pub postgres: PostgreSQLConfig,
     pub redis: RedisConfig,
     pub rpc: RPCConfig,
