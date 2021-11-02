@@ -30,7 +30,7 @@ pub struct CandidateDetails {
     pub kusama_stash_address: String,
     pub last_valid: Option<u64>,
     pub name: String,
-    pub nominated_at: u64,
+    pub nominated_at: Option<u64>,
     pub offline_accumulated: u64,
     pub offline_since: u64,
     pub online_since: u64,
@@ -49,10 +49,17 @@ pub struct CandidateDetails {
     pub version: Option<String>,
 }
 
+impl CandidateDetails {
+    pub fn is_valid(&self) -> bool {
+        self.validity.iter().all(|validity| validity.is_valid)
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Score {
-    pub updated: u64,
+    #[serde(rename(deserialize = "updated"))]
+    pub updated_at: u64,
     pub total: f64,
     pub aggregate: f64,
     pub inclusion: f64,

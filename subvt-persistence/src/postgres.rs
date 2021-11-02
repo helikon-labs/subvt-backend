@@ -738,15 +738,37 @@ impl PostgreSQLStorage {
         self.save_account(&validator_account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO onekv_candidate (validator_account_id, kusama_account_id, name, rank)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO onekv_candidate (validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
             RETURNING id
             "#,
         )
         .bind(validator_account_id.to_string())
         .bind(kusama_account_id.map(|account_id| account_id.to_string()))
+        .bind(candidate_details.discovered_at as i64)
+        .bind(candidate_details.inclusion)
+        .bind(candidate_details.last_valid.map(|last_valid| last_valid as i64))
+        .bind(candidate_details.nominated_at.map(|last_valid| last_valid as i64))
+        .bind(candidate_details.offline_accumulated as i64)
+        .bind(candidate_details.offline_since as i64)
+        .bind(candidate_details.online_since as i64)
         .bind(&candidate_details.name)
         .bind(candidate_details.rank)
+        .bind(candidate_details.version.as_ref())
+        .bind(candidate_details.is_valid())
+        .bind(candidate_details.score.as_ref().map(|score| score.updated_at as i64))
+        .bind(candidate_details.score.as_ref().map(|score| score.total))
+        .bind(candidate_details.score.as_ref().map(|score| score.aggregate))
+        .bind(candidate_details.score.as_ref().map(|score| score.inclusion))
+        .bind(candidate_details.score.as_ref().map(|score| score.discovered))
+        .bind(candidate_details.score.as_ref().map(|score| score.nominated))
+        .bind(candidate_details.score.as_ref().map(|score| score.rank))
+        .bind(candidate_details.score.as_ref().map(|score| score.unclaimed))
+        .bind(candidate_details.score.as_ref().map(|score| score.bonded))
+        .bind(candidate_details.score.as_ref().map(|score| score.faults))
+        .bind(candidate_details.score.as_ref().map(|score| score.offline))
+        .bind(candidate_details.score.as_ref().map(|score| score.randomness))
+        .bind(candidate_details.score.as_ref().map(|score| score.span_inclusion))
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
