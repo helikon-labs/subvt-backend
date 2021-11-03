@@ -79,7 +79,8 @@ pub struct Score {
 pub struct FaultEvent {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
-    pub prev_rank: Option<i32>,
+    #[serde(rename(deserialize = "prevRank"))]
+    pub previous_rank: Option<i32>,
     pub reason: String,
     pub when: u64,
 }
