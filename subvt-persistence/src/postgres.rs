@@ -22,6 +22,7 @@ type PostgresValidatorInfo = (
     i64,
     i64,
     Option<String>,
+    bool,
 );
 
 pub struct PostgreSQLStorage {
@@ -696,7 +697,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, is_enrolled_in_onekv
             FROM get_validator_info($1)
             "#
         )
@@ -720,6 +721,7 @@ impl PostgreSQLStorage {
             inactive_era_count: validator_info.5 as u64,
             total_reward_points: validator_info.6 as u64,
             unclaimed_era_indices,
+            is_enrolled_in_1kv: validator_info.8,
         })
     }
 

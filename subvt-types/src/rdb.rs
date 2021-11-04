@@ -7,4 +7,5 @@ pub struct ValidatorInfo {
     pub inactive_era_count: u64,
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
+    pub is_enrolled_in_1kv: bool,
 }

@@ -62,6 +62,7 @@ pub struct InactiveValidator {
     pub offline_offence_count: u64,
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
+    pub is_enrolled_in_1kv: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
@@ -74,6 +75,7 @@ pub struct InactiveValidatorSummary {
     pub nominations: NominationsSummary,
     pub oversubscribed: bool,
     pub slash_count: u64,
+    pub is_enrolled_in_1kv: bool,
 }
 
 impl From<&InactiveValidator> for InactiveValidatorSummary {
@@ -86,6 +88,7 @@ impl From<&InactiveValidator> for InactiveValidatorSummary {
             nominations: NominationsSummary::from(&validator.nominations),
             oversubscribed: validator.oversubscribed,
             slash_count: validator.slash_count,
+            is_enrolled_in_1kv: validator.is_enrolled_in_1kv,
         }
     }
 }

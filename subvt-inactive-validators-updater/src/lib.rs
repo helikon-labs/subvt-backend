@@ -127,6 +127,7 @@ impl InactiveValidatorListUpdater {
             inactive_validator.total_reward_points = db_validator_info.total_reward_points;
             inactive_validator.unclaimed_era_indices =
                 db_validator_info.unclaimed_era_indices.clone();
+            inactive_validator.is_enrolled_in_1kv = db_validator_info.is_enrolled_in_1kv;
         }
         debug!("Got database content.");
         let start = std::time::Instant::now();

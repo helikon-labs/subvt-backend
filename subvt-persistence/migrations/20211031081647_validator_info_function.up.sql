@@ -6,7 +6,8 @@ CREATE TYPE validator_info AS (
 	active_era_count bigint,
 	inactive_era_count bigint,
 	total_reward_points bigint,
-	unclaimed_eras text
+	unclaimed_eras text,
+    is_enrolled_in_onekv boolean
 );
 
 CREATE OR REPLACE FUNCTION get_validator_info (account_id VARCHAR(66))
@@ -27,7 +28,7 @@ BEGIN
 	FROM event_validator_offline
 	WHERE validator_account_id = account_id;
 	
-	SELECT COUNT(DISTINCT era_index), COALESCE(SUM(reward_points))
+	SELECT COUNT(DISTINCT era_index), COALESCE(SUM(reward_points), 0)
 	INTO result_record.active_era_count, result_record.total_reward_points
 	FROM era_validator
 	WHERE validator_account_id = account_id
@@ -63,6 +64,12 @@ BEGIN
 	FROM block, account
 	WHERE account.killed_at_block_hash = block.hash
 	AND account.id = account_id;
+
+    SELECT EXISTS(
+        SELECT 1
+        FROM onekv_candidate
+        WHERE validator_account_id = account_id
+    ) INTO result_record.is_enrolled_in_onekv;
 	
 	RETURN result_record;
 END
