@@ -113,6 +113,7 @@ impl ValidatorListUpdater {
             .get_block_hash(finalized_block_number)
             .await
             .context("Error while fetching finalized block hash.")?;
+        let active_era = client.get_active_era(&finalized_block_hash).await?;
         // validator addresses
         let mut validators = client
             .get_all_validators(finalized_block_hash.as_str())
@@ -122,7 +123,14 @@ impl ValidatorListUpdater {
         // enrich data with data from the relational database
         debug!("Get database content.");
         for validator in validators.iter_mut() {
-            let db_validator_info = postgres.get_validator_info(&validator.account.id).await?;
+            let db_validator_info = postgres
+                .get_validator_info(
+                    &finalized_block_hash,
+                    &validator.account.id,
+                    validator.is_active,
+                    active_era.index,
+                )
+                .await?;
             validator.account.discovered_at = db_validator_info.discovered_at;
             validator.account.killed_at = db_validator_info.killed_at;
             validator.slash_count = db_validator_info.slash_count;
@@ -132,6 +140,9 @@ impl ValidatorListUpdater {
             validator.total_reward_points = db_validator_info.total_reward_points;
             validator.unclaimed_era_indices = db_validator_info.unclaimed_era_indices.clone();
             validator.is_enrolled_in_1kv = db_validator_info.is_enrolled_in_1kv;
+            validator.blocks_authored = db_validator_info.blocks_authored;
+            validator.reward_points = db_validator_info.reward_points;
+            validator.heartbeat_received = db_validator_info.heartbeat_received;
         }
         debug!("Got database content.");
         let start = std::time::Instant::now();

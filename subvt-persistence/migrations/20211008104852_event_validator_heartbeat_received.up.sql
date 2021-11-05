@@ -17,3 +17,6 @@ CREATE TABLE IF NOT EXISTS event_validator_heartbeat_received
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX event_validator_heartbeat_received_idx_validator_account_id
+    ON event_validator_heartbeat_received (validator_account_id);

@@ -37,3 +37,9 @@ ALTER TABLE account
             REFERENCES block (hash)
             ON DELETE RESTRICT
             ON UPDATE CASCADE;
+
+CREATE INDEX block_idx_epoch_index
+    ON block (epoch_index);
+
+CREATE INDEX block_idx_era_index
+    ON block (era_index);

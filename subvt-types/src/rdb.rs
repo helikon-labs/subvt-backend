@@ -8,4 +8,7 @@ pub struct ValidatorInfo {
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
     pub is_enrolled_in_1kv: bool,
+    pub blocks_authored: Option<u64>,
+    pub reward_points: Option<u64>,
+    pub heartbeat_received: Option<bool>,
 }

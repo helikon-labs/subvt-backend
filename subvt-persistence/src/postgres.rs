@@ -23,6 +23,9 @@ type PostgresValidatorInfo = (
     i64,
     Option<String>,
     bool,
+    Option<i64>,
+    Option<i64>,
+    Option<bool>,
 );
 
 pub struct PostgreSQLStorage {
@@ -693,15 +696,21 @@ impl PostgreSQLStorage {
 
     pub async fn get_validator_info(
         &self,
+        block_hash: &str,
         validator_account_id: &AccountId,
+        is_active: bool,
+        era_index: u32,
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, is_enrolled_in_onekv
-            FROM get_validator_info($1)
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, is_enrolled_in_onekv, blocks_authored, reward_points, heartbeat_received
+            FROM get_validator_info($1, $2, $3, $4)
             "#
         )
+        .bind(block_hash)
         .bind(validator_account_id.to_string())
+        .bind(is_active)
+        .bind(era_index as i64)
         .fetch_one(&self.connection_pool)
         .await?;
         let mut unclaimed_era_indices: Vec<u32> = Vec::new();
@@ -722,6 +731,9 @@ impl PostgreSQLStorage {
             total_reward_points: validator_info.6 as u64,
             unclaimed_era_indices,
             is_enrolled_in_1kv: validator_info.8,
+            blocks_authored: validator_info.9.map(|value| value as u64),
+            reward_points: validator_info.10.map(|value| value as u64),
+            heartbeat_received: validator_info.11,
         })
     }
 

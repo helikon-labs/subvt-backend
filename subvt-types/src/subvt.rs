@@ -64,6 +64,12 @@ pub struct ValidatorDetails {
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
     pub is_enrolled_in_1kv: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocks_authored: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reward_points: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub heartbeat_received: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
@@ -78,6 +84,12 @@ pub struct ValidatorSummary {
     pub oversubscribed: bool,
     pub slash_count: u64,
     pub is_enrolled_in_1kv: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocks_authored: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reward_points: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub heartbeat_received: Option<bool>,
 }
 
 impl From<&ValidatorDetails> for ValidatorSummary {
@@ -92,6 +104,9 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             oversubscribed: validator.oversubscribed,
             slash_count: validator.slash_count,
             is_enrolled_in_1kv: validator.is_enrolled_in_1kv,
+            blocks_authored: validator.blocks_authored,
+            reward_points: validator.reward_points,
+            heartbeat_received: validator.heartbeat_received,
         }
     }
 }
