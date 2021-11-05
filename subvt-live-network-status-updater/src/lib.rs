@@ -108,7 +108,7 @@ impl LiveNetworkStatusUpdater {
             .get_active_validator_account_ids(best_block_hash.as_str())
             .await
             .context("Error while getting active validator addresses.")?;
-        // number of inactive validators
+        // number of validators
         let total_validator_count = client
             .get_total_validator_count(best_block_hash.as_str())
             .await

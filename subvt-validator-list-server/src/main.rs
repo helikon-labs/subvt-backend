@@ -1,11 +1,11 @@
 //! See `./lib.rs` for details.
 
 use lazy_static::lazy_static;
-use subvt_inactive_validators_updater::InactiveValidatorListUpdater;
 use subvt_service_common::Service;
+use subvt_validator_list_server::ValidatorListServer;
 
 lazy_static! {
-    static ref SERVICE: InactiveValidatorListUpdater = InactiveValidatorListUpdater::default();
+    static ref SERVICE: ValidatorListServer = ValidatorListServer::default();
 }
 
 #[tokio::main]

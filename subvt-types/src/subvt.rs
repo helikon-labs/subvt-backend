@@ -45,7 +45,7 @@ pub struct LiveNetworkStatusUpdate {
 
 /// Represents an inactive validator, waiting to be in the active set.
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
-pub struct InactiveValidator {
+pub struct ValidatorDetails {
     #[diff_key]
     pub account: Account,
     pub controller_account: Account,
@@ -53,6 +53,7 @@ pub struct InactiveValidator {
     pub self_stake: Stake,
     pub reward_destination: RewardDestination,
     pub next_session_keys: String,
+    pub is_active: bool,
     pub active_next_session: bool,
     pub nominations: Vec<Nomination>,
     pub oversubscribed: bool,
@@ -66,11 +67,12 @@ pub struct InactiveValidator {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
-pub struct InactiveValidatorSummary {
+pub struct ValidatorSummary {
     #[diff_key]
     pub account: AccountSummary,
     pub preferences: ValidatorPreferences,
     pub self_stake: StakeSummary,
+    pub is_active: bool,
     pub active_next_session: bool,
     pub nominations: NominationsSummary,
     pub oversubscribed: bool,
@@ -78,12 +80,13 @@ pub struct InactiveValidatorSummary {
     pub is_enrolled_in_1kv: bool,
 }
 
-impl From<&InactiveValidator> for InactiveValidatorSummary {
-    fn from(validator: &InactiveValidator) -> InactiveValidatorSummary {
-        InactiveValidatorSummary {
+impl From<&ValidatorDetails> for ValidatorSummary {
+    fn from(validator: &ValidatorDetails) -> ValidatorSummary {
+        ValidatorSummary {
             account: AccountSummary::from(&validator.account),
             preferences: validator.preferences.clone(),
             self_stake: StakeSummary::from(&validator.self_stake),
+            is_active: validator.is_active,
             active_next_session: validator.active_next_session,
             nominations: NominationsSummary::from(&validator.nominations),
             oversubscribed: validator.oversubscribed,
@@ -94,10 +97,10 @@ impl From<&InactiveValidator> for InactiveValidatorSummary {
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
-pub struct InactiveValidatorListUpdate {
+pub struct ValidatorListUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub finalized_block_number: Option<u64>,
-    pub insert: Vec<InactiveValidatorSummary>,
-    pub update: Vec<InactiveValidatorSummaryDiff>,
+    pub insert: Vec<ValidatorSummary>,
+    pub update: Vec<ValidatorSummaryDiff>,
     pub remove_ids: Vec<AccountId>,
 }

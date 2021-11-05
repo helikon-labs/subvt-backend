@@ -29,7 +29,7 @@ use subvt_types::substrate::{
 };
 /// Substrate client structure and its functions.
 /// This is the main gateway to a Substrate node through its RPC interface.
-use subvt_types::subvt::InactiveValidator;
+use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::decode_hex_string;
 
 mod storage_utility;
@@ -402,12 +402,12 @@ impl SubstrateClient {
         Ok(all_keys)
     }
 
-    /// Get the list of all inactive validators at the given block.
-    pub async fn get_all_inactive_validators(
+    /// Get the details of all validators at the given block.
+    pub async fn get_all_validators(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<InactiveValidator>> {
-        debug!("Getting all inactive validators...");
+    ) -> anyhow::Result<Vec<ValidatorDetails>> {
+        debug!("Getting all validators...");
         let active_validator_account_ids =
             self.get_active_validator_account_ids(block_hash).await?;
         let max_nominator_rewarded_per_validator: u32 = self
@@ -417,15 +417,17 @@ impl SubstrateClient {
             .value()?;
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
-            .await?
-            .into_iter()
-            .filter(|key| {
-                !active_validator_account_ids
-                    .contains(&self.account_id_from_storage_key_string(key))
-            })
-            .collect();
+            .await?;
+        /*
+        .into_iter()
+        .filter(|key| {
+            !active_validator_account_ids
+                .contains(&self.account_id_from_storage_key_string(key))
+        })
+        .collect();
+        */
 
-        let mut inactive_validator_map: HashMap<AccountId, InactiveValidator> = HashMap::new();
+        let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
         {
             let account_ids: Vec<AccountId> = all_keys
                 .iter()
@@ -433,23 +435,21 @@ impl SubstrateClient {
                 .collect();
             let accounts = self.get_accounts(&account_ids, block_hash).await?;
             for account in accounts {
-                inactive_validator_map.insert(
+                validator_map.insert(
                     account.id.clone(),
-                    InactiveValidator {
+                    ValidatorDetails {
                         account: account.clone(),
+                        is_active: active_validator_account_ids.contains(&account.id),
                         ..Default::default()
                     },
                 );
             }
         }
-        debug!(
-            "There are {} inactive validators.",
-            inactive_validator_map.len()
-        );
+        debug!("There are {} validators.", validator_map.len());
         // get next session keys
         {
             debug!("Get next session keys for all validators.");
-            let keys: Vec<String> = inactive_validator_map
+            let keys: Vec<String> = validator_map
                 .values()
                 .map(|validator| {
                     get_storage_map_key(
@@ -470,7 +470,7 @@ impl SubstrateClient {
                     if let Some(data) = data {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let session_keys = format!("0x{}", hex::encode(&data.0));
-                        let validator = inactive_validator_map.get_mut(&account_id).unwrap();
+                        let validator = validator_map.get_mut(&account_id).unwrap();
                         validator.next_session_keys = session_keys;
                     }
                 }
@@ -491,7 +491,7 @@ impl SubstrateClient {
                 decode_hex_string(&hex_string).unwrap();
             for session_key_pair in session_key_pairs.iter() {
                 let session_keys = format!("0x{}", hex::encode(session_key_pair.1));
-                if let Some(validator) = inactive_validator_map.get_mut(&session_key_pair.0) {
+                if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
                     validator.active_next_session = validator.next_session_keys == session_keys;
                 }
             }
@@ -503,7 +503,7 @@ impl SubstrateClient {
         // get reward destinations
         {
             debug!("Get reward destinations.");
-            let keys: Vec<String> = inactive_validator_map
+            let keys: Vec<String> = validator_map
                 .values()
                 .map(|validator| {
                     get_storage_map_key(&self.metadata, "Staking", "Payee", &validator.account.id)
@@ -521,7 +521,7 @@ impl SubstrateClient {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let bytes: &[u8] = &data.0;
                         let reward_destination = RewardDestination::from_bytes(bytes).unwrap();
-                        let validator = inactive_validator_map.get_mut(&account_id).unwrap();
+                        let validator = validator_map.get_mut(&account_id).unwrap();
                         validator.reward_destination = reward_destination;
                     }
                 }
@@ -600,7 +600,7 @@ impl SubstrateClient {
                 })
                 .collect();
             // add validator addresses
-            for validator_account_id in inactive_validator_map.keys() {
+            for validator_account_id in validator_map.keys() {
                 controller_storage_keys.push(get_storage_map_key(
                     &self.metadata,
                     "Staking",
@@ -653,15 +653,15 @@ impl SubstrateClient {
                     "Got {} validator controller account details.",
                     validator_controller_account_map.len()
                 );
-                for inactive_validator in inactive_validator_map.values_mut() {
+                for validator in validator_map.values_mut() {
                     let controller_account = validator_controller_account_map
                         .get(
                             controller_account_id_map
-                                .get(&inactive_validator.account.id)
+                                .get(&validator.account.id)
                                 .unwrap(),
                         )
                         .unwrap();
-                    inactive_validator.controller_account = controller_account.clone();
+                    validator.controller_account = controller_account.clone();
                 }
                 debug!("Completed fetching validator controller account details.");
             }
@@ -687,7 +687,7 @@ impl SubstrateClient {
                         if let Some(nomination) = nomination_map.get_mut(account_id) {
                             nomination.stake = stake;
                         } else {
-                            let validator = inactive_validator_map.get_mut(account_id).unwrap();
+                            let validator = validator_map.get_mut(account_id).unwrap();
                             validator.self_stake = stake;
                         }
                     }
@@ -696,14 +696,14 @@ impl SubstrateClient {
             debug!("Got all stakes.");
             for nomination in nomination_map.values() {
                 for account_id in nomination.target_account_ids.iter() {
-                    if let Some(validator) = inactive_validator_map.get_mut(account_id) {
+                    if let Some(validator) = validator_map.get_mut(account_id) {
                         validator.nominations.push(nomination.clone());
                         validator.oversubscribed = validator.nominations.len()
                             > max_nominator_rewarded_per_validator as usize;
                     }
                 }
             }
-            for validator in inactive_validator_map.values_mut() {
+            for validator in validator_map.values_mut() {
                 validator.nominations.sort_by_key(|nomination| {
                     let mut hasher = DefaultHasher::new();
                     nomination.nominator_account.id.hash(&mut hasher);
@@ -724,16 +724,14 @@ impl SubstrateClient {
                     let bytes: &[u8] = &data.0;
                     let preferences = ValidatorPreferences::from_bytes(bytes).unwrap();
                     let validator_account_id = self.account_id_from_storage_key(storage_key);
-                    let validator = inactive_validator_map
-                        .get_mut(&validator_account_id)
-                        .unwrap();
+                    let validator = validator_map.get_mut(&validator_account_id).unwrap();
                     validator.preferences = preferences;
                 }
             }
             debug!("Got all validator prefs.");
         }
         debug!("It's done baby!");
-        Ok(inactive_validator_map
+        Ok(validator_map
             .into_iter()
             .map(|(_, validator)| validator)
             .collect())

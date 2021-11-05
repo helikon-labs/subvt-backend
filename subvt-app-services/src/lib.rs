@@ -1,6 +1,3 @@
-//! Subscribes to the inactive validator list data on Redis and publishes the data
-//! through WebSocket pub/sub.
-
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use subvt_config::Config;

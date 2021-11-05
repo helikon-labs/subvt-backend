@@ -4865,21 +4865,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
-name = "subvt-active-validator-list-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "config",
- "lazy_static",
- "subvt-config",
- "subvt-logging",
- "subvt-service-common",
- "subvt-types",
- "tokio",
-]
-
-[[package]]
 name = "subvt-app-services"
 version = "0.1.0"
 dependencies = [
@@ -4920,53 +4905,6 @@ version = "0.1.0"
 dependencies = [
  "config",
  "serde 1.0.130",
-]
-
-[[package]]
-name = "subvt-inactive-validator-list-server"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-trait",
- "bus",
- "chrono",
- "config",
- "env_logger",
- "jsonrpsee",
- "jsonrpsee-types",
- "lazy_static",
- "log",
- "redis",
- "serde 1.0.130",
- "serde_json",
- "subvt-config",
- "subvt-logging",
- "subvt-service-common",
- "subvt-types",
- "tokio",
-]
-
-[[package]]
-name = "subvt-inactive-validators-updater"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-lock",
- "async-trait",
- "chrono",
- "hex",
- "lazy_static",
- "log",
- "redis",
- "serde 1.0.130",
- "serde_json",
- "subvt-config",
- "subvt-logging",
- "subvt-persistence",
- "subvt-service-common",
- "subvt-substrate-client",
- "subvt-types",
- "tokio",
 ]
 
 [[package]]
@@ -5194,6 +5132,53 @@ dependencies = [
  "subvt-config",
  "subvt-logging",
  "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
+name = "subvt-validator-list-server"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bus",
+ "chrono",
+ "config",
+ "env_logger",
+ "jsonrpsee",
+ "jsonrpsee-types",
+ "lazy_static",
+ "log",
+ "redis",
+ "serde 1.0.130",
+ "serde_json",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
+name = "subvt-validator-list-updater"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-lock",
+ "async-trait",
+ "chrono",
+ "hex",
+ "lazy_static",
+ "log",
+ "redis",
+ "serde 1.0.130",
+ "serde_json",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-persistence",
+ "subvt-service-common",
+ "subvt-substrate-client",
  "subvt-types",
  "tokio",
 ]

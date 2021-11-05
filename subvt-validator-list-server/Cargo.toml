@@ -1,5 +1,5 @@
 [package]
-name = "subvt-inactive-validator-list-server"
+name = "subvt-validator-list-server"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.56.0"

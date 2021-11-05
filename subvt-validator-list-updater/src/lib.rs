@@ -1,4 +1,4 @@
-//! Updates the Redis database after every block with inactive validator list data.
+//! Updates the Redis database after every block with validator list data.
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
 
 use anyhow::Context;
@@ -15,20 +15,20 @@ use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::BlockHeader;
-use subvt_types::subvt::InactiveValidator;
+use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
 #[derive(Default)]
-pub struct InactiveValidatorListUpdater;
+pub struct ValidatorListUpdater;
 
-impl InactiveValidatorListUpdater {
+impl ValidatorListUpdater {
     fn update_redis(
         finalized_block_number: u64,
         finalized_block_hash: String,
-        validators: &[InactiveValidator],
+        validators: &[ValidatorDetails],
     ) -> anyhow::Result<()> {
         // get redis connection
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
@@ -39,7 +39,7 @@ impl InactiveValidatorListUpdater {
         // prepare first command pipeline
         let mut redis_cmd_pipeline = Pipeline::new();
         // block number and hash
-        let prefix = format!("subvt:{}:inactive_validators", CONFIG.substrate.chain);
+        let prefix = format!("subvt:{}:validators", CONFIG.substrate.chain);
         redis_cmd_pipeline
             .cmd("MSET")
             .arg(format!("{}:{}", prefix, "finalized_block_number"))
@@ -60,13 +60,13 @@ impl InactiveValidatorListUpdater {
             .arg(addresses);
         // each validator
         redis_cmd_pipeline.cmd("DEL").arg(format!(
-            "subvt:{}:inactive_validators:validator:*",
+            "subvt:{}:validators:validator:*",
             CONFIG.substrate.chain
         ));
         redis_cmd_pipeline.cmd("MSET");
         for validator in validators {
             let prefix = format!(
-                "subvt:{}:inactive_validators:validator:{}",
+                "subvt:{}:validators:validator:{}",
                 CONFIG.substrate.chain, validator.account.id
             );
             // calculate hash
@@ -75,10 +75,17 @@ impl InactiveValidatorListUpdater {
                 validator.hash(&mut hasher);
                 hasher.finish()
             };
+            let summary_hash = {
+                let mut hasher = DefaultHasher::new();
+                ValidatorSummary::from(validator).hash(&mut hasher);
+                hasher.finish()
+            };
             let validator_json_string = serde_json::to_string(validator)?;
             redis_cmd_pipeline
                 .arg(format!("{}:hash", prefix))
                 .arg(hash)
+                .arg(format!("{}:summary_hash", prefix))
+                .arg(summary_hash)
                 .arg(prefix)
                 .arg(validator_json_string);
         }
@@ -89,15 +96,15 @@ impl InactiveValidatorListUpdater {
             .arg(finalized_block_number);
         redis_cmd_pipeline
             .query(&mut redis_connection)
-            .context("Error while setting Redis inactive validators.")?;
+            .context("Error while setting Redis validators.")?;
         Ok(())
     }
 
-    async fn fetch_and_update_inactive_validator_list(
+    async fn fetch_and_update_validator_list(
         client: &SubstrateClient,
         postgres: &PostgreSQLStorage,
         finalized_block_header: &BlockHeader,
-    ) -> anyhow::Result<Vec<InactiveValidator>> {
+    ) -> anyhow::Result<Vec<ValidatorDetails>> {
         let finalized_block_number = finalized_block_header
             .get_number()
             .context("Error while extracting finalized block number.")?;
@@ -107,43 +114,40 @@ impl InactiveValidatorListUpdater {
             .await
             .context("Error while fetching finalized block hash.")?;
         // validator addresses
-        let mut inactive_validators = client
-            .get_all_inactive_validators(finalized_block_hash.as_str())
+        let mut validators = client
+            .get_all_validators(finalized_block_hash.as_str())
             .await
-            .context("Error while getting inactive validators.")?;
-        debug!("Fetched {} inactive validators.", inactive_validators.len());
+            .context("Error while getting validators.")?;
+        debug!("Fetched {} validators.", validators.len());
         // enrich data with data from the relational database
         debug!("Get database content.");
-        for inactive_validator in inactive_validators.iter_mut() {
-            let db_validator_info = postgres
-                .get_validator_info(&inactive_validator.account.id)
-                .await?;
-            inactive_validator.account.discovered_at = db_validator_info.discovered_at;
-            inactive_validator.account.killed_at = db_validator_info.killed_at;
-            inactive_validator.slash_count = db_validator_info.slash_count;
-            inactive_validator.offline_offence_count = db_validator_info.offline_offence_count;
-            inactive_validator.active_era_count = db_validator_info.active_era_count;
-            inactive_validator.inactive_era_count = db_validator_info.inactive_era_count;
-            inactive_validator.total_reward_points = db_validator_info.total_reward_points;
-            inactive_validator.unclaimed_era_indices =
-                db_validator_info.unclaimed_era_indices.clone();
-            inactive_validator.is_enrolled_in_1kv = db_validator_info.is_enrolled_in_1kv;
+        for validator in validators.iter_mut() {
+            let db_validator_info = postgres.get_validator_info(&validator.account.id).await?;
+            validator.account.discovered_at = db_validator_info.discovered_at;
+            validator.account.killed_at = db_validator_info.killed_at;
+            validator.slash_count = db_validator_info.slash_count;
+            validator.offline_offence_count = db_validator_info.offline_offence_count;
+            validator.active_era_count = db_validator_info.active_era_count;
+            validator.inactive_era_count = db_validator_info.inactive_era_count;
+            validator.total_reward_points = db_validator_info.total_reward_points;
+            validator.unclaimed_era_indices = db_validator_info.unclaimed_era_indices.clone();
+            validator.is_enrolled_in_1kv = db_validator_info.is_enrolled_in_1kv;
         }
         debug!("Got database content.");
         let start = std::time::Instant::now();
-        InactiveValidatorListUpdater::update_redis(
+        ValidatorListUpdater::update_redis(
             finalized_block_number,
             finalized_block_hash,
-            &inactive_validators,
+            &validators,
         )?;
         let elapsed = start.elapsed();
         debug!("Redis updated. Took {} ms.", elapsed.as_millis());
-        Ok(inactive_validators)
+        Ok(validators)
     }
 }
 
 #[async_trait]
-impl Service for InactiveValidatorListUpdater {
+impl Service for ValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
@@ -155,7 +159,7 @@ impl Service for InactiveValidatorListUpdater {
                 let postgres = postgres.clone();
                 tokio::spawn(async move {
                     let _lock = busy_lock.lock().await;
-                    let update_result = InactiveValidatorListUpdater::fetch_and_update_inactive_validator_list(
+                    let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
                         &substrate_client,
                         &postgres,
                         &finalized_block_header,
@@ -167,7 +171,7 @@ impl Service for InactiveValidatorListUpdater {
                         Err(error) => {
                             error!("{:?}", error);
                             error!(
-                                "Inactive validator list update failed for block #{}. Will try again with the next block.",
+                                "Validator list update failed for block #{}. Will try again with the next block.",
                                 finalized_block_header.get_number().unwrap_or(0),
                             );
                         }
