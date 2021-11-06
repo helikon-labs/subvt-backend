@@ -43,3 +43,6 @@ CREATE INDEX block_idx_epoch_index
 
 CREATE INDEX block_idx_era_index
     ON block (era_index);
+
+CREATE INDEX block_idx_number
+    ON block (number);

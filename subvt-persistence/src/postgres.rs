@@ -105,17 +105,27 @@ impl PostgreSQLStorage {
             .execute(&mut transaction)
             .await?;
             let is_active = active_validator_account_ids.contains(validator_account_id);
+            let active_validator_index = if is_active {
+                let index = active_validator_account_ids
+                    .iter()
+                    .position(|account_id| account_id == validator_account_id)
+                    .unwrap();
+                Some(index as i64)
+            } else {
+                None
+            };
             // create record (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO era_validator (era_index, validator_account_id, is_active)
-                VALUES ($1, $2, $3)
+                INSERT INTO era_validator (era_index, validator_account_id, is_active, active_validator_index)
+                VALUES ($1, $2, $3, $4)
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
             .bind(era_index)
             .bind(validator_account_id.to_string())
             .bind(is_active)
+            .bind(active_validator_index)
             .execute(&mut transaction)
             .await?;
         }
@@ -264,20 +274,20 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
-        validator_account_id: &AccountId,
+        authority_id_hex_string: &str,
     ) -> anyhow::Result<()> {
-        self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_validator_heartbeat_received (block_hash, extrinsic_index, validator_account_id)
+            INSERT INTO event_heartbeat_received (block_hash, extrinsic_index, authority_id)
             VALUES ($1, $2, $3)
-            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
-            "#)
-            .bind(block_hash)
-            .bind(extrinsic_index)
-            .bind(validator_account_id.to_string())
-            .execute(&self.connection_pool)
-            .await?;
+            ON CONFLICT (block_hash, authority_id) DO NOTHING
+            "#,
+        )
+        .bind(block_hash)
+        .bind(extrinsic_index)
+        .bind(authority_id_hex_string)
+        .execute(&self.connection_pool)
+        .await?;
         Ok(())
     }
 
@@ -871,5 +881,36 @@ impl PostgreSQLStorage {
         }
         // return persisted record id
         Ok(candidate_save_result.0)
+    }
+
+    pub async fn save_heartbeat_extrinsic(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        is_nested_call: bool,
+        is_successful: bool,
+        (block_number, session_index, validator_index): (u32, u32, u32),
+    ) -> anyhow::Result<Option<i32>> {
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, block_number, session_index, validator_index, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(block_number as i64)
+            .bind(session_index as i64)
+            .bind(validator_index as i64)
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
     }
 }

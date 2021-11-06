@@ -20,8 +20,8 @@ use subvt_types::{
     substrate::{
         event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent, UtilityEvent},
         extrinsic::{
-            MultisigExtrinsic, ProxyExtrinsic, StakingExtrinsic, SubstrateExtrinsic,
-            TimestampExtrinsic, UtilityExtrinsic,
+            ImOnlineExtrinsic, MultisigExtrinsic, ProxyExtrinsic, StakingExtrinsic,
+            SubstrateExtrinsic, TimestampExtrinsic, UtilityExtrinsic,
         },
         MultiAddress,
     },
@@ -129,26 +129,30 @@ impl BlockProcessor {
         event: SubstrateEvent,
     ) -> anyhow::Result<()> {
         match event {
-            SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
-                extrinsic_index,
-                validator_account_id,
-            }) => {
-                let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                postgres
-                    .save_validator_heartbeart_event(
-                        block_hash,
-                        extrinsic_index,
-                        &validator_account_id,
-                    )
-                    .await?;
-            }
-            SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
-                identification_tuples,
-            }) => {
-                postgres
-                    .save_validator_offline_events(block_hash, identification_tuples)
-                    .await?;
-            }
+            SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
+                ImOnlineEvent::HeartbeatReceived {
+                    extrinsic_index,
+                    authority_id_hex_string,
+                } => {
+                    let extrinsic_index =
+                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                    postgres
+                        .save_validator_heartbeart_event(
+                            block_hash,
+                            extrinsic_index,
+                            &authority_id_hex_string,
+                        )
+                        .await?;
+                }
+                ImOnlineEvent::SomeOffline {
+                    identification_tuples,
+                } => {
+                    postgres
+                        .save_validator_offline_events(block_hash, identification_tuples)
+                        .await?;
+                }
+                _ => (),
+            },
             SubstrateEvent::Staking(staking_event) => match staking_event {
                 StakingEvent::Chilled {
                     extrinsic_index,
@@ -312,6 +316,24 @@ impl BlockProcessor {
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<()> {
         match extrinsic {
+            SubstrateExtrinsic::ImOnline(imonline_extrinsic) => match imonline_extrinsic {
+                ImOnlineExtrinsic::Hearbeat {
+                    signature: _,
+                    block_number,
+                    session_index,
+                    validator_index,
+                } => {
+                    let _ = postgres
+                        .save_heartbeat_extrinsic(
+                            block_hash,
+                            index as i32,
+                            is_nested_call,
+                            is_successful,
+                            (*block_number, *session_index, *validator_index),
+                        )
+                        .await?;
+                }
+            },
             SubstrateExtrinsic::Multisig(multisig_extrinsic) => match multisig_extrinsic {
                 MultisigExtrinsic::AsMulti {
                     signature: _,

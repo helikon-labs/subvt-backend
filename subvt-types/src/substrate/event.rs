@@ -196,7 +196,7 @@ pub enum ImOnlineEvent {
     },
     HeartbeatReceived {
         extrinsic_index: Option<u32>,
-        validator_account_id: AccountId,
+        authority_id_hex_string: String,
     },
     SomeOffline {
         identification_tuples: Vec<IdentificationTuple>,
@@ -214,9 +214,11 @@ impl ImOnlineEvent {
                 extrinsic_index,
             })),
             "HeartbeatReceived" => {
+                let authority_id = get_argument_primitive!(&arguments[0], ImOnlineAuthorityId);
+                let authority_id_bytes: &[u8] = authority_id.as_ref();
                 Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
-                    validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                    authority_id_hex_string: hex::encode(authority_id_bytes),
                 }))
             }
             "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {

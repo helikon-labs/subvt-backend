@@ -1,11 +1,12 @@
 CREATE TABLE IF NOT EXISTS era_validator
 (
-    id                   SERIAL PRIMARY KEY,
-    era_index            bigint                      NOT NULL,
-    validator_account_id VARCHAR(66)                 NOT NULL,
-    is_active            boolean                     NOT NULL DEFAULT false,
-    reward_points        bigint                      NOT NULL DEFAULT 0,
-    last_updated         TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    id                          SERIAL PRIMARY KEY,
+    era_index                   bigint                      NOT NULL,
+    validator_account_id        VARCHAR(66)                 NOT NULL,
+    is_active                   boolean                     NOT NULL DEFAULT false,
+    active_validator_index      bigint,
+    reward_points               bigint                      NOT NULL DEFAULT 0,
+    last_updated                TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT era_validator_u_era_index_validator_account_id
         UNIQUE (era_index, validator_account_id),
     CONSTRAINT era_validator_fk_era
@@ -31,3 +32,6 @@ CREATE INDEX era_validator_idx_era_index_validator_account_id
 
 CREATE INDEX era_validator_idx_is_active
     ON era_validator (is_active);
+
+CREATE INDEX era_validator_idx_active_validator_index
+    ON era_validator (active_validator_index);

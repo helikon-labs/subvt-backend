@@ -3,7 +3,7 @@ recovery_retry_seconds = 5
 
 [substrate]
 chain = "kusama"
-rpc_url = "wss://kusama.api.onfinality.io:443/ws?apikey=xyz"
+rpc_url = "wss://kusama-rpc.polkadot.io"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30
@@ -15,7 +15,7 @@ other_level = "warn"
 [rpc]
 host = "127.0.0.1"
 live_network_status_port = 7888
-inactive_validator_list_port = 7889
+validator_list_port = 7889
 
 [redis]
 url = "redis://127.0.0.1:5432/"
@@ -31,8 +31,10 @@ pool_max_connections = 20
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 9861959
+start_block_number = 9000000
 
 [onekv]
-onekv_candidate_endpoint = "https://kusama.w3f.community/candidate/"
-# onekv_candidate_endpoint = "https://polkadot.w3f.community/candidate/"
+candidate_list_endpoint = "https://kusama.w3f.community/candidates"
+candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
+refresh_seconds = 10
+request_timeout_seconds = 60

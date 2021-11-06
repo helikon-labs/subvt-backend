@@ -25,6 +25,7 @@ use pallet_election_provider_multi_phase::{ElectionCompute, SolutionOrSnapshotSi
 use pallet_elections_phragmen::Renouncing;
 use pallet_gilt::ActiveIndex;
 use pallet_identity::{Data, IdentityFields, IdentityInfo, Judgement, RegistrarIndex};
+use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
 use pallet_scheduler::TaskAddress;
@@ -121,6 +122,7 @@ pub enum ArgumentPrimitive {
     IdentityFields(IdentityFields),
     IdentityInfo(Box<IdentityInfo<MaxAdditionalFields>>),
     IdentityJudgement(Judgement<Balance>),
+    ImOnlineAuthorityId(AuthorityId),
     ImOnlineSignature(Signature),
     Key(Key),
     KeyOwnerProof(MembershipProof),
@@ -296,8 +298,8 @@ generate_argument_primitive_decoder_impl! {[
     ("T::AccountIndex", decode_account_index_2, AccountIndex),
     ("AuctionIndex", decode_auction_index, AuctionIndex),
     ("NextConfigDescriptor", decode_babe_next_config_description, BABENextConfigDescriptor),
-    ("AuthorityId", decode_authority_id_1, AccountId),
-    ("T::AuthorityId", decode_authority_id_2, AccountId),
+    ("AuthorityId", decode_authority_id_1, ImOnlineAuthorityId),
+    ("T::AuthorityId", decode_authority_id_2, ImOnlineAuthorityId),
     ("Balance", decode_balance_1, Balance),
     ("BalanceOf<T>", decode_balance_2, Balance),
     ("BalanceOf<T, I>", decode_balance_3, Balance),

@@ -157,6 +157,38 @@ impl ProxyExtrinsic {
 }
 
 #[derive(Clone, Debug)]
+pub enum ImOnlineExtrinsic {
+    Hearbeat {
+        signature: Option<Signature>,
+        block_number: u32,
+        session_index: u32,
+        validator_index: u32,
+    },
+}
+
+impl ImOnlineExtrinsic {
+    pub fn from(
+        name: &str,
+        signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_event = match name {
+            "heartbeat" => {
+                let heartbeat = get_argument_primitive!(&arguments[0], Heartbeat);
+                Some(SubstrateExtrinsic::ImOnline(ImOnlineExtrinsic::Hearbeat {
+                    signature,
+                    block_number: heartbeat.block_number,
+                    session_index: heartbeat.session_index,
+                    validator_index: heartbeat.authority_index,
+                }))
+            }
+            _ => None,
+        };
+        Ok(maybe_event)
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum TimestampExtrinsic {
     Set {
         signature: Option<Signature>,
@@ -265,6 +297,7 @@ impl UtilityExtrinsic {
 
 #[derive(Clone, Debug)]
 pub enum SubstrateExtrinsic {
+    ImOnline(ImOnlineExtrinsic),
     Multisig(MultisigExtrinsic),
     Proxy(ProxyExtrinsic),
     Staking(StakingExtrinsic),
@@ -382,6 +415,9 @@ impl SubstrateExtrinsic {
             arguments.push(argument);
         }
         let maybe_extrinsic = match (module.name.as_str(), call.name.as_str()) {
+            ("ImOnline", "heartbeat") => {
+                ImOnlineExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            }
             ("Multisig", "as_multi") | ("Multisig", "as_multi_threshold_1") => {
                 MultisigExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
