@@ -2,14 +2,16 @@
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
 
 use anyhow::Context;
-use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
-use std::sync::Arc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
@@ -163,13 +165,21 @@ impl Service for ValidatorListUpdater {
         loop {
             let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-            let busy_lock = Arc::new(Mutex::new(()));
+            let is_busy = Arc::new(AtomicBool::new(false));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
+                let finalized_block_number = match finalized_block_header.get_number() {
+                    Ok(block_number) => block_number,
+                    Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
+                };
+                if is_busy.load(Ordering::Relaxed) {
+                    debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
+                    return;
+                }
+                is_busy.store(true, Ordering::Relaxed);
                 let substrate_client = Arc::clone(&substrate_client);
-                let busy_lock = busy_lock.clone();
                 let postgres = postgres.clone();
+                let is_busy = Arc::clone(&is_busy);
                 tokio::spawn(async move {
-                    let _lock = busy_lock.lock().await;
                     let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
                         &substrate_client,
                         &postgres,
@@ -187,6 +197,7 @@ impl Service for ValidatorListUpdater {
                             );
                         }
                     }
+                    is_busy.store(false, Ordering::Relaxed);
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
