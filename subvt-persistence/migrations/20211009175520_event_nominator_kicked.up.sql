@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS event_nominator_kicked
 (
+    id                   SERIAL PRIMARY KEY,
     block_hash           VARCHAR(66)                 NOT NULL,
     extrinsic_index      integer,
     validator_account_id VARCHAR(66)                 NOT NULL,

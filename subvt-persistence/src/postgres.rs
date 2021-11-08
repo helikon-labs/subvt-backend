@@ -274,18 +274,23 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
-        authority_id_hex_string: &str,
+        session_index: u32,
+        im_online_key_hex_string: &str,
+        validator_account_id: &AccountId,
     ) -> anyhow::Result<()> {
+        self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_heartbeat_received (block_hash, extrinsic_index, authority_id)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (block_hash, authority_id) DO NOTHING
+            INSERT INTO event_heartbeat_received (block_hash, extrinsic_index, session_index, im_online_key, validator_account_id)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
-        .bind(authority_id_hex_string)
+        .bind(session_index)
+        .bind(im_online_key_hex_string)
+        .bind(validator_account_id.to_string())
         .execute(&self.connection_pool)
         .await?;
         Ok(())

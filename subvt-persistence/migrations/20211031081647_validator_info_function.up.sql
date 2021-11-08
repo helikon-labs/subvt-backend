@@ -89,13 +89,10 @@ BEGIN
 
         SELECT EXISTS(
             SELECT E.id
-            FROM extrinsic_heartbeat E, era_validator EV, block B
-            WHERE EV.era_index = era_index_param
-            AND EV.validator_account_id = account_id_param
-            AND E.validator_index = EV.active_validator_index
-            AND B.number = E.block_number
-            AND B.epoch_index = E.session_index
-            AND EV.era_index = B.era_index
+            FROM event_heartbeat_received E, block B
+            WHERE E.validator_account_id = account_id_param
+            AND B.hash = block_hash_param
+            AND E.session_index = B.epoch_index
         ) INTO result_record.heartbeat_received;
     end if;
 	

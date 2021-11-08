@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS event_era_paid
 (
+    id               SERIAL PRIMARY KEY,
     block_hash       VARCHAR(66)                 NOT NULL,
     extrinsic_index  integer,
     era_index        bigint                      NOT NULL,

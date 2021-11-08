@@ -895,6 +895,25 @@ impl SubstrateClient {
         )?)
     }
 
+    pub async fn get_im_online_key_owner_account_id(
+        &self,
+        block_hash: &str,
+        im_online_key_hex_string: &str,
+    ) -> anyhow::Result<AccountId> {
+        let im_online_key_bytes: &[u8] =
+            &hex::decode(im_online_key_hex_string.trim_start_matches("0x")).unwrap();
+        let params = get_rpc_storage_map_params(
+            &self.metadata,
+            "Session",
+            "KeyOwner",
+            &(sp_core::crypto::key_types::IM_ONLINE, im_online_key_bytes),
+            Some(block_hash),
+        );
+        let account_id_hex_string: String =
+            self.ws_client.request("state_getStorage", params).await?;
+        Ok(decode_hex_string(&account_id_hex_string)?)
+    }
+
     pub async fn get_era_validator_prefs(
         &self,
         era_index: u32,

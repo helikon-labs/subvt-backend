@@ -187,7 +187,7 @@ impl Service for ValidatorListServer {
                             let validator_summary: ValidatorSummary = validator.into();
                             update
                                 .update
-                                .push(db_validator_summary.get_diff(&validator_summary));
+                                .push(validator_summary.get_diff(&db_validator_summary));
                             validator_updates.push(validator.get_diff(&db_validator));
                         }
                     } else {

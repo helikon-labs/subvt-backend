@@ -122,25 +122,32 @@ impl BlockProcessor {
 
     async fn process_event(
         &self,
+        substrate_client: &SubstrateClient,
         postgres: &PostgreSQLStorage,
-        block_hash: &str,
+        block_hash_epoch_index: (&str, u64),
         successful_extrinsic_indices: &mut Vec<u32>,
         failed_extrinsic_indices: &mut Vec<u32>,
         event: SubstrateEvent,
     ) -> anyhow::Result<()> {
+        let (block_hash, epoch_index) = block_hash_epoch_index;
         match event {
             SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
                 ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
-                    authority_id_hex_string,
+                    im_online_key_hex_string,
                 } => {
+                    let validator_account_id = substrate_client
+                        .get_im_online_key_owner_account_id(block_hash, &im_online_key_hex_string)
+                        .await?;
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
                         .save_validator_heartbeart_event(
                             block_hash,
                             extrinsic_index,
-                            &authority_id_hex_string,
+                            epoch_index as u32,
+                            &im_online_key_hex_string,
+                            &validator_account_id,
                         )
                         .await?;
                 }
@@ -650,8 +657,9 @@ impl BlockProcessor {
         let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
         for event in events {
             self.process_event(
+                substrate_client,
                 postgres,
-                block_hash.as_str(),
+                (block_hash.as_str(), current_epoch_index),
                 &mut successful_extrinsic_indices,
                 &mut failed_extrinsic_indices,
                 event,

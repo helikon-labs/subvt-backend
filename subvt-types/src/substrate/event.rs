@@ -196,7 +196,7 @@ pub enum ImOnlineEvent {
     },
     HeartbeatReceived {
         extrinsic_index: Option<u32>,
-        authority_id_hex_string: String,
+        im_online_key_hex_string: String,
     },
     SomeOffline {
         identification_tuples: Vec<IdentificationTuple>,
@@ -214,11 +214,11 @@ impl ImOnlineEvent {
                 extrinsic_index,
             })),
             "HeartbeatReceived" => {
-                let authority_id = get_argument_primitive!(&arguments[0], ImOnlineAuthorityId);
-                let authority_id_bytes: &[u8] = authority_id.as_ref();
+                let im_online_key = get_argument_primitive!(&arguments[0], ImOnlineAuthorityId);
+                let im_online_key_bytes: &[u8] = im_online_key.as_ref();
                 Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
-                    authority_id_hex_string: hex::encode(authority_id_bytes),
+                    im_online_key_hex_string: format!("0x{}", hex::encode(im_online_key_bytes)),
                 }))
             }
             "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
