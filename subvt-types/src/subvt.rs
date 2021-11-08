@@ -65,6 +65,8 @@ pub struct ValidatorDetails {
     pub unclaimed_era_indices: Vec<u32>,
     pub is_enrolled_in_1kv: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_parachain_validator: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub return_rate_per_billion: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub blocks_authored: Option<u64>,
@@ -80,8 +82,12 @@ pub struct ValidatorDetails {
 pub struct ValidatorSummary {
     #[diff_key]
     pub account_id: AccountId,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parent_display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub child_display: Option<String>,
     pub confirmed: bool,
     pub preferences: ValidatorPreferences,
     pub self_stake: StakeSummary,
@@ -91,6 +97,8 @@ pub struct ValidatorSummary {
     pub oversubscribed: bool,
     pub slash_count: u64,
     pub is_enrolled_in_1kv: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub is_parachain_validator: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_rate_per_billion: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -150,10 +158,12 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             account_id: validator.account.id.clone(),
             display: validator.get_display(),
             parent_display: validator.get_parent_display(),
+            child_display: validator.account.child_display.clone(),
             confirmed: validator.account.get_confirmed(),
             preferences: validator.preferences.clone(),
             self_stake: StakeSummary::from(&validator.self_stake),
             is_active: validator.is_active,
+            is_parachain_validator: validator.is_parachain_validator,
             active_next_session: validator.active_next_session,
             inactive_nominations: InactiveNominationsSummary::from(&inactive_nominations),
             oversubscribed: validator.oversubscribed,

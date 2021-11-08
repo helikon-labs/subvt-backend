@@ -260,7 +260,7 @@ impl SubstrateClient {
         &self,
         account_ids: &[AccountId],
         block_hash: &str,
-    ) -> anyhow::Result<HashMap<AccountId, AccountId>> {
+    ) -> anyhow::Result<HashMap<AccountId, (AccountId, Option<String>)>> {
         let keys: Vec<String> = account_ids
             .iter()
             .map(|account_id| {
@@ -279,13 +279,20 @@ impl SubstrateClient {
             "Got {} optional super accounts records.",
             values[0].changes.len()
         );
-        let mut parent_account_map: HashMap<AccountId, AccountId> = HashMap::new();
+        let mut parent_account_map: HashMap<AccountId, (AccountId, Option<String>)> =
+            HashMap::new();
         for (storage_key, storage_data) in values[0].changes.iter() {
             if let Some(data) = storage_data {
                 let account_id = self.account_id_from_storage_key(storage_key);
                 let mut bytes: &[u8] = &data.0;
                 let super_identity: SuperAccountId = Decode::decode(&mut bytes).unwrap();
-                parent_account_map.insert(account_id, super_identity.0);
+                parent_account_map.insert(
+                    account_id,
+                    (
+                        super_identity.0,
+                        subvt_types::substrate::data_to_string(super_identity.1),
+                    ),
+                );
             }
         }
         trace!(
@@ -334,8 +341,10 @@ impl SubstrateClient {
         let identity_map = { self.get_identities(account_ids, block_hash).await? };
         let parent_account_id_map = { self.get_parent_account_ids(account_ids, block_hash).await? };
         let parent_account_identity_map = {
-            let super_account_ids: Vec<AccountId> =
-                parent_account_id_map.values().cloned().collect();
+            let super_account_ids: Vec<AccountId> = parent_account_id_map
+                .values()
+                .map(|pair| pair.0.clone())
+                .collect();
             self.get_identities(&super_account_ids, block_hash).await?
         };
         let accounts: Vec<Account> = account_ids
@@ -351,15 +360,16 @@ impl SubstrateClient {
                 }
                 if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
                     let mut parent_account = Account {
-                        id: parent_account_id.clone(),
+                        id: parent_account_id.0.clone(),
                         ..Default::default()
                     };
                     if let Some(parent_account_identity) =
-                        parent_account_identity_map.get(parent_account_id)
+                        parent_account_identity_map.get(&parent_account_id.0)
                     {
                         parent_account.identity = Some(parent_account_identity.clone());
                     }
                     account.parent = Box::new(Some(parent_account));
+                    account.child_display = parent_account_id.1.clone();
                 }
                 account
             })
@@ -409,8 +419,6 @@ impl SubstrateClient {
         era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
         debug!("Getting all validators...");
-        let active_validator_account_ids =
-            self.get_active_validator_account_ids(block_hash).await?;
         let max_nominator_rewarded_per_validator: u32 = self
             .metadata
             .module("Staking")?
@@ -422,17 +430,46 @@ impl SubstrateClient {
 
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
         {
+            let active_validator_account_ids =
+                self.get_active_validator_account_ids(block_hash).await?;
+            /*
+             * for complete parachain assignment data:
+             *
+             * parasShared.currentSessionIndex
+             * paraScheduler.validatorGroups
+             * paraScheduler.scheduled
+             */
+            let parachain_validator_account_ids = {
+                let mut account_ids = Vec::new();
+                let parachain_validator_indices = self
+                    .get_parachain_active_validator_indices(block_hash)
+                    .await?;
+                for index in parachain_validator_indices {
+                    if let Some(account_id) = active_validator_account_ids.get(index as usize) {
+                        account_ids.push(account_id.clone());
+                    } else {
+                        error!("Cannot find parachain validator index {}.", index);
+                    }
+                }
+                account_ids
+            };
             let account_ids: Vec<AccountId> = all_keys
                 .iter()
                 .map(|key| self.account_id_from_storage_key_string(key))
                 .collect();
             let accounts = self.get_accounts(&account_ids, block_hash).await?;
             for account in accounts {
+                let is_active = active_validator_account_ids.contains(&account.id);
                 validator_map.insert(
                     account.id.clone(),
                     ValidatorDetails {
                         account: account.clone(),
-                        is_active: active_validator_account_ids.contains(&account.id),
+                        is_active,
+                        is_parachain_validator: if is_active {
+                            Some(parachain_validator_account_ids.contains(&account.id))
+                        } else {
+                            None
+                        },
                         ..Default::default()
                     },
                 );
@@ -956,6 +993,17 @@ impl SubstrateClient {
         let account_id_hex_string: String =
             self.ws_client.request("state_getStorage", params).await?;
         Ok(decode_hex_string(&account_id_hex_string)?)
+    }
+
+    pub async fn get_parachain_active_validator_indices(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<u32>> {
+        let params =
+            get_rpc_storage_plain_params("ParasShared", "ActiveValidatorIndices", Some(block_hash));
+        let indices_vector_hex_string: String =
+            self.ws_client.request("state_getStorage", params).await?;
+        Ok(decode_hex_string(&indices_vector_hex_string)?)
     }
 
     pub async fn get_era_validator_prefs(

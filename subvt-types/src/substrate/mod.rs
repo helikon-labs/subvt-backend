@@ -125,6 +125,8 @@ pub struct Account {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub child_display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub discovered_at: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub killed_at: Option<u64>,
@@ -447,21 +449,22 @@ pub struct IdentityRegistration {
     pub confirmed: bool,
 }
 
-impl IdentityRegistration {
-    pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        fn data_to_string(data: Data) -> Option<String> {
-            match data {
-                Data::Raw(raw) => {
-                    let maybe_string = String::from_utf8(raw.into_inner());
-                    if let Ok(string) = maybe_string {
-                        Some(string)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
+pub fn data_to_string(data: Data) -> Option<String> {
+    match data {
+        Data::Raw(raw) => {
+            let maybe_string = String::from_utf8(raw.into_inner());
+            if let Ok(string) = maybe_string {
+                Some(string)
+            } else {
+                None
             }
         }
+        _ => None,
+    }
+}
+
+impl IdentityRegistration {
+    pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
         let registration: Registration<Balance, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> =
             Decode::decode(&mut bytes)?;
         let display = data_to_string(registration.info.display);
