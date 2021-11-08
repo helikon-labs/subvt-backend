@@ -109,7 +109,7 @@ impl Service for ValidatorListServer {
         let mut data_connection = redis_client.get_connection()?;
         let server_stop_handle = ValidatorListServer::run_rpc_server(&validator_map, &bus).await?;
 
-        let error: anyhow::Error = loop {
+        let error: anyhow::Error = 'outer: loop {
             let message = pub_sub.get_message();
             if let Err(error) = message {
                 break error.into();
@@ -195,11 +195,18 @@ impl Service for ValidatorListServer {
                             .arg(prefix)
                             .query(&mut data_connection)
                             .context("Can't read validator addresses from Redis.")?;
-                        let validator: ValidatorDetails =
-                            serde_json::from_str(&validator_json_string)?;
-                        let validator_summary = ValidatorSummary::from(&validator);
-                        update.insert.push(validator_summary);
-                        new_validators.push(validator);
+                        let validator_deser_result: serde_json::error::Result<ValidatorDetails> =
+                            serde_json::from_str(&validator_json_string);
+                        match validator_deser_result {
+                            Ok(validator) => {
+                                let validator_summary = ValidatorSummary::from(&validator);
+                                update.insert.push(validator_summary);
+                                new_validators.push(validator);
+                            }
+                            Err(error) => {
+                                break 'outer error.into();
+                            }
+                        }
                     }
                 }
             }

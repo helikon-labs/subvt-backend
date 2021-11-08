@@ -406,6 +406,7 @@ impl SubstrateClient {
     pub async fn get_all_validators(
         &self,
         block_hash: &str,
+        era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
         debug!("Getting all validators...");
         let active_validator_account_ids =
@@ -418,14 +419,6 @@ impl SubstrateClient {
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
             .await?;
-        /*
-        .into_iter()
-        .filter(|key| {
-            !active_validator_account_ids
-                .contains(&self.account_id_from_storage_key_string(key))
-        })
-        .collect();
-        */
 
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
         {
@@ -528,7 +521,6 @@ impl SubstrateClient {
             }
             debug!("Got reward destinations.");
         }
-
         // get nominations
         {
             let mut all_keys: Vec<String> = Vec::new();
@@ -711,10 +703,21 @@ impl SubstrateClient {
                 });
             }
         }
+        // get active stakers
+        {
+            debug!("Get era stakers.");
+            let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
+            for validator_stake in &era_stakers.stakers {
+                if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
+                    validator.validator_stake = Some(validator_stake.clone());
+                }
+            }
+            debug!("Got era stakers.");
+        }
 
         // get validator prefs
         {
-            debug!("start :: get validator prefs all");
+            debug!("Get validator preferences.");
             let values: Vec<StorageChangeSet<String>> = self
                 .ws_client
                 .request("state_queryStorageAt", rpc_params!(all_keys, &block_hash))
@@ -728,7 +731,7 @@ impl SubstrateClient {
                     validator.preferences = preferences;
                 }
             }
-            debug!("Got all validator prefs.");
+            debug!("Got validator preferences.");
         }
         debug!("It's done baby!");
         Ok(validator_map

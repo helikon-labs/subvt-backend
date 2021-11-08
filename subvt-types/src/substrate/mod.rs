@@ -130,32 +130,19 @@ pub struct Account {
     pub killed_at: Option<u64>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct AccountSummary {
-    pub id: AccountId,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub identity: Option<IdentityRegistrationSummary>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parent: Box<Option<AccountSummary>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub discovered_at: Option<u64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub killed_at: Option<u64>,
-}
-
-impl From<&Account> for AccountSummary {
-    fn from(account: &Account) -> AccountSummary {
-        AccountSummary {
-            id: account.id.clone(),
-            identity: account.identity.as_ref().map(|identity| identity.into()),
-            parent: if let Some(account) = &*account.parent {
-                Box::new(Some(AccountSummary::from(account)))
-            } else {
-                Box::new(None)
-            },
-            discovered_at: account.discovered_at,
-            killed_at: account.killed_at,
-        }
+impl Account {
+    pub fn get_confirmed(&self) -> bool {
+        let self_confirmed = if let Some(identity) = &self.identity {
+            identity.confirmed
+        } else {
+            false
+        };
+        let parent_confirmed = if let Some(parent_account) = &*self.parent {
+            parent_account.get_confirmed()
+        } else {
+            false
+        };
+        self_confirmed || parent_confirmed
     }
 }
 
@@ -327,6 +314,7 @@ impl Epoch {
 }
 
 /// A nominator's active stake on a validator.
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct NominatorStake {
     pub account: Account,
     pub stake: Balance,
@@ -334,6 +322,7 @@ pub struct NominatorStake {
 
 /// Active staking information for a single active validator. Contains the validator account id,
 /// self stake, total stake and each nominator's active stake on the validator.
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct ValidatorStake {
     pub account: Account,
     pub self_stake: Balance,
@@ -546,16 +535,16 @@ impl Nomination {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct NominationsSummary {
+pub struct InactiveNominationsSummary {
     pub nomination_count: u16,
-    pub total_active_amount: Balance,
+    pub total_amount: Balance,
 }
 
-impl From<&Vec<Nomination>> for NominationsSummary {
-    fn from(nominations: &Vec<Nomination>) -> NominationsSummary {
-        NominationsSummary {
+impl From<&Vec<Nomination>> for InactiveNominationsSummary {
+    fn from(nominations: &Vec<Nomination>) -> InactiveNominationsSummary {
+        InactiveNominationsSummary {
             nomination_count: nominations.len() as u16,
-            total_active_amount: nominations.iter().fold(0, |a, b| a + b.stake.active_amount),
+            total_amount: nominations.iter().fold(0, |a, b| a + b.stake.active_amount),
         }
     }
 }

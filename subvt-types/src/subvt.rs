@@ -4,8 +4,8 @@
 
 use crate::crypto::AccountId;
 use crate::substrate::{
-    Account, AccountSummary, Balance, Epoch, Era, Nomination, NominationsSummary,
-    RewardDestination, Stake, StakeSummary, ValidatorPreferences,
+    Account, Balance, Epoch, Era, InactiveNominationsSummary, Nomination, RewardDestination, Stake,
+    StakeSummary, ValidatorPreferences, ValidatorStake,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::From;
@@ -70,17 +70,22 @@ pub struct ValidatorDetails {
     pub reward_points: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub heartbeat_received: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validator_stake: Option<ValidatorStake>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
 pub struct ValidatorSummary {
     #[diff_key]
-    pub account: AccountSummary,
+    pub account_id: AccountId,
+    pub display: Option<String>,
+    pub parent_display: Option<String>,
+    pub confirmed: bool,
     pub preferences: ValidatorPreferences,
     pub self_stake: StakeSummary,
     pub is_active: bool,
     pub active_next_session: bool,
-    pub nominations: NominationsSummary,
+    pub inactive_nominations: InactiveNominationsSummary,
     pub oversubscribed: bool,
     pub slash_count: u64,
     pub is_enrolled_in_1kv: bool,
@@ -90,23 +95,73 @@ pub struct ValidatorSummary {
     pub reward_points: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub heartbeat_received: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validator_stake: Option<ValidatorStakeSummary>,
+}
+
+impl ValidatorDetails {
+    pub fn get_display(&self) -> Option<String> {
+        if let Some(identity) = &self.account.identity {
+            identity.display.clone()
+        } else {
+            None
+        }
+    }
+
+    pub fn get_parent_display(&self) -> Option<String> {
+        if let Some(parent) = &*self.account.parent {
+            if let Some(identity) = &parent.identity {
+                identity.display.clone()
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
 
 impl From<&ValidatorDetails> for ValidatorSummary {
     fn from(validator: &ValidatorDetails) -> ValidatorSummary {
+        let active_staker_account_ids: Vec<AccountId> =
+            if let Some(validator_stake) = &validator.validator_stake {
+                validator_stake
+                    .nominators
+                    .iter()
+                    .map(|nominator_stake| nominator_stake.account.id.clone())
+                    .collect()
+            } else {
+                Vec::new()
+            };
+        let inactive_nominations: Vec<Nomination> = validator
+            .nominations
+            .iter()
+            .cloned()
+            .filter(|nomination| {
+                !active_staker_account_ids.contains(&nomination.nominator_account.id)
+            })
+            .collect();
+
         ValidatorSummary {
-            account: AccountSummary::from(&validator.account),
+            account_id: validator.account.id.clone(),
+            display: validator.get_display(),
+            parent_display: validator.get_parent_display(),
+            confirmed: validator.account.get_confirmed(),
             preferences: validator.preferences.clone(),
             self_stake: StakeSummary::from(&validator.self_stake),
             is_active: validator.is_active,
             active_next_session: validator.active_next_session,
-            nominations: NominationsSummary::from(&validator.nominations),
+            inactive_nominations: InactiveNominationsSummary::from(&inactive_nominations),
             oversubscribed: validator.oversubscribed,
             slash_count: validator.slash_count,
             is_enrolled_in_1kv: validator.is_enrolled_in_1kv,
             blocks_authored: validator.blocks_authored,
             reward_points: validator.reward_points,
             heartbeat_received: validator.heartbeat_received,
+            validator_stake: validator
+                .validator_stake
+                .as_ref()
+                .map(ValidatorStakeSummary::from),
         }
     }
 }
@@ -118,4 +173,21 @@ pub struct ValidatorListUpdate {
     pub insert: Vec<ValidatorSummary>,
     pub update: Vec<ValidatorSummaryDiff>,
     pub remove_ids: Vec<AccountId>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct ValidatorStakeSummary {
+    pub self_stake: Balance,
+    pub total_stake: Balance,
+    pub nominator_count: u64,
+}
+
+impl From<&ValidatorStake> for ValidatorStakeSummary {
+    fn from(validator_stake: &ValidatorStake) -> Self {
+        ValidatorStakeSummary {
+            self_stake: validator_stake.self_stake,
+            total_stake: validator_stake.total_stake,
+            nominator_count: validator_stake.nominators.len() as u64,
+        }
+    }
 }

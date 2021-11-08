@@ -118,7 +118,7 @@ impl ValidatorListUpdater {
         let active_era = client.get_active_era(&finalized_block_hash).await?;
         // validator addresses
         let mut validators = client
-            .get_all_validators(finalized_block_hash.as_str())
+            .get_all_validators(finalized_block_hash.as_str(), &active_era)
             .await
             .context("Error while getting validators.")?;
         debug!("Fetched {} validators.", validators.len());
