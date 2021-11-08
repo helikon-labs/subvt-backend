@@ -29,3 +29,6 @@ CREATE INDEX event_heartbeat_received_idx_validator_account_id
 
 CREATE INDEX event_heartbeat_received_idx_session_index
     ON event_heartbeat_received (session_index);
+
+CREATE INDEX event_heartbeat_received_idx_session_index_account_id
+    ON event_heartbeat_received (validator_account_id, session_index);

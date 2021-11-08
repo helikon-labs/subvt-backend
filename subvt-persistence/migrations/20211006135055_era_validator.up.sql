@@ -35,3 +35,6 @@ CREATE INDEX era_validator_idx_is_active
 
 CREATE INDEX era_validator_idx_active_validator_index
     ON era_validator (active_validator_index);
+
+CREATE INDEX era_validator_idx_validator_account_id_is_active
+    ON era_validator (validator_account_id, is_active);

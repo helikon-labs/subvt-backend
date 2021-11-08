@@ -46,3 +46,12 @@ CREATE INDEX block_idx_era_index
 
 CREATE INDEX block_idx_number
     ON block (number);
+
+CREATE INDEX block_idx_hash_epoch_index
+    ON block (hash, epoch_index);
+
+CREATE INDEX block_idx_author_account_id
+    ON block (author_account_id);
+
+CREATE INDEX block_idx_era_index_author_account_id
+    ON block (era_index, author_account_id);

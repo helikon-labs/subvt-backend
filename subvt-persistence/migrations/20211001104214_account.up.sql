@@ -9,5 +9,11 @@ CREATE TABLE IF NOT EXISTS account
 CREATE INDEX account_idx_discovered_at_block_hash
     ON account (discovered_at_block_hash);
 
+CREATE INDEX account_idx_id_discovered_at_block_hash
+    ON account (id, discovered_at_block_hash);
+
 CREATE INDEX account_idx_killed_at_block_hash
     ON account (killed_at_block_hash);
+
+CREATE INDEX account_idx_id_killed_at_block_hash
+    ON account (id, killed_at_block_hash);
