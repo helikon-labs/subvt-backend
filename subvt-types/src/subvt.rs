@@ -65,6 +65,8 @@ pub struct ValidatorDetails {
     pub unclaimed_era_indices: Vec<u32>,
     pub is_enrolled_in_1kv: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub return_rate_per_billion: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub blocks_authored: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reward_points: Option<u64>,
@@ -89,6 +91,8 @@ pub struct ValidatorSummary {
     pub oversubscribed: bool,
     pub slash_count: u64,
     pub is_enrolled_in_1kv: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub return_rate_per_billion: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub blocks_authored: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -158,6 +162,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             blocks_authored: validator.blocks_authored,
             reward_points: validator.reward_points,
             heartbeat_received: validator.heartbeat_received,
+            return_rate_per_billion: validator.return_rate_per_billion,
             validator_stake: validator
                 .validator_stake
                 .as_ref()

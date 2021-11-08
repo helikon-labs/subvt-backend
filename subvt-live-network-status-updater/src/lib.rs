@@ -153,7 +153,7 @@ impl LiveNetworkStatusUpdater {
             )
         } else {
             let last_era_total_reward = client
-                .get_era_total_validator_reward(era.index - 1)
+                .get_era_total_validator_reward(era.index - 1, best_block_hash.as_str())
                 .await
                 .context("Error while getting last era's total validator reward.")?;
             // era stakers

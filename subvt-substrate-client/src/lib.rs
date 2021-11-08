@@ -703,18 +703,6 @@ impl SubstrateClient {
                 });
             }
         }
-        // get active stakers
-        {
-            debug!("Get era stakers.");
-            let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
-            for validator_stake in &era_stakers.stakers {
-                if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
-                    validator.validator_stake = Some(validator_stake.clone());
-                }
-            }
-            debug!("Got era stakers.");
-        }
-
         // get validator prefs
         {
             debug!("Get validator preferences.");
@@ -732,6 +720,38 @@ impl SubstrateClient {
                 }
             }
             debug!("Got validator preferences.");
+        }
+        // get active stakers
+        {
+            debug!("Get era stakers.");
+            let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
+            for validator_stake in &era_stakers.stakers {
+                if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
+                    validator.validator_stake = Some(validator_stake.clone());
+                }
+            }
+            debug!("Got era stakers.");
+            // calculate return rates
+            let total_staked = self.get_era_total_stake(era.index, block_hash).await?;
+            let eras_per_day =
+                (24 * 60 * 60 * 1000 / self.metadata.constants.era_duration_millis) as u128;
+            let last_era_total_reward = self
+                .get_era_total_validator_reward(era.index - 1, block_hash)
+                .await?;
+            let total_return_rate_per_billion =
+                (last_era_total_reward * eras_per_day * 365 * 1_000_000_000) / total_staked;
+            let average_stake = era_stakers.average_stake();
+            for validator in validator_map.values_mut() {
+                validator.return_rate_per_billion = if validator.is_active {
+                    let return_rate = (average_stake * total_return_rate_per_billion
+                        / validator.validator_stake.as_ref().unwrap().total_stake)
+                        * (1_000_000_000 - (validator.preferences.commission_per_billion as u128))
+                        / 1_000_000_000;
+                    Some(return_rate as u32)
+                } else {
+                    None
+                }
+            }
         }
         debug!("It's done baby!");
         Ok(validator_map
@@ -753,13 +773,34 @@ impl SubstrateClient {
     }
 
     /// Get total rewards earned by validators in the native currency at the given era.
-    pub async fn get_era_total_validator_reward(&self, era_index: u32) -> anyhow::Result<Balance> {
+    pub async fn get_era_total_validator_reward(
+        &self,
+        era_index: u32,
+        block_hash: &str,
+    ) -> anyhow::Result<Balance> {
         let params = get_rpc_storage_map_params(
             &self.metadata,
             "Staking",
             "ErasValidatorReward",
             &era_index,
-            None,
+            Some(block_hash),
+        );
+        let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
+        decode_hex_string(hex_string.as_str())
+    }
+
+    /// Get total amount staked at the given era.
+    pub async fn get_era_total_stake(
+        &self,
+        era_index: u32,
+        block_hash: &str,
+    ) -> anyhow::Result<Balance> {
+        let params = get_rpc_storage_map_params(
+            &self.metadata,
+            "Staking",
+            "ErasTotalStake",
+            &era_index,
+            Some(block_hash),
         );
         let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
         decode_hex_string(hex_string.as_str())
