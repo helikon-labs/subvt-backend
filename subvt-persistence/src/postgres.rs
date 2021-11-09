@@ -894,12 +894,13 @@ impl PostgreSQLStorage {
         extrinsic_index: i32,
         is_nested_call: bool,
         is_successful: bool,
-        (block_number, session_index, validator_index): (u32, u32, u32),
+        (block_number, session_index): (u32, u32),
+        (validator_index, validator_account_id): (u32, &AccountId),
     ) -> anyhow::Result<Option<i32>> {
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, block_number, session_index, validator_index, is_successful)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, block_number, session_index, validator_index, validator_account_id, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             "#,
         )
@@ -909,6 +910,7 @@ impl PostgreSQLStorage {
             .bind(block_number as i64)
             .bind(session_index as i64)
             .bind(validator_index as i64)
+            .bind(validator_account_id.to_string())
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)
             .await?;

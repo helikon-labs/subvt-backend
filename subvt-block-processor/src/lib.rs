@@ -47,18 +47,16 @@ impl BlockProcessor {
         postgres: &PostgreSQLStorage,
         era_index: u32,
         block_hash: &str,
+        active_validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
         debug!("Persist era #{} validators.", era_index);
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
             .await?;
-        let active_validator_account_ids = substrate_client
-            .get_active_validator_account_ids(block_hash)
-            .await?;
         postgres
             .save_era_validators(
                 era_index,
-                &active_validator_account_ids,
+                active_validator_account_ids,
                 &all_validator_account_ids,
             )
             .await?;
@@ -136,20 +134,30 @@ impl BlockProcessor {
                     extrinsic_index,
                     im_online_key_hex_string,
                 } => {
-                    let validator_account_id = substrate_client
+                    match substrate_client
                         .get_im_online_key_owner_account_id(block_hash, &im_online_key_hex_string)
-                        .await?;
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_validator_heartbeart_event(
-                            block_hash,
-                            extrinsic_index,
-                            epoch_index as u32,
-                            &im_online_key_hex_string,
-                            &validator_account_id,
-                        )
-                        .await?;
+                        .await
+                    {
+                        Ok(validator_account_id) => {
+                            let extrinsic_index =
+                                extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+                            postgres
+                                .save_validator_heartbeart_event(
+                                    block_hash,
+                                    extrinsic_index,
+                                    epoch_index as u32,
+                                    &im_online_key_hex_string,
+                                    &validator_account_id,
+                                )
+                                .await?;
+                        }
+                        Err(error) => {
+                            error!(
+                                "Cannot get persist heartbeat event in block {}: {:?}",
+                                im_online_key_hex_string, error
+                            );
+                        }
+                    }
                 }
                 ImOnlineEvent::SomeOffline {
                     identification_tuples,
@@ -317,9 +325,8 @@ impl BlockProcessor {
         &self,
         postgres: &PostgreSQLStorage,
         block_hash: &str,
-        index: usize,
-        is_nested_call: bool,
-        is_successful: bool,
+        active_validator_account_ids: &[AccountId],
+        (index, is_nested_call, is_successful): (usize, bool, bool),
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<()> {
         match extrinsic {
@@ -330,15 +337,26 @@ impl BlockProcessor {
                     session_index,
                     validator_index,
                 } => {
-                    let _ = postgres
-                        .save_heartbeat_extrinsic(
-                            block_hash,
-                            index as i32,
-                            is_nested_call,
-                            is_successful,
-                            (*block_number, *session_index, *validator_index),
-                        )
-                        .await?;
+                    if let Some(validator_account_id) =
+                        active_validator_account_ids.get(*validator_index as usize)
+                    {
+                        let _ = postgres
+                            .save_heartbeat_extrinsic(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                (*block_number, *session_index),
+                                (*validator_index, validator_account_id),
+                            )
+                            .await?;
+                    } else {
+                        error!(
+                            "Cannot find active validator account id with index {}. Cannot persist heartbeat extrinsic in block {}.",
+                            validator_index,
+                            block_hash
+                        );
+                    }
                 }
             },
             SubstrateExtrinsic::Multisig(multisig_extrinsic) => match multisig_extrinsic {
@@ -351,15 +369,27 @@ impl BlockProcessor {
                     store_call: _,
                     max_weight: _,
                 } => {
-                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
-                        .await?;
+                    self.process_extrinsic(
+                        postgres,
+                        block_hash,
+                        active_validator_account_ids,
+                        (index, true, is_successful),
+                        call,
+                    )
+                    .await?;
                 }
                 MultisigExtrinsic::AsMultiThreshold1 {
                     other_signatories: _,
                     call,
                 } => {
-                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
-                        .await?;
+                    self.process_extrinsic(
+                        postgres,
+                        block_hash,
+                        active_validator_account_ids,
+                        (index, true, is_successful),
+                        call,
+                    )
+                    .await?;
                 }
             },
             SubstrateExtrinsic::Proxy(proxy_extrinsic) => match proxy_extrinsic {
@@ -369,8 +399,14 @@ impl BlockProcessor {
                     force_proxy_type: _,
                     call,
                 } => {
-                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
-                        .await?;
+                    self.process_extrinsic(
+                        postgres,
+                        block_hash,
+                        active_validator_account_ids,
+                        (index, true, is_successful),
+                        call,
+                    )
+                    .await?;
                 }
                 ProxyExtrinsic::ProxyAnnounced {
                     signature: _,
@@ -379,8 +415,14 @@ impl BlockProcessor {
                     force_proxy_type: _,
                     call,
                 } => {
-                    self.process_extrinsic(postgres, block_hash, index, true, is_successful, call)
-                        .await?;
+                    self.process_extrinsic(
+                        postgres,
+                        block_hash,
+                        active_validator_account_ids,
+                        (index, true, is_successful),
+                        call,
+                    )
+                    .await?;
                 }
             },
             SubstrateExtrinsic::Staking(staking_extrinsic) => match staking_extrinsic {
@@ -473,9 +515,8 @@ impl BlockProcessor {
                         self.process_extrinsic(
                             postgres,
                             block_hash,
-                            index,
-                            true,
-                            is_successful,
+                            active_validator_account_ids,
+                            (index, true, is_successful),
                             call,
                         )
                         .await?;
@@ -489,9 +530,8 @@ impl BlockProcessor {
                         self.process_extrinsic(
                             postgres,
                             block_hash,
-                            index,
-                            true,
-                            is_successful,
+                            active_validator_account_ids,
+                            (index, true, is_successful),
                             call,
                         )
                         .await?;
@@ -559,6 +599,9 @@ impl BlockProcessor {
         let current_epoch_index = substrate_client
             .get_current_epoch_index(&block_hash)
             .await?;
+        let active_validator_account_ids = substrate_client
+            .get_active_validator_account_ids(&block_hash)
+            .await?;
 
         if last_epoch_index != current_epoch_index {
             debug!("New epoch. Persist era if it doesn't exist.");
@@ -570,6 +613,7 @@ impl BlockProcessor {
                 postgres,
                 active_era.index,
                 block_hash.as_str(),
+                &active_validator_account_ids,
             )
             .await?;
             self.persist_era_validator_preferences(
@@ -630,9 +674,7 @@ impl BlockProcessor {
             }
         }
         let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
-            substrate_client
-                .get_active_validator_account_ids(&block_hash)
-                .await?
+            active_validator_account_ids
                 .get(validator_index)
                 .map(|a| a.to_owned())
         } else {
@@ -673,9 +715,8 @@ impl BlockProcessor {
             self.process_extrinsic(
                 postgres,
                 block_hash.as_str(),
-                index,
-                false,
-                is_successful,
+                &active_validator_account_ids,
+                (index, false, is_successful),
                 extrinsic,
             )
             .await?
