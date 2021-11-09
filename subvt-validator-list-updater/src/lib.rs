@@ -51,26 +51,60 @@ impl ValidatorListUpdater {
         // validator address list
         redis_cmd_pipeline
             .cmd("DEL")
-            .arg(format!("{}:{}", prefix, "addresses"));
-        let addresses: HashSet<String> = validators
+            .arg(format!("{}:active:{}", prefix, "addresses"));
+        redis_cmd_pipeline
+            .cmd("DEL")
+            .arg(format!("{}:inactive:{}", prefix, "addresses"));
+        let active_addresses: HashSet<String> = validators
             .iter()
-            .map(|validator| validator.account.id.to_string())
+            .filter_map(|validator| {
+                if validator.is_active {
+                    Some(validator.account.id.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        let inactive_addresses: HashSet<String> = validators
+            .iter()
+            .filter_map(|validator| {
+                if !validator.is_active {
+                    Some(validator.account.id.to_string())
+                } else {
+                    None
+                }
+            })
             .collect();
         redis_cmd_pipeline
             .cmd("SADD")
-            .arg(format!("{}:{}", prefix, "addresses"))
-            .arg(addresses);
+            .arg(format!("{}:active:{}", prefix, "addresses"))
+            .arg(active_addresses);
+        redis_cmd_pipeline
+            .cmd("SADD")
+            .arg(format!("{}:inactive:{}", prefix, "addresses"))
+            .arg(inactive_addresses);
         // each validator
         redis_cmd_pipeline.cmd("DEL").arg(format!(
-            "subvt:{}:validators:validator:*",
+            "subvt:{}:validators:active:validator:*",
+            CONFIG.substrate.chain
+        ));
+        redis_cmd_pipeline.cmd("DEL").arg(format!(
+            "subvt:{}:validators:inactive:validator:*",
             CONFIG.substrate.chain
         ));
         redis_cmd_pipeline.cmd("MSET");
         for validator in validators {
-            let prefix = format!(
-                "subvt:{}:validators:validator:{}",
-                CONFIG.substrate.chain, validator.account.id
+            let validator_prefix = format!(
+                "subvt:{}:validators:{}:validator:{}",
+                CONFIG.substrate.chain,
+                if validator.is_active {
+                    "active"
+                } else {
+                    "inactive"
+                },
+                validator.account.id
             );
+
             // calculate hash
             let hash = {
                 let mut hasher = DefaultHasher::new();
@@ -84,11 +118,11 @@ impl ValidatorListUpdater {
             };
             let validator_json_string = serde_json::to_string(validator)?;
             redis_cmd_pipeline
-                .arg(format!("{}:hash", prefix))
+                .arg(format!("{}:hash", validator_prefix))
                 .arg(hash)
-                .arg(format!("{}:summary_hash", prefix))
+                .arg(format!("{}:summary_hash", validator_prefix))
                 .arg(summary_hash)
-                .arg(prefix)
+                .arg(validator_prefix)
                 .arg(validator_json_string);
         }
         // publish event

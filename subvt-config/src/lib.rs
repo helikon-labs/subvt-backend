@@ -79,8 +79,10 @@ pub struct RPCConfig {
     pub host: String,
     /// TCP port for the live network status WS RPC server.
     pub live_network_status_port: String,
-    /// TCP port for the live network status WS RPC server.
-    pub validator_list_port: String,
+    /// TCP port for the active validator list WS RPC server.
+    pub active_validator_list_port: u16,
+    /// TCP port for the inactive validator list WS RPC server.
+    pub inactive_validator_list_port: u16,
 }
 
 /// Redis configuration. Redis is utilized as in-memory

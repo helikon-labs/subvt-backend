@@ -3,7 +3,7 @@ recovery_retry_seconds = 5
 
 [substrate]
 chain = "kusama"
-rpc_url = "wss://kusama-rpc.polkadot.io"
+rpc_url = "wss://kusama-rpc.polkadot.io:443"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30
@@ -15,7 +15,8 @@ other_level = "warn"
 [rpc]
 host = "127.0.0.1"
 live_network_status_port = 7888
-validator_list_port = 7889
+active_validator_list_port = 7889
+inactive_validator_list_port = 7890
 
 [redis]
 url = "redis://127.0.0.1:5432/"

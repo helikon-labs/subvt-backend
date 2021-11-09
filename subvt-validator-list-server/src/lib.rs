@@ -4,6 +4,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
+use clap::{App, Arg};
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
@@ -33,15 +34,14 @@ pub struct ValidatorListServer;
 
 impl ValidatorListServer {
     pub async fn run_rpc_server(
+        host: &str,
+        port: u16,
         validator_map: &Arc<RwLock<HashMap<AccountId, ValidatorDetails>>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
     ) -> anyhow::Result<WsStopHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
-            .build(format!(
-                "{}:{}",
-                CONFIG.rpc.host, CONFIG.rpc.validator_list_port
-            ))
+            .build(format!("{}:{}", host, port))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let validator_map = validator_map.clone();
@@ -91,10 +91,23 @@ impl ValidatorListServer {
 #[async_trait]
 impl Service for ValidatorListServer {
     async fn run(&'static self) -> anyhow::Result<()> {
+        let matches = App::new("SubVT Validator List Server")
+            .version("0.1.0")
+            .author("Kutsal Kaan Bilgin <kutsa@helikon.io>")
+            .about("Serves the live active or inactive validator list for the SubVT app.")
+            .arg(Arg::new("inactive").long("inactive").short('i').about(
+                "Active list is served by default. Use this flag to serve the inactive list.",
+            ))
+            .get_matches();
+        let is_active_list = !matches.is_present("inactive");
         let last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
-        let prefix = format!("subvt:{}:validators", CONFIG.substrate.chain);
+        let prefix = format!(
+            "subvt:{}:validators:{}",
+            CONFIG.substrate.chain,
+            if is_active_list { "active" } else { "inactive" }
+        );
 
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -107,7 +120,17 @@ impl Service for ValidatorListServer {
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
-        let server_stop_handle = ValidatorListServer::run_rpc_server(&validator_map, &bus).await?;
+        let server_stop_handle = ValidatorListServer::run_rpc_server(
+            &CONFIG.rpc.host,
+            if is_active_list {
+                CONFIG.rpc.active_validator_list_port
+            } else {
+                CONFIG.rpc.inactive_validator_list_port
+            },
+            &validator_map,
+            &bus,
+        )
+        .await?;
 
         let error: anyhow::Error = 'outer: loop {
             let message = pub_sub.get_message();
