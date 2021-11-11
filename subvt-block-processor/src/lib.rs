@@ -599,31 +599,36 @@ impl BlockProcessor {
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(&block_hash)
             .await?;
-        let era_stakers = substrate_client
-            .get_era_stakers(&active_era, true, &block_hash)
-            .await?;
 
-        if last_epoch_index != current_epoch_index {
-            debug!("New epoch. Persist era if it doesn't exist.");
-            postgres.save_era(&active_era, &era_stakers).await?;
-        }
-        if last_era_index != active_era.index {
-            self.persist_era_validators_and_stakers(
-                substrate_client,
-                postgres,
-                &active_era,
-                block_hash.as_str(),
-                &active_validator_account_ids,
-                &era_stakers,
-            )
-            .await?;
-            self.persist_era_reward_points(
-                substrate_client,
-                postgres,
-                &block_hash,
-                active_era.index - 1,
-            )
-            .await?;
+        if last_epoch_index != current_epoch_index || last_era_index != active_era.index {
+            let era_stakers = substrate_client
+                .get_era_stakers(&active_era, true, &block_hash)
+                .await?;
+            if last_epoch_index != current_epoch_index {
+                debug!("New epoch. Persist era if it doesn't exist.");
+                postgres.save_era(&active_era, &era_stakers).await?;
+            }
+            if last_era_index != active_era.index {
+                let era_stakers = substrate_client
+                    .get_era_stakers(&active_era, true, &block_hash)
+                    .await?;
+                self.persist_era_validators_and_stakers(
+                    substrate_client,
+                    postgres,
+                    &active_era,
+                    block_hash.as_str(),
+                    &active_validator_account_ids,
+                    &era_stakers,
+                )
+                .await?;
+                self.persist_era_reward_points(
+                    substrate_client,
+                    postgres,
+                    &block_hash,
+                    active_era.index - 1,
+                )
+                .await?;
+            }
         }
         // update current era reward points every 10 minutes
         let blocks_per_10_minutes = 10 * 60 * 1000
