@@ -1,6 +1,6 @@
 use log::debug;
 use sqlx::{Pool, Postgres};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::{
@@ -9,9 +9,11 @@ use subvt_types::{
     rdb::ValidatorInfo,
     substrate::{
         argument::IdentificationTuple,
-        ValidatorPreferences, {Balance, BlockHeader, Era},
+        EraStakers, ValidatorPreferences, ValidatorStake, {Balance, BlockHeader, Era},
     },
 };
+
+pub mod report;
 
 type PostgresValidatorInfo = (
     Option<i64>,
@@ -64,11 +66,24 @@ impl PostgreSQLStorage {
         }
     }
 
-    pub async fn save_era(&self, era: &Era) -> anyhow::Result<Option<i64>> {
+    pub async fn save_era(
+        &self,
+        era: &Era,
+        era_stakers: &EraStakers,
+    ) -> anyhow::Result<Option<i64>> {
+        let nominator_count = {
+            let mut nominator_account_id_set: HashSet<AccountId> = HashSet::new();
+            for validator_stake in &era_stakers.stakers {
+                for nominator_stake in &validator_stake.nominators {
+                    nominator_account_id_set.insert(nominator_stake.account.id.clone());
+                }
+            }
+            nominator_account_id_set.len() as i64
+        };
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            INSERT INTO era (index, start_timestamp, end_timestamp)
-            VALUES ($1, $2, $3)
+            INSERT INTO era (index, start_timestamp, end_timestamp, active_nominator_count, minimum_stake, maximum_stake, average_stake, median_stake)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (index) DO NOTHING
             RETURNING index
             "#,
@@ -76,6 +91,11 @@ impl PostgreSQLStorage {
         .bind(era.index)
         .bind(era.start_timestamp as i64)
         .bind(era.end_timestamp as i64)
+        .bind(nominator_count)
+        .bind(era_stakers.min_stake().1.to_string())
+        .bind(era_stakers.max_stake().1.to_string())
+        .bind(era_stakers.average_stake().to_string())
+        .bind(era_stakers.median_stake().to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
@@ -90,6 +110,8 @@ impl PostgreSQLStorage {
         era_index: u32,
         active_validator_account_ids: &[AccountId],
         all_validator_account_ids: &[AccountId],
+        validator_stake_map: &HashMap<AccountId, ValidatorStake>,
+        validator_prefs_map: &HashMap<AccountId, ValidatorPreferences>,
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
         for validator_account_id in all_validator_account_ids {
@@ -104,66 +126,66 @@ impl PostgreSQLStorage {
             .bind(validator_account_id.to_string())
             .execute(&mut transaction)
             .await?;
-            let is_active = active_validator_account_ids.contains(validator_account_id);
-            let active_validator_index = if is_active {
-                let index = active_validator_account_ids
-                    .iter()
-                    .position(|account_id| account_id == validator_account_id)
-                    .unwrap();
-                Some(index as i64)
-            } else {
-                None
-            };
+            let maybe_active_validator_index = active_validator_account_ids
+                .iter()
+                .position(|account_id| account_id == validator_account_id);
+            // get prefs
+            let maybe_validator_prefs = validator_prefs_map.get(validator_account_id);
+            // get stakes for active
+            let maybe_validator_stake = validator_stake_map.get(validator_account_id);
+
             // create record (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO era_validator (era_index, validator_account_id, is_active, active_validator_index)
-                VALUES ($1, $2, $3, $4)
-                ON CONFLICT (era_index, validator_account_id) DO NOTHING
-                "#,
-            )
-            .bind(era_index)
-            .bind(validator_account_id.to_string())
-            .bind(is_active)
-            .bind(active_validator_index)
-            .execute(&mut transaction)
-            .await?;
-        }
-        transaction.commit().await?;
-        Ok(())
-    }
-
-    pub async fn save_era_validator_preferences(
-        &self,
-        era_index: u32,
-        era_validator_preferences: &HashMap<AccountId, ValidatorPreferences>,
-    ) -> anyhow::Result<()> {
-        let mut transaction = self.connection_pool.begin().await?;
-        for (validator_account_id, validator_preferences) in era_validator_preferences.iter() {
-            // create validator account (if not exists)
-            sqlx::query(
-                r#"
-                INSERT INTO account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                "#,
-            )
-            .bind(validator_account_id.to_string())
-            .execute(&mut transaction)
-            .await?;
-            sqlx::query(
-                r#"
-                INSERT INTO era_validator_preferences (era_index, validator_account_id, commission_per_billion, blocks_nominations)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO era_validator (era_index, validator_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
                 .bind(era_index)
                 .bind(validator_account_id.to_string())
-                .bind(validator_preferences.commission_per_billion)
-                .bind(validator_preferences.blocks_nominations)
+                .bind(maybe_active_validator_index.is_some())
+                .bind(maybe_active_validator_index.map(|index| index as i64))
+                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.commission_per_billion))
+                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.blocks_nominations))
+                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()))
+                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.total_stake.to_string()))
                 .execute(&mut transaction)
                 .await?;
+        }
+        transaction.commit().await?;
+        Ok(())
+    }
+
+    pub async fn save_era_stakers(&self, era_stakers: &EraStakers) -> anyhow::Result<()> {
+        let mut transaction = self.connection_pool.begin().await?;
+        for validator_stake in &era_stakers.stakers {
+            for nominator_stake in &validator_stake.nominators {
+                // create nominator account (if not exists)
+                sqlx::query(
+                    r#"
+                INSERT INTO account (id)
+                VALUES ($1)
+                ON CONFLICT (id) DO NOTHING
+                "#,
+                )
+                .bind(nominator_stake.account.id.to_string())
+                .execute(&mut transaction)
+                .await?;
+                sqlx::query(
+                    r#"
+                INSERT INTO era_staker (era_index, validator_account_id, nominator_account_id, stake)
+                VALUES ($1, $2, $3, $4)
+                ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
+                "#,
+                )
+                .bind(era_stakers.era.index)
+                .bind(validator_stake.account.id.to_string())
+                .bind(nominator_stake.account.id.to_string())
+                .bind(nominator_stake.stake.to_string())
+                .execute(&mut transaction)
+                .await?;
+            }
         }
         transaction.commit().await?;
         Ok(())
@@ -286,13 +308,13 @@ impl PostgreSQLStorage {
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
         )
-        .bind(block_hash)
-        .bind(extrinsic_index)
-        .bind(session_index)
-        .bind(im_online_key_hex_string)
-        .bind(validator_account_id.to_string())
-        .execute(&self.connection_pool)
-        .await?;
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(session_index)
+            .bind(im_online_key_hex_string)
+            .bind(validator_account_id.to_string())
+            .execute(&self.connection_pool)
+            .await?;
         Ok(())
     }
 
@@ -722,12 +744,12 @@ impl PostgreSQLStorage {
             FROM get_validator_info($1, $2, $3, $4)
             "#
         )
-        .bind(block_hash)
-        .bind(validator_account_id.to_string())
-        .bind(is_active)
-        .bind(era_index as i64)
-        .fetch_one(&self.connection_pool)
-        .await?;
+            .bind(block_hash)
+            .bind(validator_account_id.to_string())
+            .bind(is_active)
+            .bind(era_index as i64)
+            .fetch_one(&self.connection_pool)
+            .await?;
         let mut unclaimed_era_indices: Vec<u32> = Vec::new();
         if let Some(concated_string) = validator_info.7 {
             for unclaimed_era_index_string in concated_string.split(',') {
@@ -772,35 +794,35 @@ impl PostgreSQLStorage {
             RETURNING id
             "#,
         )
-        .bind(&candidate_details.id)
-        .bind(validator_account_id.to_string())
-        .bind(kusama_account_id.map(|account_id| account_id.to_string()))
-        .bind(candidate_details.discovered_at as i64)
-        .bind(candidate_details.inclusion)
-        .bind(candidate_details.last_valid.map(|last_valid| last_valid as i64))
-        .bind(candidate_details.nominated_at.map(|last_valid| last_valid as i64))
-        .bind(candidate_details.offline_accumulated as i64)
-        .bind(candidate_details.offline_since as i64)
-        .bind(candidate_details.online_since as i64)
-        .bind(&candidate_details.name)
-        .bind(candidate_details.rank)
-        .bind(candidate_details.version.as_ref())
-        .bind(candidate_details.is_valid())
-        .bind(candidate_details.score.as_ref().map(|score| score.updated_at as i64))
-        .bind(candidate_details.score.as_ref().map(|score| score.total))
-        .bind(candidate_details.score.as_ref().map(|score| score.aggregate))
-        .bind(candidate_details.score.as_ref().map(|score| score.inclusion))
-        .bind(candidate_details.score.as_ref().map(|score| score.discovered))
-        .bind(candidate_details.score.as_ref().map(|score| score.nominated))
-        .bind(candidate_details.score.as_ref().map(|score| score.rank))
-        .bind(candidate_details.score.as_ref().map(|score| score.unclaimed))
-        .bind(candidate_details.score.as_ref().map(|score| score.bonded))
-        .bind(candidate_details.score.as_ref().map(|score| score.faults))
-        .bind(candidate_details.score.as_ref().map(|score| score.offline))
-        .bind(candidate_details.score.as_ref().map(|score| score.randomness))
-        .bind(candidate_details.score.as_ref().map(|score| score.span_inclusion))
-        .fetch_one(&self.connection_pool)
-        .await?;
+            .bind(&candidate_details.id)
+            .bind(validator_account_id.to_string())
+            .bind(kusama_account_id.map(|account_id| account_id.to_string()))
+            .bind(candidate_details.discovered_at as i64)
+            .bind(candidate_details.inclusion)
+            .bind(candidate_details.last_valid.map(|last_valid| last_valid as i64))
+            .bind(candidate_details.nominated_at.map(|last_valid| last_valid as i64))
+            .bind(candidate_details.offline_accumulated as i64)
+            .bind(candidate_details.offline_since as i64)
+            .bind(candidate_details.online_since as i64)
+            .bind(&candidate_details.name)
+            .bind(candidate_details.rank)
+            .bind(candidate_details.version.as_ref())
+            .bind(candidate_details.is_valid())
+            .bind(candidate_details.score.as_ref().map(|score| score.updated_at as i64))
+            .bind(candidate_details.score.as_ref().map(|score| score.total))
+            .bind(candidate_details.score.as_ref().map(|score| score.aggregate))
+            .bind(candidate_details.score.as_ref().map(|score| score.inclusion))
+            .bind(candidate_details.score.as_ref().map(|score| score.discovered))
+            .bind(candidate_details.score.as_ref().map(|score| score.nominated))
+            .bind(candidate_details.score.as_ref().map(|score| score.rank))
+            .bind(candidate_details.score.as_ref().map(|score| score.unclaimed))
+            .bind(candidate_details.score.as_ref().map(|score| score.bonded))
+            .bind(candidate_details.score.as_ref().map(|score| score.faults))
+            .bind(candidate_details.score.as_ref().map(|score| score.offline))
+            .bind(candidate_details.score.as_ref().map(|score| score.randomness))
+            .bind(candidate_details.score.as_ref().map(|score| score.span_inclusion))
+            .fetch_one(&self.connection_pool)
+            .await?;
 
         // persist validity records and rank events
         let mut transaction = self.connection_pool.begin().await?;
@@ -812,15 +834,15 @@ impl PostgreSQLStorage {
                 ON CONFLICT (id) DO NOTHING
                 "#,
             )
-            .bind(&validity.id)
-            .bind(candidate_save_result.0)
-            .bind(validator_account_id.to_string())
-            .bind(&validity.details)
-            .bind(validity.is_valid)
-            .bind(&validity.ty)
-            .bind(validity.updated_at as i64)
-            .execute(&mut transaction)
-            .await?;
+                .bind(&validity.id)
+                .bind(candidate_save_result.0)
+                .bind(validator_account_id.to_string())
+                .bind(&validity.details)
+                .bind(validity.is_valid)
+                .bind(&validity.ty)
+                .bind(validity.updated_at as i64)
+                .execute(&mut transaction)
+                .await?;
         }
         for rank_event in &candidate_details.rank_events {
             sqlx::query(
@@ -830,13 +852,13 @@ impl PostgreSQLStorage {
                 ON CONFLICT (onekv_id) DO NOTHING
                 "#,
             )
-            .bind(&rank_event.id)
-            .bind(validator_account_id.to_string())
-            .bind(rank_event.start_era as i32)
-            .bind(rank_event.active_era as i32)
-            .bind(rank_event.when as i64)
-            .execute(&mut transaction)
-            .await?;
+                .bind(&rank_event.id)
+                .bind(validator_account_id.to_string())
+                .bind(rank_event.start_era as i32)
+                .bind(rank_event.active_era as i32)
+                .bind(rank_event.when as i64)
+                .execute(&mut transaction)
+                .await?;
         }
         for fault_event in &candidate_details.fault_events {
             sqlx::query(
@@ -846,13 +868,13 @@ impl PostgreSQLStorage {
                 ON CONFLICT (onekv_id) DO NOTHING
                 "#,
             )
-            .bind(&fault_event.id)
-            .bind(validator_account_id.to_string())
-            .bind(fault_event.previous_rank.map(|previous_rank| previous_rank as i32))
-            .bind(&fault_event.reason)
-            .bind(fault_event.when as i64)
-            .execute(&mut transaction)
-            .await?;
+                .bind(&fault_event.id)
+                .bind(validator_account_id.to_string())
+                .bind(fault_event.previous_rank.map(|previous_rank| previous_rank as i32))
+                .bind(&fault_event.reason)
+                .bind(fault_event.when as i64)
+                .execute(&mut transaction)
+                .await?;
         }
         transaction.commit().await?;
 

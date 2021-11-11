@@ -23,7 +23,7 @@ use subvt_types::{
             ImOnlineExtrinsic, MultisigExtrinsic, ProxyExtrinsic, StakingExtrinsic,
             SubstrateExtrinsic, TimestampExtrinsic, UtilityExtrinsic,
         },
-        MultiAddress,
+        Era, EraStakers, MultiAddress, ValidatorStake,
     },
 };
 
@@ -41,44 +41,41 @@ struct RuntimeInformation {
 }
 
 impl BlockProcessor {
-    async fn persist_era_validators(
+    async fn persist_era_validators_and_stakers(
         &self,
         substrate_client: &SubstrateClient,
         postgres: &PostgreSQLStorage,
-        era_index: u32,
+        era: &Era,
         block_hash: &str,
         active_validator_account_ids: &[AccountId],
+        era_stakers: &EraStakers,
     ) -> anyhow::Result<()> {
-        debug!("Persist era #{} validators.", era_index);
+        debug!("Persist era #{} validators.", era.index);
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
             .await?;
+        let validator_stake_map = {
+            let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::new();
+            for validator_stake in &era_stakers.stakers {
+                validator_stake_map
+                    .insert(validator_stake.account.id.clone(), validator_stake.clone());
+            }
+            validator_stake_map
+        };
+        let validator_prefs_map = substrate_client
+            .get_era_validator_prefs(era.index, block_hash)
+            .await?;
         postgres
             .save_era_validators(
-                era_index,
+                era.index,
                 active_validator_account_ids,
                 &all_validator_account_ids,
+                &validator_stake_map,
+                &validator_prefs_map,
             )
             .await?;
-        debug!("Persisted era #{} validators.", era_index);
-        Ok(())
-    }
-
-    async fn persist_era_validator_preferences(
-        &self,
-        substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLStorage,
-        era_index: u32,
-        block_hash: &str,
-    ) -> anyhow::Result<()> {
-        debug!("Persist era #{} validator preferences.", era_index);
-        let era_validator_prefs = substrate_client
-            .get_era_validator_prefs(era_index, block_hash)
-            .await?;
-        postgres
-            .save_era_validator_preferences(era_index, &era_validator_prefs)
-            .await?;
-        debug!("Persisted era #{} validator preferences.", era_index);
+        postgres.save_era_stakers(era_stakers).await?;
+        debug!("Persisted era #{} validators and stakers.", era.index);
         Ok(())
     }
 
@@ -602,25 +599,22 @@ impl BlockProcessor {
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(&block_hash)
             .await?;
+        let era_stakers = substrate_client
+            .get_era_stakers(&active_era, true, &block_hash)
+            .await?;
 
         if last_epoch_index != current_epoch_index {
             debug!("New epoch. Persist era if it doesn't exist.");
-            postgres.save_era(&active_era).await?;
+            postgres.save_era(&active_era, &era_stakers).await?;
         }
         if last_era_index != active_era.index {
-            self.persist_era_validators(
+            self.persist_era_validators_and_stakers(
                 substrate_client,
                 postgres,
-                active_era.index,
+                &active_era,
                 block_hash.as_str(),
                 &active_validator_account_ids,
-            )
-            .await?;
-            self.persist_era_validator_preferences(
-                substrate_client,
-                postgres,
-                active_era.index,
-                block_hash.as_str(),
+                &era_stakers,
             )
             .await?;
             self.persist_era_reward_points(

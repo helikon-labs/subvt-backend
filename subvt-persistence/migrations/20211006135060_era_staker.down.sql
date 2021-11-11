@@ -1,0 +1,1 @@
+DROP TABLE era_staker CASCADE;
