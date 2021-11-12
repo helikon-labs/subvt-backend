@@ -88,7 +88,7 @@ impl ValidatorListServer {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for ValidatorListServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let matches = App::new("SubVT Validator List Server")

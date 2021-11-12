@@ -102,7 +102,7 @@ impl LiveNetworkStatusServer {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for LiveNetworkStatusServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let bus = Arc::new(Mutex::new(Bus::new(100)));

@@ -85,6 +85,12 @@ pub struct RPCConfig {
     pub inactive_validator_list_port: u16,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct HTTPConfig {
+    pub report_service_port: u16,
+    pub app_service_port: u16,
+}
+
 /// Redis configuration. Redis is utilized as in-memory
 /// buffer storage for real-time data.
 #[derive(Clone, Debug, Deserialize)]
@@ -127,6 +133,7 @@ pub struct Config {
     pub block_processor: BlockProcessorConfig,
     pub env: Environment,
     pub common: CommonConfig,
+    pub http: HTTPConfig,
     pub log: LogConfig,
     pub onekv: OneKVConfig,
     pub postgres: PostgreSQLConfig,

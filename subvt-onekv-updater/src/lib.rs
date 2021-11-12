@@ -69,7 +69,7 @@ impl OneKVUpdater {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for OneKVUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         info!(

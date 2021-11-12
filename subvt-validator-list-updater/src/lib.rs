@@ -193,7 +193,7 @@ impl ValidatorListUpdater {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for ValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {

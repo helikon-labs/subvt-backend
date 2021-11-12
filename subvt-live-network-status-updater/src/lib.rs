@@ -232,7 +232,7 @@ impl LiveNetworkStatusUpdater {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for LiveNetworkStatusUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {

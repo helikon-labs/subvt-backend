@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.56.0"
 
 [dependencies]
-anyhow = "1.0.44"
+anyhow = "1.0.45"
 async-trait = "0.1.51"
 log = "0.4.14"
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.12" }

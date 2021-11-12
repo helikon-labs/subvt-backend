@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "subvt-app-services",
+    "subvt-app-service",
     "subvt-block-processor",
     "subvt-config",
     "subvt-live-network-status-server",
@@ -10,7 +10,7 @@ members = [
     "subvt-onekv-updater",
     "subvt-persistence",
     "subvt-proc-macro",
-    "subvt-report-services",
+    "subvt-report-service",
     "subvt-service-common",
     "subvt-substrate-client",
     "subvt-types",

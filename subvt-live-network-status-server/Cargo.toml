@@ -7,7 +7,7 @@ rust-version = "1.56.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.44"
+anyhow = "1.0.45"
 async-trait = "0.1.51"
 bus = "2.2.3"
 chrono = "0.4.19"
@@ -24,4 +24,4 @@ subvt-config = { path = "../subvt-config" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
-tokio = { version = "1.11.0", features = ["full"] }
+tokio = { version = "1.13.0", features = ["full"] }

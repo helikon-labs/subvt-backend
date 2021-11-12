@@ -724,7 +724,7 @@ impl BlockProcessor {
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Service for BlockProcessor {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
