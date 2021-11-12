@@ -87,6 +87,7 @@ pub struct RPCConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HTTPConfig {
+    pub host: String,
     pub report_service_port: u16,
     pub app_service_port: u16,
 }

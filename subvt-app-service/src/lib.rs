@@ -20,7 +20,10 @@ pub struct AppService;
 impl Service for AppService {
     async fn run(&'static self) -> anyhow::Result<()> {
         let result = HttpServer::new(|| App::new().service(hello))
-            .bind(format!("0.0.0.0:{}", CONFIG.http.app_service_port))?
+            .bind(format!(
+                "{}:{}",
+                CONFIG.http.host, CONFIG.http.app_service_port,
+            ))?
             .run()
             .await;
         Ok(result?)
