@@ -129,7 +129,8 @@ pub enum ArgumentPrimitive {
     KeyValue(KeyValue),
     MultiAsset(Box<xcm::v0::prelude::MultiAsset>),
     MultiAddress(MultiAddress),
-    MultiLocation(xcm::v0::MultiLocation),
+    MultiLocationV0(xcm::v0::MultiLocation),
+    MultiLocation(xcm::v2::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     MultiSignature(MultiSignature),
     MultiSigner(MultiSigner),
@@ -375,8 +376,6 @@ generate_argument_primitive_decoder_impl! {[
     ("KeyValue", decode_key_value, KeyValue),
     ("ParachainsInherentData<T::Header>", decode_parachains_inherent_data, ParachainsInherentData),
     ("MultiAsset", decode_multi_asset, MultiAsset),
-    ("MultiLocation", decode_multi_location_1, MultiLocation),
-    ("Box<MultiLocation>", decode_multi_location_2, MultiLocation),
     ("Timepoint<BlockNumber>", decode_multisig_timepoint_1, MultisigTimepoint),
     ("Timepoint<T::BlockNumber>", decode_multisig_timepoint_2, MultisigTimepoint),
     ("MultiSignature", decode_multisignature, MultiSignature),
@@ -605,6 +604,26 @@ impl Argument {
                             ))),
                             Err(_) => Err(ArgumentDecodeError::DecodeError(
                                 "Cannot decode ValidatorPrefs.".to_string(),
+                            )),
+                        }
+                    }
+                } else if name == "MultiLocation" || name == "Box<MultiLocation>" {
+                    if metadata.is_xcm_multilocation_v0(chain) {
+                        match xcm::v0::MultiLocation::decode(&mut *bytes) {
+                            Ok(multi_location) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::MultiLocationV0(multi_location),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode V0 MultiLocation.".to_string(),
+                            )),
+                        }
+                    } else {
+                        match xcm::v2::MultiLocation::decode(&mut *bytes) {
+                            Ok(multi_location) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::MultiLocation(multi_location),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode V2 MultiLocation.".to_string(),
                             )),
                         }
                     }

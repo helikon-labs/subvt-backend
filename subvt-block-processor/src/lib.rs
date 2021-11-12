@@ -149,10 +149,7 @@ impl BlockProcessor {
                                 .await?;
                         }
                         Err(error) => {
-                            error!(
-                                "Cannot get persist heartbeat event in block {}: {:?}",
-                                im_online_key_hex_string, error
-                            );
+                            error!("Cannot persist heartbeat event: {:?}", error);
                         }
                     }
                 }

@@ -160,6 +160,16 @@ impl PostgreSQLStorage {
     pub async fn save_era_stakers(&self, era_stakers: &EraStakers) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
         for validator_stake in &era_stakers.stakers {
+            sqlx::query(
+                r#"
+                INSERT INTO account (id)
+                VALUES ($1)
+                ON CONFLICT (id) DO NOTHING
+                "#,
+            )
+            .bind(validator_stake.account.id.to_string())
+            .execute(&mut transaction)
+            .await?;
             for nominator_stake in &validator_stake.nominators {
                 // create nominator account (if not exists)
                 sqlx::query(
