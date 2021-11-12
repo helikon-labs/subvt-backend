@@ -130,7 +130,8 @@ pub enum ArgumentPrimitive {
     MultiAsset(Box<xcm::v0::prelude::MultiAsset>),
     MultiAddress(MultiAddress),
     MultiLocationV0(xcm::v0::MultiLocation),
-    MultiLocation(xcm::v2::MultiLocation),
+    MultiLocationV1(xcm::v1::MultiLocation),
+    MultiLocationV2(xcm::v2::MultiLocation),
     MultisigTimepoint(Timepoint<BlockNumber>),
     MultiSignature(MultiSignature),
     MultiSigner(MultiSigner),
@@ -177,7 +178,9 @@ pub enum ArgumentPrimitive {
     VoteWeight(VoteWeight),
     Weight(Weight),
     WeightLimit(xcm::v2::WeightLimit),
-    Xcm(xcm::latest::Xcm<()>),
+    XcmV0(xcm::v0::Xcm<()>),
+    XcmV1(xcm::v1::Xcm<()>),
+    XcmV2(xcm::v2::Xcm<()>),
     XcmError(xcm::latest::Error),
     XcmOutcome(Box<xcm::latest::Outcome>),
     XcmQueryId(xcm::prelude::QueryId),
@@ -429,8 +432,6 @@ generate_argument_primitive_decoder_impl! {[
     ("VoteWeight", decode_vote_weight, VoteWeight),
     ("Weight", decode_weight, Weight),
     ("WeightLimit", decode_weight_limit, WeightLimit),
-    ("Xcm<()>", decode_xcm_1, Xcm),
-    ("Box<Xcm<T::Call>>", decode_xcm_2, Xcm),
     ("XcmError", decode_xcm_error, XcmError),
     ("Outcome", decode_xcm_outcome_1, XcmOutcome),
     ("xcm::latest::Outcome", decode_xcm_outcome_2, XcmOutcome),
@@ -451,6 +452,96 @@ pub enum ArgumentDecodeError {
 }
 
 impl Argument {
+    fn decode_validator_prefs(
+        chain: &Chain,
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        if metadata.is_validator_prefs_legacy(chain) {
+            match LegacyValidatorPrefs::decode(&mut *bytes) {
+                Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
+                        commission_per_billion: legacy_validator_prefs.commission.deconstruct(),
+                        blocks_nominations: false,
+                    }),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode LegacyValidatorPrefs.".to_string(),
+                )),
+            }
+        } else {
+            match ValidatorPrefs::decode(&mut *bytes) {
+                Ok(validator_prefs) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
+                        commission_per_billion: validator_prefs.commission.deconstruct(),
+                        blocks_nominations: validator_prefs.blocked,
+                    }),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode ValidatorPrefs.".to_string(),
+                )),
+            }
+        }
+    }
+
+    fn decode_multi_location(
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        match metadata.get_xcm_version() {
+            0 => match xcm::v0::MultiLocation::decode(&mut *bytes) {
+                Ok(multi_location) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::MultiLocationV0(multi_location),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V0 MultiLocation.".to_string(),
+                )),
+            },
+            1 => match xcm::v1::MultiLocation::decode(&mut *bytes) {
+                Ok(multi_location) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::MultiLocationV1(multi_location),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V1 MultiLocation.".to_string(),
+                )),
+            },
+            _ => match xcm::v2::MultiLocation::decode(&mut *bytes) {
+                Ok(multi_location) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::MultiLocationV2(multi_location),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V2 MultiLocation.".to_string(),
+                )),
+            },
+        }
+    }
+
+    fn decode_xcm(
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        match metadata.get_xcm_version() {
+            0 => match xcm::v0::Xcm::decode(&mut *bytes) {
+                Ok(xcm) => Ok(Argument::Primitive(Box::new(ArgumentPrimitive::XcmV0(xcm)))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V0 XCM.".to_string(),
+                )),
+            },
+            1 => match xcm::v1::Xcm::decode(&mut *bytes) {
+                Ok(xcm) => Ok(Argument::Primitive(Box::new(ArgumentPrimitive::XcmV1(xcm)))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V1 XCM.".to_string(),
+                )),
+            },
+            _ => match xcm::v2::Xcm::decode(&mut *bytes) {
+                Ok(xcm) => Ok(Argument::Primitive(Box::new(ArgumentPrimitive::XcmV2(xcm)))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode V2 XCM.".to_string(),
+                )),
+            },
+        }
+    }
+
     pub fn decode(
         chain: &Chain,
         metadata: &Metadata,
@@ -578,55 +669,11 @@ impl Argument {
                         }
                     }
                 } else if name == "ValidatorPrefs" {
-                    if metadata.is_validator_prefs_legacy(chain) {
-                        match LegacyValidatorPrefs::decode(&mut *bytes) {
-                            Ok(legacy_validator_prefs) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
-                                    commission_per_billion: legacy_validator_prefs
-                                        .commission
-                                        .deconstruct(),
-                                    blocks_nominations: false,
-                                }),
-                            ))),
-                            Err(_) => Err(ArgumentDecodeError::DecodeError(
-                                "Cannot decode LegacyValidatorPrefs.".to_string(),
-                            )),
-                        }
-                    } else {
-                        match ValidatorPrefs::decode(&mut *bytes) {
-                            Ok(validator_prefs) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::ValidatorPreferences(ValidatorPreferences {
-                                    commission_per_billion: validator_prefs
-                                        .commission
-                                        .deconstruct(),
-                                    blocks_nominations: validator_prefs.blocked,
-                                }),
-                            ))),
-                            Err(_) => Err(ArgumentDecodeError::DecodeError(
-                                "Cannot decode ValidatorPrefs.".to_string(),
-                            )),
-                        }
-                    }
+                    Argument::decode_validator_prefs(chain, metadata, &mut *bytes)
                 } else if name == "MultiLocation" || name == "Box<MultiLocation>" {
-                    if metadata.is_xcm_multilocation_v0(chain) {
-                        match xcm::v0::MultiLocation::decode(&mut *bytes) {
-                            Ok(multi_location) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::MultiLocationV0(multi_location),
-                            ))),
-                            Err(_) => Err(ArgumentDecodeError::DecodeError(
-                                "Cannot decode V0 MultiLocation.".to_string(),
-                            )),
-                        }
-                    } else {
-                        match xcm::v2::MultiLocation::decode(&mut *bytes) {
-                            Ok(multi_location) => Ok(Argument::Primitive(Box::new(
-                                ArgumentPrimitive::MultiLocation(multi_location),
-                            ))),
-                            Err(_) => Err(ArgumentDecodeError::DecodeError(
-                                "Cannot decode V2 MultiLocation.".to_string(),
-                            )),
-                        }
-                    }
+                    Argument::decode_multi_location(metadata, &mut *bytes)
+                } else if name == "Xcm<()>" || name == "Box<Xcm<T::Call>>" {
+                    Argument::decode_xcm(metadata, &mut *bytes)
                 } else {
                     match ArgumentPrimitive::decode(name, &mut *bytes) {
                         Ok(argument_primitive) => {

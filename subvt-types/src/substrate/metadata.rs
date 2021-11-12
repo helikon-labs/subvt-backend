@@ -110,11 +110,13 @@ impl Metadata {
         }
     }
 
-    pub fn is_xcm_multilocation_v0(&self, chain: &Chain) -> bool {
-        match chain {
-            Chain::Kusama => self.last_runtime_upgrade_info.spec_version < 9111,
-            Chain::Polkadot => false,
-            _ => false,
+    pub fn get_xcm_version(&self) -> u8 {
+        if self.last_runtime_upgrade_info.spec_version < 9100 {
+            0
+        } else if self.last_runtime_upgrade_info.spec_version < 9122 {
+            1
+        } else {
+            2
         }
     }
 }
