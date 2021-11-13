@@ -113,7 +113,7 @@ impl Metadata {
     pub fn get_xcm_version(&self) -> u8 {
         if self.last_runtime_upgrade_info.spec_version < 9100 {
             0
-        } else if self.last_runtime_upgrade_info.spec_version < 9122 {
+        } else if self.last_runtime_upgrade_info.spec_version < 9111 {
             1
         } else {
             2

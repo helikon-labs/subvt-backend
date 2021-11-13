@@ -1,0 +1,213 @@
+swagger: "2.0"
+info:
+  description: "Specifies the SubVT report service endpoints."
+  version: "0.1.0"
+  title: "SubVT Report Service"
+  termsOfService: "https://helikon.io/terms/"
+  contact:
+    email: "info@helikon.io"
+  license:
+    name: "GPL-3.0"
+    url: "https://www.gnu.org/licenses/gpl-3.0.en.html"
+host: "subvt.helikon.io"
+basePath: "/service/report"
+tags:
+  - name: "era"
+    description: "Single- or multiple-era reports."
+    externalDocs:
+      description: "Find out more"
+      url: "https://subvt.helikon.io"
+  - name: "validator"
+    description: "Validator reports for single- or multiple-era."
+    externalDocs:
+      description: "Find out more"
+      url: "https://subvt.helikon.io"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /era:
+    get:
+      tags:
+        - "era"
+      summary: "Get era report for a range of era indices."
+      description: ""
+      produces:
+        - "application/json"
+      parameters:
+        - name: "start_era_index"
+          in: "query"
+          description: "Index of the report start era."
+          required: true
+          type: "integer"
+          format: "int32"
+          minimum: 1
+        - name: "end_era_index"
+          in: "query"
+          description: "Index of the report end era."
+          required: true
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EraReport"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /validator/{account_id}:
+    get:
+      tags:
+        - "validator"
+      summary: "Get era-validator report for a range of era indices."
+      description: ""
+      produces:
+        - "application/json"
+      parameters:
+        - name: "account_id"
+          in: "path"
+          description: "Account id of the validator in hex format (eg. 0xdc89c6865c029c1088fb27b41c1a715b0bb611b94e1d625fa0bb8a1294187454)."
+          required: true
+          type: "string"
+        - name: "start_era_index"
+          in: "query"
+          description: "Index of the report start era."
+          required: true
+          type: "integer"
+          format: "int32"
+          minimum: 1
+        - name: "end_era_index"
+          in: "query"
+          description: "Index of the report end era."
+          required: true
+          type: "integer"
+          format: "int32"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/EraValidatorReport"
+        "400":
+          description: "Invalid input"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+definitions:
+  Era:
+    type: "object"
+    properties:
+      index:
+        type: "integer"
+        format: "int64"
+      start_timestamp:
+        type: "integer"
+        format: "int64"
+        description: "Era start timestamp in milliseconds."
+      end_timestamp:
+        type: "integer"
+        format: "int64"
+        description: "Era end timestamp in milliseconds."
+  EraReport:
+    type: "object"
+    properties:
+      era:
+        $ref: "#/definitions/Era"
+      total_reward_points:
+        type: "integer"
+        format: "int64"
+        description: "Total reward points earned in era by active validators."
+      total_reward:
+        type: "integer"
+        format: "int64"
+        description: "Total rewards distributed in era in native currency."
+      offline_offence_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of offline offences committed by the active validators in era."
+      total_stake:
+        type: "integer"
+        format: "int64"
+        description: "Total amount staked by nominators/validators in era."
+      active_nominator_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of active nominators in era."
+  Error:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+        description: "Error code."
+      description:
+        type: "string"
+        description: "Error description."
+  EraValidatorReport:
+    type: "object"
+    properties:
+      era:
+        $ref: "#/definitions/Era"
+      is_active:
+        type: "boolean"
+        description: "Whether the validator was active in era."
+      commission_per_billion:
+        type: "integer"
+        format: "int64"
+        description: "Validator commission per billion in era."
+      self_stake:
+        type: "integer"
+        format: "int64"
+        description: "Self stake of the validator in era."
+      total_stake:
+        type: "integer"
+        format: "int64"
+        description: "Total active stake of the validator in era."
+      block_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of blocks authored by the validator in era."
+      reward_points:
+        type: "integer"
+        format: "int64"
+        description: "Reward points earned by the validator in era."
+      self_reward:
+        type: "integer"
+        format: "int64"
+        description: "Total amount earned by the validator in native token in era."
+      staker_reward:
+        type: "integer"
+        format: "int64"
+        description: "Total amount distributed to stakers in era."
+      offline_offence_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of offline offences committed by the validator in era."
+      slashed_amount:
+        type: "integer"
+        format: "int64"
+        description: "Amount slashed from the validator in era."
+      chilling_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of chilling events for the validator in era."
+externalDocs:
+  description: "Find out more about SubVT"
+  url: "http://subvt.helikon.io"
