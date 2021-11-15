@@ -44,8 +44,8 @@ paths:
           minimum: 1
         - name: "end_era_index"
           in: "query"
-          description: "Index of the report end era."
-          required: true
+          description: "Index of the report end era. Report is generated for single era if this field is null."
+          required: false
           type: "integer"
           format: "int32"
       responses:
@@ -130,6 +130,22 @@ definitions:
     properties:
       era:
         $ref: "#/definitions/Era"
+      minimum_stake:
+        type: "integer"
+        format: "int64"
+        description: "Minimum stake backing a validator."
+      maximum_stake:
+        type: "integer"
+        format: "int64"
+        description: "Maximum stake backing a validator."
+      average_stake:
+        type: "integer"
+        format: "int64"
+        description: "Average of stakes backing all validators."
+      median_stake:
+        type: "integer"
+        format: "int64"
+        description: "Median of stakes backing all validators."
       total_reward_points:
         type: "integer"
         format: "int64"
@@ -138,10 +154,6 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Total rewards distributed in era in native currency."
-      offline_offence_count:
-        type: "integer"
-        format: "int64"
-        description: "Number of offline offences committed by the active validators in era."
       total_stake:
         type: "integer"
         format: "int64"
@@ -150,6 +162,18 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Number of active nominators in era."
+      offline_offence_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of offline offences committed by the active validators in era."
+      slashed_amount:
+        type: "integer"
+        format: "int64"
+        description: "Total slashed amount in era."
+      chilling_count:
+        type: "integer"
+        format: "int64"
+        description: "Number of validator chilling events in era."
   ReportError:
     type: "object"
     properties:

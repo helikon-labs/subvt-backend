@@ -86,6 +86,60 @@ async fn era_validator_report_service(
     }
 }
 
+#[get("/service/report/era")]
+async fn era_report_service(
+    query: web::Query<EraReportQueryParameters>,
+    data: web::Data<ServiceState>,
+) -> impl Responder {
+    if let Some(end_era_index) = query.maybe_end_era_index {
+        if end_era_index < query.start_era_index {
+            return HttpResponse::InternalServerError()
+                .content_type("application/json")
+                .body(
+                    serde_json::to_string(&ReportError {
+                        description: "End era index cannot be less than start era index."
+                            .to_string(),
+                    })
+                    .unwrap(),
+                );
+        }
+        let era_count = end_era_index - query.start_era_index;
+        if era_count > CONFIG.report.max_era_index_range {
+            return HttpResponse::InternalServerError()
+                .content_type("application/json")
+                .body(
+                    serde_json::to_string(&ReportError {
+                        description: format!(
+                            "Report cannot span {} eras. Maximum allowed is {}.",
+                            era_count, CONFIG.report.max_era_index_range
+                        ),
+                    })
+                    .unwrap(),
+                );
+        }
+    }
+    let report_result = &data
+        .postgres
+        .get_era_report(
+            query.start_era_index,
+            query.maybe_end_era_index.unwrap_or(query.start_era_index),
+        )
+        .await;
+    match report_result {
+        Ok(report) => HttpResponse::Ok()
+            .content_type("application/json")
+            .body(serde_json::to_string(report).unwrap()),
+        Err(error) => HttpResponse::InternalServerError()
+            .content_type("application/json")
+            .body(
+                serde_json::to_string(&ReportError {
+                    description: format!("{:?}", error),
+                })
+                .unwrap(),
+            ),
+    }
+}
+
 #[derive(Default)]
 pub struct ReportService;
 
@@ -100,6 +154,7 @@ impl Service for ReportService {
                     postgres: postgres.clone(),
                 })
                 .service(era_validator_report_service)
+                .service(era_report_service)
         })
         .workers(10)
         .bind(format!(
