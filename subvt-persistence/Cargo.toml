@@ -9,4 +9,4 @@ anyhow = "1.0.45"
 log = "0.4.14"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
-sqlx = { version = "0.5.7", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+sqlx = { version = "0.5.9", features = ["postgres", "runtime-tokio-rustls", "chrono"] }

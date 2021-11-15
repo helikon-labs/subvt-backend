@@ -58,12 +58,12 @@ paths:
         "400":
           description: "Invalid input"
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/ReportError"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/Error"
-  /validator/{account_id}:
+            $ref: "#/definitions/ReportError"
+  /validator/{account_id_hex}:
     get:
       tags:
         - "validator"
@@ -72,7 +72,7 @@ paths:
       produces:
         - "application/json"
       parameters:
-        - name: "account_id"
+        - name: "account_id_hex"
           in: "path"
           description: "Account id of the validator in hex format (eg. 0xdc89c6865c029c1088fb27b41c1a715b0bb611b94e1d625fa0bb8a1294187454)."
           required: true
@@ -86,8 +86,8 @@ paths:
           minimum: 1
         - name: "end_era_index"
           in: "query"
-          description: "Index of the report end era."
-          required: true
+          description: "Index of the report end era (inclusive). Report is generated for single era if this field is null."
+          required: false
           type: "integer"
           format: "int32"
       responses:
@@ -100,11 +100,11 @@ paths:
         "400":
           description: "Invalid input"
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/ReportError"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/Error"
+            $ref: "#/definitions/ReportError"
 securityDefinitions:
   api_key:
     type: "apiKey"
@@ -150,13 +150,9 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Number of active nominators in era."
-  Error:
+  ReportError:
     type: "object"
     properties:
-      code:
-        type: "integer"
-        format: "int32"
-        description: "Error code."
       description:
         type: "string"
         description: "Error description."

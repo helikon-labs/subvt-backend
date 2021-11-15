@@ -128,6 +128,11 @@ pub struct OneKVConfig {
     pub request_timeout_seconds: u64,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct ReportConfig {
+    pub max_era_index_range: u32,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -141,6 +146,7 @@ pub struct Config {
     pub redis: RedisConfig,
     pub rpc: RPCConfig,
     pub substrate: SubstrateConfig,
+    pub report: ReportConfig,
 }
 
 impl Config {

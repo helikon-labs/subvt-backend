@@ -25,3 +25,6 @@ CREATE INDEX event_rewarded_idx_block_hash
 
 CREATE INDEX event_rewarded_idx_rewardee_account_id
     ON event_rewarded (rewardee_account_id);
+
+CREATE INDEX event_rewarded_idx_extrinsic_index_block_hash_rewardee
+    ON event_rewarded (extrinsic_index, block_hash, rewardee_account_id);
