@@ -100,7 +100,7 @@ impl Service for ValidatorListServer {
             ))
             .get_matches();
         let is_active_list = !matches.is_present("inactive");
-        let last_finalized_block_number = 0;
+        let mut last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
         let prefix = format!(
@@ -147,6 +147,7 @@ impl Service for ValidatorListServer {
                     "Skip duplicate finalized block #{}.",
                     finalized_block_number
                 );
+                continue 'outer;
             }
             debug!("New finalized block #{}.", finalized_block_number);
 
@@ -254,6 +255,7 @@ impl Service for ValidatorListServer {
                 bus.broadcast(BusEvent::Update(update));
                 debug!("Update published to the bus.");
             }
+            last_finalized_block_number = finalized_block_number;
         };
         error!("{:?}", error);
         {

@@ -83,6 +83,8 @@ pub struct RPCConfig {
     pub active_validator_list_port: u16,
     /// TCP port for the inactive validator list WS RPC server.
     pub inactive_validator_list_port: u16,
+    /// TCP port for the validator details WS RPC server.
+    pub validator_details_port: u16,
 }
 
 #[derive(Clone, Debug, Deserialize)]
