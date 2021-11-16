@@ -219,16 +219,39 @@ impl PostgreSQLStorage {
     pub async fn update_era_reward_points(
         &self,
         era_index: u32,
-        reward_points_total: u32,
+        total_reward_points: u32,
     ) -> anyhow::Result<Option<i64>> {
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            UPDATE era SET reward_points_total = $1, last_updated = now()
+            UPDATE era SET total_reward_points = $1, last_updated = now()
             WHERE index = $2
             RETURNING index
             "#,
         )
-        .bind(reward_points_total)
+        .bind(total_reward_points)
+        .bind(era_index)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn update_era_total_validator_reward(
+        &self,
+        era_index: u32,
+        total_validator_reward: Balance,
+    ) -> anyhow::Result<Option<i64>> {
+        let maybe_result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            UPDATE era SET total_validator_reward = $1, last_updated = now()
+            WHERE index = $2
+            RETURNING index
+            "#,
+        )
+        .bind(total_validator_reward.to_string())
         .bind(era_index)
         .fetch_optional(&self.connection_pool)
         .await?;

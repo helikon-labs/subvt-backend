@@ -5,6 +5,7 @@ CREATE TYPE era_report AS (
 	maximum_stake VARCHAR(128),
 	average_stake VARCHAR(128),
 	median_stake VARCHAR(128),
+	total_validator_reward VARCHAR(128),
 	total_reward_points bigint,
 	total_reward bigint,
 	total_stake VARCHAR(128),
@@ -24,11 +25,11 @@ DECLARE
 BEGIN
 	SELECT E.start_timestamp, E.end_timestamp, E.active_nominator_count,
 		E.total_stake, E.minimum_stake, E.maximum_stake, E.average_stake, E.median_stake,
-		E.reward_points_total
+		E.total_validator_reward, E.total_reward_points
 	FROM era E
 	INTO result_record.start_timestamp, result_record.end_timestamp, result_record.active_nominator_count,
 		result_record.total_stake, result_record.minimum_stake, result_record.maximum_stake, result_record.average_stake,
-		result_record.median_stake, result_record.total_reward_points
+		result_record.median_stake, result_record.total_validator_reward, result_record.total_reward_points
 	WHERE E.index = era_index_param;
 	
 	SELECT COALESCE(SUM(ER.amount::bigint), 0)

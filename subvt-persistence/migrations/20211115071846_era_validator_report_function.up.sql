@@ -3,8 +3,8 @@ CREATE TYPE era_validator_report AS (
 	era_end_timestamp bigint,
     is_active boolean,
 	commission_per_billion bigint,
-	self_stake bigint,
-	total_stake bigint,
+	self_stake VARCHAR(128),
+	total_stake VARCHAR(128),
 	block_count integer,
 	reward_points integer,
 	self_reward bigint,
@@ -29,8 +29,8 @@ BEGIN
 
 	SELECT is_active, commission_per_billion, self_stake, total_stake, reward_points
 	FROM era_validator
-	INTO result_record.is_active, result_record.commission_per_billion, result_record.self_stake,
-		result_record.total_stake, result_record.reward_points
+	INTO result_record.is_active, result_record.commission_per_billion,
+	    result_record.self_stake, result_record.total_stake, result_record.reward_points
 	WHERE validator_account_id = account_id_param
 	AND era_index = era_index_param;
 

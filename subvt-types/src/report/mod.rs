@@ -29,6 +29,7 @@ pub struct EraReport {
     pub maximum_stake: Option<u128>,
     pub average_stake: Option<u128>,
     pub median_stake: Option<u128>,
+    pub total_validator_reward: Option<u128>,
     pub total_reward_points: Option<u128>,
     pub total_reward: u128,
     pub total_stake: Option<u128>,

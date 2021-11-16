@@ -623,6 +623,16 @@ impl BlockProcessor {
                     &era_stakers,
                 )
                 .await?;
+                // update last era
+                let last_era_total_validator_reward = substrate_client
+                    .get_era_total_validator_reward(active_era.index - 1, &block_hash)
+                    .await?;
+                postgres
+                    .update_era_total_validator_reward(
+                        active_era.index - 1,
+                        last_era_total_validator_reward,
+                    )
+                    .await?;
                 self.persist_era_reward_points(
                     substrate_client,
                     postgres,

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS era
     maximum_stake           VARCHAR(128)                NOT NULL,
     average_stake           VARCHAR(128)                NOT NULL,
     median_stake            VARCHAR(128)                NOT NULL,
-    reward_points_total     bigint,
+    total_validator_reward  VARCHAR(128),
+    total_reward_points     bigint,
     last_updated            TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

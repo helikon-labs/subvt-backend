@@ -8,8 +8,8 @@ type PostgresEraValidatorReport = (
     Option<i64>,
     Option<bool>,
     Option<i64>,
-    Option<i64>,
-    Option<i64>,
+    Option<String>,
+    Option<String>,
     i32,
     Option<i32>,
     i64,
@@ -22,6 +22,7 @@ type PostgresEraValidatorReport = (
 type PostgresEraReport = (
     Option<i64>,
     Option<i64>,
+    Option<String>,
     Option<String>,
     Option<String>,
     Option<String>,
@@ -73,8 +74,8 @@ impl PostgreSQLStorage {
                 era,
                 is_active: era_validator_report.2,
                 commission_per_billion: era_validator_report.3.map(|value| value as u32),
-                self_stake: era_validator_report.4.map(|value| value as u128),
-                total_stake: era_validator_report.5.map(|value| value as u128),
+                self_stake: parse_maybe_string(&era_validator_report.4)?,
+                total_stake: parse_maybe_string(&era_validator_report.5)?,
                 block_count: era_validator_report.6 as u32,
                 reward_points: era_validator_report.7.map(|value| value as u128),
                 self_reward: era_validator_report.8 as u128,
@@ -115,7 +116,7 @@ impl PostgreSQLStorage {
     async fn get_single_era_report(&self, era_index: u32) -> anyhow::Result<Option<EraReport>> {
         let era_report: PostgresEraReport = sqlx::query_as(
             r#"
-            SELECT start_timestamp, end_timestamp, minimum_stake, maximum_stake, average_stake, median_stake, total_reward_points, total_reward, total_stake, active_nominator_count, offline_offence_count, slashed_amount, chilling_count
+            SELECT start_timestamp, end_timestamp, minimum_stake, maximum_stake, average_stake, median_stake, total_validator_reward, total_reward_points, total_reward, total_stake, active_nominator_count, offline_offence_count, slashed_amount, chilling_count
             FROM get_era_report($1)
             "#
         )
@@ -138,13 +139,14 @@ impl PostgreSQLStorage {
                 maximum_stake: parse_maybe_string(&era_report.3)?,
                 average_stake: parse_maybe_string(&era_report.4)?,
                 median_stake: parse_maybe_string(&era_report.5)?,
-                total_reward_points: era_report.6.map(|value| value as u128),
-                total_reward: era_report.7 as u128,
-                total_stake: parse_maybe_string(&era_report.8)?,
-                active_nominator_count: era_report.9.map(|value| value as u64),
-                offline_offence_count: era_report.10 as u64,
-                slashed_amount: era_report.11 as u128,
-                chilling_count: era_report.12 as u64,
+                total_validator_reward: parse_maybe_string(&era_report.6)?,
+                total_reward_points: era_report.7.map(|value| value as u128),
+                total_reward: era_report.8 as u128,
+                total_stake: parse_maybe_string(&era_report.9)?,
+                active_nominator_count: era_report.10.map(|value| value as u64),
+                offline_offence_count: era_report.11 as u64,
+                slashed_amount: era_report.12 as u128,
+                chilling_count: era_report.13 as u64,
             }))
         } else {
             Ok(None)
