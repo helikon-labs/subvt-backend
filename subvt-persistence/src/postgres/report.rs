@@ -1,4 +1,5 @@
 use crate::postgres::PostgreSQLStorage;
+use std::str::FromStr;
 use subvt_types::report::{EraReport, EraValidatorReport};
 use subvt_types::substrate::Era;
 
@@ -21,18 +22,26 @@ type PostgresEraValidatorReport = (
 type PostgresEraReport = (
     Option<i64>,
     Option<i64>,
-    Option<i64>,
-    Option<i64>,
-    Option<i64>,
-    Option<i64>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
+    Option<String>,
     Option<i64>,
     i64,
-    i64,
+    Option<String>,
     Option<i32>,
     i32,
     i64,
     i32,
 );
+
+fn parse_maybe_string<T: FromStr>(maybe_string: &Option<String>) -> Result<Option<T>, T::Err> {
+    if let Some(string) = maybe_string {
+        Ok(Some(string.parse::<T>()?))
+    } else {
+        Ok(None)
+    }
+}
 
 impl PostgreSQLStorage {
     async fn get_single_era_validator_report(
@@ -125,13 +134,13 @@ impl PostgreSQLStorage {
         if let Some(era) = maybe_era {
             Ok(Some(EraReport {
                 era,
-                minimum_stake: era_report.2.map(|value| value as u128),
-                maximum_stake: era_report.3.map(|value| value as u128),
-                average_stake: era_report.4.map(|value| value as u128),
-                median_stake: era_report.5.map(|value| value as u128),
+                minimum_stake: parse_maybe_string(&era_report.2)?,
+                maximum_stake: parse_maybe_string(&era_report.3)?,
+                average_stake: parse_maybe_string(&era_report.4)?,
+                median_stake: parse_maybe_string(&era_report.5)?,
                 total_reward_points: era_report.6.map(|value| value as u128),
                 total_reward: era_report.7 as u128,
-                total_stake: era_report.8 as u128,
+                total_stake: parse_maybe_string(&era_report.8)?,
                 active_nominator_count: era_report.9.map(|value| value as u64),
                 offline_offence_count: era_report.10 as u64,
                 slashed_amount: era_report.11 as u128,

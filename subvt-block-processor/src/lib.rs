@@ -603,7 +603,12 @@ impl BlockProcessor {
                 .await?;
             if last_epoch_index != current_epoch_index {
                 debug!("New epoch. Persist era if it doesn't exist.");
-                postgres.save_era(&active_era, &era_stakers).await?;
+                let total_stake = substrate_client
+                    .get_era_total_stake(active_era.index, &block_hash)
+                    .await?;
+                postgres
+                    .save_era(&active_era, total_stake, &era_stakers)
+                    .await?;
             }
             if last_era_index != active_era.index {
                 let era_stakers = substrate_client

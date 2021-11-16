@@ -31,7 +31,7 @@ pub struct EraReport {
     pub median_stake: Option<u128>,
     pub total_reward_points: Option<u128>,
     pub total_reward: u128,
-    pub total_stake: u128,
+    pub total_stake: Option<u128>,
     pub active_nominator_count: Option<u64>,
     pub offline_offence_count: u64,
     pub slashed_amount: u128,

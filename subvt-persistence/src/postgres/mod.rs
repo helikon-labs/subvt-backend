@@ -69,6 +69,7 @@ impl PostgreSQLStorage {
     pub async fn save_era(
         &self,
         era: &Era,
+        total_stake: u128,
         era_stakers: &EraStakers,
     ) -> anyhow::Result<Option<i64>> {
         let nominator_count = {
@@ -82,8 +83,8 @@ impl PostgreSQLStorage {
         };
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            INSERT INTO era (index, start_timestamp, end_timestamp, active_nominator_count, minimum_stake, maximum_stake, average_stake, median_stake)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO era (index, start_timestamp, end_timestamp, active_nominator_count, total_stake, minimum_stake, maximum_stake, average_stake, median_stake)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (index) DO NOTHING
             RETURNING index
             "#,
@@ -92,6 +93,7 @@ impl PostgreSQLStorage {
         .bind(era.start_timestamp as i64)
         .bind(era.end_timestamp as i64)
         .bind(nominator_count)
+        .bind(total_stake.to_string())
         .bind(era_stakers.min_stake().1.to_string())
         .bind(era_stakers.max_stake().1.to_string())
         .bind(era_stakers.average_stake().to_string())

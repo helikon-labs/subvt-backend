@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS era
     start_timestamp         bigint                      NOT NULL,
     end_timestamp           bigint                      NOT NULL,
     active_nominator_count  bigint                      NOT NULL,
+    total_stake             VARCHAR(128)                NOT NULL,
     minimum_stake           VARCHAR(128)                NOT NULL,
     maximum_stake           VARCHAR(128)                NOT NULL,
     average_stake           VARCHAR(128)                NOT NULL,
