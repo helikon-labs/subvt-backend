@@ -157,6 +157,7 @@ impl Service for ReportService {
                 .service(era_report_service)
         })
         .workers(10)
+        .disable_signals()
         .bind(format!(
             "{}:{}",
             CONFIG.http.host, CONFIG.http.report_service_port,

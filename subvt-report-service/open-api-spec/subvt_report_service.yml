@@ -146,6 +146,10 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Median of stakes backing all validators."
+      total_validator_reward:
+        type: "integer"
+        format: "int64"
+        description: "Total reward distributed to the validators in era."
       total_reward_points:
         type: "integer"
         format: "int64"
