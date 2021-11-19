@@ -1,4 +1,0 @@
-[submodule "subvt-telemetry"]
-	path = subvt-telemetry
-	url = https://github.com/helikon-labs/subvt-telemetry.git
-	branch = subvt
