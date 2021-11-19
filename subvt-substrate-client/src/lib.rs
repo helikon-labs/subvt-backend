@@ -313,7 +313,7 @@ impl SubstrateClient {
                 get_storage_map_key(&self.metadata, "Identity", "IdentityOf", account_id)
             })
             .collect();
-        debug!("Got {} storage keys for identities.", keys.len());
+        trace!("Got {} storage keys for identities.", keys.len());
         if keys.is_empty() {
             return Ok(HashMap::new());
         }
@@ -321,7 +321,7 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
-        debug!("Got {} optional identities.", values[0].changes.len());
+        trace!("Got {} optional identities.", values[0].changes.len());
         let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::new();
         for (storage_key, storage_data) in values[0].changes.iter() {
             let account_id = self.account_id_from_storage_key(storage_key);
@@ -427,7 +427,11 @@ impl SubstrateClient {
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
             .await?;
-
+        debug!(
+            "There are {} validators (active and waiting).",
+            all_keys.len()
+        );
+        debug!("Get complete account, active and para-validator info for all validators.");
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
         {
             let active_validator_account_ids =
@@ -439,6 +443,7 @@ impl SubstrateClient {
              * paraScheduler.validatorGroups
              * paraScheduler.scheduled
              */
+            trace!("Get parachain validator account ids.");
             let parachain_validator_account_ids = {
                 let mut account_ids = Vec::new();
                 let parachain_validator_indices = self
@@ -475,10 +480,9 @@ impl SubstrateClient {
                 );
             }
         }
-        debug!("There are {} validators.", validator_map.len());
         // get next session keys
         {
-            debug!("Get next session keys for all validators.");
+            debug!("Get session keys for all validators.");
             let keys: Vec<String> = validator_map
                 .values()
                 .map(|validator| {
@@ -505,11 +509,10 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Got next session keys.");
         }
         // get next session active validator keys
         {
-            debug!("Get queued keys for the next session.");
+            debug!("Find out which validators are active next session.");
             let hex_string: String = self
                 .ws_client
                 .request(
@@ -525,10 +528,6 @@ impl SubstrateClient {
                     validator.active_next_session = validator.next_session_keys == session_keys;
                 }
             }
-            debug!(
-                "Got {} queued session keys for the next session.",
-                session_key_pairs.len()
-            );
         }
         // get reward destinations
         {
@@ -556,10 +555,10 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Got reward destinations.");
         }
         // get nominations
         {
+            debug!("Get all nominations.");
             let mut all_keys: Vec<String> = Vec::new();
             loop {
                 let last = all_keys.last();
@@ -587,7 +586,10 @@ impl SubstrateClient {
                 }
             }
 
-            debug!("{} nominations.", all_keys.len());
+            debug!(
+                "Got {} nomination storage keys. Accessing storage.",
+                all_keys.len()
+            );
             let mut nomination_map: HashMap<AccountId, Nomination> = HashMap::new();
             for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
@@ -604,7 +606,7 @@ impl SubstrateClient {
                 }
             }
             debug!(
-                "Got {} nominations. Get nominator account details...",
+                "Got {} nominations. Get nominator account details.",
                 nomination_map.len()
             );
             // get nominator account details
@@ -620,8 +622,8 @@ impl SubstrateClient {
                             .nominator_account = account.clone();
                     }
                 }
-                debug!("Completed fetching nominator account details.");
             }
+            debug!("Get nominator controller accounts.");
             let mut controller_storage_keys: Vec<String> = nomination_map
                 .keys()
                 .map(|nominator_account_id| {
@@ -660,11 +662,8 @@ impl SubstrateClient {
             }
             let controller_account_ids: Vec<AccountId> =
                 controller_account_id_map.values().cloned().collect();
-            debug!(
-                "Got {} controller account ids.",
-                controller_account_ids.len()
-            );
             // get validator controller account details
+            debug!("Get validator controller accounts.");
             {
                 let mut validator_controller_account_map: HashMap<AccountId, Account> =
                     HashMap::new();
@@ -678,10 +677,6 @@ impl SubstrateClient {
                         validator_controller_account_map.insert(account.id.clone(), account);
                     }
                 }
-                debug!(
-                    "Got {} validator controller account details.",
-                    validator_controller_account_map.len()
-                );
                 for validator in validator_map.values_mut() {
                     let controller_account = validator_controller_account_map
                         .get(
@@ -692,9 +687,8 @@ impl SubstrateClient {
                         .unwrap();
                     validator.controller_account = controller_account.clone();
                 }
-                debug!("Completed fetching validator controller account details.");
             }
-            debug!("Get nominations and self stakes.");
+            debug!("Get nomination amounts and self stakes.");
             // her biri için bonding'i al (staking.bonded)
             let ledger_storage_keys: Vec<String> = controller_account_ids
                 .iter()
@@ -722,7 +716,6 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Got all stakes.");
             for nomination in nomination_map.values() {
                 for account_id in nomination.target_account_ids.iter() {
                     if let Some(validator) = validator_map.get_mut(account_id) {
@@ -739,6 +732,7 @@ impl SubstrateClient {
                     hasher.finish()
                 });
             }
+            debug!("Nomination data complete.");
         }
         // get validator prefs
         {
@@ -756,18 +750,16 @@ impl SubstrateClient {
                     validator.preferences = preferences;
                 }
             }
-            debug!("Got validator preferences.");
         }
         // get active stakers
         {
-            debug!("Get era stakers.");
+            debug!("Get active stakers.");
             let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
             for validator_stake in &era_stakers.stakers {
                 if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
                     validator.validator_stake = Some(validator_stake.clone());
                 }
             }
-            debug!("Got era stakers.");
             // calculate return rates
             let total_staked = self.get_era_total_stake(era.index, block_hash).await?;
             let eras_per_day =
@@ -790,7 +782,7 @@ impl SubstrateClient {
                 }
             }
         }
-        debug!("It's done baby!");
+        debug!("Validator data complete.");
         Ok(validator_map
             .into_iter()
             .map(|(_, validator)| validator)

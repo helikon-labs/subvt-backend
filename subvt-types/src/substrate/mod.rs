@@ -557,7 +557,7 @@ pub struct Stake {
     pub stash_account_id: AccountId,
     pub total_amount: Balance,
     pub active_amount: Balance,
-    pub claimed_era_indices: Vec<u32>,
+    // pub claimed_era_indices: Vec<u32>,
 }
 
 impl Stake {
@@ -567,7 +567,7 @@ impl Stake {
             stash_account_id: ledger.stash,
             total_amount: ledger.total,
             active_amount: ledger.active,
-            claimed_era_indices: ledger.claimed_rewards,
+            // claimed_era_indices: ledger.claimed_rewards,
         };
         Ok(stake)
     }

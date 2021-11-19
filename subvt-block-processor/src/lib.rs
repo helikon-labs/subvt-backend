@@ -4,7 +4,7 @@ use async_lock::Mutex;
 use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::{debug, error};
+use log::{debug, error, trace};
 use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -756,7 +756,7 @@ impl Service for BlockProcessor {
                 let runtime_information = runtime_information.clone();
                 let postgres = postgres.clone();
                 if is_indexing_past_blocks.load(Ordering::Relaxed) {
-                    debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
+                    trace!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
                     return;
                 }
                 let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);

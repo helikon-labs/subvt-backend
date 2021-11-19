@@ -4,7 +4,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::{debug, error};
+use log::{debug, error, trace};
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
@@ -155,9 +155,8 @@ impl ValidatorListUpdater {
             .get_all_validators(finalized_block_hash.as_str(), &active_era)
             .await
             .context("Error while getting validators.")?;
-        debug!("Fetched {} validators.", validators.len());
         // enrich data with data from the relational database
-        debug!("Get database content.");
+        debug!("Get RDB content.");
         for validator in validators.iter_mut() {
             let db_validator_info = postgres
                 .get_validator_info(
@@ -180,7 +179,7 @@ impl ValidatorListUpdater {
             validator.reward_points = db_validator_info.reward_points;
             validator.heartbeat_received = db_validator_info.heartbeat_received;
         }
-        debug!("Got database content.");
+        debug!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
         ValidatorListUpdater::update_redis(
             finalized_block_number,
@@ -206,7 +205,7 @@ impl Service for ValidatorListUpdater {
                     Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
                 if is_busy.load(Ordering::Relaxed) {
-                    debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
+                    trace!("Busy processing a past block. Skip block #{}.", finalized_block_number);
                     return;
                 }
                 is_busy.store(true, Ordering::Relaxed);
@@ -220,9 +219,7 @@ impl Service for ValidatorListUpdater {
                         &finalized_block_header,
                     ).await;
                     match update_result {
-                        Ok(_) => {
-                            debug!("Update successful.");
-                        }
+                        Ok(_) => (),
                         Err(error) => {
                             error!("{:?}", error);
                             error!(
