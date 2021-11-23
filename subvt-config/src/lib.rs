@@ -55,6 +55,8 @@ pub struct CommonConfig {
 pub struct SubstrateConfig {
     /// Name of the chain (`kusama`, `polkadot`, `darwinia`, etc.).
     pub chain: String,
+    /// Hash of the genesis block of the chain.
+    pub chain_genesis_hash: String,
     /// Node WebSocket RPC URL (e.g. `wss://kusama-rpc.polkadot.io` for Kusama).
     pub rpc_url: String,
     /// RPC connection timeout in seconds.

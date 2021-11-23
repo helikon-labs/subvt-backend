@@ -13,6 +13,7 @@ members = [
     "subvt-report-service",
     "subvt-service-common",
     "subvt-substrate-client",
+    "subvt-telemetry-processor",
     "subvt-types",
     "subvt-utility",
     "subvt-validator-details-server",

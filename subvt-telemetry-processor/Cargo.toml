@@ -1,0 +1,23 @@
+[package]
+name = "subvt-telemetry-processor"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.56.0"
+
+[dependencies]
+anyhow = "1.0.45"
+# async-lock = "2.4.0"
+# async-recursion = "0.3.2"
+async-trait = "0.1.51"
+async-tungstenite = { version = "0.16.0", features = ["tokio-runtime", "tokio-native-tls"] }
+# chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
+futures = "0.3"
+lazy_static = "1.4.0"
+log = "0.4.14"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.66"
+subvt-config = { path = "../subvt-config" }
+subvt-logging = { path = "../subvt-logging" }
+subvt-persistence = { path = "../subvt-persistence" }
+subvt-service-common = { path = "../subvt-service-common" }
+tokio = { version = "1.13.0", features = ["full"] }

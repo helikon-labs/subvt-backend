@@ -15,17 +15,18 @@ pub fn init(config: &subvt_config::Config) {
     builder.filter(None, other_modules_log_level);
     builder.filter(Some("subvt_app_service"), log_level);
     builder.filter(Some("subvt_block_processor"), log_level);
-    builder.filter(Some("subvt_validator_list_server"), log_level);
-    builder.filter(Some("subvt_validator_list_updater"), log_level);
     builder.filter(Some("subvt_live_network_status_server"), log_level);
     builder.filter(Some("subvt_live_network_status_updater"), log_level);
     builder.filter(Some("subvt_onekv_updater"), log_level);
     builder.filter(Some("subvt_persistence"), log_level);
     builder.filter(Some("subvt_report_service"), log_level);
     builder.filter(Some("subvt_substrate_client"), log_level);
+    builder.filter(Some("subvt_telemetry_processor"), log_level);
     builder.filter(Some("subvt_thousand_validators_updater"), log_level);
     builder.filter(Some("subvt_types"), log_level);
     builder.filter(Some("subvt_validator_details_server"), log_level);
+    builder.filter(Some("subvt_validator_list_server"), log_level);
+    builder.filter(Some("subvt_validator_list_updater"), log_level);
     builder.write_style(WriteStyle::Always);
     builder.init();
 }
