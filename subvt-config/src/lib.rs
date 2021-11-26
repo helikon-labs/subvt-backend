@@ -137,6 +137,11 @@ pub struct ReportConfig {
     pub max_era_index_range: u32,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct TelemetryConfig {
+    pub websocket_url: String,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -151,6 +156,7 @@ pub struct Config {
     pub rpc: RPCConfig,
     pub substrate: SubstrateConfig,
     pub report: ReportConfig,
+    pub telemetry: TelemetryConfig,
 }
 
 impl Config {

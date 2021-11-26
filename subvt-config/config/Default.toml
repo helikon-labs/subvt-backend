@@ -3,8 +3,8 @@ recovery_retry_seconds = 5
 
 [substrate]
 chain = "kusama"
-# Kusama 0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe
-# Polkadot 0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3
+# Kusama    0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe
+# Polkadot  0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3
 chain_genesis_hash = "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
 rpc_url = "wss://kusama-rpc.polkadot.io:443"
 timeout_seconds = 30
@@ -51,3 +51,8 @@ request_timeout_seconds = 60
 
 [report]
 max_era_index_range = 100
+
+[telemetry]
+# W3F       wss://telemetry.w3f.community/feed
+# Polkadot  wss://feed.telemetry.polkadot.io/feed/
+websocket_url = "wss://telemetry.w3f.community/feed"
