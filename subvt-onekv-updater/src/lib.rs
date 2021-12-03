@@ -46,23 +46,54 @@ impl OneKVUpdater {
         );
         // get details for each candidate
         for (index, candidate) in candidates.iter().enumerate() {
-            let response = self
+            let response_result = self
                 .http_client
                 .get(&format!(
                     "{}{}",
                     CONFIG.onekv.candidate_details_endpoint, candidate.stash_address
                 ))
                 .send()
-                .await?;
-            let mut candidate_details: CandidateDetails = response.json().await?;
+                .await;
+            let response = match response_result {
+                Ok(response) => response,
+                Err(error) => {
+                    error!(
+                        "Error while fetching details for candidate {}:{:?}",
+                        candidate.stash_address, error
+                    );
+                    continue;
+                }
+            };
+
+            let candidate_details_result: reqwest::Result<CandidateDetails> = response.json().await;
+            let mut candidate_details = match candidate_details_result {
+                Ok(candidate_details) => candidate_details,
+                Err(error) => {
+                    error!(
+                        "Error while deserializing details JSON for candidate {}:{:?}",
+                        candidate.stash_address, error
+                    );
+                    continue;
+                }
+            };
             candidate_details.score = candidate.score.clone();
-            postgres.save_onekv_candidate(&candidate_details).await?;
-            debug!(
-                "Fetched and persisted candidate {} of {} :: {}.",
-                index + 1,
-                candidates.len(),
-                candidate.stash_address
-            );
+            let save_result = postgres.save_onekv_candidate(&candidate_details).await;
+            match save_result {
+                Ok(_) => {
+                    debug!(
+                        "Fetched and persisted candidate {} of {} :: {}.",
+                        index + 1,
+                        candidates.len(),
+                        candidate.stash_address
+                    );
+                }
+                Err(error) => {
+                    error!(
+                        "Error while persisting details of candidate {}:{:?}",
+                        candidate.stash_address, error
+                    );
+                }
+            }
         }
         info!("1KV update completed.");
         Ok(())
