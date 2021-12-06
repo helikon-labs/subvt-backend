@@ -4,3 +4,4 @@ pub mod rdb;
 pub mod report;
 pub mod substrate;
 pub mod subvt;
+pub mod telemetry;

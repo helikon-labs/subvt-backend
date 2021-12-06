@@ -6,6 +6,7 @@ rust-version = "1.56.0"
 
 [dependencies]
 anyhow = "1.0.45"
+chrono = "0.4.19"
 log = "0.4.14"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }

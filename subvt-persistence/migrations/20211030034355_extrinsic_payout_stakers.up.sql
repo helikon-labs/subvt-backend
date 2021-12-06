@@ -1,14 +1,14 @@
 CREATE TABLE IF NOT EXISTS extrinsic_payout_stakers
 (
     id                   SERIAL PRIMARY KEY,
-    block_hash           VARCHAR(66)                 NOT NULL,
-    extrinsic_index      integer                     NOT NULL,
-    is_nested_call       boolean                     NOT NULL,
-    caller_account_id    VARCHAR(66)                 NOT NULL,
-    validator_account_id VARCHAR(66)                 NOT NULL,
-    era_index            bigint                      NOT NULL,
-    is_successful        boolean                     NOT NULL,
-    last_updated         TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    block_hash           VARCHAR(66)                    NOT NULL,
+    extrinsic_index      integer                        NOT NULL,
+    is_nested_call       boolean                        NOT NULL,
+    caller_account_id    VARCHAR(66)                    NOT NULL,
+    validator_account_id VARCHAR(66)                    NOT NULL,
+    era_index            bigint                         NOT NULL,
+    is_successful        boolean                        NOT NULL,
+    last_updated         TIMESTAMP WITHOUT TIME ZONE    NOT NULL DEFAULT now(),
     CONSTRAINT extrinsic_payout_stakers_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES block (hash)

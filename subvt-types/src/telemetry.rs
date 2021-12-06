@@ -4,8 +4,8 @@ use serde_json::value::RawValue;
 
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct NodeStats {
-    peer_count: u64,
-    queued_tx_count: u64,
+    pub peer_count: u64,
+    pub queued_tx_count: u64,
 }
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -17,11 +17,11 @@ pub struct NodeIO(
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct NodeHardware(
     // upload bandwidth
-    Vec<f64>,
+    pub Vec<f64>,
     // download bandwidth
-    Vec<f64>,
+    pub Vec<f64>,
     // timestamps
-    Vec<f64>,
+    pub Vec<f64>,
 );
 
 #[derive(Debug, Deserialize, PartialEq)]
@@ -34,13 +34,13 @@ pub struct NodeLocation(
     String,
 );
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct NodeDetails {
-    name: String,
-    implementation: String,
-    version: String,
-    controller_address: Option<String>,
-    network_id: Option<String>,
+    pub name: String,
+    pub implementation: String,
+    pub version: String,
+    pub controller_address: Option<String>,
+    pub network_id: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -71,8 +71,8 @@ pub enum FeedMessage {
         block_hash: String,
     },
     AddedNode {
-        node_id: usize,
-        node: Box<NodeDetails>,
+        node_id: u64,
+        node_details: Box<NodeDetails>,
         stats: NodeStats,
         io: NodeIO,                  // can't losslessly deserialize
         hardware: Box<NodeHardware>, // can't losslessly deserialize
@@ -81,29 +81,29 @@ pub enum FeedMessage {
         startup_time: Option<u64>,
     },
     RemovedNode {
-        node_id: usize,
+        node_id: u64,
     },
     LocatedNode {
-        node_id: usize,
+        node_id: u64,
         latitude: f32,
         longitude: f32,
         city: String,
     },
     NodeImportedBlock {
-        node_id: usize,
+        node_id: u64,
         block_details: BlockDetails,
     },
     NodeFinalizedBlock {
-        node_id: usize,
+        node_id: u64,
         block_number: u64,
         block_hash: String,
     },
     NodeStatsUpdate {
-        node_id: usize,
+        node_id: u64,
         stats: NodeStats,
     },
     NodeHardware {
-        node_id: usize,
+        node_id: u64,
         hardware: NodeHardware,
     },
     TimeSync {
@@ -152,10 +152,10 @@ pub enum FeedMessage {
         block_hash: String,
     },
     StaleNode {
-        node_id: usize,
+        node_id: u64,
     },
     NodeIOUpdate {
-        node_id: usize,
+        node_id: u64,
         io: NodeIO,
     },
     UnknownValue {
@@ -219,7 +219,7 @@ impl FeedMessage {
                 ) = serde_json::from_str(raw_value.get())?;
                 FeedMessage::AddedNode {
                     node_id,
-                    node: Box::new(NodeDetails {
+                    node_details: Box::new(NodeDetails {
                         name,
                         implementation,
                         version,

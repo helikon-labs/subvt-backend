@@ -5969,6 +5969,7 @@ name = "subvt-persistence"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "log",
  "sqlx",
  "subvt-config",
@@ -6045,6 +6046,7 @@ name = "subvt-telemetry-processor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-lock",
  "async-trait",
  "async-tungstenite",
  "futures",
@@ -6056,6 +6058,7 @@ dependencies = [
  "subvt-logging",
  "subvt-persistence",
  "subvt-service-common",
+ "subvt-types",
  "tokio 1.13.0",
 ]
 

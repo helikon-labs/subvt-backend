@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS extrinsic_nominate_validator
 (
     extrinsic_nominate_id SERIAL,
-    validator_account_id  VARCHAR(66)                 NOT NULL,
-    last_updated          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    validator_account_id  VARCHAR(66)                   NOT NULL,
+    last_updated          TIMESTAMP WITHOUT TIME ZONE   NOT NULL DEFAULT now(),
     CONSTRAINT extrinsic_nominate_validator_fk_extrinsic_nominate
         FOREIGN KEY (extrinsic_nominate_id)
             REFERENCES extrinsic_nominate (id)

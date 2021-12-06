@@ -14,6 +14,7 @@ use subvt_types::{
 };
 
 pub mod report;
+pub mod telemetry;
 
 type PostgresValidatorInfo = (
     Option<i64>,
