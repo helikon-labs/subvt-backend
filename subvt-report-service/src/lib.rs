@@ -150,7 +150,7 @@ impl Service for ReportService {
         debug!("Starting HTTP service...");
         let result = HttpServer::new(move || {
             App::new()
-                .data(ServiceState {
+                .app_data(ServiceState {
                     postgres: postgres.clone(),
                 })
                 .service(era_validator_report_service)

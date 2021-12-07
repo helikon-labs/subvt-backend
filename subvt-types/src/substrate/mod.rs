@@ -10,10 +10,7 @@ use pallet_staking::{Exposure, Nominations, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
-use sp_core::{
-    crypto::{AccountId32, Ss58AddressFormat},
-    H256,
-};
+use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
 use std::collections::BTreeMap;
 use std::convert::From;
@@ -219,7 +216,7 @@ impl BlockHeader {
         for log_string in &self.digest.logs {
             let log_hex_string = log_string.trim_start_matches("0x");
             let mut log_bytes: &[u8] = &hex::decode(&log_hex_string).unwrap();
-            let digest_item: DigestItem<H256> = Decode::decode(&mut log_bytes).unwrap();
+            let digest_item: DigestItem = Decode::decode(&mut log_bytes).unwrap();
             match digest_item {
                 DigestItem::PreRuntime(consensus_engine_id, mut bytes) => {
                     let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();

@@ -32,7 +32,7 @@ use pallet_scheduler::TaskAddress;
 use pallet_staking::{EraIndex, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
-use polkadot_core_primitives::{AccountIndex, Hash, Header};
+use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
 use polkadot_primitives::v1::{
     Balance, BlockNumber, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id,
     InherentData, ValidationCode,
@@ -42,9 +42,10 @@ use polkadot_runtime_common::{
     auctions::AuctionIndex,
     claims::{EcdsaSignature, EthereumAddress, StatementKind},
 };
+use polkadot_runtime_parachains::disputes::{DisputeLocation, DisputeResult};
 use polkadot_runtime_parachains::ump::{MessageId, OverweightIndex};
 use sp_consensus_babe::{digests::NextConfigDescriptor, EquivocationProof};
-use sp_core::{sr25519::Signature, ChangesTrieConfiguration};
+use sp_core::sr25519::Signature;
 use sp_finality_grandpa::AuthorityList;
 use sp_npos_elections::{ElectionScore, Supports, VoteWeight};
 use sp_runtime::{MultiSignature, MultiSigner, Perbill, Percent, Perquintill};
@@ -74,7 +75,7 @@ pub enum ArgumentPrimitive {
     BlockNumber(BlockNumber),
     Call(SubstrateExtrinsic),
     CallHash(CallHash),
-    ChangesTrieConfiguration(ChangesTrieConfiguration),
+    CandidateHash(CandidateHash),
     CompactAuctionIndex(Compact<AuctionIndex>),
     CompactBalance(Compact<Balance>),
     CompactBlockNumber(Compact<BlockNumber>),
@@ -103,6 +104,8 @@ pub enum ArgumentPrimitive {
     DispatchError(DispatchError),
     DispatchInfo(DispatchInfo),
     DispatchResult(DispatchResult),
+    DisputeLocation(DisputeLocation),
+    DisputeResult(DisputeResult),
     EcdsaSignature(EcdsaSignature),
     ElectionCompute(ElectionCompute),
     ElectionScore(ElectionScore),
@@ -315,7 +318,7 @@ generate_argument_primitive_decoder_impl! {[
     ("T::BlockNumber", decode_t_block_number, BlockNumber),
     ("CallHash", decode_call_hash_1, CallHash),
     ("CallHashOf<T>", decode_call_hash_2, CallHash),
-    ("ChangesTrieConfiguration", decode_changes_trie_configuration, ChangesTrieConfiguration),
+    ("CandidateHash", decode_candidate_hash, CandidateHash),
     ("CandidateReceipt<Hash>", decode_candidate_receipt_1, CandidateReceipt),
     ("CandidateReceipt<T::Hash>", decode_candidate_receipt_2, CandidateReceipt),
     ("MemberCount", decode_collective_member_count, CollectiveMemberCount),
@@ -346,6 +349,8 @@ generate_argument_primitive_decoder_impl! {[
     ("DispatchInfo", decode_dispatch_info, DispatchInfo),
     ("DispatchError", decode_dispatch_error, DispatchError),
     ("DispatchResult", decode_dispatch_result, DispatchResult),
+    ("DisputeLocation", decode_dispute_location, DisputeLocation),
+    ("DisputeResult", decode_dispute_result, DisputeResult),
     ("EcdsaSignature", decode_ecdsa_signature, EcdsaSignature),
     ("ElectionCompute", decode_election_compute, ElectionCompute),
     ("ElectionSize", decode_election_size, ElectionSize),
@@ -606,6 +611,8 @@ impl Argument {
                     || name == "Box<RawSolution<SolutionOf<T>>>"
                     || name == "RawSolution<CompactOf<T>>"
                     || name == "CompactAssignments"
+                    || name == "Box<T::PalletsOrigin>"
+                    || name == "ChangesTrieConfiguration"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
@@ -617,16 +624,18 @@ impl Argument {
                     || name == "Box<<T as Config<I>>::Proposal>"
                     || name == "Box<<T as Trait<I>>::Proposal>"
                     || name == "OpaqueCall"
+                    || name == "OpaqueCall<T>"
                 {
-                    if name == "OpaqueCall" {
+                    if name == "OpaqueCall" || name == "OpaqueCall<T>" {
                         let vector_length_result: Result<Compact<u64>, _> =
                             Decode::decode(&mut *bytes);
                         match vector_length_result {
                             Ok(_) => (),
                             Err(_) => {
-                                return Err(ArgumentDecodeError::DecodeError(
-                                    "Cannot decode byte vector length for OpaqueCall.".to_string(),
-                                ))
+                                return Err(ArgumentDecodeError::DecodeError(format!(
+                                    "Cannot decode byte vector length for {}.",
+                                    name
+                                )))
                             }
                         }
                     }
