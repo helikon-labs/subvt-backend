@@ -17,7 +17,7 @@ impl PostgreSQLStorage {
         let networks: Vec<PostgresNetwork> = sqlx::query_as(
             r#"
             SELECT id, hash, name, app_service_url, live_network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
-            FROM network
+            FROM app_network
             ORDER BY id ASC
             "#
         )

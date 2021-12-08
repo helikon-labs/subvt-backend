@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS network
+CREATE TABLE IF NOT EXISTS app_network
 (
     id SERIAL PRIMARY KEY,
     hash VARCHAR(66) NOT NULL,
@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS network
     CONSTRAINT network_u_name UNIQUE (name)
 );
 
-INSERT INTO network(hash, name) VALUES('0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe', 'Kusama');
-INSERT INTO network(hash, name) VALUES('0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3', 'Polkadot');
+INSERT INTO app_network(hash, name) VALUES('0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe', 'Kusama');
+INSERT INTO app_network(hash, name) VALUES('0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3', 'Polkadot');
