@@ -1,0 +1,66 @@
+swagger: "2.0"
+info:
+  description: "Specifies the SubVT mobile application service endpoints."
+  version: "0.1.0"
+  title: "SubVT Application Service"
+  termsOfService: "https://helikon.io/terms/"
+  contact:
+    email: "info@helikon.io"
+  license:
+    name: "GPL-3.0"
+    url: "https://www.gnu.org/licenses/gpl-3.0.en.html"
+host: "subvt.helikon.io"
+basePath: "/service/app"
+tags:
+  - name: "app"
+    description: "Mobile application services."
+    externalDocs:
+      description: "Find out more"
+      url: "https://subvt.helikon.io"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /network:
+    get:
+      tags:
+        - "app"
+      summary: "Get a list of supported networks."
+      description: ""
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Network"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/ReportError"
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "api_key"
+    in: "header"
+definitions:
+  ReportError:
+    type: "object"
+    properties:
+      description:
+        type: "string"
+        description: "Error description."
+  Network:
+    type: "object"
+    properties:
+      hash:
+        type: "string"
+        description: "Genesis block hash of the network (e.g. 0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe for Kusama)."
+      name:
+        type: "string"
+        description: "Network name (e.g. Polkadot, Kusama)."
+externalDocs:
+  description: "Find out more about SubVT"
+  url: "http://subvt.helikon.io"

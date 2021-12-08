@@ -58,11 +58,11 @@ paths:
         "400":
           description: "Invalid input"
           schema:
-            $ref: "#/definitions/ReportError"
+            $ref: "#/definitions/ReportServiceError"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/ReportError"
+            $ref: "#/definitions/ReportServiceError"
   /validator/{account_id_hex}:
     get:
       tags:
@@ -100,11 +100,11 @@ paths:
         "400":
           description: "Invalid input"
           schema:
-            $ref: "#/definitions/ReportError"
+            $ref: "#/definitions/ReportServiceError"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/ReportError"
+            $ref: "#/definitions/ReportServiceError"
 securityDefinitions:
   api_key:
     type: "apiKey"
@@ -178,7 +178,7 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Number of validator chilling events in era."
-  ReportError:
+  ReportServiceError:
     type: "object"
     properties:
       description:

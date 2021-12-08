@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -7,7 +8,7 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::Service;
-use subvt_types::report::ReportError;
+use subvt_types::report::ReportServiceError;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -41,7 +42,7 @@ async fn era_validator_report_service(
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .body(
-                    serde_json::to_string(&ReportError {
+                    serde_json::to_string(&ReportServiceError {
                         description: "End era index cannot be less than start era index."
                             .to_string(),
                     })
@@ -53,7 +54,7 @@ async fn era_validator_report_service(
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .body(
-                    serde_json::to_string(&ReportError {
+                    serde_json::to_string(&ReportServiceError {
                         description: format!(
                             "Report cannot span {} eras. Maximum allowed is {}.",
                             era_count, CONFIG.report.max_era_index_range
@@ -78,7 +79,7 @@ async fn era_validator_report_service(
         Err(error) => HttpResponse::InternalServerError()
             .content_type("application/json")
             .body(
-                serde_json::to_string(&ReportError {
+                serde_json::to_string(&ReportServiceError {
                     description: format!("{:?}", error),
                 })
                 .unwrap(),
@@ -96,7 +97,7 @@ async fn era_report_service(
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .body(
-                    serde_json::to_string(&ReportError {
+                    serde_json::to_string(&ReportServiceError {
                         description: "End era index cannot be less than start era index."
                             .to_string(),
                     })
@@ -108,7 +109,7 @@ async fn era_report_service(
             return HttpResponse::InternalServerError()
                 .content_type("application/json")
                 .body(
-                    serde_json::to_string(&ReportError {
+                    serde_json::to_string(&ReportServiceError {
                         description: format!(
                             "Report cannot span {} eras. Maximum allowed is {}.",
                             era_count, CONFIG.report.max_era_index_range
@@ -132,7 +133,7 @@ async fn era_report_service(
         Err(error) => HttpResponse::InternalServerError()
             .content_type("application/json")
             .body(
-                serde_json::to_string(&ReportError {
+                serde_json::to_string(&ReportServiceError {
                     description: format!("{:?}", error),
                 })
                 .unwrap(),
@@ -150,9 +151,9 @@ impl Service for ReportService {
         debug!("Starting HTTP service...");
         let result = HttpServer::new(move || {
             App::new()
-                .app_data(ServiceState {
+                .app_data(Data::new(ServiceState {
                     postgres: postgres.clone(),
-                })
+                }))
                 .service(era_validator_report_service)
                 .service(era_report_service)
         })

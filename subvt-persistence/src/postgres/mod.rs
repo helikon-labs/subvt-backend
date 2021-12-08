@@ -13,6 +13,7 @@ use subvt_types::{
     },
 };
 
+pub mod app;
 pub mod report;
 pub mod telemetry;
 
