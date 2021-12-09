@@ -52,7 +52,7 @@ impl PostgreSQLStorage {
     pub async fn save_account(&self, account_id: &AccountId) -> anyhow::Result<Option<AccountId>> {
         let maybe_result: Option<(String,)> = sqlx::query_as(
             r#"
-            INSERT INTO account (id)
+            INSERT INTO sub_account (id)
             VALUES ($1)
             ON CONFLICT (id) DO NOTHING
             RETURNING id
@@ -85,7 +85,7 @@ impl PostgreSQLStorage {
         };
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            INSERT INTO era (index, start_timestamp, end_timestamp, active_nominator_count, total_stake, minimum_stake, maximum_stake, average_stake, median_stake)
+            INSERT INTO sub_era (index, start_timestamp, end_timestamp, active_nominator_count, total_stake, minimum_stake, maximum_stake, average_stake, median_stake)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (index) DO NOTHING
             RETURNING index
@@ -122,7 +122,7 @@ impl PostgreSQLStorage {
             // create validator account (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO account (id)
+                INSERT INTO sub_account (id)
                 VALUES ($1)
                 ON CONFLICT (id) DO NOTHING
                 "#,
@@ -141,7 +141,7 @@ impl PostgreSQLStorage {
             // create record (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO era_validator (era_index, validator_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
+                INSERT INTO sub_era_validator (era_index, validator_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
@@ -166,7 +166,7 @@ impl PostgreSQLStorage {
         for validator_stake in &era_stakers.stakers {
             sqlx::query(
                 r#"
-                INSERT INTO account (id)
+                INSERT INTO sub_account (id)
                 VALUES ($1)
                 ON CONFLICT (id) DO NOTHING
                 "#,
@@ -178,7 +178,7 @@ impl PostgreSQLStorage {
                 // create nominator account (if not exists)
                 sqlx::query(
                     r#"
-                INSERT INTO account (id)
+                INSERT INTO sub_account (id)
                 VALUES ($1)
                 ON CONFLICT (id) DO NOTHING
                 "#,
@@ -188,7 +188,7 @@ impl PostgreSQLStorage {
                 .await?;
                 sqlx::query(
                     r#"
-                INSERT INTO era_staker (era_index, validator_account_id, nominator_account_id, stake)
+                INSERT INTO sub_era_staker (era_index, validator_account_id, nominator_account_id, stake)
                 VALUES ($1, $2, $3, $4)
                 ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
                 "#,
@@ -208,7 +208,7 @@ impl PostgreSQLStorage {
     pub async fn era_exists(&self, era_index: u32) -> anyhow::Result<bool> {
         let era_record_count: (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(index) FROM era
+            SELECT COUNT(index) FROM sub_era
             WHERE index = $1
             "#,
         )
@@ -225,7 +225,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<Option<i64>> {
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            UPDATE era SET total_reward_points = $1, last_updated = now()
+            UPDATE sub_era SET total_reward_points = $1, updated_at = now()
             WHERE index = $2
             RETURNING index
             "#,
@@ -248,7 +248,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<Option<i64>> {
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            UPDATE era SET total_validator_reward = $1, last_updated = now()
+            UPDATE sub_era SET total_validator_reward = $1, updated_at = now()
             WHERE index = $2
             RETURNING index
             "#,
@@ -273,7 +273,7 @@ impl PostgreSQLStorage {
         for (validator_account_id, reward_points) in era_reward_points_map {
             sqlx::query(
                 r#"
-                UPDATE era_validator SET reward_points = $1, last_updated = now()
+                UPDATE sub_era_validator SET reward_points = $1, updated_at = now()
                 WHERE era_index = $2 AND validator_account_id = $3
                 "#,
             )
@@ -303,7 +303,7 @@ impl PostgreSQLStorage {
         }
         let maybe_result: Option<(String, )> = sqlx::query_as(
             r#"
-            INSERT INTO block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, is_finalized, metadata_version, runtime_version)
+            INSERT INTO sub_block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, is_finalized, metadata_version, runtime_version)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             ON CONFLICT (hash) DO NOTHING
             RETURNING hash
@@ -340,7 +340,7 @@ impl PostgreSQLStorage {
         self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_heartbeat_received (block_hash, extrinsic_index, session_index, im_online_key, validator_account_id)
+            INSERT INTO sub_event_heartbeat_received (block_hash, extrinsic_index, session_index, im_online_key, validator_account_id)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
@@ -364,7 +364,7 @@ impl PostgreSQLStorage {
             self.save_account(&identification_tuple.0).await?;
             sqlx::query(
                 r#"
-                INSERT INTO event_validator_offline (block_hash, validator_account_id)
+                INSERT INTO sub_event_validator_offline (block_hash, validator_account_id)
                 VALUES ($1, $2)
                 ON CONFLICT (block_hash, validator_account_id) DO NOTHING
                 "#,
@@ -389,7 +389,7 @@ impl PostgreSQLStorage {
         self.save_account(nominator_account_id).await?;
         let maybe_extrinsic_nominate_id: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, nominator_account_id, is_successful)
+            INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, nominator_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (block_hash, nominator_account_id) DO NOTHING
             RETURNING id
@@ -407,7 +407,7 @@ impl PostgreSQLStorage {
                 self.save_account(validator_account_id).await?;
                 sqlx::query(
                     r#"
-                INSERT INTO extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
+                INSERT INTO sub_extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
                 VALUES ($1, $2)
                 ON CONFLICT (extrinsic_nominate_id, validator_account_id) DO NOTHING
                 "#)
@@ -429,7 +429,7 @@ impl PostgreSQLStorage {
         self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_validator_chilled (block_hash, extrinsic_index, validator_account_id)
+            INSERT INTO sub_event_validator_chilled (block_hash, extrinsic_index, validator_account_id)
             VALUES ($1, $2, $3)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
@@ -452,7 +452,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO event_era_paid (block_hash, extrinsic_index, era_index, validator_payout, remainder)
+            INSERT INTO sub_event_era_paid (block_hash, extrinsic_index, era_index, validator_payout, remainder)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (era_index) DO NOTHING
             "#)
@@ -477,7 +477,7 @@ impl PostgreSQLStorage {
         self.save_account(nominator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO event_nominator_kicked (block_hash, extrinsic_index, validator_account_id, nominator_account_id)
+            INSERT INTO sub_event_nominator_kicked (block_hash, extrinsic_index, validator_account_id, nominator_account_id)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, validator_account_id, nominator_account_id) DO NOTHING
             "#)
@@ -500,7 +500,7 @@ impl PostgreSQLStorage {
         self.save_account(rewardee_account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO event_rewarded (block_hash, extrinsic_index, rewardee_account_id, amount)
+            INSERT INTO sub_event_rewarded (block_hash, extrinsic_index, rewardee_account_id, amount)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, rewardee_account_id) DO NOTHING
             RETURNING id
@@ -529,7 +529,7 @@ impl PostgreSQLStorage {
         self.save_account(validator_account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO event_slashed (block_hash, extrinsic_index, validator_account_id, amount)
+            INSERT INTO sub_event_slashed (block_hash, extrinsic_index, validator_account_id, amount)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             RETURNING id
@@ -557,7 +557,7 @@ impl PostgreSQLStorage {
         self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO event_new_account (block_hash, extrinsic_index, account_id)
+            INSERT INTO sub_event_new_account (block_hash, extrinsic_index, account_id)
             VALUES ($1, $2, $3)
             ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
@@ -574,7 +574,7 @@ impl PostgreSQLStorage {
         // update account
         let maybe_result: Option<(String,)> = sqlx::query_as(
             r#"
-            UPDATE account SET discovered_at_block_hash = $1, last_updated = now()
+            UPDATE sub_account SET discovered_at_block_hash = $1, updated_at = now()
             WHERE id = $2
             RETURNING id
             "#,
@@ -599,7 +599,7 @@ impl PostgreSQLStorage {
         self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO event_killed_account (block_hash, extrinsic_index, account_id)
+            INSERT INTO sub_event_killed_account (block_hash, extrinsic_index, account_id)
             VALUES ($1, $2, $3)
             ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
@@ -616,7 +616,7 @@ impl PostgreSQLStorage {
         // update account
         let maybe_result: Option<(String,)> = sqlx::query_as(
             r#"
-            UPDATE account SET killed_at_block_hash = $1, last_updated = now()
+            UPDATE sub_account SET killed_at_block_hash = $1, updated_at = now()
             WHERE id = $2
             RETURNING id
             "#,
@@ -635,7 +635,7 @@ impl PostgreSQLStorage {
     pub async fn get_processed_block_height(&self) -> anyhow::Result<i64> {
         let processed_block_height: (i64,) = sqlx::query_as(
             r#"
-            SELECT COALESCE(MAX(number), -1) from block
+            SELECT COALESCE(MAX(number), -1) from sub_block
             "#,
         )
         .fetch_one(&self.connection_pool)
@@ -650,7 +650,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO event_batch_item_completed (block_hash, extrinsic_index)
+            INSERT INTO sub_event_batch_item_completed (block_hash, extrinsic_index)
             VALUES ($1, $2)
             "#,
         )
@@ -670,7 +670,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO event_batch_interrupted (block_hash, extrinsic_index, item_index, dispatch_error_debug)
+            INSERT INTO sub_event_batch_interrupted (block_hash, extrinsic_index, item_index, dispatch_error_debug)
             VALUES ($1, $2, $3, $4)
             "#)
             .bind(block_hash)
@@ -689,7 +689,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO event_batch_completed (block_hash, extrinsic_index)
+            INSERT INTO sub_event_batch_completed (block_hash, extrinsic_index)
             VALUES ($1, $2)
             "#,
         )
@@ -712,7 +712,7 @@ impl PostgreSQLStorage {
         self.save_account(controller_account_id).await?;
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_validate (block_hash, extrinsic_index, is_nested_call, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
+            INSERT INTO sub_extrinsic_validate (block_hash, extrinsic_index, is_nested_call, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (block_hash, controller_account_id) DO NOTHING
             RETURNING id
@@ -747,7 +747,7 @@ impl PostgreSQLStorage {
         self.save_account(validator_account_id).await?;
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful)
+            INSERT INTO sub_extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING id
             "#,
@@ -778,7 +778,7 @@ impl PostgreSQLStorage {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
             SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, is_enrolled_in_onekv, blocks_authored, reward_points, heartbeat_received
-            FROM get_validator_info($1, $2, $3, $4)
+            FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
             .bind(block_hash)
@@ -826,7 +826,7 @@ impl PostgreSQLStorage {
         self.save_account(&validator_account_id).await?;
         let candidate_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion)
+            INSERT INTO sub_onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
             RETURNING id
             "#,
@@ -866,7 +866,7 @@ impl PostgreSQLStorage {
         for validity in &candidate_details.validity {
             sqlx::query(
                 r#"
-                INSERT INTO onekv_candidate_validity (onekv_id, onekv_candidate_id, validator_account_id, details, is_valid, ty, updated_at)
+                INSERT INTO sub_onekv_candidate_validity (onekv_id, onekv_candidate_id, validator_account_id, details, is_valid, ty, validity_updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 ON CONFLICT (id) DO NOTHING
                 "#,
@@ -884,7 +884,7 @@ impl PostgreSQLStorage {
         for rank_event in &candidate_details.rank_events {
             sqlx::query(
                 r#"
-                INSERT INTO onekv_candidate_rank_event (onekv_id, validator_account_id, active_era, start_era, happened_at)
+                INSERT INTO sub_onekv_candidate_rank_event (onekv_id, validator_account_id, active_era, start_era, happened_at)
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (onekv_id) DO NOTHING
                 "#,
@@ -900,7 +900,7 @@ impl PostgreSQLStorage {
         for fault_event in &candidate_details.fault_events {
             sqlx::query(
                 r#"
-                INSERT INTO onekv_candidate_fault_event (onekv_id, validator_account_id, previous_rank, reason, happened_at)
+                INSERT INTO sub_onekv_candidate_fault_event (onekv_id, validator_account_id, previous_rank, reason, happened_at)
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (onekv_id) DO NOTHING
                 "#,
@@ -918,7 +918,7 @@ impl PostgreSQLStorage {
         // only keep the last two records
         let candidate_record_count: (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(DISTINCT id) FROM onekv_candidate
+            SELECT COUNT(DISTINCT id) FROM sub_onekv_candidate
             WHERE validator_account_id = $1
             "#,
         )
@@ -928,10 +928,10 @@ impl PostgreSQLStorage {
         if candidate_record_count.0 > 2 {
             sqlx::query(
                 r#"
-                DELETE FROM onekv_candidate
+                DELETE FROM sub_onekv_candidate
                 WHERE id IN
                 (
-                    SELECT id FROM onekv_candidate
+                    SELECT id FROM sub_onekv_candidate
                     WHERE validator_account_id = $1
                     ORDER BY id ASC
                     LIMIT $2
@@ -958,7 +958,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<Option<i32>> {
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, block_number, session_index, validator_index, validator_account_id, is_successful)
+            INSERT INTO sub_extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, block_number, session_index, validator_index, validator_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             "#,

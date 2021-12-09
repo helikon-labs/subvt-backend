@@ -1,2 +1,2 @@
-SELECT remove_retention_policy('telemetry_node_network_stats');
-DROP TABLE telemetry_node_network_stats CASCADE;
+SELECT remove_retention_policy('sub_telemetry_node_network_stats');
+DROP TABLE sub_telemetry_node_network_stats CASCADE;

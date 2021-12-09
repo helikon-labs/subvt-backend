@@ -1,1 +1,1 @@
-DROP TABLE telemetry_node CASCADE;
+DROP TABLE sub_telemetry_node CASCADE;

@@ -1,1 +1,1 @@
-DROP TABLE era_validator CASCADE;
+DROP TABLE sub_era_validator CASCADE;

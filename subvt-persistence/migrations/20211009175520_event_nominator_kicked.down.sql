@@ -1,1 +1,1 @@
-DROP TABLE event_nominator_kicked CASCADE;
+DROP TABLE sub_event_nominator_kicked CASCADE;

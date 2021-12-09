@@ -1,1 +1,1 @@
-DROP TABLE event_validator_offline CASCADE;
+DROP TABLE sub_event_validator_offline CASCADE;

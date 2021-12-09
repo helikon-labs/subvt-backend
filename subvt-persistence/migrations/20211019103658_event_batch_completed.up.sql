@@ -1,12 +1,13 @@
-CREATE TABLE IF NOT EXISTS event_batch_completed
+CREATE TABLE IF NOT EXISTS sub_event_batch_completed
 (
     id              SERIAL PRIMARY KEY,
-    block_hash      VARCHAR(66)                 NOT NULL,
+    block_hash      VARCHAR(66) NOT NULL,
     extrinsic_index integer,
-    last_updated    TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT event_batch_item_completed_fk_block
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT sub_event_batch_completed_fk_block
         FOREIGN KEY (block_hash)
-            REFERENCES block (hash)
+            REFERENCES sub_block (hash)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );

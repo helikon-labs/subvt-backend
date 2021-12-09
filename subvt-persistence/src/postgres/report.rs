@@ -53,7 +53,7 @@ impl PostgreSQLStorage {
         let era_validator_report: PostgresEraValidatorReport = sqlx::query_as(
             r#"
             SELECT era_start_timestamp, era_end_timestamp, is_active, commission_per_billion, self_stake, total_stake, block_count, reward_points, self_reward, staker_reward, offline_offence_count, slashed_amount, chilling_count
-            FROM get_era_validator_report($1, $2)
+            FROM sub_get_era_validator_report($1, $2)
             "#
         )
             .bind(era_index as i64)
@@ -117,7 +117,7 @@ impl PostgreSQLStorage {
         let era_report: PostgresEraReport = sqlx::query_as(
             r#"
             SELECT start_timestamp, end_timestamp, minimum_stake, maximum_stake, average_stake, median_stake, total_validator_reward, total_reward_points, total_reward, total_stake, active_nominator_count, offline_offence_count, slashed_amount, chilling_count
-            FROM get_era_report($1)
+            FROM sub_get_era_report($1)
             "#
         )
             .bind(era_index as i64)

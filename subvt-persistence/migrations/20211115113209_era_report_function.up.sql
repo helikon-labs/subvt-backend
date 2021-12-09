@@ -1,4 +1,4 @@
-CREATE TYPE era_report AS (
+CREATE TYPE sub_era_report AS (
 	start_timestamp bigint,
 	end_timestamp bigint,
 	minimum_stake VARCHAR(128),
@@ -15,25 +15,25 @@ CREATE TYPE era_report AS (
 	chilling_count integer
 );
 
-CREATE OR REPLACE FUNCTION get_era_report (era_index_param bigint)
-RETURNS era_report
+CREATE OR REPLACE FUNCTION sub_get_era_report (era_index_param bigint)
+RETURNS sub_era_report
 AS $$
 
 DECLARE
-    result_record era_report;
+    result_record sub_era_report;
 
 BEGIN
 	SELECT E.start_timestamp, E.end_timestamp, E.active_nominator_count,
 		E.total_stake, E.minimum_stake, E.maximum_stake, E.average_stake, E.median_stake,
 		E.total_validator_reward, E.total_reward_points
-	FROM era E
+	FROM sub_era E
 	INTO result_record.start_timestamp, result_record.end_timestamp, result_record.active_nominator_count,
 		result_record.total_stake, result_record.minimum_stake, result_record.maximum_stake, result_record.average_stake,
 		result_record.median_stake, result_record.total_validator_reward, result_record.total_reward_points
 	WHERE E.index = era_index_param;
 	
 	SELECT COALESCE(SUM(ER.amount::bigint), 0)
-	FROM event_rewarded ER, extrinsic_payout_stakers EPS
+	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
 	INTO result_record.total_reward
 	WHERE EPS.era_index = era_index_param
 	AND EPS.extrinsic_index = ER.extrinsic_index
@@ -41,19 +41,19 @@ BEGIN
 	AND EPS.is_successful = true;
 	
 	SELECT COUNT(DISTINCT EVO.id)
-	FROM event_validator_offline EVO, block B
+	FROM sub_event_validator_offline EVO, sub_block B
 	INTO result_record.offline_offence_count
 	WHERE EVO.block_hash = B.hash
 	AND B.era_index = era_index_param;
 	
 	SELECT COALESCE(SUM(ES.amount::bigint), 0)
-	FROM event_slashed ES, block B
+	FROM sub_event_slashed ES, sub_block B
 	INTO result_record.slashed_amount
 	WHERE ES.block_hash = B.hash
 	AND B.era_index = era_index_param;
 	
 	SELECT COUNT(DISTINCT EVC.id)
-	FROM event_validator_chilled EVC, block B
+	FROM sub_event_validator_chilled EVC, sub_block B
 	INTO result_record.chilling_count
 	WHERE EVC.block_hash = B.hash
 	AND B.era_index = era_index_param;

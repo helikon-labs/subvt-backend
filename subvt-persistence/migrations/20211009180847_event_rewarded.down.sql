@@ -1,1 +1,1 @@
-DROP TABLE event_rewarded CASCADE;
+DROP TABLE sub_event_rewarded CASCADE;

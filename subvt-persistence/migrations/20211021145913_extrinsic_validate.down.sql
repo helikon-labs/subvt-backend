@@ -1,1 +1,1 @@
-DROP TABLE extrinsic_validate CASCADE;
+DROP TABLE sub_extrinsic_validate CASCADE;

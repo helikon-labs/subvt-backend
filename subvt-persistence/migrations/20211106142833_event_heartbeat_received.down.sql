@@ -1,1 +1,1 @@
-DROP TABLE event_heartbeat_received CASCADE;
+DROP TABLE sub_event_heartbeat_received CASCADE;

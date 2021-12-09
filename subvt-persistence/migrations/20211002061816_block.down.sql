@@ -1,1 +1,1 @@
-DROP TABLE block CASCADE;
+DROP TABLE sub_block CASCADE;

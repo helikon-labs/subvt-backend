@@ -1,1 +1,1 @@
-DROP TABLE event_slashed CASCADE;
+DROP TABLE sub_event_slashed CASCADE;

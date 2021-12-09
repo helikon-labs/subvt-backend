@@ -1,1 +1,1 @@
-DROP TABLE onekv_candidate CASCADE;
+DROP TABLE sub_onekv_candidate CASCADE;

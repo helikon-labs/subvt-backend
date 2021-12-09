@@ -1,1 +1,1 @@
-DROP TABLE extrinsic_payout_stakers CASCADE;
+DROP TABLE sub_extrinsic_payout_stakers CASCADE;

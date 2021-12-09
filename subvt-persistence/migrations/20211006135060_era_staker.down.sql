@@ -1,1 +1,1 @@
-DROP TABLE era_staker CASCADE;
+DROP TABLE sub_era_staker CASCADE;

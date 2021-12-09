@@ -1,1 +1,1 @@
-DROP TABLE extrinsic_nominate_validator CASCADE;
+DROP TABLE sub_extrinsic_nominate_validator CASCADE;

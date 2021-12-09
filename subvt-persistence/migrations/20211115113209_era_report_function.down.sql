@@ -1,2 +1,2 @@
-DROP FUNCTION IF EXISTS get_era_report;
-DROP TYPE IF EXISTS era_report;
+DROP FUNCTION IF EXISTS sub_get_era_report;
+DROP TYPE IF EXISTS sub_era_report;

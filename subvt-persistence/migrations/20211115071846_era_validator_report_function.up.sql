@@ -1,4 +1,4 @@
-CREATE TYPE era_validator_report AS (
+CREATE TYPE sub_era_validator_report AS (
 	era_start_timestamp bigint,
 	era_end_timestamp bigint,
     is_active boolean,
@@ -14,34 +14,34 @@ CREATE TYPE era_validator_report AS (
 	chilling_count integer
 );
 
-CREATE OR REPLACE FUNCTION get_era_validator_report (era_index_param bigint, account_id_param VARCHAR(66))
-RETURNS era_validator_report
+CREATE OR REPLACE FUNCTION sub_get_era_validator_report (era_index_param bigint, account_id_param VARCHAR(66))
+RETURNS sub_era_validator_report
 AS $$
 
 DECLARE
-    result_record era_validator_report;
+    result_record sub_era_validator_report;
 
 BEGIN
 	SELECT E.start_timestamp, E.end_timestamp
-	FROM era E
+	FROM sub_era E
 	INTO result_record.era_start_timestamp, result_record.era_end_timestamp
 	WHERE E.index = era_index_param;
 
 	SELECT is_active, commission_per_billion, self_stake, total_stake, reward_points
-	FROM era_validator
+	FROM sub_era_validator
 	INTO result_record.is_active, result_record.commission_per_billion,
 	    result_record.self_stake, result_record.total_stake, result_record.reward_points
 	WHERE validator_account_id = account_id_param
 	AND era_index = era_index_param;
 
 	SELECT COUNT(DISTINCT B.number)
-	FROM block B
+	FROM sub_block B
 	INTO result_record.block_count
 	WHERE B.author_account_id = account_id_param
 	AND B.era_index = era_index_param;
 
 	SELECT COALESCE(SUM(ER.amount::bigint), 0)
-	FROM event_rewarded ER, extrinsic_payout_stakers EPS
+	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
 	INTO result_record.self_reward
 	WHERE EPS.era_index = era_index_param
 	AND EPS.extrinsic_index = ER.extrinsic_index
@@ -50,7 +50,7 @@ BEGIN
 	AND ER.rewardee_account_id = account_id_param;
 
 	SELECT COALESCE(SUM(ER.amount::bigint), 0)
-	FROM event_rewarded ER, extrinsic_payout_stakers EPS
+	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
 	INTO result_record.staker_reward
 	WHERE EPS.era_index = era_index_param
 	AND EPS.extrinsic_index = ER.extrinsic_index
@@ -60,21 +60,21 @@ BEGIN
 	AND EPS.validator_account_id = account_id_param;
 
 	SELECT COUNT(DISTINCT EVO.id)
-	FROM event_validator_offline EVO, block B
+	FROM sub_event_validator_offline EVO, sub_block B
 	INTO result_record.offline_offence_count
 	WHERE EVO.validator_account_id = account_id_param
 	AND EVO.block_hash = B.hash
 	AND B.era_index = era_index_param;
 
 	SELECT COALESCE(SUM(ES.amount::bigint), 0)
-	FROM event_slashed ES, block B
+	FROM sub_event_slashed ES, sub_block B
 	INTO result_record.slashed_amount
 	WHERE ES.validator_account_id = account_id_param
 	AND ES.block_hash = B.hash
 	AND B.era_index = era_index_param;
 
 	SELECT COUNT(DISTINCT EVC.id)
-	FROM event_validator_chilled EVC, block B
+	FROM sub_event_validator_chilled EVC, sub_block B
 	INTO result_record.chilling_count
 	WHERE EVC.validator_account_id = account_id_param
 	AND EVC.block_hash = B.hash

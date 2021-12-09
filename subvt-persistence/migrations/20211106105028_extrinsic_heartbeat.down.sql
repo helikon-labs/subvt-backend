@@ -1,1 +1,1 @@
-DROP TABLE extrinsic_heartbeat CASCADE;
+DROP TABLE sub_extrinsic_heartbeat CASCADE;

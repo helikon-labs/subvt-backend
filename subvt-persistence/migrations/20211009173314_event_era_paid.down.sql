@@ -1,1 +1,1 @@
-DROP TABLE event_era_paid CASCADE;
+DROP TABLE sub_event_era_paid CASCADE;

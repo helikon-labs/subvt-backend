@@ -1,1 +1,1 @@
-DROP TABLE event_new_account CASCADE;
+DROP TABLE sub_event_new_account CASCADE;
