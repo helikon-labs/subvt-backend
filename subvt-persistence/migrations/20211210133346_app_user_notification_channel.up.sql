@@ -22,3 +22,6 @@ CREATE TABLE IF NOT EXISTS app_user_notification_channel
 
 CREATE INDEX app_user_notification_channel_idx_user_id
     ON app_user_notification_channel (user_id);
+
+CREATE INDEX app_user_notification_channel_idx_user_id_channel
+    ON app_user_notification_channel (user_id, notification_channel_name);

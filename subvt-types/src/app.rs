@@ -24,8 +24,13 @@ pub struct Network {
     pub validator_list_service_url: Option<String>,
 }
 
+fn default_id() -> u32 {
+    0
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct User {
+    #[serde(default = "default_id")]
     pub id: u32,
     pub public_key_hex: String,
 }
@@ -39,4 +44,14 @@ pub struct NotificationChannel {
 pub struct NotificationType {
     pub id: u32,
     pub code: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct UserNotificationChannel {
+    #[serde(default = "default_id")]
+    pub id: u32,
+    #[serde(default = "default_id")]
+    pub user_id: u32,
+    pub channel_name: String,
+    pub target: String,
 }
