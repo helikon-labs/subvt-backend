@@ -1,8 +1,10 @@
 use log::debug;
+use parity_scale_codec::Encode;
 use sqlx::{Pool, Postgres};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
+use subvt_types::substrate::RewardDestination;
 use subvt_types::{
     crypto::AccountId,
     onekv,
@@ -114,6 +116,7 @@ impl PostgreSQLStorage {
         era_index: u32,
         active_validator_account_ids: &[AccountId],
         all_validator_account_ids: &[AccountId],
+        bonded_account_id_map: &HashMap<AccountId, AccountId>,
         validator_stake_map: &HashMap<AccountId, ValidatorStake>,
         validator_prefs_map: &HashMap<AccountId, ValidatorPreferences>,
     ) -> anyhow::Result<()> {
@@ -130,6 +133,20 @@ impl PostgreSQLStorage {
             .bind(validator_account_id.to_string())
             .execute(&mut transaction)
             .await?;
+            // create controller account id (if not exists)
+            let maybe_controller_account_id = bonded_account_id_map.get(validator_account_id);
+            if let Some(controller_account_id) = maybe_controller_account_id {
+                sqlx::query(
+                    r#"
+                    INSERT INTO sub_account (id)
+                    VALUES ($1)
+                    ON CONFLICT (id) DO NOTHING
+                    "#,
+                )
+                .bind(controller_account_id.to_string())
+                .execute(&mut transaction)
+                .await?;
+            }
             let maybe_active_validator_index = active_validator_account_ids
                 .iter()
                 .position(|account_id| account_id == validator_account_id);
@@ -141,13 +158,14 @@ impl PostgreSQLStorage {
             // create record (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO sub_era_validator (era_index, validator_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO sub_era_validator (era_index, validator_account_id, controller_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
                 .bind(era_index)
                 .bind(validator_account_id.to_string())
+                .bind(maybe_controller_account_id.map(|id| id.to_string()))
                 .bind(maybe_active_validator_index.is_some())
                 .bind(maybe_active_validator_index.map(|index| index as i64))
                 .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.commission_per_billion))
@@ -758,6 +776,78 @@ impl PostgreSQLStorage {
             .bind(caller_account_id.to_string())
             .bind(validator_account_id.to_string())
             .bind(era_index)
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_set_controller_extrinsic(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        is_nested_call: bool,
+        is_successful: bool,
+        caller_account_id: &AccountId,
+        controller_account_id: &AccountId,
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(caller_account_id).await?;
+        self.save_account(controller_account_id).await?;
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO sub_extrinsic_set_controller (block_hash, extrinsic_index, is_nested_call, caller_account_id, controller_account_id, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(caller_account_id.to_string())
+            .bind(controller_account_id.to_string())
+            .bind(is_successful)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_bond_extrinsic(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        is_nested_call: bool,
+        is_successful: bool,
+        (caller_account_id, controller_account_id, amount, reward_destination): (
+            &AccountId,
+            &AccountId,
+            Balance,
+            &RewardDestination,
+        ),
+    ) -> anyhow::Result<Option<i32>> {
+        self.save_account(caller_account_id).await?;
+        self.save_account(controller_account_id).await?;
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO sub_extrinsic_bond (block_hash, extrinsic_index, is_nested_call, caller_account_id, controller_account_id, amount, reward_destination_encoded_hex, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(is_nested_call)
+            .bind(caller_account_id.to_string())
+            .bind(controller_account_id.to_string())
+            .bind(amount.to_string())
+            .bind(format!("0x{}", hex::encode(reward_destination.encode())))
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)
             .await?;

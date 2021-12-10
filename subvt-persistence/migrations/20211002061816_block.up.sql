@@ -30,13 +30,13 @@ ALTER TABLE sub_account
     ADD CONSTRAINT sub_account_fk_discovered_block
         FOREIGN KEY (discovered_at_block_hash)
             REFERENCES sub_block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE;
 ALTER TABLE sub_account
     ADD CONSTRAINT sub_account_fk_killed_block
         FOREIGN KEY (killed_at_block_hash)
             REFERENCES sub_block (hash)
-            ON DELETE RESTRICT
+            ON DELETE CASCADE
             ON UPDATE CASCADE;
 
 CREATE INDEX sub_block_idx_epoch_index

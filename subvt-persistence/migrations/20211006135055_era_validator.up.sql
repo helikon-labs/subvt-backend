@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
     id                      SERIAL PRIMARY KEY,
     era_index               bigint NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
+    controller_account_id   VARCHAR(66),
     is_active               boolean NOT NULL DEFAULT false,
     active_validator_index  bigint,
     commission_per_billion  bigint,
@@ -20,6 +21,11 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT sub_era_validator_fk_account
+        FOREIGN KEY (validator_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_era_validator_fk_controller_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
             ON DELETE CASCADE

@@ -1,4 +1,4 @@
-use crate::substrate::Chain;
+use crate::substrate::{Balance, Chain, RewardDestination};
 use crate::{
     crypto::AccountId,
     substrate::{
@@ -215,6 +215,12 @@ impl TimestampExtrinsic {
 
 #[derive(Clone, Debug)]
 pub enum StakingExtrinsic {
+    Bond {
+        signature: Option<Signature>,
+        controller: MultiAddress,
+        amount: Balance,
+        reward_destination: RewardDestination,
+    },
     Nominate {
         signature: Option<Signature>,
         targets: Vec<MultiAddress>,
@@ -223,6 +229,10 @@ pub enum StakingExtrinsic {
         signature: Option<Signature>,
         validator_account_id: AccountId,
         era_index: EraIndex,
+    },
+    SetController {
+        signature: Option<Signature>,
+        controller: MultiAddress,
     },
     Validate {
         signature: Option<Signature>,
@@ -237,6 +247,12 @@ impl StakingExtrinsic {
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
+            "bond" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Bond {
+                signature,
+                controller: get_argument_primitive!(&arguments[0], MultiAddress),
+                amount: get_argument_primitive!(&arguments[1], CompactBalance).0,
+                reward_destination: get_argument_primitive!(&arguments[2], RewardDestination),
+            })),
             "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
                 signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
@@ -246,6 +262,12 @@ impl StakingExtrinsic {
                     signature,
                     validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     era_index: get_argument_primitive!(&arguments[1], EraIndex),
+                },
+            )),
+            "set_controller" => Some(SubstrateExtrinsic::Staking(
+                StakingExtrinsic::SetController {
+                    signature,
+                    controller: get_argument_primitive!(&arguments[0], MultiAddress),
                 },
             )),
             "validate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
@@ -421,7 +443,11 @@ impl SubstrateExtrinsic {
             ("Multisig", "as_multi") | ("Multisig", "as_multi_threshold_1") => {
                 MultisigExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
-            ("Staking", "nominate") | ("Staking", "payout_stakers") | ("Staking", "validate") => {
+            ("Staking", "bond")
+            | ("Staking", "nominate")
+            | ("Staking", "payout_stakers")
+            | ("Staking", "validate")
+            | ("Staking", "set_controller") => {
                 StakingExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Proxy", "proxy") | ("Proxy", "proxy_announced") => {

@@ -7,7 +7,9 @@ rust-version = "1.56.0"
 [dependencies]
 anyhow = "1.0.45"
 chrono = "0.4.19"
+hex = "0.4"
 log = "0.4.14"
+parity-scale-codec = "2.3.1"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 sqlx = { version = "0.5.9", features = ["postgres", "runtime-tokio-rustls", "chrono"] }

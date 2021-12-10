@@ -54,6 +54,9 @@ impl BlockProcessor {
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
             .await?;
+        let bonded_account_id_map = substrate_client
+            .get_bonded_account_id_map(&all_validator_account_ids, block_hash)
+            .await?;
         let validator_stake_map = {
             let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::new();
             for validator_stake in &era_stakers.stakers {
@@ -70,6 +73,7 @@ impl BlockProcessor {
                 era.index,
                 active_validator_account_ids,
                 &all_validator_account_ids,
+                &bonded_account_id_map,
                 &validator_stake_map,
                 &validator_prefs_map,
             )
@@ -420,6 +424,43 @@ impl BlockProcessor {
                 }
             },
             SubstrateExtrinsic::Staking(staking_extrinsic) => match staking_extrinsic {
+                StakingExtrinsic::Bond {
+                    signature,
+                    controller,
+                    amount,
+                    reward_destination,
+                } => {
+                    let maybe_caller_account_id = match signature {
+                        Some(signature) => signature.get_signer_account_id(),
+                        _ => None,
+                    };
+                    let controller_account_id = if let Some(account_id) =
+                        controller.get_account_id()
+                    {
+                        account_id
+                    } else {
+                        error!("Controller address is not raw account id in staking.bond. Cannot persist.");
+                        return Ok(());
+                    };
+                    if let Some(caller_account_id) = maybe_caller_account_id {
+                        postgres
+                            .save_bond_extrinsic(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                (
+                                    &caller_account_id,
+                                    &controller_account_id,
+                                    *amount,
+                                    reward_destination,
+                                ),
+                            )
+                            .await?;
+                    } else {
+                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.bond.", index);
+                    }
+                }
                 StakingExtrinsic::Nominate { signature, targets } => {
                     let maybe_nominator_account_id = match signature {
                         Some(signature) => signature.get_signer_account_id(),
@@ -472,6 +513,37 @@ impl BlockProcessor {
                                 *era_index,
                             )
                             .await;
+                    } else {
+                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
+                    }
+                }
+                StakingExtrinsic::SetController {
+                    signature,
+                    controller,
+                } => {
+                    let maybe_caller_account_id = match signature {
+                        Some(signature) => signature.get_signer_account_id(),
+                        _ => None,
+                    };
+                    let controller_account_id = if let Some(account_id) =
+                        controller.get_account_id()
+                    {
+                        account_id
+                    } else {
+                        error!("Controller address is not raw account id in staking.set_controller. Cannot persist.");
+                        return Ok(());
+                    };
+                    if let Some(caller_account_id) = maybe_caller_account_id {
+                        postgres
+                            .save_set_controller_extrinsic(
+                                block_hash,
+                                index as i32,
+                                is_nested_call,
+                                is_successful,
+                                &caller_account_id,
+                                &controller_account_id,
+                            )
+                            .await?;
                     } else {
                         error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
                     }
