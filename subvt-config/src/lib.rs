@@ -114,6 +114,7 @@ pub struct PostgreSQLConfig {
     pub username: String,
     pub password: String,
     pub pool_max_connections: u32,
+    pub connection_timeout_seconds: u64,
 }
 
 /// SubVT block processor configuration.

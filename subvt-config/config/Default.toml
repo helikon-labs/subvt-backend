@@ -37,6 +37,7 @@ username = "subvt"
 password = "subvt"
 database_name = "subvt"
 pool_max_connections = 20
+connection_timeout_seconds = 3
 
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12

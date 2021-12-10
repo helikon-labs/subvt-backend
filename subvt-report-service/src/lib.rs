@@ -39,29 +39,16 @@ async fn era_validator_report_service(
 ) -> impl Responder {
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .body(
-                    serde_json::to_string(&ReportServiceError {
-                        description: "End era index cannot be less than start era index."
-                            .to_string(),
-                    })
-                    .unwrap(),
-                );
+            return HttpResponse::InternalServerError().json(ReportServiceError::from(
+                "End era index cannot be less than start era index.".to_string(),
+            ));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .body(
-                    serde_json::to_string(&ReportServiceError {
-                        description: format!(
-                            "Report cannot span {} eras. Maximum allowed is {}.",
-                            era_count, CONFIG.report.max_era_index_range
-                        ),
-                    })
-                    .unwrap(),
-                );
+            return HttpResponse::InternalServerError().json(ReportServiceError::from(format!(
+                "Report cannot span {} eras. Maximum allowed is {}.",
+                era_count, CONFIG.report.max_era_index_range
+            )));
         }
     }
     let report_result = &data
@@ -73,17 +60,9 @@ async fn era_validator_report_service(
         )
         .await;
     match report_result {
-        Ok(report) => HttpResponse::Ok()
-            .content_type("application/json")
-            .body(serde_json::to_string(report).unwrap()),
+        Ok(report) => HttpResponse::Ok().json(report),
         Err(error) => HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .body(
-                serde_json::to_string(&ReportServiceError {
-                    description: format!("{:?}", error),
-                })
-                .unwrap(),
-            ),
+            .json(ReportServiceError::from(format!("{:?}", error))),
     }
 }
 
@@ -94,29 +73,16 @@ async fn era_report_service(
 ) -> impl Responder {
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .body(
-                    serde_json::to_string(&ReportServiceError {
-                        description: "End era index cannot be less than start era index."
-                            .to_string(),
-                    })
-                    .unwrap(),
-                );
+            return HttpResponse::InternalServerError().json(ReportServiceError::from(
+                "End era index cannot be less than start era index.".to_string(),
+            ));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return HttpResponse::InternalServerError()
-                .content_type("application/json")
-                .body(
-                    serde_json::to_string(&ReportServiceError {
-                        description: format!(
-                            "Report cannot span {} eras. Maximum allowed is {}.",
-                            era_count, CONFIG.report.max_era_index_range
-                        ),
-                    })
-                    .unwrap(),
-                );
+            return HttpResponse::InternalServerError().json(ReportServiceError::from(format!(
+                "Report cannot span {} eras. Maximum allowed is {}.",
+                era_count, CONFIG.report.max_era_index_range
+            )));
         }
     }
     let report_result = &data
@@ -127,17 +93,9 @@ async fn era_report_service(
         )
         .await;
     match report_result {
-        Ok(report) => HttpResponse::Ok()
-            .content_type("application/json")
-            .body(serde_json::to_string(report).unwrap()),
+        Ok(report) => HttpResponse::Ok().json(report),
         Err(error) => HttpResponse::InternalServerError()
-            .content_type("application/json")
-            .body(
-                serde_json::to_string(&ReportServiceError {
-                    description: format!("{:?}", error),
-                })
-                .unwrap(),
-            ),
+            .json(ReportServiceError::from(format!("{:?}", error))),
     }
 }
 

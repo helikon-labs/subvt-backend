@@ -5279,6 +5279,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "config",
+ "hex",
  "lazy_static",
  "log",
  "serde 1.0.130",

@@ -42,6 +42,9 @@ impl PostgreSQLStorage {
     pub async fn new(config: &Config) -> anyhow::Result<PostgreSQLStorage> {
         debug!("Establishing database connection pool...");
         let connection_pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_timeout(std::time::Duration::from_secs(
+                config.postgres.connection_timeout_seconds,
+            ))
             .max_connections(config.postgres.pool_max_connections)
             .connect(&config.get_postgres_url())
             .await?;
@@ -224,7 +227,7 @@ impl PostgreSQLStorage {
     }
 
     pub async fn era_exists(&self, era_index: u32) -> anyhow::Result<bool> {
-        let era_record_count: (i64,) = sqlx::query_as(
+        let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(index) FROM sub_era
             WHERE index = $1
@@ -233,7 +236,7 @@ impl PostgreSQLStorage {
         .bind(era_index)
         .fetch_one(&self.connection_pool)
         .await?;
-        Ok(era_record_count.0 > 0)
+        Ok(record_count.0 > 0)
     }
 
     pub async fn update_era_reward_points(

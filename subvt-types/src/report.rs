@@ -6,6 +6,12 @@ pub struct ReportServiceError {
     pub description: String,
 }
 
+impl ReportServiceError {
+    pub fn from(description: String) -> ReportServiceError {
+        ReportServiceError { description }
+    }
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct EraValidatorReport {
     pub era: Era,
