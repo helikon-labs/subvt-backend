@@ -1,0 +1,1 @@
+DROP TABLE app_notification_channel CASCADE;

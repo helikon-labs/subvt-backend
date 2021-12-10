@@ -28,23 +28,44 @@ async fn get_networks(data: web::Data<ServiceState>) -> impl Responder {
     }
 }
 
+#[get("/service/notification/channel")]
+async fn get_notification_channels(data: web::Data<ServiceState>) -> impl Responder {
+    match data.postgres.get_notification_channels().await {
+        Ok(channels) => HttpResponse::Ok().json(channels),
+        Err(error) => {
+            HttpResponse::InternalServerError().json(AppServiceError::from(format!("{:?}", error)))
+        }
+    }
+}
+
+#[get("/service/notification/type")]
+async fn get_notification_types(data: web::Data<ServiceState>) -> impl Responder {
+    match data.postgres.get_notification_types().await {
+        Ok(types) => HttpResponse::Ok().json(types),
+        Err(error) => {
+            HttpResponse::InternalServerError().json(AppServiceError::from(format!("{:?}", error)))
+        }
+    }
+}
+
 #[post("/service/user")]
 async fn create_user(data: web::Data<ServiceState>, mut user: web::Json<User>) -> impl Responder {
+    let public_key_hex = user.public_key_hex.trim_start_matches("0x").to_uppercase();
     // validate length
-    if user.public_key_hex.len() != PUBLIC_KEY_HEX_LENGTH {
+    if public_key_hex.len() != PUBLIC_KEY_HEX_LENGTH {
         return HttpResponse::BadRequest().json(AppServiceError::from(format!(
             "Public key should be {} characters long hexadecimal string.",
             PUBLIC_KEY_HEX_LENGTH
         )));
     }
     // validate hex
-    if hex::decode(&user.public_key_hex).is_err() {
+    if hex::decode(&public_key_hex).is_err() {
         return HttpResponse::BadRequest().json(AppServiceError::from(
             "Public key should be valid hexadecimal string.".to_string(),
         ));
     }
     // check duplicate
-    match data.postgres.user_exists(&user.public_key_hex).await {
+    match data.postgres.user_exists(&public_key_hex).await {
         Ok(user_exists) => {
             if user_exists {
                 return HttpResponse::Conflict().json(AppServiceError::from(
@@ -57,6 +78,7 @@ async fn create_user(data: web::Data<ServiceState>, mut user: web::Json<User>) -
                 .json(AppServiceError::from(format!("{:?}", error)));
         }
     }
+    user.public_key_hex = format!("0x{}", public_key_hex);
     let save_result = &data.postgres.save_user(&user).await;
     match save_result {
         Ok(id) => {
@@ -83,6 +105,8 @@ impl Service for AppService {
                     postgres: postgres.clone(),
                 }))
                 .service(get_networks)
+                .service(get_notification_channels)
+                .service(get_notification_types)
                 .service(create_user)
         })
         .workers(10)

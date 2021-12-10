@@ -1,5 +1,5 @@
 use crate::postgres::PostgreSQLStorage;
-use subvt_types::app::{Network, User};
+use subvt_types::app::{Network, NotificationChannel, NotificationType, User};
 
 type PostgresNetwork = (
     i32,
@@ -26,7 +26,7 @@ impl PostgreSQLStorage {
             .iter()
             .cloned()
             .map(|db_network| Network {
-                id: db_network.0,
+                id: db_network.0 as u32,
                 hash: db_network.1,
                 name: db_network.2,
                 live_network_status_service_url: db_network.3,
@@ -37,7 +37,7 @@ impl PostgreSQLStorage {
             .collect())
     }
 
-    pub async fn save_user(&self, user: &User) -> anyhow::Result<i32> {
+    pub async fn save_user(&self, user: &User) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
             INSERT INTO app_user (public_key_hex)
@@ -48,7 +48,7 @@ impl PostgreSQLStorage {
         .bind(&user.public_key_hex)
         .fetch_one(&self.connection_pool)
         .await?;
-        Ok(result.0)
+        Ok(result.0 as u32)
     }
 
     pub async fn user_exists(&self, public_key_hex: &str) -> anyhow::Result<bool> {
@@ -62,5 +62,44 @@ impl PostgreSQLStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
+    }
+
+    pub async fn get_notification_channels(&self) -> anyhow::Result<Vec<NotificationChannel>> {
+        let networks: Vec<(String,)> = sqlx::query_as(
+            r#"
+            SELECT name
+            FROM app_notification_channel
+            ORDER BY name ASC
+            "#,
+        )
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(networks
+            .iter()
+            .cloned()
+            .map(|db_notification_channel| NotificationChannel {
+                name: db_notification_channel.0,
+            })
+            .collect())
+    }
+
+    pub async fn get_notification_types(&self) -> anyhow::Result<Vec<NotificationType>> {
+        let networks: Vec<(i32, String)> = sqlx::query_as(
+            r#"
+            SELECT id, code
+            FROM app_notification_type
+            ORDER BY id ASC
+            "#,
+        )
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(networks
+            .iter()
+            .cloned()
+            .map(|db_notification_type| NotificationType {
+                id: db_notification_type.0 as u32,
+                code: db_notification_type.1,
+            })
+            .collect())
     }
 }

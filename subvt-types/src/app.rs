@@ -15,7 +15,7 @@ impl AppServiceError {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Network {
-    pub id: i32,
+    pub id: u32,
     pub hash: String,
     pub name: String,
     pub live_network_status_service_url: Option<String>,
@@ -26,6 +26,17 @@ pub struct Network {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct User {
-    pub id: i32,
+    pub id: u32,
     pub public_key_hex: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct NotificationChannel {
+    pub name: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct NotificationType {
+    pub id: u32,
+    pub code: String,
 }

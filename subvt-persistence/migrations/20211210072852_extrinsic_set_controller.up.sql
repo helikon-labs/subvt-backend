@@ -27,3 +27,9 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_extrinsic_set_controller_idx_caller_account_id
+    ON sub_extrinsic_set_controller (caller_account_id);
+
+CREATE INDEX sub_extrinsic_set_controller_idx_controller_account_id
+    ON sub_extrinsic_set_controller (controller_account_id);

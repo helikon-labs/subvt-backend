@@ -29,3 +29,12 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_extrinsic_bond_idx_caller_account_id
+    ON sub_extrinsic_bond (caller_account_id);
+
+CREATE INDEX sub_extrinsic_bond_idx_controller_account_id
+    ON sub_extrinsic_bond (controller_account_id);
+
+CREATE INDEX sub_extrinsic_bond_idx_caller_controller
+    ON sub_extrinsic_bond (caller_account_id, controller_account_id);
