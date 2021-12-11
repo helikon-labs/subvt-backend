@@ -4,10 +4,11 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
 use serde::Deserialize;
+use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
-use subvt_service_common::Service;
+use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{AppServiceError, User, UserNotificationChannel, PUBLIC_KEY_HEX_LENGTH};
 
 lazy_static! {
@@ -201,44 +202,28 @@ struct UserNotificationChannelIdPathParameter {
 async fn delete_user_notification_channel(
     path_params: web::Path<UserNotificationChannelIdPathParameter>,
     state: web::Data<ServiceState>,
-) -> impl Responder {
-    // check channel exists
-    match state
+) -> Result<HttpResponse, InternalServerError> {
+    let channel_exists = state
         .postgres
         .user_notification_channel_exists(path_params.user_id, path_params.channel_id)
-        .await
-    {
-        Ok(channel_exists) => {
-            if !channel_exists {
-                return HttpResponse::NotFound().json(AppServiceError::from(
-                    "User notitification channel not found.".to_string(),
-                ));
-            }
-        }
-        Err(error) => {
-            return HttpResponse::InternalServerError()
-                .json(AppServiceError::from(format!("{:?}", error)));
-        }
+        .await?;
+    if !channel_exists {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+            "User notification channel not found.".to_string(),
+        )));
     }
-    // delete
     match state
         .postgres
         .delete_user_notification_channel(path_params.channel_id)
-        .await
+        .await?
     {
-        Ok(successful) => {
-            if !successful {
-                return HttpResponse::InternalServerError().json(AppServiceError::from(
-                    "There was an error deleting the notification channel.".to_string(),
-                ));
-            }
-        }
-        Err(error) => {
-            return HttpResponse::InternalServerError()
-                .json(AppServiceError::from(format!("{:?}", error)));
-        }
+        true => Ok(HttpResponse::NoContent().finish()),
+        false => Ok(
+            HttpResponse::InternalServerError().json(AppServiceError::from(
+                "There was an error deleting the notification channel.".to_string(),
+            )),
+        ),
     }
-    HttpResponse::NoContent().finish()
 }
 
 #[derive(Default)]

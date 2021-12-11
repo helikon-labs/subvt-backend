@@ -5454,6 +5454,7 @@ dependencies = [
 name = "subvt-service-common"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "anyhow",
  "async-trait",
  "log",

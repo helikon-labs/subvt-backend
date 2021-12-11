@@ -5,6 +5,8 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::substrate::Chain;
 
+pub mod err;
+
 #[async_trait(?Send)]
 pub trait Service {
     async fn run(&'static self) -> anyhow::Result<()>;
