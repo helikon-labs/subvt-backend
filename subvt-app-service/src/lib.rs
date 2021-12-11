@@ -1,5 +1,5 @@
 use actix_web::web::Data;
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{delete, get, post, web, App, HttpResponse, HttpServer, Responder};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
@@ -98,7 +98,7 @@ async fn create_user(state: web::Data<ServiceState>, mut user: web::Json<User>) 
 
 #[derive(Deserialize)]
 struct UserIdPathParameter {
-    pub user_id: u16,
+    pub user_id: u32,
 }
 
 #[get("/service/user/{user_id}/notification/channel")]
@@ -108,7 +108,7 @@ async fn get_user_notification_channels(
 ) -> impl Responder {
     match &state
         .postgres
-        .get_user_notification_channels(path_params.user_id as u32)
+        .get_user_notification_channels(path_params.user_id)
         .await
     {
         Ok(channels) => HttpResponse::Ok().json(channels),
@@ -126,11 +126,7 @@ async fn add_user_notification_channel(
 ) -> impl Responder {
     input.user_id = path_params.user_id as u32;
     // check user exists
-    match state
-        .postgres
-        .user_exists_with_id(input.user_id as i32)
-        .await
-    {
+    match state.postgres.user_exists_with_id(input.user_id).await {
         Ok(user_exists) => {
             if !user_exists {
                 return HttpResponse::NotFound()
@@ -195,6 +191,56 @@ async fn add_user_notification_channel(
     }
 }
 
+#[derive(Deserialize)]
+struct UserNotificationChannelIdPathParameter {
+    pub user_id: u32,
+    pub channel_id: u32,
+}
+
+#[delete("/service/user/{user_id}/notification/channel/{channel_id}")]
+async fn delete_user_notification_channel(
+    path_params: web::Path<UserNotificationChannelIdPathParameter>,
+    state: web::Data<ServiceState>,
+) -> impl Responder {
+    // check channel exists
+    match state
+        .postgres
+        .user_notification_channel_exists(path_params.user_id, path_params.channel_id)
+        .await
+    {
+        Ok(channel_exists) => {
+            if !channel_exists {
+                return HttpResponse::NotFound().json(AppServiceError::from(
+                    "User notitification channel not found.".to_string(),
+                ));
+            }
+        }
+        Err(error) => {
+            return HttpResponse::InternalServerError()
+                .json(AppServiceError::from(format!("{:?}", error)));
+        }
+    }
+    // delete
+    match state
+        .postgres
+        .delete_user_notification_channel(path_params.channel_id)
+        .await
+    {
+        Ok(successful) => {
+            if !successful {
+                return HttpResponse::InternalServerError().json(AppServiceError::from(
+                    "There was an error deleting the notification channel.".to_string(),
+                ));
+            }
+        }
+        Err(error) => {
+            return HttpResponse::InternalServerError()
+                .json(AppServiceError::from(format!("{:?}", error)));
+        }
+    }
+    HttpResponse::NoContent().finish()
+}
+
 #[derive(Default)]
 pub struct AppService;
 
@@ -214,6 +260,7 @@ impl Service for AppService {
                 .service(create_user)
                 .service(add_user_notification_channel)
                 .service(get_user_notification_channels)
+                .service(delete_user_notification_channel)
         })
         .workers(10)
         .disable_signals()

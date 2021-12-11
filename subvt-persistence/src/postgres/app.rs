@@ -66,14 +66,14 @@ impl PostgreSQLStorage {
         Ok(record_count.0 > 0)
     }
 
-    pub async fn user_exists_with_id(&self, id: i32) -> anyhow::Result<bool> {
+    pub async fn user_exists_with_id(&self, id: u32) -> anyhow::Result<bool> {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user
             WHERE id = $1
             "#,
         )
-        .bind(id)
+        .bind(id as i32)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
@@ -157,6 +157,24 @@ impl PostgreSQLStorage {
             .collect())
     }
 
+    pub async fn user_notification_channel_exists(
+        &self,
+        user_id: u32,
+        channel_id: u32,
+    ) -> anyhow::Result<bool> {
+        let record_count: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT id) FROM app_user_notification_channel
+            WHERE id = $1 AND user_id = $2
+            "#,
+        )
+        .bind(channel_id as i32)
+        .bind(user_id as i32)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(record_count.0 > 0)
+    }
+
     pub async fn user_notification_channel_target_exists(
         &self,
         user_notification_channel: &UserNotificationChannel,
@@ -192,5 +210,19 @@ impl PostgreSQLStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(result.0 as u32)
+    }
+
+    pub async fn delete_user_notification_channel(&self, id: u32) -> anyhow::Result<bool> {
+        let maybe_id: Option<(i32,)> = sqlx::query_as(
+            r#"
+            DELETE FROM app_user_notification_channel
+            WHERE id = $1
+            RETURNING id
+            "#,
+        )
+        .bind(id as i32)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_id.is_some() && maybe_id.unwrap().0 == id as i32)
     }
 }

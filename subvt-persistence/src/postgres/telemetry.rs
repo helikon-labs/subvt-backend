@@ -100,7 +100,7 @@ impl PostgreSQLStorage {
 
     pub async fn remove_node(&self, node_id: u64) -> anyhow::Result<Option<i64>> {
         let maybe_result: Option<(i64,)> =
-            sqlx::query_as("DELETE FROM sub_telemetry_node WHERE id = $1")
+            sqlx::query_as("DELETE FROM sub_telemetry_node WHERE id = $1 RETURNING id")
                 .bind(node_id as i64)
                 .fetch_optional(&self.connection_pool)
                 .await?;
