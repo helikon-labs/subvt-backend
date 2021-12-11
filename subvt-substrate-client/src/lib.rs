@@ -534,7 +534,7 @@ impl SubstrateClient {
                 for (storage_key, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
                         let account_id = self.account_id_from_storage_key(storage_key);
-                        let session_keys = format!("0x{}", hex::encode(&data.0));
+                        let session_keys = format!("0x{}", hex::encode_upper(&data.0));
                         let validator = validator_map.get_mut(&account_id).unwrap();
                         validator.next_session_keys = session_keys;
                     }
@@ -554,7 +554,7 @@ impl SubstrateClient {
             let session_key_pairs: Vec<(AccountId, [u8; 192])> =
                 decode_hex_string(&hex_string).unwrap();
             for session_key_pair in session_key_pairs.iter() {
-                let session_keys = format!("0x{}", hex::encode(session_key_pair.1));
+                let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
                 if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
                     validator.active_next_session = validator.next_session_keys == session_keys;
                 }

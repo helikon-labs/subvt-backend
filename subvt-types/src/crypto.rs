@@ -31,7 +31,7 @@ impl AccountId {
 impl Display for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("0x")?;
-        f.write_str(&hex::encode(self.0))
+        f.write_str(&hex::encode_upper(self.0))
     }
 }
 
@@ -40,8 +40,10 @@ impl FromStr for AccountId {
 
     fn from_str(hex_string: &str) -> Result<Self, Self::Err> {
         let trimmed_hex_string = hex_string.trim_start_matches("0x");
-        let array: [u8; 32] = hex::decode(trimmed_hex_string)?.try_into().unwrap();
-        Ok(AccountId(array))
+        hex::decode(trimmed_hex_string)?
+            .try_into()
+            .map(AccountId)
+            .map_err(|_| hex::FromHexError::InvalidStringLength)
     }
 }
 

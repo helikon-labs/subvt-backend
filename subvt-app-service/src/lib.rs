@@ -8,7 +8,9 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::{err::InternalServerError, Service};
-use subvt_types::app::{AppServiceError, User, UserNotificationChannel, PUBLIC_KEY_HEX_LENGTH};
+use subvt_types::app::{
+    AppServiceError, User, UserNotificationChannel, UserValidator, PUBLIC_KEY_HEX_LENGTH,
+};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -66,7 +68,7 @@ async fn create_user(state: web::Data<ServiceState>, mut user: web::Json<User>) 
         )));
     }
     user.id = state.postgres.save_user(&user).await?;
-    Ok(HttpResponse::Ok().json(user))
+    Ok(HttpResponse::Created().json(user))
 }
 
 #[derive(Deserialize)]
@@ -79,6 +81,16 @@ async fn get_user_notification_channels(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
+    // check user exists
+    if !state
+        .postgres
+        .user_exists_with_id(path_params.user_id)
+        .await?
+    {
+        return Ok(
+            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
+        );
+    }
     Ok(HttpResponse::Ok().json(
         state
             .postgres
@@ -100,6 +112,7 @@ async fn add_user_notification_channel(
             HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
         );
     }
+    // check notification channel exists
     if !state
         .postgres
         .notification_channel_exists(&input.channel_name)
@@ -128,7 +141,7 @@ async fn add_user_notification_channel(
         .postgres
         .save_user_notification_channel(&input)
         .await?;
-    Ok(HttpResponse::Ok().json(input))
+    Ok(HttpResponse::Created().json(input))
 }
 
 #[derive(Deserialize)]
@@ -165,6 +178,96 @@ async fn delete_user_notification_channel(
     }
 }
 
+#[get("/service/user/{user_id}/validator")]
+async fn get_user_validators(
+    path_params: web::Path<UserIdPathParameter>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    // check user exists
+    if !state
+        .postgres
+        .user_exists_with_id(path_params.user_id)
+        .await?
+    {
+        return Ok(
+            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
+        );
+    }
+    Ok(HttpResponse::Ok().json(
+        state
+            .postgres
+            .get_user_validators(path_params.user_id)
+            .await?,
+    ))
+}
+
+#[post("/service/user/{user_id}/validator")]
+async fn add_user_validator(
+    path_params: web::Path<UserIdPathParameter>,
+    mut input: web::Json<UserValidator>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    input.user_id = path_params.user_id;
+    // check user exists
+    if !state.postgres.user_exists_with_id(input.user_id).await? {
+        return Ok(
+            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
+        );
+    }
+    // check network exists
+    if !state
+        .postgres
+        .network_exists_with_id(input.network_id)
+        .await?
+    {
+        return Ok(
+            HttpResponse::NotFound().json(AppServiceError::from("Network not found.".to_string()))
+        );
+    }
+    // check user validator exists
+    if state.postgres.user_validator_exists(&input).await? {
+        return Ok(HttpResponse::Conflict()
+            .json(AppServiceError::from("User validator exists.".to_string())));
+    }
+    input.id = state.postgres.save_user_validator(&input).await?;
+    Ok(HttpResponse::Created().json(input))
+}
+
+#[derive(Deserialize)]
+struct UserValidatorIdPathParameter {
+    pub user_id: u32,
+    pub user_validator_id: u32,
+}
+
+#[delete("/service/user/{user_id}/validator/{user_validator_id}")]
+async fn delete_user_validator(
+    path_params: web::Path<UserValidatorIdPathParameter>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    // check user exists
+    if !state
+        .postgres
+        .user_validator_exists_with_id(path_params.user_id, path_params.user_validator_id)
+        .await?
+    {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+            "User validator not found.".to_string(),
+        )));
+    }
+    match state
+        .postgres
+        .delete_user_validator(path_params.user_validator_id)
+        .await?
+    {
+        true => Ok(HttpResponse::NoContent().finish()),
+        false => Ok(
+            HttpResponse::InternalServerError().json(AppServiceError::from(
+                "There was an error deleting the user's validator.".to_string(),
+            )),
+        ),
+    }
+}
+
 #[derive(Default)]
 pub struct AppService;
 
@@ -185,6 +288,9 @@ impl Service for AppService {
                 .service(add_user_notification_channel)
                 .service(get_user_notification_channels)
                 .service(delete_user_notification_channel)
+                .service(get_user_validators)
+                .service(add_user_validator)
+                .service(delete_user_validator)
         })
         .workers(10)
         .disable_signals()

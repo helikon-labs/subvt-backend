@@ -1,3 +1,4 @@
+use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
@@ -54,4 +55,14 @@ pub struct UserNotificationChannel {
     pub user_id: u32,
     pub channel_name: String,
     pub target: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct UserValidator {
+    #[serde(default = "default_id")]
+    pub id: u32,
+    #[serde(default = "default_id")]
+    pub user_id: u32,
+    pub network_id: u32,
+    pub validator_account_id: AccountId,
 }

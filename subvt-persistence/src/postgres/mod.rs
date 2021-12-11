@@ -850,7 +850,7 @@ impl PostgreSQLStorage {
             .bind(caller_account_id.to_string())
             .bind(controller_account_id.to_string())
             .bind(amount.to_string())
-            .bind(format!("0x{}", hex::encode(reward_destination.encode())))
+            .bind(format!("0x{}", hex::encode_upper(reward_destination.encode())))
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)
             .await?;

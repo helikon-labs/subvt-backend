@@ -218,7 +218,10 @@ impl ImOnlineEvent {
                 let im_online_key_bytes: &[u8] = im_online_key.as_ref();
                 Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
                     extrinsic_index,
-                    im_online_key_hex_string: format!("0x{}", hex::encode(im_online_key_bytes)),
+                    im_online_key_hex_string: format!(
+                        "0x{}",
+                        hex::encode_upper(im_online_key_bytes)
+                    ),
                 }))
             }
             "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
