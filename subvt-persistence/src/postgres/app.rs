@@ -400,4 +400,17 @@ impl PostgreSQLStorage {
         .await?;
         Ok(maybe_id.is_some() && maybe_id.unwrap().0 == id as i32)
     }
+
+    pub async fn notification_type_exists_by_code(&self, code: &str) -> anyhow::Result<bool> {
+        let record_count: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT code) FROM app_notification_type
+            WHERE code = $1
+            "#,
+        )
+        .bind(code)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(record_count.0 > 0)
+    }
 }

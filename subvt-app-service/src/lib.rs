@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
 use serde::Deserialize;
+use std::collections::HashSet;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
@@ -244,7 +245,7 @@ async fn delete_user_validator(
     path_params: web::Path<UserValidatorIdPathParameter>,
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
-    // check user exists
+    // check validator exists
     if !state
         .postgres
         .user_validator_exists_with_id(path_params.user_id, path_params.user_validator_id)
@@ -268,6 +269,93 @@ async fn delete_user_validator(
     }
 }
 
+#[derive(Deserialize)]
+struct UserNotificationRuleParameter {
+    pub _parameter_type_id: u32,
+    pub _value: String,
+}
+
+#[derive(Deserialize)]
+struct CreateUserNotificationRuleRequest {
+    pub notification_type_code: String,
+    pub network_id: Option<u32>,
+    pub is_for_all_validators: bool,
+    pub user_validator_ids: HashSet<u32>,
+    pub user_notification_channel_ids: HashSet<u32>,
+    pub _parameters: Vec<UserNotificationRuleParameter>,
+}
+
+#[post("/service/user/{user_id}/notification/rule")]
+async fn create_user_notification_rule(
+    path_params: web::Path<UserIdPathParameter>,
+    mut input: web::Json<CreateUserNotificationRuleRequest>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    println!("{:?}", input.user_notification_channel_ids);
+    // check user exists
+    if !state
+        .postgres
+        .user_exists_with_id(path_params.user_id)
+        .await?
+    {
+        return Ok(
+            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
+        );
+    }
+    // check notification type exists
+    if !state
+        .postgres
+        .notification_type_exists_by_code(&input.notification_type_code)
+        .await?
+    {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+            "Notification type not found.".to_string(),
+        )));
+    }
+    // check network exists
+    if let Some(network_id) = input.network_id {
+        if !state.postgres.network_exists_with_id(network_id).await? {
+            return Ok(HttpResponse::NotFound()
+                .json(AppServiceError::from("Network not found.".to_string())));
+        }
+    }
+    // check validators
+    if input.is_for_all_validators {
+        input.user_validator_ids.clear();
+    }
+    for user_validator_id in &input.user_validator_ids {
+        if !state
+            .postgres
+            .user_validator_exists_with_id(path_params.user_id, *user_validator_id)
+            .await?
+        {
+            return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+                "User validator not found.".to_string(),
+            )));
+        }
+    }
+    // check user notification channel ids
+    for user_notification_channel_id in &input.user_notification_channel_ids {
+        if !state
+            .postgres
+            .user_notification_channel_exists(path_params.user_id, *user_notification_channel_id)
+            .await?
+        {
+            return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+                "User notification channel.".to_string(),
+            )));
+        }
+    }
+    // check parameter-notification type matchings
+    // validate parameters
+
+    // insert notification rule
+    // insert validators
+    // insert channel ids
+    // insert params
+    Ok(HttpResponse::NoContent().finish())
+}
+
 #[derive(Default)]
 pub struct AppService;
 
@@ -281,6 +369,7 @@ impl Service for AppService {
                 .app_data(Data::new(ServiceState {
                     postgres: postgres.clone(),
                 }))
+                // .app_data(web::JsonConfig::default().error_handler(|json_payload_error, _| actix_web::Error { cause: Box::new(()) }))
                 .service(get_networks)
                 .service(get_notification_channels)
                 .service(get_notification_types)
@@ -291,6 +380,7 @@ impl Service for AppService {
                 .service(get_user_validators)
                 .service(add_user_validator)
                 .service(delete_user_validator)
+                .service(create_user_notification_rule)
         })
         .workers(10)
         .disable_signals()
