@@ -21,16 +21,13 @@ jobs:
       - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2021-12-08
+          toolchain: nightly
           components: clippy, rustfmt
           override: true
       - run: rustup update
-      #- run: rustup update nightly
-      #- run: rustup default nightly
-      #- run: rustup target add wasm32-unknown-unknown --toolchain nightly
-      - run: rustup toolchain install nightly-2021-12-08
-      - run: rustup target add wasm32-unknown-unknown --toolchain nightly-2021-12-08
-      - run: rustup default nightly-2021-12-08
+      - run: rustup update nightly
+      - run: rustup default nightly
+      - run: rustup target add wasm32-unknown-unknown --toolchain nightly
       - name: Format
         uses: actions-rs/cargo@v1
         with:
