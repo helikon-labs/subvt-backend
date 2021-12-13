@@ -38,13 +38,26 @@ pub struct User {
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct NotificationChannel {
-    pub name: String,
+    pub code: String,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct NotificationType {
-    pub id: u32,
     pub code: String,
+    pub param_types: Vec<NotificationParamType>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct NotificationParamType {
+    pub id: u32,
+    pub notification_type_code: String,
+    pub order: u8,
+    pub code: String,
+    #[serde(rename(serialize = "type", deserialize = "type"))]
+    pub type_: String,
+    pub min: Option<String>,
+    pub max: Option<String>,
+    pub is_optional: bool,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -53,7 +66,7 @@ pub struct UserNotificationChannel {
     pub id: u32,
     #[serde(default = "default_id")]
     pub user_id: u32,
-    pub channel_name: String,
+    pub channel_code: String,
     pub target: String,
 }
 

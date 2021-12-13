@@ -1,7 +1,9 @@
 use crate::postgres::PostgreSQLStorage;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use subvt_types::app::{
-    Network, NotificationChannel, NotificationType, User, UserNotificationChannel, UserValidator,
+    Network, NotificationChannel, NotificationParamType, NotificationType, User,
+    UserNotificationChannel, UserValidator,
 };
 use subvt_types::crypto::AccountId;
 
@@ -14,6 +16,46 @@ type PostgresNetwork = (
     Option<String>,
     Option<String>,
 );
+
+#[derive(sqlx::Type)]
+#[sqlx(
+    type_name = "app_notification_type_param_data_type",
+    rename_all = "lowercase"
+)]
+enum NotificationParamDataType {
+    String,
+    Integer,
+    Balance,
+    Float,
+    Boolean,
+}
+
+type PostgresNotificationParamType = (
+    i32,
+    String,
+    String,
+    i16,
+    NotificationParamDataType,
+    Option<String>,
+    Option<String>,
+    bool,
+);
+
+impl Display for NotificationParamDataType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                NotificationParamDataType::String => "string",
+                NotificationParamDataType::Integer => "integer",
+                NotificationParamDataType::Balance => "balance",
+                NotificationParamDataType::Float => "float",
+                NotificationParamDataType::Boolean => "boolean",
+            }
+        )
+    }
+}
 
 impl PostgreSQLStorage {
     pub async fn get_networks(&self) -> anyhow::Result<Vec<Network>> {
@@ -84,9 +126,9 @@ impl PostgreSQLStorage {
     pub async fn get_notification_channels(&self) -> anyhow::Result<Vec<NotificationChannel>> {
         let networks: Vec<(String,)> = sqlx::query_as(
             r#"
-            SELECT name
+            SELECT code
             FROM app_notification_channel
-            ORDER BY name ASC
+            ORDER BY code ASC
             "#,
         )
         .fetch_all(&self.connection_pool)
@@ -95,42 +137,70 @@ impl PostgreSQLStorage {
             .iter()
             .cloned()
             .map(|db_notification_channel| NotificationChannel {
-                name: db_notification_channel.0,
+                code: db_notification_channel.0,
             })
             .collect())
     }
 
-    pub async fn notification_channel_exists(&self, name: &str) -> anyhow::Result<bool> {
+    pub async fn notification_channel_exists(&self, code: &str) -> anyhow::Result<bool> {
         let record_count: (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(DISTINCT name) FROM app_notification_channel
-            WHERE name = $1
+            SELECT COUNT(DISTINCT code) FROM app_notification_channel
+            WHERE code = $1
             "#,
         )
-        .bind(name)
+        .bind(code)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
     }
 
     pub async fn get_notification_types(&self) -> anyhow::Result<Vec<NotificationType>> {
-        let networks: Vec<(i32, String)> = sqlx::query_as(
+        let db_notification_types: Vec<(String,)> = sqlx::query_as(
             r#"
-            SELECT id, code
+            SELECT code
             FROM app_notification_type
-            ORDER BY id ASC
+            ORDER BY code ASC
             "#,
         )
         .fetch_all(&self.connection_pool)
         .await?;
-        Ok(networks
+        let mut notification_types: Vec<NotificationType> = db_notification_types
             .iter()
             .cloned()
             .map(|db_notification_type| NotificationType {
-                id: db_notification_type.0 as u32,
-                code: db_notification_type.1,
+                code: db_notification_type.0,
+                param_types: Vec::new(),
             })
-            .collect())
+            .collect();
+        // get params for each notification type
+        for notification_type in notification_types.iter_mut() {
+            let db_notification_param_types: Vec<PostgresNotificationParamType> = sqlx::query_as(
+                r#"
+                SELECT id, notification_type_code, code, "order", type, "min", "max", is_optional
+                FROM app_notification_param_type
+                WHERE notification_type_code = $1
+                ORDER BY notification_type_code ASC, "order" ASC
+                "#,
+            )
+            .bind(&notification_type.code)
+            .fetch_all(&self.connection_pool)
+            .await?;
+            notification_type.param_types = db_notification_param_types
+                .iter()
+                .map(|db_notification_param_type| NotificationParamType {
+                    id: db_notification_param_type.0 as u32,
+                    notification_type_code: db_notification_param_type.1.clone(),
+                    code: db_notification_param_type.2.clone(),
+                    order: db_notification_param_type.3 as u8,
+                    type_: db_notification_param_type.4.to_string(),
+                    min: db_notification_param_type.5.clone(),
+                    max: db_notification_param_type.6.clone(),
+                    is_optional: db_notification_param_type.7,
+                })
+                .collect();
+        }
+        Ok(notification_types)
     }
 
     pub async fn get_user_notification_channels(
@@ -139,7 +209,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<Vec<UserNotificationChannel>> {
         let db_user_notification_channels: Vec<(i32, i32, String, String)> = sqlx::query_as(
             r#"
-            SELECT id, user_id, notification_channel_name, target
+            SELECT id, user_id, notification_channel_code, target
             FROM app_user_notification_channel
             WHERE user_id = $1
             ORDER BY id ASC
@@ -153,7 +223,7 @@ impl PostgreSQLStorage {
             .map(|db_user_notification_channel| UserNotificationChannel {
                 id: db_user_notification_channel.0 as u32,
                 user_id: db_user_notification_channel.1 as u32,
-                channel_name: db_user_notification_channel.2.clone(),
+                channel_code: db_user_notification_channel.2.clone(),
                 target: db_user_notification_channel.3.clone(),
             })
             .collect())
@@ -184,11 +254,11 @@ impl PostgreSQLStorage {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user_notification_channel
-            WHERE user_id = $1 AND notification_channel_name = $2 AND target = $3
+            WHERE user_id = $1 AND notification_channel_code = $2 AND target = $3
             "#,
         )
         .bind(user_notification_channel.user_id as i32)
-        .bind(&user_notification_channel.channel_name)
+        .bind(&user_notification_channel.channel_code)
         .bind(&user_notification_channel.target)
         .fetch_one(&self.connection_pool)
         .await?;
@@ -201,13 +271,13 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_user_notification_channel (user_id, notification_channel_name, target)
+            INSERT INTO app_user_notification_channel (user_id, notification_channel_code, target)
             VALUES ($1, $2, $3)
             RETURNING id
             "#,
         )
         .bind(user_notification_channel.user_id as i32)
-        .bind(&user_notification_channel.channel_name)
+        .bind(&user_notification_channel.channel_code)
         .bind(&user_notification_channel.target)
         .fetch_one(&self.connection_pool)
         .await?;

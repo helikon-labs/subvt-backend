@@ -115,7 +115,7 @@ async fn add_user_notification_channel(
     // check notification channel exists
     if !state
         .postgres
-        .notification_channel_exists(&input.channel_name)
+        .notification_channel_exists(&input.channel_code)
         .await?
     {
         return Ok(HttpResponse::NotFound().json(AppServiceError::from(
