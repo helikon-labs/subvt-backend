@@ -10,7 +10,8 @@ use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
-    AppServiceError, User, UserNotificationChannel, UserValidator, PUBLIC_KEY_HEX_LENGTH,
+    AppServiceError, NotificationParamType, User, UserNotificationChannel, UserValidator,
+    PUBLIC_KEY_HEX_LENGTH,
 };
 
 lazy_static! {
@@ -22,6 +23,18 @@ type ResultResponse = Result<HttpResponse, InternalServerError>;
 #[derive(Clone)]
 struct ServiceState {
     postgres: Arc<PostgreSQLStorage>,
+}
+
+async fn check_user_exists_by_id(
+    state: &web::Data<ServiceState>,
+    user_id: u32,
+) -> anyhow::Result<Option<HttpResponse>> {
+    if !state.postgres.user_exists_by_id(user_id).await? {
+        return Ok(Some(
+            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string())),
+        ));
+    }
+    Ok(None)
 }
 
 #[get("/service/network")]
@@ -82,15 +95,8 @@ async fn get_user_notification_channels(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
-    // check user exists
-    if !state
-        .postgres
-        .user_exists_with_id(path_params.user_id)
-        .await?
-    {
-        return Ok(
-            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
-        );
+    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
+        return Ok(error_response);
     }
     Ok(HttpResponse::Ok().json(
         state
@@ -107,11 +113,8 @@ async fn add_user_notification_channel(
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
     input.user_id = path_params.user_id as u32;
-    // check user exists
-    if !state.postgres.user_exists_with_id(input.user_id).await? {
-        return Ok(
-            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
-        );
+    if let Some(error_response) = check_user_exists_by_id(&state, input.user_id).await? {
+        return Ok(error_response);
     }
     // check notification channel exists
     if !state
@@ -184,15 +187,8 @@ async fn get_user_validators(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
-    // check user exists
-    if !state
-        .postgres
-        .user_exists_with_id(path_params.user_id)
-        .await?
-    {
-        return Ok(
-            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
-        );
+    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
+        return Ok(error_response);
     }
     Ok(HttpResponse::Ok().json(
         state
@@ -209,16 +205,13 @@ async fn add_user_validator(
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
     input.user_id = path_params.user_id;
-    // check user exists
-    if !state.postgres.user_exists_with_id(input.user_id).await? {
-        return Ok(
-            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
-        );
+    if let Some(error_response) = check_user_exists_by_id(&state, input.user_id).await? {
+        return Ok(error_response);
     }
     // check network exists
     if !state
         .postgres
-        .network_exists_with_id(input.network_id)
+        .network_exists_by_id(input.network_id)
         .await?
     {
         return Ok(
@@ -248,7 +241,7 @@ async fn delete_user_validator(
     // check validator exists
     if !state
         .postgres
-        .user_validator_exists_with_id(path_params.user_id, path_params.user_validator_id)
+        .user_validator_exists_by_id(path_params.user_id, path_params.user_validator_id)
         .await?
     {
         return Ok(HttpResponse::NotFound().json(AppServiceError::from(
@@ -269,10 +262,102 @@ async fn delete_user_validator(
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 struct UserNotificationRuleParameter {
-    pub _parameter_type_id: u32,
-    pub _value: String,
+    pub parameter_type_id: u32,
+    pub value: String,
+}
+
+impl UserNotificationRuleParameter {
+    pub fn validate(&self, parameter_type: &NotificationParamType) -> (bool, Option<String>) {
+        match parameter_type.type_.as_ref() {
+            "string" => {
+                if let Some(min) = &parameter_type.min {
+                    if self.value.len() < min.parse::<usize>().unwrap() {
+                        return (
+                            false,
+                            Some(format!("String length cannot be less than {}.", min)),
+                        );
+                    }
+                }
+                if let Some(max) = &parameter_type.max {
+                    if self.value.len() > max.parse::<usize>().unwrap() {
+                        return (
+                            false,
+                            Some(format!("String length cannot be more than {}.", max)),
+                        );
+                    }
+                }
+            }
+            "integer" => {
+                if let Some(min) = &parameter_type.min {
+                    if let Ok(value) = self.value.parse::<i64>() {
+                        if value < min.parse::<i64>().unwrap() {
+                            return (false, Some(format!("Cannot be less than {}.", min)));
+                        }
+                    } else {
+                        return (false, Some("Invalid integer value.".to_string()));
+                    }
+                }
+                if let Some(max) = &parameter_type.max {
+                    if let Ok(value) = self.value.parse::<i64>() {
+                        if value > max.parse::<i64>().unwrap() {
+                            return (false, Some(format!("Cannot be more than {}.", max)));
+                        }
+                    } else {
+                        return (false, Some("Invalid integer value.".to_string()));
+                    }
+                }
+            }
+            "balance" => {
+                if let Some(min) = &parameter_type.min {
+                    if let Ok(value) = self.value.parse::<u128>() {
+                        if value < min.parse::<u128>().unwrap() {
+                            return (false, Some(format!("Cannot be less than {}.", min)));
+                        }
+                    } else {
+                        return (false, Some("Invalid balance value.".to_string()));
+                    }
+                }
+                if let Some(max) = &parameter_type.max {
+                    if let Ok(value) = self.value.parse::<u128>() {
+                        if value > max.parse::<u128>().unwrap() {
+                            return (false, Some(format!("Cannot be more than {}.", max)));
+                        }
+                    } else {
+                        return (false, Some("Invalid balance value.".to_string()));
+                    }
+                }
+            }
+            "float" => {
+                if let Some(min) = &parameter_type.min {
+                    if let Ok(value) = self.value.parse::<f64>() {
+                        if value < min.parse::<f64>().unwrap() {
+                            return (false, Some(format!("Cannot be less than {}.", min)));
+                        }
+                    } else {
+                        return (false, Some("Invalid float value.".to_string()));
+                    }
+                }
+                if let Some(max) = &parameter_type.max {
+                    if let Ok(value) = self.value.parse::<f64>() {
+                        if value > max.parse::<f64>().unwrap() {
+                            return (false, Some(format!("Cannot be more than {}.", max)));
+                        }
+                    } else {
+                        return (false, Some("Invalid float value.".to_string()));
+                    }
+                }
+            }
+            "boolean" => {
+                if self.value.parse::<bool>().is_err() {
+                    return (false, Some("Invalid boolean value.".to_string()));
+                }
+            }
+            _ => unreachable!("Unexpected parameter type: {}", parameter_type.type_),
+        }
+        (true, None)
+    }
 }
 
 #[derive(Deserialize)]
@@ -282,7 +367,7 @@ struct CreateUserNotificationRuleRequest {
     pub is_for_all_validators: bool,
     pub user_validator_ids: HashSet<u32>,
     pub user_notification_channel_ids: HashSet<u32>,
-    pub _parameters: Vec<UserNotificationRuleParameter>,
+    pub parameters: Vec<UserNotificationRuleParameter>,
 }
 
 #[post("/service/user/{user_id}/notification/rule")]
@@ -291,16 +376,8 @@ async fn create_user_notification_rule(
     mut input: web::Json<CreateUserNotificationRuleRequest>,
     state: web::Data<ServiceState>,
 ) -> ResultResponse {
-    println!("{:?}", input.user_notification_channel_ids);
-    // check user exists
-    if !state
-        .postgres
-        .user_exists_with_id(path_params.user_id)
-        .await?
-    {
-        return Ok(
-            HttpResponse::NotFound().json(AppServiceError::from("User not found.".to_string()))
-        );
+    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
+        return Ok(error_response);
     }
     // check notification type exists
     if !state
@@ -314,7 +391,7 @@ async fn create_user_notification_rule(
     }
     // check network exists
     if let Some(network_id) = input.network_id {
-        if !state.postgres.network_exists_with_id(network_id).await? {
+        if !state.postgres.network_exists_by_id(network_id).await? {
             return Ok(HttpResponse::NotFound()
                 .json(AppServiceError::from("Network not found.".to_string())));
         }
@@ -322,17 +399,27 @@ async fn create_user_notification_rule(
     // check validators
     if input.is_for_all_validators {
         input.user_validator_ids.clear();
+    } else if input.user_validator_ids.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(AppServiceError::from(
+            "At least 1 user validator should be selected.".to_string(),
+        )));
     }
     for user_validator_id in &input.user_validator_ids {
         if !state
             .postgres
-            .user_validator_exists_with_id(path_params.user_id, *user_validator_id)
+            .user_validator_exists_by_id(path_params.user_id, *user_validator_id)
             .await?
         {
             return Ok(HttpResponse::NotFound().json(AppServiceError::from(
                 "User validator not found.".to_string(),
             )));
         }
+    }
+    // check if there is at least one notification channel
+    if input.user_notification_channel_ids.is_empty() {
+        return Ok(HttpResponse::BadRequest().json(AppServiceError::from(
+            "There should be at least 1 notification channel selected.".to_string(),
+        )));
     }
     // check user notification channel ids
     for user_notification_channel_id in &input.user_notification_channel_ids {
@@ -342,19 +429,80 @@ async fn create_user_notification_rule(
             .await?
         {
             return Ok(HttpResponse::NotFound().json(AppServiceError::from(
-                "User notification channel.".to_string(),
+                "User notification channel not found.".to_string(),
             )));
         }
     }
-    // check parameter-notification type matchings
+    let notification_parameter_types = state
+        .postgres
+        .get_notification_parameter_types(&input.notification_type_code)
+        .await?;
+    let notification_parameter_type_ids: Vec<u32> = notification_parameter_types
+        .iter()
+        .map(|parameter_type| parameter_type.id)
+        .collect();
+    let irrelevant_parameter_type_ids: Vec<u32> = input
+        .parameters
+        .iter()
+        .map(|parameter| parameter.parameter_type_id)
+        .filter(|id| !notification_parameter_type_ids.contains(id))
+        .collect();
+    if !irrelevant_parameter_type_ids.is_empty() {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(format!(
+            "Posted parameter(s) with id(s) {:?} not found for notification type '{}'.",
+            irrelevant_parameter_type_ids, input.notification_type_code
+        ))));
+    }
+    let posted_parameter_type_ids: Vec<u32> = input
+        .parameters
+        .iter()
+        .map(|parameter| parameter.parameter_type_id)
+        .collect();
+    // check if all non-optional parameters are sent
+    let missing_non_optional_parameter_type_ids: Vec<u32> = notification_parameter_types
+        .iter()
+        .filter(|parameter_type| {
+            !parameter_type.is_optional && !posted_parameter_type_ids.contains(&parameter_type.id)
+        })
+        .map(|parameter_type| parameter_type.id)
+        .collect();
+    if !missing_non_optional_parameter_type_ids.is_empty() {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(format!(
+            "Missing non-optional parameter type ids: {:?}",
+            missing_non_optional_parameter_type_ids
+        ))));
+    }
     // validate parameters
+    for parameter in &input.parameters {
+        let parameter_type = notification_parameter_types
+            .iter()
+            .find(|parameter_type| parameter_type.id == parameter.parameter_type_id)
+            .unwrap();
+        if let (false, Some(validation_error_message)) = parameter.validate(parameter_type) {
+            return Ok(
+                HttpResponse::BadRequest().json(AppServiceError::from(format!(
+                    "Invalid '{}': {}",
+                    parameter_type.code, validation_error_message
+                ))),
+            );
+        }
+    }
 
+    // [2h]
     // insert notification rule
     // insert validators
     // insert channel ids
     // insert params
     Ok(HttpResponse::NoContent().finish())
 }
+
+// [2h] get user notification rules
+// [30m] delete user notification rule
+
+// [3h]
+// notification model
+// persist notification
+// get user notifications
 
 #[derive(Default)]
 pub struct AppService;
