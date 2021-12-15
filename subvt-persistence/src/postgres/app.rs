@@ -692,7 +692,7 @@ impl PostgreSQLStorage {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user_notification_rule
-            WHERE id = $1 AND user_id = $1
+            WHERE id = $1 AND user_id = $2
             AND deleted_at IS NULL
             "#,
         )

@@ -3,17 +3,6 @@ use serde::{Deserialize, Serialize};
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct AppServiceError {
-    pub description: String,
-}
-
-impl AppServiceError {
-    pub fn from(description: String) -> AppServiceError {
-        AppServiceError { description }
-    }
-}
-
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct Network {
     pub id: u32,

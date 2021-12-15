@@ -8,7 +8,7 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::{err::InternalServerError, Service};
-use subvt_types::report::ReportServiceError;
+use subvt_types::err::ServiceError;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -41,18 +41,16 @@ async fn era_validator_report_service(
 ) -> ResultResponse {
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
-            return Ok(HttpResponse::BadRequest().json(ReportServiceError::from(
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(
                 "End era index cannot be less than start era index.".to_string(),
             )));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return Ok(
-                HttpResponse::BadRequest().json(ReportServiceError::from(format!(
-                    "Report cannot span {} eras. Maximum allowed is {}.",
-                    era_count, CONFIG.report.max_era_index_range
-                ))),
-            );
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
+                "Report cannot span {} eras. Maximum allowed is {}.",
+                era_count, CONFIG.report.max_era_index_range
+            ))));
         }
     }
     Ok(HttpResponse::Ok().json(
@@ -73,18 +71,16 @@ async fn era_report_service(
 ) -> ResultResponse {
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
-            return Ok(HttpResponse::BadRequest().json(ReportServiceError::from(
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(
                 "End era index cannot be less than start era index.".to_string(),
             )));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return Ok(
-                HttpResponse::BadRequest().json(ReportServiceError::from(format!(
-                    "Report cannot span {} eras. Maximum allowed is {}.",
-                    era_count, CONFIG.report.max_era_index_range
-                ))),
-            );
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
+                "Report cannot span {} eras. Maximum allowed is {}.",
+                era_count, CONFIG.report.max_era_index_range
+            ))));
         }
     }
     Ok(HttpResponse::Ok().json(
