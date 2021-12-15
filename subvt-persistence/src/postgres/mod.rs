@@ -199,20 +199,20 @@ impl PostgreSQLStorage {
                 // create nominator account (if not exists)
                 sqlx::query(
                     r#"
-                INSERT INTO sub_account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                "#,
+                    INSERT INTO sub_account (id)
+                    VALUES ($1)
+                    ON CONFLICT (id) DO NOTHING
+                    "#,
                 )
                 .bind(nominator_stake.account.id.to_string())
                 .execute(&mut transaction)
                 .await?;
                 sqlx::query(
                     r#"
-                INSERT INTO sub_era_staker (era_index, validator_account_id, nominator_account_id, stake)
-                VALUES ($1, $2, $3, $4)
-                ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
-                "#,
+                    INSERT INTO sub_era_staker (era_index, validator_account_id, nominator_account_id, stake)
+                    VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
+                    "#,
                 )
                 .bind(era_stakers.era.index)
                 .bind(validator_stake.account.id.to_string())
@@ -428,10 +428,10 @@ impl PostgreSQLStorage {
                 self.save_account(validator_account_id).await?;
                 sqlx::query(
                     r#"
-                INSERT INTO sub_extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
-                VALUES ($1, $2)
-                ON CONFLICT (extrinsic_nominate_id, validator_account_id) DO NOTHING
-                "#)
+                    INSERT INTO sub_extrinsic_nominate_validator (extrinsic_nominate_id, validator_account_id)
+                    VALUES ($1, $2)
+                    ON CONFLICT (extrinsic_nominate_id, validator_account_id) DO NOTHING
+                    "#)
                     .bind(extrinsic_nominate_id.0)
                     .bind(validator_account_id.to_string())
                     .execute(&self.connection_pool)

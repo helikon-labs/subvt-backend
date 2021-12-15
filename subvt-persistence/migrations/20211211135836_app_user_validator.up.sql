@@ -1,13 +1,13 @@
 CREATE TABLE IF NOT EXISTS app_user_validator
 (
     id                      SERIAL PRIMARY KEY,
-    user_id                 SERIAL NOT NULL,
-    network_id              SERIAL NOT NULL,
+    user_id                 integer NOT NULL,
+    network_id              integer NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    deleted_at              TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT app_user_validator_u_user_network_validator
-        UNIQUE (user_id, network_id, validator_account_id),
+        UNIQUE (user_id, network_id, validator_account_id, deleted_at),
     CONSTRAINT app_user_validator_fk_user
         FOREIGN KEY (user_id)
             REFERENCES app_user (id)

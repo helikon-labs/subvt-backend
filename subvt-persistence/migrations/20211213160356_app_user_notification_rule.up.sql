@@ -1,10 +1,12 @@
 CREATE TABLE IF NOT EXISTS app_user_notification_rule
 (
     id                      SERIAL PRIMARY KEY,
-    user_id                 SERIAL NOT NULL,
+    user_id                 integer NOT NULL,
     notification_type_code  VARCHAR(256) NOT NULL,
-    network_id              SERIAL,
+    name                    text,
+    network_id              integer,
     is_for_all_validators   boolean NOT NULL,
+    notes                   text,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     deleted_at              TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT app_user_notification_rule_fk_user
@@ -16,6 +18,11 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule
         FOREIGN KEY (notification_type_code)
             REFERENCES app_notification_type (code)
             ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    CONSTRAINT app_user_notification_rule_fk_network
+        FOREIGN KEY (network_id)
+            REFERENCES app_network (id)
+            ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
@@ -24,8 +31,8 @@ CREATE INDEX app_user_notification_rule_idx_user_id
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_validator
 (
-    user_notification_rule_id   SERIAL NOT NULL,
-    user_validator_id           SERIAL NOT NULL,
+    user_notification_rule_id   integer NOT NULL,
+    user_validator_id           integer NOT NULL,
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_validator_pk
         PRIMARY KEY (user_notification_rule_id, user_validator_id),
@@ -37,7 +44,7 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_validator
     CONSTRAINT app_user_notification_rule_validator_fk_user_validator
         FOREIGN KEY (user_validator_id)
             REFERENCES app_user_validator (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 
@@ -49,8 +56,8 @@ CREATE INDEX app_user_notification_rule_validator_idx_user_validator_id
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
 (
-    user_notification_rule_id       SERIAL NOT NULL,
-    user_notification_channel_id    SERIAL NOT NULL,
+    user_notification_rule_id       integer NOT NULL,
+    user_notification_channel_id    integer NOT NULL,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_channel_pk
         PRIMARY KEY (user_notification_rule_id, user_notification_channel_id),
@@ -62,7 +69,7 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
     CONSTRAINT app_user_notification_rule_channel_fk_channel
         FOREIGN KEY (user_notification_channel_id)
             REFERENCES app_user_notification_channel (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 
@@ -74,8 +81,9 @@ CREATE INDEX app_user_notification_rule_channel_idx_channel_id
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
 (
-    user_notification_rule_id   SERIAL NOT NULL,
-    notification_param_type_id  SERIAL NOT NULL,
+    user_notification_rule_id   integer NOT NULL,
+    notification_param_type_id  integer NOT NULL,
+    "order"                     smallint NOT NULL,
     "value"                     VARCHAR(128),
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_param_pk
@@ -88,7 +96,7 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
     CONSTRAINT app_user_notification_rule_param_fk_param_type
         FOREIGN KEY (notification_param_type_id)
             REFERENCES app_notification_param_type (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

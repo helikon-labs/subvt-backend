@@ -1,3 +1,4 @@
+use log::error;
 use std::fmt::{Display, Formatter};
 use subvt_types::app::AppServiceError;
 
@@ -8,7 +9,8 @@ pub struct InternalServerError {
 
 impl Display for InternalServerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let err = AppServiceError::from(format!("{:?}", self.err));
+        error!("{:?}", self.err);
+        let err = AppServiceError::from("Internal server error.".to_string());
         write!(f, "{}", serde_json::to_string(&err).unwrap())
     }
 }

@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_validity
 (
     id                      SERIAL PRIMARY KEY,
     onekv_id                VARCHAR(128) NOT NULL,
-    onekv_candidate_id      SERIAL NOT NULL,
+    onekv_candidate_id      integer NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
     details                 TEXT NOT NULL,
     is_valid                boolean NOT NULL,

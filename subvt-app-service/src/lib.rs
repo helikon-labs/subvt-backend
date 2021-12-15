@@ -10,7 +10,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
-    AppServiceError, NotificationParamType, User, UserNotificationChannel, UserValidator,
+    AppServiceError, User, UserNotificationChannel, UserNotificationRuleParameter, UserValidator,
     PUBLIC_KEY_HEX_LENGTH,
 };
 
@@ -262,112 +262,32 @@ async fn delete_user_validator(
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct UserNotificationRuleParameter {
-    pub parameter_type_id: u32,
-    pub value: String,
-}
-
-impl UserNotificationRuleParameter {
-    pub fn validate(&self, parameter_type: &NotificationParamType) -> (bool, Option<String>) {
-        match parameter_type.type_.as_ref() {
-            "string" => {
-                if let Some(min) = &parameter_type.min {
-                    if self.value.len() < min.parse::<usize>().unwrap() {
-                        return (
-                            false,
-                            Some(format!("String length cannot be less than {}.", min)),
-                        );
-                    }
-                }
-                if let Some(max) = &parameter_type.max {
-                    if self.value.len() > max.parse::<usize>().unwrap() {
-                        return (
-                            false,
-                            Some(format!("String length cannot be more than {}.", max)),
-                        );
-                    }
-                }
-            }
-            "integer" => {
-                if let Some(min) = &parameter_type.min {
-                    if let Ok(value) = self.value.parse::<i64>() {
-                        if value < min.parse::<i64>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
-                        }
-                    } else {
-                        return (false, Some("Invalid integer value.".to_string()));
-                    }
-                }
-                if let Some(max) = &parameter_type.max {
-                    if let Ok(value) = self.value.parse::<i64>() {
-                        if value > max.parse::<i64>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
-                        }
-                    } else {
-                        return (false, Some("Invalid integer value.".to_string()));
-                    }
-                }
-            }
-            "balance" => {
-                if let Some(min) = &parameter_type.min {
-                    if let Ok(value) = self.value.parse::<u128>() {
-                        if value < min.parse::<u128>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
-                        }
-                    } else {
-                        return (false, Some("Invalid balance value.".to_string()));
-                    }
-                }
-                if let Some(max) = &parameter_type.max {
-                    if let Ok(value) = self.value.parse::<u128>() {
-                        if value > max.parse::<u128>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
-                        }
-                    } else {
-                        return (false, Some("Invalid balance value.".to_string()));
-                    }
-                }
-            }
-            "float" => {
-                if let Some(min) = &parameter_type.min {
-                    if let Ok(value) = self.value.parse::<f64>() {
-                        if value < min.parse::<f64>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
-                        }
-                    } else {
-                        return (false, Some("Invalid float value.".to_string()));
-                    }
-                }
-                if let Some(max) = &parameter_type.max {
-                    if let Ok(value) = self.value.parse::<f64>() {
-                        if value > max.parse::<f64>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
-                        }
-                    } else {
-                        return (false, Some("Invalid float value.".to_string()));
-                    }
-                }
-            }
-            "boolean" => {
-                if self.value.parse::<bool>().is_err() {
-                    return (false, Some("Invalid boolean value.".to_string()));
-                }
-            }
-            _ => unreachable!("Unexpected parameter type: {}", parameter_type.type_),
-        }
-        (true, None)
-    }
-}
-
 #[derive(Deserialize)]
 struct CreateUserNotificationRuleRequest {
     pub notification_type_code: String,
+    pub name: Option<String>,
     pub network_id: Option<u32>,
     pub is_for_all_validators: bool,
     pub user_validator_ids: HashSet<u32>,
     pub user_notification_channel_ids: HashSet<u32>,
     pub parameters: Vec<UserNotificationRuleParameter>,
+    pub notes: Option<String>,
+}
+
+#[get("/service/user/{user_id}/notification/rule")]
+async fn get_user_notification_rules(
+    path_params: web::Path<UserIdPathParameter>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
+        return Ok(error_response);
+    }
+    Ok(HttpResponse::Ok().json(
+        state
+            .postgres
+            .get_user_notification_rules(path_params.user_id)
+            .await?,
+    ))
 }
 
 #[post("/service/user/{user_id}/notification/rule")]
@@ -487,13 +407,66 @@ async fn create_user_notification_rule(
             );
         }
     }
+    let rule_id = state
+        .postgres
+        .save_user_notification_rule(
+            path_params.user_id,
+            &input.notification_type_code,
+            (input.name.as_deref(), input.notes.as_deref()),
+            input.network_id,
+            input.is_for_all_validators,
+            (
+                &input.user_validator_ids,
+                &input.user_notification_channel_ids,
+                &input.parameters,
+            ),
+        )
+        .await?;
+    // get rule
+    Ok(HttpResponse::Created().json(
+        state
+            .postgres
+            .get_user_notification_rule_by_id(rule_id)
+            .await?,
+    ))
+}
 
-    // [2h]
-    // insert notification rule
-    // insert validators
-    // insert channel ids
-    // insert params
-    Ok(HttpResponse::NoContent().finish())
+#[derive(Deserialize)]
+struct UserNotificationRuleIdPathParameter {
+    pub user_id: u32,
+    pub user_notification_rule_id: u32,
+}
+
+#[delete("/service/user/{user_id}/notification/rule/{user_notification_rule_id}")]
+async fn delete_user_notification_rule(
+    path_params: web::Path<UserNotificationRuleIdPathParameter>,
+    state: web::Data<ServiceState>,
+) -> ResultResponse {
+    // check rule exists
+    if !state
+        .postgres
+        .user_notification_rule_exists_by_id(
+            path_params.user_id,
+            path_params.user_notification_rule_id,
+        )
+        .await?
+    {
+        return Ok(HttpResponse::NotFound().json(AppServiceError::from(
+            "User notification rule not found.".to_string(),
+        )));
+    }
+    match state
+        .postgres
+        .delete_user_notification_rule(path_params.user_notification_rule_id)
+        .await?
+    {
+        true => Ok(HttpResponse::NoContent().finish()),
+        false => Ok(
+            HttpResponse::InternalServerError().json(AppServiceError::from(
+                "There was an error deleting the user notification rule.".to_string(),
+            )),
+        ),
+    }
 }
 
 // [2h] get user notification rules
@@ -503,6 +476,25 @@ async fn create_user_notification_rule(
 // notification model
 // persist notification
 // get user notifications
+
+/*
+- id
+- user id
+- notification rule id
+- network id
+- user validator id
+- parameter type
+- parameter value
+- block number
+- extrinsic index
+- event index
+- user notification channel type
+- target
+- created at
+- sent at
+- delivered at
+- read at
+ */
 
 #[derive(Default)]
 pub struct AppService;
@@ -529,6 +521,8 @@ impl Service for AppService {
                 .service(add_user_validator)
                 .service(delete_user_validator)
                 .service(create_user_notification_rule)
+                .service(get_user_notification_rules)
+                .service(delete_user_notification_rule)
         })
         .workers(10)
         .disable_signals()
