@@ -1,6 +1,8 @@
 use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
 
+pub mod db;
+
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
 #[derive(Clone, Debug, Default, Serialize)]
@@ -8,6 +10,7 @@ pub struct Network {
     pub id: u32,
     pub hash: String,
     pub name: String,
+    pub ss58_prefix: u32,
     pub live_network_status_service_url: Option<String>,
     pub report_service_url: Option<String>,
     pub validator_details_service_url: Option<String>,
@@ -76,6 +79,17 @@ pub struct UserNotificationRuleParameter {
     pub parameter_type_id: u32,
     pub order: u8,
     pub value: String,
+}
+
+impl From<&(i32, i32, i16, String)> for UserNotificationRuleParameter {
+    fn from(input: &(i32, i32, i16, String)) -> Self {
+        UserNotificationRuleParameter {
+            user_notification_rule_id: input.0 as u32,
+            parameter_type_id: input.1 as u32,
+            order: input.2 as u8,
+            value: input.3.clone(),
+        }
+    }
 }
 
 impl UserNotificationRuleParameter {

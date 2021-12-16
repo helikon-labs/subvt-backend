@@ -2,46 +2,12 @@ use crate::postgres::PostgreSQLStorage;
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use subvt_types::app::db::{PostgresNetwork, PostgresUserValidator};
 use subvt_types::app::{
     Network, NotificationChannel, NotificationParamType, NotificationType, User,
     UserNotificationChannel, UserNotificationRule, UserNotificationRuleParameter, UserValidator,
 };
 use subvt_types::crypto::AccountId;
-
-type PostgresNetwork = (
-    i32,
-    String,
-    String,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-    Option<String>,
-);
-
-fn postgres_network_to_network(postgres_network: PostgresNetwork) -> Network {
-    Network {
-        id: postgres_network.0 as u32,
-        hash: postgres_network.1,
-        name: postgres_network.2,
-        live_network_status_service_url: postgres_network.3,
-        report_service_url: postgres_network.4,
-        validator_details_service_url: postgres_network.5,
-        validator_list_service_url: postgres_network.6,
-    }
-}
-
-type PostgresUserValidator = (i32, i32, i32, String);
-
-fn postgres_user_validator_to_user_validator(
-    postgres_user_validator: &PostgresUserValidator,
-) -> UserValidator {
-    UserValidator {
-        id: postgres_user_validator.0 as u32,
-        user_id: postgres_user_validator.1 as u32,
-        network_id: postgres_user_validator.2 as u32,
-        validator_account_id: AccountId::from_str(&postgres_user_validator.3).unwrap(),
-    }
-}
 
 type PostgresUserNotificationChannel = (i32, i32, String, String);
 
@@ -65,19 +31,6 @@ type PostgresUserNotificationRule = (
     bool,
     Option<String>,
 );
-
-type PostgresUserNotificationRuleParameter = (i32, i32, i16, String);
-
-fn postgres_user_notification_rule_parameter_to_user_notification_rule_parameter(
-    postgres_user_notification_rule_parameter: &PostgresUserNotificationRuleParameter,
-) -> UserNotificationRuleParameter {
-    UserNotificationRuleParameter {
-        user_notification_rule_id: postgres_user_notification_rule_parameter.0 as u32,
-        parameter_type_id: postgres_user_notification_rule_parameter.1 as u32,
-        order: postgres_user_notification_rule_parameter.2 as u8,
-        value: postgres_user_notification_rule_parameter.3.clone(),
-    }
-}
 
 #[derive(sqlx::Type)]
 #[sqlx(
@@ -123,7 +76,7 @@ impl PostgreSQLStorage {
     pub async fn get_network_by_id(&self, id: u32) -> anyhow::Result<Network> {
         Ok(sqlx::query_as(
             r#"
-            SELECT id, hash, name, live_network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
+            SELECT id, hash, name, ss58_prefix, live_network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
             FROM app_network
             WHERE id = $1
             "#
@@ -131,23 +84,22 @@ impl PostgreSQLStorage {
             .bind(id as i32)
             .fetch_one(&self.connection_pool)
             .await
-            .map(postgres_network_to_network)?)
+            .map(PostgresNetwork::into)?)
     }
 
     pub async fn get_networks(&self) -> anyhow::Result<Vec<Network>> {
-        let networks: Vec<PostgresNetwork> = sqlx::query_as(
+        Ok(sqlx::query_as(
             r#"
-            SELECT id, hash, name, live_network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
+            SELECT id, hash, name, ss58_prefix, live_network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
             FROM app_network
             ORDER BY id ASC
             "#
         )
             .fetch_all(&self.connection_pool)
-            .await?;
-        Ok(networks
+            .await?
             .iter()
             .cloned()
-            .map(postgres_network_to_network)
+            .map(PostgresNetwork::into)
             .collect())
     }
 
@@ -544,7 +496,7 @@ impl PostgreSQLStorage {
         &self,
         rule_id: u32,
     ) -> anyhow::Result<Vec<UserValidator>> {
-        let db_user_validators: Vec<PostgresUserValidator> = sqlx::query_as(
+        Ok(sqlx::query_as(
             r#"
             SELECT id, user_id, network_id, validator_account_id
             FROM app_user_validator
@@ -558,11 +510,11 @@ impl PostgreSQLStorage {
         )
         .bind(rule_id as i32)
         .fetch_all(&self.connection_pool)
-        .await?;
-        Ok(db_user_validators
-            .iter()
-            .map(postgres_user_validator_to_user_validator)
-            .collect())
+        .await?
+        .iter()
+        .cloned()
+        .map(PostgresUserValidator::into)
+        .collect())
     }
 
     pub async fn get_user_notification_rule_channels(
@@ -594,21 +546,20 @@ impl PostgreSQLStorage {
         &self,
         rule_id: u32,
     ) -> anyhow::Result<Vec<UserNotificationRuleParameter>> {
-        let db_user_notification_rule_parameters: Vec<PostgresUserNotificationRuleParameter> =
-            sqlx::query_as(
-                r#"
+        let db_user_notification_rule_parameters: Vec<(i32, i32, i16, String)> = sqlx::query_as(
+            r#"
             SELECT user_notification_rule_id, notification_param_type_id, "order", "value"
             FROM app_user_notification_rule_param
             WHERE user_notification_rule_id = $1
             ORDER BY "order" ASC
             "#,
-            )
-            .bind(rule_id as i32)
-            .fetch_all(&self.connection_pool)
-            .await?;
+        )
+        .bind(rule_id as i32)
+        .fetch_all(&self.connection_pool)
+        .await?;
         Ok(db_user_notification_rule_parameters
             .iter()
-            .map(postgres_user_notification_rule_parameter_to_user_notification_rule_parameter)
+            .map(|input| input.into())
             .collect())
     }
 
