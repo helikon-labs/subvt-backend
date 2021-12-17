@@ -1,76 +1,15 @@
 use crate::postgres::PostgreSQLStorage;
 use std::collections::HashSet;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use subvt_types::app::db::{PostgresNetwork, PostgresUserValidator};
+use subvt_types::app::db::{
+    PostgresNetwork, PostgresNotificationParamType, PostgresUserNotificationChannel,
+    PostgresUserNotificationRule, PostgresUserValidator,
+};
 use subvt_types::app::{
     Network, NotificationChannel, NotificationParamType, NotificationType, User,
     UserNotificationChannel, UserNotificationRule, UserNotificationRuleParameter, UserValidator,
 };
 use subvt_types::crypto::AccountId;
-
-type PostgresUserNotificationChannel = (i32, i32, String, String);
-
-fn postgres_user_notification_channel_to_notification_channel(
-    postgres_user_notification_channel: &PostgresUserNotificationChannel,
-) -> UserNotificationChannel {
-    UserNotificationChannel {
-        id: postgres_user_notification_channel.0 as u32,
-        user_id: postgres_user_notification_channel.1 as u32,
-        channel_code: postgres_user_notification_channel.2.clone(),
-        target: postgres_user_notification_channel.3.clone(),
-    }
-}
-
-type PostgresUserNotificationRule = (
-    i32,
-    i32,
-    String,
-    Option<String>,
-    Option<i32>,
-    bool,
-    Option<String>,
-);
-
-#[derive(sqlx::Type)]
-#[sqlx(
-    type_name = "app_notification_type_param_data_type",
-    rename_all = "lowercase"
-)]
-enum NotificationParamDataType {
-    String,
-    Integer,
-    Balance,
-    Float,
-    Boolean,
-}
-
-type PostgresNotificationParamType = (
-    i32,
-    String,
-    String,
-    i16,
-    NotificationParamDataType,
-    Option<String>,
-    Option<String>,
-    bool,
-);
-
-impl Display for NotificationParamDataType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                NotificationParamDataType::String => "string",
-                NotificationParamDataType::Integer => "integer",
-                NotificationParamDataType::Balance => "balance",
-                NotificationParamDataType::Float => "float",
-                NotificationParamDataType::Boolean => "boolean",
-            }
-        )
-    }
-}
 
 impl PostgreSQLStorage {
     pub async fn get_network_by_id(&self, id: u32) -> anyhow::Result<Network> {
@@ -521,7 +460,7 @@ impl PostgreSQLStorage {
         &self,
         rule_id: u32,
     ) -> anyhow::Result<Vec<UserNotificationChannel>> {
-        let db_user_notification_channels: Vec<PostgresUserNotificationChannel> = sqlx::query_as(
+        Ok(sqlx::query_as(
             r#"
             SELECT id, user_id, notification_channel_code, target
             FROM app_user_notification_channel
@@ -535,11 +474,11 @@ impl PostgreSQLStorage {
         )
         .bind(rule_id as i32)
         .fetch_all(&self.connection_pool)
-        .await?;
-        Ok(db_user_notification_channels
-            .iter()
-            .map(postgres_user_notification_channel_to_notification_channel)
-            .collect())
+        .await?
+        .iter()
+        .cloned()
+        .map(PostgresUserNotificationChannel::into)
+        .collect())
     }
 
     pub async fn get_user_notification_rule_parameters(

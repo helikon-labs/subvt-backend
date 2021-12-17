@@ -919,8 +919,8 @@ impl PostgreSQLStorage {
         self.save_account(&validator_account_id).await?;
         let candidate_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+            INSERT INTO sub_onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, location, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
             RETURNING id
             "#,
         )
@@ -935,6 +935,7 @@ impl PostgreSQLStorage {
             .bind(candidate_details.offline_since as i64)
             .bind(candidate_details.online_since as i64)
             .bind(&candidate_details.name)
+            .bind(&candidate_details.location)
             .bind(candidate_details.rank)
             .bind(candidate_details.version.as_ref())
             .bind(candidate_details.is_valid())
@@ -951,6 +952,7 @@ impl PostgreSQLStorage {
             .bind(candidate_details.score.as_ref().map(|score| score.offline))
             .bind(candidate_details.score.as_ref().map(|score| score.randomness))
             .bind(candidate_details.score.as_ref().map(|score| score.span_inclusion))
+            .bind(candidate_details.score.as_ref().map(|score| score.location))
             .fetch_one(&self.connection_pool)
             .await?;
 

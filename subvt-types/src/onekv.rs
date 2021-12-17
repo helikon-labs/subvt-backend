@@ -47,6 +47,7 @@ pub struct CandidateDetails {
     #[serde(rename(deserialize = "invalidity"))]
     pub validity: Vec<Validity>,
     pub version: Option<String>,
+    pub location: Option<String>,
 }
 
 impl CandidateDetails {
@@ -72,6 +73,7 @@ pub struct Score {
     pub offline: f64,
     pub randomness: f64,
     pub span_inclusion: f64,
+    pub location: Option<f64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

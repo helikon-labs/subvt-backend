@@ -5550,6 +5550,7 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-version",
+ "sqlx",
  "subvt-proc-macro",
  "subvt-utility",
  "thiserror",

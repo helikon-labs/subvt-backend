@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate
     offline_since           bigint NOT NULL,
     online_since            bigint NOT NULL,
     name                    text NOT NULL,
+    location                text,
     rank                    bigint,
     version                 VARCHAR(256),
     is_valid                boolean,
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate
     score_offline           double precision,
     score_randomness        double precision,
     score_span_inclusion    double precision,
+    score_location          double precision,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_onekv_candidate_fk_validator_account_id
