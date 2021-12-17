@@ -1,3 +1,5 @@
+CREATE TYPE app_notification_period AS ENUM ('immediate', 'hour', 'day', 'epoch', 'session', 'era');
+
 CREATE TABLE IF NOT EXISTS app_user_notification_rule
 (
     id                      SERIAL PRIMARY KEY,
@@ -6,6 +8,8 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule
     name                    text,
     network_id              integer,
     is_for_all_validators   boolean NOT NULL,
+    period_count            integer NOT NULL default 0,
+    period                  app_notification_period NOT NULL default 'immediate',
     notes                   text,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     deleted_at              TIMESTAMP WITHOUT TIME ZONE,

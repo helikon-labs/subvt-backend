@@ -6,8 +6,9 @@ use subvt_types::app::db::{
     PostgresUserNotificationRule, PostgresUserValidator,
 };
 use subvt_types::app::{
-    Network, NotificationChannel, NotificationParamType, NotificationType, User,
-    UserNotificationChannel, UserNotificationRule, UserNotificationRuleParameter, UserValidator,
+    Network, NotificationChannel, NotificationParamType, NotificationPeriod, NotificationType,
+    User, UserNotificationChannel, UserNotificationRule, UserNotificationRuleParameter,
+    UserValidator,
 };
 use subvt_types::crypto::AccountId;
 
@@ -422,7 +423,7 @@ impl PostgreSQLStorage {
                 notification_type_code: db_notification_param_type.1.clone(),
                 code: db_notification_param_type.2.clone(),
                 order: db_notification_param_type.3 as u8,
-                type_: db_notification_param_type.4.to_string(),
+                type_: db_notification_param_type.4.clone(),
                 min: db_notification_param_type.5.clone(),
                 max: db_notification_param_type.6.clone(),
                 is_optional: db_notification_param_type.7,
@@ -508,7 +509,7 @@ impl PostgreSQLStorage {
     ) -> anyhow::Result<Option<UserNotificationRule>> {
         let maybe_db_notification_rule: Option<PostgresUserNotificationRule> = sqlx::query_as(
             r#"
-            SELECT id, user_id, notification_type_code, name, network_id, is_for_all_validators, notes
+            SELECT id, user_id, notification_type_code, name, network_id, is_for_all_validators, period_count, period, notes
             FROM app_user_notification_rule
             WHERE id = $1
             "#
@@ -535,6 +536,8 @@ impl PostgreSQLStorage {
             name: db_notification_rule.3,
             network: maybe_network,
             is_for_all_validators: db_notification_rule.5,
+            period_count: db_notification_rule.6 as u16,
+            period: db_notification_rule.7,
             validators: self
                 .get_user_notification_rule_validators(db_notification_rule.0 as u32)
                 .await?,
@@ -544,7 +547,7 @@ impl PostgreSQLStorage {
             parameters: self
                 .get_user_notification_rule_parameters(db_notification_rule.0 as u32)
                 .await?,
-            notes: db_notification_rule.6,
+            notes: db_notification_rule.8,
         }))
     }
 
@@ -613,8 +616,8 @@ impl PostgreSQLStorage {
         user_id: u32,
         notification_type_code: &str,
         (name, notes): (Option<&str>, Option<&str>),
-        network_id: Option<u32>,
-        is_for_all_validators: bool,
+        (network_id, is_for_all_validators): (Option<u32>, bool),
+        (period_count, period): (u16, &NotificationPeriod),
         (user_validator_ids, user_notification_channel_ids, parameters): (
             &HashSet<u32>,
             &HashSet<u32>,
@@ -625,8 +628,8 @@ impl PostgreSQLStorage {
         // insert notification rule
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_user_notification_rule (user_id, notification_type_code, name, network_id, is_for_all_validators, notes)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO app_user_notification_rule (user_id, notification_type_code, name, network_id, is_for_all_validators, period_count, period, notes)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING id
             "#,
         )
@@ -635,6 +638,8 @@ impl PostgreSQLStorage {
             .bind(name)
             .bind(network_id.map(|network_id| network_id as i32))
             .bind(is_for_all_validators)
+            .bind(period_count as i32)
+            .bind(period)
             .bind(notes)
             .fetch_one(&self.connection_pool)
             .await?;

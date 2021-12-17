@@ -1,5 +1,6 @@
 use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 pub mod db;
 
@@ -39,14 +40,44 @@ pub struct NotificationType {
     pub param_types: Vec<NotificationParamType>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, sqlx::Type, Serialize, Deserialize)]
+#[sqlx(
+    type_name = "app_notification_type_param_data_type",
+    rename_all = "lowercase"
+)]
+#[serde(rename_all = "lowercase")]
+pub enum NotificationParamDataType {
+    String,
+    Integer,
+    Balance,
+    Float,
+    Boolean,
+}
+
+impl Display for NotificationParamDataType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                NotificationParamDataType::String => "string",
+                NotificationParamDataType::Integer => "integer",
+                NotificationParamDataType::Balance => "balance",
+                NotificationParamDataType::Float => "float",
+                NotificationParamDataType::Boolean => "boolean",
+            }
+        )
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NotificationParamType {
     pub id: u32,
     pub notification_type_code: String,
     pub order: u8,
     pub code: String,
     #[serde(rename(serialize = "type", deserialize = "type"))]
-    pub type_: String,
+    pub type_: NotificationParamDataType,
     pub min: Option<String>,
     pub max: Option<String>,
     pub is_optional: bool,
@@ -94,8 +125,8 @@ impl From<&(i32, i32, i16, String)> for UserNotificationRuleParameter {
 
 impl UserNotificationRuleParameter {
     pub fn validate(&self, parameter_type: &NotificationParamType) -> (bool, Option<String>) {
-        match parameter_type.type_.as_ref() {
-            "string" => {
+        match parameter_type.type_ {
+            NotificationParamDataType::String => {
                 if let Some(min) = &parameter_type.min {
                     if self.value.len() < min.parse::<usize>().unwrap() {
                         return (
@@ -113,7 +144,7 @@ impl UserNotificationRuleParameter {
                     }
                 }
             }
-            "integer" => {
+            NotificationParamDataType::Integer => {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<i64>() {
                         if value < min.parse::<i64>().unwrap() {
@@ -133,7 +164,7 @@ impl UserNotificationRuleParameter {
                     }
                 }
             }
-            "balance" => {
+            NotificationParamDataType::Balance => {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<u128>() {
                         if value < min.parse::<u128>().unwrap() {
@@ -153,7 +184,7 @@ impl UserNotificationRuleParameter {
                     }
                 }
             }
-            "float" => {
+            NotificationParamDataType::Float => {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<f64>() {
                         if value < min.parse::<f64>().unwrap() {
@@ -173,24 +204,54 @@ impl UserNotificationRuleParameter {
                     }
                 }
             }
-            "boolean" => {
+            NotificationParamDataType::Boolean => {
                 if self.value.parse::<bool>().is_err() {
                     return (false, Some("Invalid boolean value.".to_string()));
                 }
             }
-            _ => unreachable!("Unexpected parameter type: {}", parameter_type.type_),
         }
         (true, None)
     }
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, sqlx::Type, Serialize, Deserialize)]
+#[sqlx(type_name = "app_notification_period", rename_all = "lowercase")]
+#[serde(rename_all = "lowercase")]
+pub enum NotificationPeriod {
+    Immediate,
+    Hour,
+    Day,
+    Epoch,
+    Session,
+    Era,
+}
+
+impl Display for NotificationPeriod {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                NotificationPeriod::Immediate => "immediate",
+                NotificationPeriod::Hour => "hour",
+                NotificationPeriod::Day => "day",
+                NotificationPeriod::Epoch => "epoch",
+                NotificationPeriod::Session => "session",
+                NotificationPeriod::Era => "era",
+            }
+        )
+    }
+}
+
+#[derive(Clone, Debug, Serialize)]
 pub struct UserNotificationRule {
     pub id: u32,
     pub notification_type: NotificationType,
     pub name: Option<String>,
     pub network: Option<Network>,
     pub is_for_all_validators: bool,
+    pub period_count: u16,
+    pub period: NotificationPeriod,
     pub validators: Vec<UserValidator>,
     pub notification_channels: Vec<UserNotificationChannel>,
     pub parameters: Vec<UserNotificationRuleParameter>,

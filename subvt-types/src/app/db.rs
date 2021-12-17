@@ -1,6 +1,7 @@
-use crate::app::{Network, UserNotificationChannel, UserValidator};
+use crate::app::{
+    Network, NotificationParamDataType, NotificationPeriod, UserNotificationChannel, UserValidator,
+};
 use crate::crypto::AccountId;
-use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 pub type PostgresNetwork = (
@@ -62,21 +63,10 @@ pub type PostgresUserNotificationRule = (
     Option<String>,
     Option<i32>,
     bool,
+    i32,
+    NotificationPeriod,
     Option<String>,
 );
-
-#[derive(sqlx::Type)]
-#[sqlx(
-    type_name = "app_notification_type_param_data_type",
-    rename_all = "lowercase"
-)]
-pub enum NotificationParamDataType {
-    String,
-    Integer,
-    Balance,
-    Float,
-    Boolean,
-}
 
 pub type PostgresNotificationParamType = (
     i32,
@@ -88,19 +78,3 @@ pub type PostgresNotificationParamType = (
     Option<String>,
     bool,
 );
-
-impl Display for NotificationParamDataType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                NotificationParamDataType::String => "string",
-                NotificationParamDataType::Integer => "integer",
-                NotificationParamDataType::Balance => "balance",
-                NotificationParamDataType::Float => "float",
-                NotificationParamDataType::Boolean => "boolean",
-            }
-        )
-    }
-}
