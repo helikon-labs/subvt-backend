@@ -713,7 +713,7 @@ impl PostgreSQLStorage {
         sqlx::query(
             r#"
             INSERT INTO sub_event_batch_interrupted (block_hash, extrinsic_index, event_index, item_index, dispatch_error_debug)
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, $5)
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
