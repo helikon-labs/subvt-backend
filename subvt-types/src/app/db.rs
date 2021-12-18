@@ -1,5 +1,6 @@
 use crate::app::{
-    Network, NotificationParamDataType, NotificationPeriod, UserNotificationChannel, UserValidator,
+    Network, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
+    UserValidator,
 };
 use crate::crypto::AccountId;
 use std::str::FromStr;
@@ -63,8 +64,8 @@ pub type PostgresUserNotificationRule = (
     Option<String>,
     Option<i32>,
     bool,
+    NotificationPeriodType,
     i32,
-    NotificationPeriod,
     Option<String>,
 );
 

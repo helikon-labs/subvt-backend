@@ -10,7 +10,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::PostgreSQLStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
-    NotificationPeriod, User, UserNotificationChannel, UserNotificationRuleParameter,
+    NotificationPeriodType, User, UserNotificationChannel, UserNotificationRuleParameter,
     UserValidator, PUBLIC_KEY_HEX_LENGTH,
 };
 use subvt_types::err::ServiceError;
@@ -264,8 +264,8 @@ struct CreateUserNotificationRuleRequest {
     pub network_id: Option<u32>,
     pub is_for_all_validators: bool,
     pub user_validator_ids: HashSet<u32>,
-    pub period_count: u16,
-    pub period: NotificationPeriod,
+    pub period_type: NotificationPeriodType,
+    pub period: u16,
     pub user_notification_channel_ids: HashSet<u32>,
     pub parameters: Vec<UserNotificationRuleParameter>,
     pub notes: Option<String>,
@@ -409,7 +409,7 @@ async fn create_user_notification_rule(
             &input.notification_type_code,
             (input.name.as_deref(), input.notes.as_deref()),
             (input.network_id, input.is_for_all_validators),
-            (input.period_count, &input.period),
+            (&input.period_type, input.period),
             (
                 &input.user_validator_ids,
                 &input.user_notification_channel_ids,

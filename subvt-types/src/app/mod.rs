@@ -215,9 +215,9 @@ impl UserNotificationRuleParameter {
 }
 
 #[derive(Clone, Debug, sqlx::Type, Serialize, Deserialize)]
-#[sqlx(type_name = "app_notification_period", rename_all = "lowercase")]
+#[sqlx(type_name = "app_notification_period_type", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
-pub enum NotificationPeriod {
+pub enum NotificationPeriodType {
     Immediate,
     Hour,
     Day,
@@ -226,18 +226,18 @@ pub enum NotificationPeriod {
     Era,
 }
 
-impl Display for NotificationPeriod {
+impl Display for NotificationPeriodType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "{}",
             match self {
-                NotificationPeriod::Immediate => "immediate",
-                NotificationPeriod::Hour => "hour",
-                NotificationPeriod::Day => "day",
-                NotificationPeriod::Epoch => "epoch",
-                NotificationPeriod::Session => "session",
-                NotificationPeriod::Era => "era",
+                NotificationPeriodType::Immediate => "immediate",
+                NotificationPeriodType::Hour => "hour",
+                NotificationPeriodType::Day => "day",
+                NotificationPeriodType::Epoch => "epoch",
+                NotificationPeriodType::Session => "session",
+                NotificationPeriodType::Era => "era",
             }
         )
     }
@@ -250,8 +250,8 @@ pub struct UserNotificationRule {
     pub name: Option<String>,
     pub network: Option<Network>,
     pub is_for_all_validators: bool,
-    pub period_count: u16,
-    pub period: NotificationPeriod,
+    pub period_type: NotificationPeriodType,
+    pub period: u16,
     pub validators: Vec<UserValidator>,
     pub notification_channels: Vec<UserNotificationChannel>,
     pub parameters: Vec<UserNotificationRuleParameter>,
