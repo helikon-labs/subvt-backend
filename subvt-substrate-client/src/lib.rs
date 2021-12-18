@@ -115,19 +115,37 @@ impl SubstrateClient {
 
     /// Get a block hash by its number.
     pub async fn get_block_hash(&self, block_number: u64) -> anyhow::Result<String> {
-        let hash = self
+        let hash: String = self
             .ws_client
             .request("chain_getBlockHash", rpc_params!(block_number))
             .await?;
-        Ok(hash)
+        Ok(format!(
+            "0x{}",
+            hash.trim_start_matches("0x").to_uppercase()
+        ))
     }
 
     /// Get a block header by its hash.
     pub async fn get_block_header(&self, block_hash: &str) -> anyhow::Result<BlockHeader> {
-        let header = self
+        let mut header: BlockHeader = self
             .ws_client
             .request("chain_getHeader", rpc_params!(&block_hash))
             .await?;
+        header.parent_hash = format!(
+            "0x{}",
+            header.parent_hash.trim_start_matches("0x").to_uppercase()
+        );
+        header.extrinsics_root = format!(
+            "0x{}",
+            header
+                .extrinsics_root
+                .trim_start_matches("0x")
+                .to_uppercase()
+        );
+        header.state_root = format!(
+            "0x{}",
+            header.state_root.trim_start_matches("0x").to_uppercase()
+        );
         Ok(header)
     }
 
@@ -137,15 +155,27 @@ impl SubstrateClient {
             .ws_client
             .request("chain_getFinalizedHead", None)
             .await?;
-        Ok(hash)
+        Ok(format!(
+            "0x{}",
+            hash.trim_start_matches("0x").to_uppercase()
+        ))
     }
 
     /// Get a block.
     async fn get_block(&self, block_hash: &str) -> anyhow::Result<Block> {
-        let block_wrapper: BlockWrapper = self
+        let mut block_wrapper: BlockWrapper = self
             .ws_client
             .request("chain_getBlock", rpc_params!(&block_hash))
             .await?;
+        block_wrapper.block.header.parent_hash = format!(
+            "0x{}",
+            block_wrapper
+                .block
+                .header
+                .parent_hash
+                .trim_start_matches("0x")
+                .to_uppercase()
+        );
         Ok(block_wrapper.block)
     }
 

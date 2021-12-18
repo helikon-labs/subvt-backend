@@ -56,7 +56,7 @@ BEGIN
         AND is_successful = true
     );
 
-    SELECT block.timestamp
+    SELECT sub_block.timestamp
     INTO result_record.discovered_at
     FROM sub_block, sub_account
     WHERE sub_account.discovered_at_block_hash = sub_block.hash

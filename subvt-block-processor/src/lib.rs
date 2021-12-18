@@ -809,7 +809,7 @@ impl BlockProcessor {
             self.process_event(
                 substrate_client,
                 postgres,
-                (block_hash.as_str(), current_epoch_index),
+                (&block_hash, current_epoch_index),
                 &mut successful_extrinsic_indices,
                 &mut failed_extrinsic_indices,
                 (index, event),
@@ -822,7 +822,7 @@ impl BlockProcessor {
             let is_successful = successful_extrinsic_indices.contains(&(index as u32));
             self.process_extrinsic(
                 postgres,
-                block_hash.as_str(),
+                &block_hash,
                 &active_validator_account_ids,
                 (index, false, is_successful),
                 extrinsic,
