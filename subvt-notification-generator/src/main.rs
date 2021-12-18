@@ -1,11 +1,11 @@
 //! See `./lib.rs` for details.
 
 use lazy_static::lazy_static;
-use subvt_notifier::Notifier;
+use subvt_notification_generator::NotificationGenerator;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: Notifier = Notifier::default();
+    static ref SERVICE: NotificationGenerator = NotificationGenerator::default();
 }
 
 #[tokio::main]

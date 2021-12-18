@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
 (
     id                      SERIAL PRIMARY KEY,
     block_hash              VARCHAR(66) NOT NULL,
+    event_index             integer,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

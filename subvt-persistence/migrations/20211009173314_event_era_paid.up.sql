@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_era_paid
     id                  SERIAL PRIMARY KEY,
     block_hash          VARCHAR(66) NOT NULL,
     extrinsic_index     integer,
+    event_index         integer NOT NULL,
     era_index           bigint NOT NULL,
     validator_payout    VARCHAR(128) NOT NULL,
     remainder           VARCHAR(128) NOT NULL,

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_new_account
     id              SERIAL PRIMARY KEY,
     block_hash      VARCHAR(66) NOT NULL,
     extrinsic_index integer,
+    event_index     integer NOT NULL,
     account_id      VARCHAR(66) NOT NULL,
     updated_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT extrinsic_new_account_u_block_hash_account_id

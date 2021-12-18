@@ -5374,7 +5374,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "subvt-notifier"
+name = "subvt-notification-sender"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "config",
+ "lazy_static",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
+name = "subvt-notification_generator"
 version = "0.1.0"
 dependencies = [
  "anyhow",

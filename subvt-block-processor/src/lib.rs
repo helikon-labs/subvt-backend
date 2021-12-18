@@ -126,7 +126,7 @@ impl BlockProcessor {
         block_hash_epoch_index: (&str, u64),
         successful_extrinsic_indices: &mut Vec<u32>,
         failed_extrinsic_indices: &mut Vec<u32>,
-        event: SubstrateEvent,
+        (event_index, event): (usize, &SubstrateEvent),
     ) -> anyhow::Result<()> {
         let (block_hash, epoch_index) = block_hash_epoch_index;
         match event {
@@ -136,7 +136,7 @@ impl BlockProcessor {
                     im_online_key_hex_string,
                 } => {
                     match substrate_client
-                        .get_im_online_key_owner_account_id(block_hash, &im_online_key_hex_string)
+                        .get_im_online_key_owner_account_id(block_hash, im_online_key_hex_string)
                         .await
                     {
                         Ok(validator_account_id) => {
@@ -146,8 +146,9 @@ impl BlockProcessor {
                                 .save_validator_heartbeart_event(
                                     block_hash,
                                     extrinsic_index,
-                                    epoch_index as u32,
-                                    &im_online_key_hex_string,
+                                    event_index as i32,
+                                    epoch_index as i64,
+                                    im_online_key_hex_string,
                                     &validator_account_id,
                                 )
                                 .await?;
@@ -161,7 +162,11 @@ impl BlockProcessor {
                     identification_tuples,
                 } => {
                     postgres
-                        .save_validator_offline_events(block_hash, identification_tuples)
+                        .save_validators_offline_event(
+                            block_hash,
+                            event_index as i32,
+                            identification_tuples,
+                        )
                         .await?;
                 }
                 _ => (),
@@ -177,7 +182,8 @@ impl BlockProcessor {
                         .save_validator_chilled_event(
                             block_hash,
                             extrinsic_index,
-                            &validator_account_id,
+                            event_index as i32,
+                            validator_account_id,
                         )
                         .await?;
                 }
@@ -193,9 +199,10 @@ impl BlockProcessor {
                         .save_era_paid_event(
                             block_hash,
                             extrinsic_index,
-                            era_index,
-                            validator_payout,
-                            remainder,
+                            event_index as i32,
+                            *era_index,
+                            *validator_payout,
+                            *remainder,
                         )
                         .await?;
                 }
@@ -210,8 +217,9 @@ impl BlockProcessor {
                         .save_nominator_kicked_event(
                             block_hash,
                             extrinsic_index,
-                            &validator_account_id,
-                            &nominator_account_id,
+                            event_index as i32,
+                            validator_account_id,
+                            nominator_account_id,
                         )
                         .await?;
                 }
@@ -226,8 +234,9 @@ impl BlockProcessor {
                         .save_rewarded_event(
                             block_hash,
                             extrinsic_index,
-                            &rewardee_account_id,
-                            amount,
+                            event_index as i32,
+                            rewardee_account_id,
+                            *amount,
                         )
                         .await?;
                 }
@@ -242,8 +251,9 @@ impl BlockProcessor {
                         .save_slashed_event(
                             block_hash,
                             extrinsic_index,
-                            &validator_account_id,
-                            amount,
+                            event_index as i32,
+                            validator_account_id,
+                            *amount,
                         )
                         .await?;
                 }
@@ -266,7 +276,12 @@ impl BlockProcessor {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
-                        .save_new_account_event(block_hash, extrinsic_index, &account_id)
+                        .save_new_account_event(
+                            block_hash,
+                            extrinsic_index,
+                            event_index as i32,
+                            account_id,
+                        )
                         .await?;
                 }
                 SystemEvent::KilledAccount {
@@ -276,7 +291,12 @@ impl BlockProcessor {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
-                        .save_killed_account_event(block_hash, extrinsic_index, &account_id)
+                        .save_killed_account_event(
+                            block_hash,
+                            extrinsic_index,
+                            event_index as i32,
+                            account_id,
+                        )
                         .await?;
                 }
                 _ => (),
@@ -286,7 +306,11 @@ impl BlockProcessor {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
-                        .save_batch_item_completed_event(block_hash, extrinsic_index)
+                        .save_batch_item_completed_event(
+                            block_hash,
+                            extrinsic_index,
+                            event_index as i32,
+                        )
                         .await?;
                 }
                 UtilityEvent::BatchInterrupted {
@@ -300,7 +324,8 @@ impl BlockProcessor {
                         .save_batch_interrupted_event(
                             block_hash,
                             extrinsic_index,
-                            item_index as i32,
+                            event_index as i32,
+                            *item_index as i32,
                             format!("{:?}", dispatch_error),
                         )
                         .await?;
@@ -309,7 +334,7 @@ impl BlockProcessor {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
-                        .save_batch_completed_event(block_hash, extrinsic_index)
+                        .save_batch_completed_event(block_hash, extrinsic_index, event_index as i32)
                         .await?;
                 }
             },
@@ -780,14 +805,14 @@ impl BlockProcessor {
         // process/persist events
         let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
         let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
-        for event in events {
+        for (index, event) in events.iter().enumerate() {
             self.process_event(
                 substrate_client,
                 postgres,
                 (block_hash.as_str(), current_epoch_index),
                 &mut successful_extrinsic_indices,
                 &mut failed_extrinsic_indices,
-                event,
+                (index, event),
             )
             .await?;
         }

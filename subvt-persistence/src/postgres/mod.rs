@@ -354,20 +354,22 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
-        session_index: u32,
+        event_index: i32,
+        session_index: i64,
         im_online_key_hex_string: &str,
         validator_account_id: &AccountId,
     ) -> anyhow::Result<()> {
         self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO sub_event_heartbeat_received (block_hash, extrinsic_index, session_index, im_online_key, validator_account_id)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO sub_event_heartbeat_received (block_hash, extrinsic_index, event_index, session_index, im_online_key, validator_account_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
+            .bind(event_index)
             .bind(session_index)
             .bind(im_online_key_hex_string)
             .bind(validator_account_id.to_string())
@@ -376,21 +378,23 @@ impl PostgreSQLStorage {
         Ok(())
     }
 
-    pub async fn save_validator_offline_events(
+    pub async fn save_validators_offline_event(
         &self,
         block_hash: &str,
-        identification_tuples: Vec<IdentificationTuple>,
+        event_index: i32,
+        identification_tuples: &[IdentificationTuple],
     ) -> anyhow::Result<()> {
         for identification_tuple in identification_tuples {
             self.save_account(&identification_tuple.0).await?;
             sqlx::query(
                 r#"
-                INSERT INTO sub_event_validator_offline (block_hash, validator_account_id)
-                VALUES ($1, $2)
+                INSERT INTO sub_event_validator_offline (block_hash, event_index, validator_account_id)
+                VALUES ($1, $2, $3)
                 ON CONFLICT (block_hash, validator_account_id) DO NOTHING
                 "#,
             )
             .bind(block_hash)
+            .bind(event_index)
             .bind(identification_tuple.0.to_string())
             .execute(&self.connection_pool)
             .await?;
@@ -445,18 +449,20 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         validator_account_id: &AccountId,
     ) -> anyhow::Result<()> {
         self.save_account(validator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO sub_event_validator_chilled (block_hash, extrinsic_index, validator_account_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO sub_event_validator_chilled (block_hash, extrinsic_index, event_index, validator_account_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .bind(validator_account_id.to_string())
         .execute(&self.connection_pool)
         .await?;
@@ -467,18 +473,20 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         era_index: u32,
         validator_payout: Balance,
         remainder: Balance,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_event_era_paid (block_hash, extrinsic_index, era_index, validator_payout, remainder)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO sub_event_era_paid (block_hash, extrinsic_index, event_index, era_index, validator_payout, remainder)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (era_index) DO NOTHING
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
+            .bind(event_index)
             .bind(era_index)
             .bind(validator_payout.to_string())
             .bind(remainder.to_string())
@@ -491,6 +499,7 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         validator_account_id: &AccountId,
         nominator_account_id: &AccountId,
     ) -> anyhow::Result<()> {
@@ -498,12 +507,13 @@ impl PostgreSQLStorage {
         self.save_account(nominator_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO sub_event_nominator_kicked (block_hash, extrinsic_index, validator_account_id, nominator_account_id)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO sub_event_nominator_kicked (block_hash, extrinsic_index, event_index, validator_account_id, nominator_account_id)
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (block_hash, validator_account_id, nominator_account_id) DO NOTHING
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
+            .bind(event_index)
             .bind(validator_account_id.to_string())
             .bind(nominator_account_id.to_string())
             .execute(&self.connection_pool)
@@ -515,20 +525,22 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         rewardee_account_id: &AccountId,
         amount: Balance,
     ) -> anyhow::Result<Option<i32>> {
         self.save_account(rewardee_account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_rewarded (block_hash, extrinsic_index, rewardee_account_id, amount)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO sub_event_rewarded (block_hash, extrinsic_index, event_index, rewardee_account_id, amount)
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (block_hash, rewardee_account_id) DO NOTHING
             RETURNING id
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .bind(rewardee_account_id.to_string())
         .bind(amount.to_string())
         .fetch_optional(&self.connection_pool)
@@ -544,13 +556,14 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         validator_account_id: &AccountId,
         amount: Balance,
     ) -> anyhow::Result<Option<i32>> {
         self.save_account(validator_account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_slashed (block_hash, extrinsic_index, validator_account_id, amount)
+            INSERT INTO sub_event_slashed (block_hash, extrinsic_index, event_index, validator_account_id, amount)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             RETURNING id
@@ -558,6 +571,7 @@ impl PostgreSQLStorage {
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .bind(validator_account_id.to_string())
         .bind(amount.to_string())
         .fetch_optional(&self.connection_pool)
@@ -573,19 +587,21 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         account_id: &AccountId,
     ) -> anyhow::Result<Option<String>> {
         self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_new_account (block_hash, extrinsic_index, account_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO sub_event_new_account (block_hash, extrinsic_index, event_index, account_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -615,19 +631,21 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         account_id: &AccountId,
     ) -> anyhow::Result<Option<String>> {
         self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_killed_account (block_hash, extrinsic_index, account_id)
-            VALUES ($1, $2, $3)
+            INSERT INTO sub_event_killed_account (block_hash, extrinsic_index, event_index, account_id)
+            VALUES ($1, $2, $3, $4)
             ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -668,15 +686,17 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_event_batch_item_completed (block_hash, extrinsic_index)
-            VALUES ($1, $2)
+            INSERT INTO sub_event_batch_item_completed (block_hash, extrinsic_index, event_index)
+            VALUES ($1, $2, $3)
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .execute(&self.connection_pool)
         .await?;
         Ok(())
@@ -686,16 +706,18 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
         item_index: i32,
         dispatch_error_debug: String,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_event_batch_interrupted (block_hash, extrinsic_index, item_index, dispatch_error_debug)
+            INSERT INTO sub_event_batch_interrupted (block_hash, extrinsic_index, event_index, item_index, dispatch_error_debug)
             VALUES ($1, $2, $3, $4)
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
+            .bind(event_index)
             .bind(item_index)
             .bind(dispatch_error_debug)
             .execute(&self.connection_pool)
@@ -707,15 +729,17 @@ impl PostgreSQLStorage {
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
+        event_index: i32,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_event_batch_completed (block_hash, extrinsic_index)
-            VALUES ($1, $2)
+            INSERT INTO sub_event_batch_completed (block_hash, extrinsic_index, event_index)
+            VALUES ($1, $2, $3)
             "#,
         )
         .bind(block_hash)
         .bind(extrinsic_index)
+        .bind(event_index)
         .execute(&self.connection_pool)
         .await?;
         Ok(())

@@ -11,10 +11,10 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct Notifier;
+pub struct NotificationSender;
 
 #[async_trait(?Send)]
-impl Service for Notifier {
+impl Service for NotificationSender {
     async fn run(&'static self) -> anyhow::Result<()> {
         Ok(())
     }
