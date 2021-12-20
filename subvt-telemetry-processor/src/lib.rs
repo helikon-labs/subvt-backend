@@ -209,7 +209,7 @@ impl TelemetryProcessor {
         node_map: Mutex<HashMap<u64, NodeDetails>>,
         rx: Receiver<Vec<FeedMessage>>,
     ) -> anyhow::Result<()> {
-        let postgres = PostgreSQLStorage::new(&CONFIG).await?;
+        let postgres = PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         for messages in rx {
             for message in messages {
                 TelemetryProcessor::process_feed_message(&postgres, &node_map, &message).await?;

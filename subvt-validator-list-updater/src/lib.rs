@@ -196,7 +196,8 @@ impl ValidatorListUpdater {
 impl Service for ValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
+            let postgres =
+                Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let is_busy = Arc::new(AtomicBool::new(false));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {

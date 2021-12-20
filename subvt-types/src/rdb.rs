@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 pub struct ValidatorInfo {
     pub discovered_at: Option<u64>,
     pub killed_at: Option<u64>,
@@ -11,4 +13,10 @@ pub struct ValidatorInfo {
     pub blocks_authored: Option<u64>,
     pub reward_points: Option<u64>,
     pub heartbeat_received: Option<bool>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct BlockProcessedNotification {
+    pub block_number: u64,
+    pub block_hash: String,
 }

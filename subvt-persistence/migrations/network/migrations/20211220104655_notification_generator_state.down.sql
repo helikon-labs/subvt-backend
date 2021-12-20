@@ -1,0 +1,1 @@
+DROP TABLE sub_notification_generator_state CASCADE;

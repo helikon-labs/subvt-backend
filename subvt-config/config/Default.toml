@@ -30,19 +30,28 @@ app_service_port = 7901
 [redis]
 url = "redis://127.0.0.1:5432/"
 
-[postgres]
+[app_postgres]
 host = "127.0.0.1"
 port = 5432
 username = "subvt"
 password = "subvt"
-database_name = "subvt"
+database_name = "subvt_app"
+pool_max_connections = 20
+connection_timeout_seconds = 3
+
+[network_postgres]
+host = "127.0.0.1"
+port = 5432
+username = "subvt"
+password = "subvt"
+database_name = "subvt_kusama"
 pool_max_connections = 20
 connection_timeout_seconds = 3
 
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 4401243
+start_block_number = 8000000
 
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"

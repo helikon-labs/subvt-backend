@@ -107,7 +107,7 @@ impl Service for OneKVUpdater {
             "1KV updater has started with {} seconds refresh wait period.",
             CONFIG.onekv.refresh_seconds
         );
-        let postgres = PostgreSQLStorage::new(&CONFIG).await?;
+        let postgres = PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         loop {
             if let Err(error) = self.update(&postgres).await {
                 error!("1KV update has failed: {:?}", error);

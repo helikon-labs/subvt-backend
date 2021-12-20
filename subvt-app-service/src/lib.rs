@@ -468,7 +468,8 @@ pub struct AppService;
 #[async_trait(?Send)]
 impl Service for AppService {
     async fn run(&'static self) -> anyhow::Result<()> {
-        let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
+        let postgres =
+            Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
         debug!("Starting HTTP service...");
         let result = HttpServer::new(move || {
             App::new()

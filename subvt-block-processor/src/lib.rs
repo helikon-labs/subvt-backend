@@ -829,6 +829,10 @@ impl BlockProcessor {
             )
             .await?
         }
+        // notify
+        postgres
+            .notify_block_processed(block_number, block_hash)
+            .await?;
         Ok(())
     }
 }
@@ -841,7 +845,8 @@ impl Service for BlockProcessor {
             let block_processor_substrate_client =
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
-            let postgres = Arc::new(PostgreSQLStorage::new(&CONFIG).await?);
+            let postgres =
+                Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
             let is_indexing_past_blocks = Arc::new(AtomicBool::new(false));
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {

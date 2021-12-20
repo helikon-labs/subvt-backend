@@ -152,7 +152,8 @@ pub struct Config {
     pub http: HTTPConfig,
     pub log: LogConfig,
     pub onekv: OneKVConfig,
-    pub postgres: PostgreSQLConfig,
+    pub app_postgres: PostgreSQLConfig,
+    pub network_postgres: PostgreSQLConfig,
     pub redis: RedisConfig,
     pub rpc: RPCConfig,
     pub substrate: SubstrateConfig,
@@ -187,14 +188,25 @@ impl Config {
         c.try_into()
     }
 
-    pub fn get_postgres_url(&self) -> String {
+    pub fn get_app_postgres_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}?sslmode=disable",
-            self.postgres.username,
-            self.postgres.password,
-            self.postgres.host,
-            self.postgres.port,
-            self.postgres.database_name,
+            self.app_postgres.username,
+            self.app_postgres.password,
+            self.app_postgres.host,
+            self.app_postgres.port,
+            self.app_postgres.database_name,
+        )
+    }
+
+    pub fn get_network_postgres_url(&self) -> String {
+        format!(
+            "postgres://{}:{}@{}:{}/{}?sslmode=disable",
+            self.network_postgres.username,
+            self.network_postgres.password,
+            self.network_postgres.host,
+            self.network_postgres.port,
+            self.network_postgres.database_name,
         )
     }
 }

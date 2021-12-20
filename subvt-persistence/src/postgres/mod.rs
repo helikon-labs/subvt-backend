@@ -16,6 +16,7 @@ use subvt_types::{
 };
 
 pub mod app;
+pub mod notify;
 pub mod report;
 pub mod telemetry;
 
@@ -35,21 +36,25 @@ type PostgresValidatorInfo = (
 );
 
 pub struct PostgreSQLStorage {
+    uri: String,
     connection_pool: Pool<Postgres>,
 }
 
 impl PostgreSQLStorage {
-    pub async fn new(config: &Config) -> anyhow::Result<PostgreSQLStorage> {
+    pub async fn new(config: &Config, uri: String) -> anyhow::Result<PostgreSQLStorage> {
         debug!("Establishing database connection pool...");
         let connection_pool = sqlx::postgres::PgPoolOptions::new()
             .connect_timeout(std::time::Duration::from_secs(
-                config.postgres.connection_timeout_seconds,
+                config.network_postgres.connection_timeout_seconds,
             ))
-            .max_connections(config.postgres.pool_max_connections)
-            .connect(&config.get_postgres_url())
+            .max_connections(config.network_postgres.pool_max_connections)
+            .connect(&uri)
             .await?;
         debug!("Database connection pool established.");
-        Ok(PostgreSQLStorage { connection_pool })
+        Ok(PostgreSQLStorage {
+            uri,
+            connection_pool,
+        })
     }
 }
 
@@ -669,6 +674,19 @@ impl PostgreSQLStorage {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn get_block_hash(&self, block_number: u64) -> anyhow::Result<Option<String>> {
+        Ok(sqlx::query_as(
+            r#"
+            SELECT hash FROM sub_block
+            WHERE "number" = $1
+            "#,
+        )
+        .bind(block_number as i64)
+        .fetch_optional(&self.connection_pool)
+        .await?
+        .map(|hash: (String,)| hash.0))
     }
 
     pub async fn get_processed_block_height(&self) -> anyhow::Result<i64> {

@@ -5393,11 +5393,14 @@ name = "subvt-notification_generator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-lock",
  "async-trait",
  "config",
  "lazy_static",
+ "log",
  "subvt-config",
  "subvt-logging",
+ "subvt-persistence",
  "subvt-service-common",
  "subvt-types",
  "tokio",
@@ -5431,6 +5434,8 @@ dependencies = [
  "hex",
  "log",
  "parity-scale-codec",
+ "serde 1.0.130",
+ "serde_json",
  "sqlx",
  "subvt-config",
  "subvt-types",
