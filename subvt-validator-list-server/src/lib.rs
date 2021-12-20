@@ -5,7 +5,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
 use clap::{App, Arg};
-use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
+use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
@@ -38,7 +38,7 @@ impl ValidatorListServer {
         port: u16,
         validator_map: &Arc<RwLock<HashMap<AccountId, ValidatorDetails>>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<WsStopHandle> {
+    ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
             .build(format!("{}:{}", host, port))
@@ -47,6 +47,7 @@ impl ValidatorListServer {
         let validator_map = validator_map.clone();
         let bus = bus.clone();
         rpc_module.register_subscription(
+            "subscribe_validator_list",
             "subscribe_validator_list",
             "unsubscribe_validator_list",
             move |_params, mut sink, _| {

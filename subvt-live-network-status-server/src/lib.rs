@@ -4,7 +4,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
+use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use redis::Connection;
@@ -43,7 +43,7 @@ impl LiveNetworkStatusServer {
     async fn run_rpc_server(
         current_status: &Arc<RwLock<LiveNetworkStatus>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<WsStopHandle> {
+    ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .build(format!(
                 "{}:{}",
@@ -54,6 +54,7 @@ impl LiveNetworkStatusServer {
         let current_status = current_status.clone();
         let bus = bus.clone();
         rpc_module.register_subscription(
+            "subscribe_live_network_status",
             "subscribe_live_network_status",
             "unsubscribe_live_network_status",
             move |_params, mut sink, _| {

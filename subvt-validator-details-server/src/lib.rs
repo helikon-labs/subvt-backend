@@ -1,7 +1,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsStopHandle};
+use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
 use redis::RedisResult;
@@ -68,7 +68,7 @@ impl ValidatorDetailsServer {
         port: u16,
         redis_client: &redis::Client,
         bus: Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<WsStopHandle> {
+    ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
             .build(format!("{}:{}", host, port))
@@ -77,6 +77,7 @@ impl ValidatorDetailsServer {
         let redis_client = redis_client.clone();
         let data_connection = Arc::new(RwLock::new(redis_client.get_connection()?));
         rpc_module.register_subscription(
+            "subscribe_validator_details",
             "subscribe_validator_details",
             "unsubscribe_validator_details",
             move |params, mut sink, _| {
