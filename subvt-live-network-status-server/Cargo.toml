@@ -24,4 +24,4 @@ subvt-config = { path = "../subvt-config" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
-tokio = { version = "1.13.0", features = ["full"] }
+tokio = { version = "1.15.0", features = ["full"] }
