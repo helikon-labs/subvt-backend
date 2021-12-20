@@ -7,7 +7,8 @@ use lazy_static::lazy_static;
 use log::error;
 use std::sync::Arc;
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 
 lazy_static! {
@@ -20,7 +21,7 @@ pub struct NotificationGenerator;
 impl NotificationGenerator {
     async fn process_block(
         &self,
-        postgres: &Arc<PostgreSQLStorage>,
+        postgres: &Arc<PostgreSQLNetworkStorage>,
         block_number: u64,
     ) -> anyhow::Result<()> {
         println!("process block #{}", block_number);
@@ -37,9 +38,10 @@ impl NotificationGenerator {
 impl Service for NotificationGenerator {
     async fn run(&'static self) -> anyhow::Result<()> {
         let _app_postgres =
-            Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        let network_postgres =
-            Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
+            Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
+        let network_postgres = Arc::new(
+            PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+        );
         let maybe_last_processed_block_number_mutex = Arc::new(Mutex::new(
             network_postgres
                 .get_notification_generator_state()

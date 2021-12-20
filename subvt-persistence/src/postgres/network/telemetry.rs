@@ -1,8 +1,8 @@
-use crate::postgres::PostgreSQLStorage;
+use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 use subvt_types::telemetry::{NodeDetails, NodeHardware, NodeStats};
 
-impl PostgreSQLStorage {
+impl PostgreSQLNetworkStorage {
     pub async fn update_node_best_block(
         &self,
         node_id: u64,

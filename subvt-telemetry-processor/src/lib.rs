@@ -10,7 +10,7 @@ use log::{debug, error, info, trace, warn};
 use std::collections::HashMap;
 use std::sync::mpsc::{self, Receiver, Sender};
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_types::telemetry::{FeedMessage, NodeDetails};
 
@@ -23,7 +23,7 @@ pub struct TelemetryProcessor;
 
 impl TelemetryProcessor {
     async fn process_feed_message(
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         node_map: &Mutex<HashMap<u64, NodeDetails>>,
         feed_message: &FeedMessage,
     ) -> anyhow::Result<()> {
@@ -209,7 +209,8 @@ impl TelemetryProcessor {
         node_map: Mutex<HashMap<u64, NodeDetails>>,
         rx: Receiver<Vec<FeedMessage>>,
     ) -> anyhow::Result<()> {
-        let postgres = PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
+        let postgres =
+            PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         for messages in rx {
             for message in messages {
                 TelemetryProcessor::process_feed_message(&postgres, &node_map, &message).await?;

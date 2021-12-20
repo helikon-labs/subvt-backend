@@ -1,4 +1,4 @@
-use crate::postgres::PostgreSQLStorage;
+use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
 use subvt_types::report::{EraReport, EraValidatorReport};
 use subvt_types::substrate::Era;
@@ -44,7 +44,7 @@ fn parse_maybe_string<T: FromStr>(maybe_string: &Option<String>) -> Result<Optio
     }
 }
 
-impl PostgreSQLStorage {
+impl PostgreSQLNetworkStorage {
     async fn get_single_era_validator_report(
         &self,
         era_index: u32,

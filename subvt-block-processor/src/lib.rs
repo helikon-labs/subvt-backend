@@ -11,7 +11,7 @@ use std::sync::{
     Arc, RwLock,
 };
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::metadata::MetadataVersion;
@@ -44,7 +44,7 @@ impl BlockProcessor {
     async fn persist_era_validators_and_stakers(
         &self,
         substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         era: &Era,
         block_hash: &str,
         active_validator_account_ids: &[AccountId],
@@ -86,7 +86,7 @@ impl BlockProcessor {
     async fn persist_era_reward_points(
         &self,
         substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         block_hash: &str,
         era_index: u32,
     ) -> anyhow::Result<()> {
@@ -122,7 +122,7 @@ impl BlockProcessor {
     async fn process_event(
         &self,
         substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         block_hash_epoch_index: (&str, u64),
         successful_extrinsic_indices: &mut Vec<u32>,
         failed_extrinsic_indices: &mut Vec<u32>,
@@ -346,7 +346,7 @@ impl BlockProcessor {
     #[async_recursion]
     async fn process_extrinsic(
         &self,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         block_hash: &str,
         active_validator_account_ids: &[AccountId],
         (index, is_nested_call, is_successful): (usize, bool, bool),
@@ -638,7 +638,7 @@ impl BlockProcessor {
         &self,
         substrate_client: &mut SubstrateClient,
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
     ) -> anyhow::Result<()> {
         debug!("Process block #{}.", block_number);
@@ -845,8 +845,9 @@ impl Service for BlockProcessor {
             let block_processor_substrate_client =
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
-            let postgres =
-                Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
+            let postgres = Arc::new(
+                PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+            );
             let is_indexing_past_blocks = Arc::new(AtomicBool::new(false));
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {

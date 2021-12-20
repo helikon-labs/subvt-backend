@@ -6,7 +6,7 @@ use log::debug;
 use serde::Deserialize;
 use std::sync::Arc;
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::err::ServiceError;
 
@@ -18,7 +18,7 @@ type ResultResponse = Result<HttpResponse, InternalServerError>;
 
 #[derive(Clone)]
 struct ServiceState {
-    postgres: Arc<PostgreSQLStorage>,
+    postgres: Arc<PostgreSQLNetworkStorage>,
 }
 
 #[derive(Deserialize)]
@@ -99,8 +99,9 @@ pub struct ReportService;
 #[async_trait(?Send)]
 impl Service for ReportService {
     async fn run(&'static self) -> anyhow::Result<()> {
-        let postgres =
-            Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
+        let postgres = Arc::new(
+            PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+        );
         debug!("Starting HTTP service...");
         let result = HttpServer::new(move || {
             App::new()

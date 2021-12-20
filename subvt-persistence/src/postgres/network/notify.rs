@@ -1,4 +1,4 @@
-use crate::postgres::PostgreSQLStorage;
+use crate::postgres::network::PostgreSQLNetworkStorage;
 use serde::Serialize;
 use sqlx::postgres::PgListener;
 use subvt_types::rdb::BlockProcessedNotification;
@@ -15,7 +15,7 @@ impl Channel {
     }
 }
 
-impl PostgreSQLStorage {
+impl PostgreSQLNetworkStorage {
     async fn notify<T>(&self, channel: &str, payload: &T) -> anyhow::Result<()>
     where
         T: Serialize,

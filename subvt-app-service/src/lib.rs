@@ -7,7 +7,7 @@ use serde::Deserialize;
 use std::collections::HashSet;
 use std::sync::Arc;
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
     NotificationPeriodType, User, UserNotificationChannel, UserNotificationRuleParameter,
@@ -23,7 +23,7 @@ type ResultResponse = Result<HttpResponse, InternalServerError>;
 
 #[derive(Clone)]
 struct ServiceState {
-    postgres: Arc<PostgreSQLStorage>,
+    postgres: Arc<PostgreSQLAppStorage>,
 }
 
 async fn check_user_exists_by_id(
@@ -469,7 +469,7 @@ pub struct AppService;
 impl Service for AppService {
     async fn run(&'static self) -> anyhow::Result<()> {
         let postgres =
-            Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
+            Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
         debug!("Starting HTTP service...");
         let result = HttpServer::new(move || {
             App::new()

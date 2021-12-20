@@ -1,6 +1,8 @@
-use crate::postgres::PostgreSQLStorage;
+use log::debug;
+use sqlx::{Pool, Postgres};
 use std::collections::HashSet;
 use std::str::FromStr;
+use subvt_config::Config;
 use subvt_types::app::db::{
     PostgresNetwork, PostgresNotificationParamType, PostgresUserNotificationChannel,
     PostgresUserNotificationRule, PostgresUserValidator,
@@ -12,7 +14,30 @@ use subvt_types::app::{
 };
 use subvt_types::crypto::AccountId;
 
-impl PostgreSQLStorage {
+pub struct PostgreSQLAppStorage {
+    _uri: String,
+    connection_pool: Pool<Postgres>,
+}
+
+impl PostgreSQLAppStorage {
+    pub async fn new(config: &Config, uri: String) -> anyhow::Result<PostgreSQLAppStorage> {
+        debug!("Establishing application database connection pool...");
+        let connection_pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_timeout(std::time::Duration::from_secs(
+                config.network_postgres.connection_timeout_seconds,
+            ))
+            .max_connections(config.network_postgres.pool_max_connections)
+            .connect(&uri)
+            .await?;
+        debug!("Application database connection pool established.");
+        Ok(PostgreSQLAppStorage {
+            _uri: uri,
+            connection_pool,
+        })
+    }
+}
+
+impl PostgreSQLAppStorage {
     pub async fn get_network_by_id(&self, id: u32) -> anyhow::Result<Network> {
         Ok(sqlx::query_as(
             r#"
@@ -221,11 +246,11 @@ impl PostgreSQLStorage {
             WHERE user_id = $1 AND notification_channel_code = $2 AND target = $3 AND deleted_at IS NULL
             "#,
         )
-        .bind(user_notification_channel.user_id as i32)
-        .bind(&user_notification_channel.channel_code)
-        .bind(&user_notification_channel.target)
-        .fetch_one(&self.connection_pool)
-        .await?;
+            .bind(user_notification_channel.user_id as i32)
+            .bind(&user_notification_channel.channel_code)
+            .bind(&user_notification_channel.target)
+            .fetch_one(&self.connection_pool)
+            .await?;
         Ok(record_count.0 > 0)
     }
 

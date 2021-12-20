@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error, info};
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_types::onekv::{Candidate, CandidateDetails};
 
@@ -31,7 +31,7 @@ impl Default for OneKVUpdater {
 }
 
 impl OneKVUpdater {
-    async fn update(&self, postgres: &PostgreSQLStorage) -> anyhow::Result<()> {
+    async fn update(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         info!("Update 1KV.");
         info!("Fetch candidate list.");
         let response = self
@@ -107,7 +107,8 @@ impl Service for OneKVUpdater {
             "1KV updater has started with {} seconds refresh wait period.",
             CONFIG.onekv.refresh_seconds
         );
-        let postgres = PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
+        let postgres =
+            PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         loop {
             if let Err(error) = self.update(&postgres).await {
                 error!("1KV update has failed: {:?}", error);

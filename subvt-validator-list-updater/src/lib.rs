@@ -13,7 +13,7 @@ use std::sync::{
     Arc,
 };
 use subvt_config::Config;
-use subvt_persistence::postgres::PostgreSQLStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::BlockHeader;
@@ -138,7 +138,7 @@ impl ValidatorListUpdater {
 
     async fn fetch_and_update_validator_list(
         client: &SubstrateClient,
-        postgres: &PostgreSQLStorage,
+        postgres: &PostgreSQLNetworkStorage,
         finalized_block_header: &BlockHeader,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
         let finalized_block_number = finalized_block_header
@@ -196,8 +196,9 @@ impl ValidatorListUpdater {
 impl Service for ValidatorListUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let postgres =
-                Arc::new(PostgreSQLStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?);
+            let postgres = Arc::new(
+                PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+            );
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let is_busy = Arc::new(AtomicBool::new(false));
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
