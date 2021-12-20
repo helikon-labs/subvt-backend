@@ -32,7 +32,7 @@ polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", 
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.13" }
 scale-info = "1.0.0"
 serde = { version = "1.0.132", features = ["derive"] }
-serde_json = "1.0.66"
+serde_json = "1.0.73"
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 sp-consensus-babe = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.13" }
