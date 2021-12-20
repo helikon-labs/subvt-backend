@@ -12,7 +12,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
-use subvt_types::telemetry::{FeedMessage, NodeDetails};
+use subvt_types::telemetry::{FeedMessage, NodeDetails, NodeLocation};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -58,14 +58,14 @@ impl TelemetryProcessor {
                 io: _io,
                 hardware: _hardware,
                 block_details: _block_details,
-                location: _location,
+                location,
                 startup_time,
             } => {
                 trace!("Add node #{} :: {:?}.", node_id, node_details);
                 let mut map = node_map.lock().await;
                 map.insert(*node_id, *node_details.clone());
                 postgres
-                    .save_node(*node_id, node_details, *startup_time)
+                    .save_node(*node_id, node_details, *startup_time, location)
                     .await?;
             }
             FeedMessage::RemovedNode { node_id } => {
@@ -76,11 +76,21 @@ impl TelemetryProcessor {
             }
             FeedMessage::LocatedNode {
                 node_id,
-                latitude: _,
-                longitude: _,
-                city: _,
+                latitude,
+                longitude,
+                city,
             } => {
-                trace!("Located node #{}.", node_id);
+                let location = NodeLocation(
+                    *latitude,
+                    *longitude,
+                    city.clone(),
+                );
+                postgres
+                    .update_node_location(
+                        *node_id,
+                        &location
+                    )
+                    .await?;
             }
             FeedMessage::NodeImportedBlock {
                 node_id,

@@ -714,7 +714,7 @@ impl PostgreSQLAppStorage {
         Ok(user_notification_rule_id as u32)
     }
     /*
-    SELECT "id", user_id, notification_type_code, "name", network_id, is_for_all_validators, period_type, period, notes
+    SELECT "id", user_id, notification_type_code, "name", network_id, is_for_all_validators, period_type, "period", notes
     FROM app_user_notification_rule UNR
     WHERE UNR.notification_type_code = 'notification_type'
     AND UNR.deleted_at IS NULL
@@ -742,9 +742,10 @@ impl PostgreSQLAppStorage {
                     WHERE UV2.network_id = 5
                     AND UV2.validator_account_id = 'ABC'
                     AND UV2.id = UNRV.user_validator_id
+                    AND UV2.deleted_at IS NULL
                 )
             )
         )
-    )
+    );
          */
 }

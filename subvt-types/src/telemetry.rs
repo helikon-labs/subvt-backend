@@ -27,11 +27,11 @@ pub struct NodeHardware(
 #[derive(Debug, Deserialize, PartialEq)]
 pub struct NodeLocation(
     // latitude
-    f32,
+    pub f32,
     // longitude
-    f32,
+    pub f32,
     // city
-    String,
+    pub String,
 );
 
 #[derive(Clone, Debug, PartialEq)]

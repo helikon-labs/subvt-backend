@@ -33,6 +33,14 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule
 CREATE INDEX app_user_notification_rule_idx_user_id
     ON app_user_notification_rule (user_id);
 
+CREATE INDEX app_user_notification_rule_idx_search
+    ON app_user_notification_rule (
+        notification_type_code,
+        deleted_at,
+        network_id,
+        is_for_all_validators
+    );
+
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_validator
 (
     user_notification_rule_id   integer NOT NULL,
@@ -57,6 +65,9 @@ CREATE INDEX app_user_notification_rule_validator_idx_rule_id
 
 CREATE INDEX app_user_notification_rule_validator_idx_user_validator_id
     ON app_user_notification_rule_validator (user_validator_id);
+
+CREATE INDEX app_user_notification_rule_validator_idx_search
+    ON app_user_notification_rule_validator (user_notification_rule_id, user_validator_id);
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
 (

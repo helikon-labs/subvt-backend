@@ -9,6 +9,9 @@ CREATE TABLE IF NOT EXISTS sub_telemetry_node (
    finalized_block_number   bigint,
    finalized_block_hash     VARCHAR(66),
    startup_time             bigint,
+   location                 text,
+   latitude                 double precision,
+   longitude                double precision,
    created_at               TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
    updated_at               TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );

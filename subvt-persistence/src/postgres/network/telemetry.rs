@@ -1,6 +1,6 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
-use subvt_types::telemetry::{NodeDetails, NodeHardware, NodeStats};
+use subvt_types::telemetry::{NodeDetails, NodeHardware, NodeLocation, NodeStats};
 
 impl PostgreSQLNetworkStorage {
     pub async fn update_node_best_block(
@@ -53,11 +53,37 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
+    pub async fn update_node_location(
+        &self,
+        node_id: u64,
+        location: &NodeLocation,
+    ) -> anyhow::Result<Option<i64>> {
+        let maybe_result: Option<(i64,)> = sqlx::query_as(
+            r#"
+            UPDATE sub_telemetry_node SET location = $1, latitude = $2, longitude = $3, updated_at = now()
+            WHERE id = $4
+            RETURNING id
+            "#,
+        )
+            .bind(&location.2)
+            .bind(location.0 as f64)
+            .bind(location.1 as f64)
+            .bind(node_id as i64)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn save_node(
         &self,
         node_id: u64,
         node_details: &NodeDetails,
         startup_time: Option<u64>,
+        location: &Option<NodeLocation>
     ) -> anyhow::Result<()> {
         let account_id_str = if let Some(address) = &node_details.controller_address {
             Some(AccountId::from_ss58_check(address)?.to_string())
@@ -66,10 +92,10 @@ impl PostgreSQLNetworkStorage {
         };
         sqlx::query(
             r#"
-            INSERT INTO sub_telemetry_node (id, controller_account_id, name, client_implementation, client_version, startup_time)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO sub_telemetry_node (id, controller_account_id, name, client_implementation, client_version, startup_time, location, latitude, longitude)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT(id) DO UPDATE
-            SET controller_account_id = EXCLUDED.controller_account_id, name = EXCLUDED.name, client_implementation = EXCLUDED.client_implementation, client_version = EXCLUDED.client_version, startup_time = EXCLUDED.startup_time
+            SET controller_account_id = EXCLUDED.controller_account_id, name = EXCLUDED.name, client_implementation = EXCLUDED.client_implementation, client_version = EXCLUDED.client_version, startup_time = EXCLUDED.startup_time,  location = EXCLUDED.location, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude
             "#,
         )
             .bind(node_id as i64)
@@ -78,6 +104,9 @@ impl PostgreSQLNetworkStorage {
             .bind(&node_details.implementation)
             .bind(&node_details.version)
             .bind(startup_time.map(|startup_time| startup_time as i64))
+            .bind(location.as_ref().map(|location| location.2.clone()))
+            .bind(location.as_ref().map(|location| location.0 as f64))
+            .bind(location.as_ref().map(|location| location.1 as f64))
             .execute(&self.connection_pool)
             .await?;
         Ok(())
