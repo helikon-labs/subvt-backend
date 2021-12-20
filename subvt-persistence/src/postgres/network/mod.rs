@@ -4,6 +4,8 @@ use sqlx::{Pool, Postgres};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
+use subvt_types::app::db::PostgresBlock;
+use subvt_types::app::Block;
 use subvt_types::substrate::RewardDestination;
 use subvt_types::{
     crypto::AccountId,
@@ -686,6 +688,23 @@ impl PostgreSQLNetworkStorage {
         .fetch_optional(&self.connection_pool)
         .await?
         .map(|hash: (String,)| hash.0))
+    }
+
+    pub async fn get_block_by_number(&self, block_number: u64) -> anyhow::Result<Option<Block>> {
+        let maybe_db_block: Option<PostgresBlock> = sqlx::query_as(
+            r#"
+            SELECT hash, number, timestamp, author_account_id, era_index, epoch_index, is_finalized, metadata_version, runtime_version
+            FROM sub_block
+            WHERE "number" = $1
+            "#,
+        )
+            .bind(block_number as i64)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        match maybe_db_block {
+            Some(db_block) => Ok(Some(Block::from(db_block)?)),
+            None => Ok(None),
+        }
     }
 
     pub async fn get_processed_block_height(&self) -> anyhow::Result<i64> {

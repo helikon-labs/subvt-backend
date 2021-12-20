@@ -1,5 +1,5 @@
 use crate::app::{
-    Network, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
+    Block, Network, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
     UserValidator,
 };
 use crate::crypto::AccountId;
@@ -79,3 +79,36 @@ pub type PostgresNotificationParamType = (
     Option<String>,
     bool,
 );
+
+pub type PostgresBlock = (
+    String,
+    i64,
+    Option<i64>,
+    Option<String>,
+    i64,
+    i64,
+    bool,
+    i16,
+    i16,
+);
+
+impl Block {
+    pub fn from(db_block: PostgresBlock) -> anyhow::Result<Block> {
+        let author_account_id = if let Some(hex_string) = db_block.3 {
+            Some(AccountId::from_str(&hex_string)?)
+        } else {
+            None
+        };
+        Ok(Block {
+            hash: db_block.0,
+            number: db_block.1 as u64,
+            timestamp: db_block.2.map(|timestamp| timestamp as u64),
+            author_account_id,
+            era_index: db_block.4 as u64,
+            epoch_index: db_block.5 as u64,
+            is_finalized: db_block.6,
+            metadata_version: db_block.7 as u16,
+            runtime_version: db_block.8 as u16,
+        })
+    }
+}

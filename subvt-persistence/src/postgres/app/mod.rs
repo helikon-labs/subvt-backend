@@ -713,4 +713,38 @@ impl PostgreSQLAppStorage {
         transaction.commit().await?;
         Ok(user_notification_rule_id as u32)
     }
+    /*
+    SELECT "id", user_id, notification_type_code, "name", network_id, is_for_all_validators, period_type, period, notes
+    FROM app_user_notification_rule UNR
+    WHERE UNR.notification_type_code = 'notification_type'
+    AND UNR.deleted_at IS NULL
+    AND (UNR.network_id IS NULL OR UNR.network_id = 5)
+    AND (
+        (
+            UNR.is_for_all_validators = true
+            AND EXISTS (
+                SELECT DISTINCT "id"
+                FROM app_user_validator UV1
+                WHERE UV1.network_id = 5
+                AND UV1.validator_account_id = 'ABC'
+                AND UV1.deleted_at IS NULL
+            )
+        )
+        OR
+        (
+            UNR.is_for_all_validators = false
+            AND EXISTS (
+                SELECT id FROM app_user_notification_rule_validator UNRV
+                WHERE UNRV.user_notification_rule_id = UNR.id
+                AND EXISTS(
+                    SELECT DISTINCT "id"
+                    FROM app_user_validator UV2
+                    WHERE UV2.network_id = 5
+                    AND UV2.validator_account_id = 'ABC'
+                    AND UV2.id = UNRV.user_validator_id
+                )
+            )
+        )
+    )
+         */
 }

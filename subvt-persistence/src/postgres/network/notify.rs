@@ -59,10 +59,6 @@ impl PostgreSQLNetworkStorage {
             let pg_notification = listener.recv().await?;
             let notification: BlockProcessedNotification =
                 serde_json::from_str(pg_notification.payload())?;
-            println!(
-                "[from recv 2]: {} {}",
-                notification.block_number, notification.block_hash
-            );
             callback(notification)
         }
     }

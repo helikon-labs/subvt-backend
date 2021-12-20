@@ -6,6 +6,18 @@ pub mod db;
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
+pub struct Block {
+    pub hash: String,
+    pub number: u64,
+    pub timestamp: Option<u64>,
+    pub author_account_id: Option<AccountId>,
+    pub era_index: u64,
+    pub epoch_index: u64,
+    pub is_finalized: bool,
+    pub metadata_version: u16,
+    pub runtime_version: u16,
+}
+
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct Network {
     pub id: u32,

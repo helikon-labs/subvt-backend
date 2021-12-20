@@ -24,12 +24,20 @@ impl NotificationGenerator {
         postgres: &Arc<PostgreSQLNetworkStorage>,
         block_number: u64,
     ) -> anyhow::Result<()> {
-        println!("process block #{}", block_number);
+        let block = match postgres.get_block_by_number(block_number).await? {
+            Some(block) => block,
+            None => {
+                error!("Block ${} not found.", block_number);
+                return Ok(());
+            }
+        };
+        // get authorship notification
+        // offences
+        // chills
+        // commission changes
+
         postgres
-            .save_notification_generator_state(
-                &postgres.get_block_hash(block_number).await?.unwrap(),
-                block_number,
-            )
+            .save_notification_generator_state(&block.hash, block_number)
             .await
     }
 }
