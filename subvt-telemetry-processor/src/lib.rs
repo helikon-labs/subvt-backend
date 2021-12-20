@@ -80,17 +80,8 @@ impl TelemetryProcessor {
                 longitude,
                 city,
             } => {
-                let location = NodeLocation(
-                    *latitude,
-                    *longitude,
-                    city.clone(),
-                );
-                postgres
-                    .update_node_location(
-                        *node_id,
-                        &location
-                    )
-                    .await?;
+                let location = NodeLocation(*latitude, *longitude, city.clone());
+                postgres.update_node_location(*node_id, &location).await?;
             }
             FeedMessage::NodeImportedBlock {
                 node_id,
