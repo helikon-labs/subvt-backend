@@ -19,3 +19,6 @@ CREATE TABLE IF NOT EXISTS sub_event_new_account
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_event_new_account_idx_block_hash
+    ON sub_event_new_account (block_hash);

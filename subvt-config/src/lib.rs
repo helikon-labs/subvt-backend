@@ -63,6 +63,8 @@ pub struct SubstrateConfig {
     pub connection_timeout_seconds: u64,
     /// RPC request timeout in seconds.
     pub request_timeout_seconds: u64,
+    /// Substrate network id for internal use.
+    pub network_id: u32,
 }
 
 /// Log configuration.

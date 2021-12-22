@@ -14,3 +14,6 @@ CREATE TABLE IF NOT EXISTS sub_event_batch_interrupted
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_event_batch_interrupted_idx_block_hash
+    ON sub_event_batch_interrupted (block_hash);

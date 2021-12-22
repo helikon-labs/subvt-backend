@@ -22,3 +22,6 @@ CREATE TABLE IF NOT EXISTS sub_event_era_paid
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_event_era_paid_idx_block_hash
+    ON sub_event_era_paid (block_hash);

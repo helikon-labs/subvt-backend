@@ -3,13 +3,15 @@ recovery_retry_seconds = 5
 
 [substrate]
 chain = "kusama"
-# Kusama    0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe
-# Polkadot  0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3
-chain_genesis_hash = "0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe"
+# Kusama    0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE
+# Polkadot  0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3
+chain_genesis_hash = "0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE"
 rpc_url = "wss://kusama-rpc.polkadot.io:443"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30
+# for internal use, 1 for Polkadot, 2 for Kusama
+network_id = 2
 
 [log]
 subvt_level = "debug"
@@ -51,7 +53,7 @@ connection_timeout_seconds = 3
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 8000000
+start_block_number = 10629680
 
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"

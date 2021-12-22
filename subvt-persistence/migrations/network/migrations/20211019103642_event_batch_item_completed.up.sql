@@ -12,3 +12,6 @@ CREATE TABLE IF NOT EXISTS sub_event_batch_item_completed
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_event_batch_item_completed_idx_block_hash
+    ON sub_event_batch_item_completed (block_hash);

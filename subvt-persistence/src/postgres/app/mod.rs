@@ -8,9 +8,9 @@ use subvt_types::app::db::{
     PostgresUserNotificationRule, PostgresUserValidator,
 };
 use subvt_types::app::{
-    Network, NotificationChannel, NotificationParamType, NotificationPeriodType, NotificationType,
-    User, UserNotificationChannel, UserNotificationRule, UserNotificationRuleParameter,
-    UserValidator,
+    Network, Notification, NotificationChannel, NotificationParamType, NotificationPeriodType,
+    NotificationType, User, UserNotificationChannel, UserNotificationRule,
+    UserNotificationRuleParameter, UserValidator,
 };
 use subvt_types::crypto::AccountId;
 
@@ -470,6 +470,7 @@ impl PostgreSQLAppStorage {
                 FROM app_user_notification_rule_validator
                 WHERE user_notification_rule_id = $1
             )
+            AND deleted_at IS NULL
             ORDER BY id ASC
             "#,
         )
@@ -495,6 +496,7 @@ impl PostgreSQLAppStorage {
                 FROM app_user_notification_rule_channel
                 WHERE user_notification_rule_id = $1
             )
+            AND deleted_at IS NULL
             ORDER BY id ASC
             "#,
         )
@@ -555,6 +557,7 @@ impl PostgreSQLAppStorage {
         };
         Ok(Some(UserNotificationRule {
             id: db_notification_rule.0 as u32,
+            user_id: db_notification_rule.1 as u32,
             notification_type: self
                 .get_notification_type_by_code(&db_notification_rule.2)
                 .await?,
@@ -713,39 +716,96 @@ impl PostgreSQLAppStorage {
         transaction.commit().await?;
         Ok(user_notification_rule_id as u32)
     }
-    /*
-    SELECT "id", user_id, notification_type_code, "name", network_id, is_for_all_validators, period_type, "period", notes
-    FROM app_user_notification_rule UNR
-    WHERE UNR.notification_type_code = 'notification_type'
-    AND UNR.deleted_at IS NULL
-    AND (UNR.network_id IS NULL OR UNR.network_id = 5)
-    AND (
-        (
-            UNR.is_for_all_validators = true
-            AND EXISTS (
-                SELECT DISTINCT "id"
-                FROM app_user_validator UV1
-                WHERE UV1.network_id = 5
-                AND UV1.validator_account_id = 'ABC'
-                AND UV1.deleted_at IS NULL
-            )
-        )
-        OR
-        (
-            UNR.is_for_all_validators = false
-            AND EXISTS (
-                SELECT id FROM app_user_notification_rule_validator UNRV
-                WHERE UNRV.user_notification_rule_id = UNR.id
-                AND EXISTS(
-                    SELECT DISTINCT "id"
-                    FROM app_user_validator UV2
-                    WHERE UV2.network_id = 5
-                    AND UV2.validator_account_id = 'ABC'
-                    AND UV2.id = UNRV.user_validator_id
-                    AND UV2.deleted_at IS NULL
+
+    pub async fn get_notification_rules_for_validator(
+        &self,
+        notification_type_code: &str,
+        network_id: u32,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<Vec<UserNotificationRule>> {
+        let rule_ids: Vec<(i32,)> = sqlx::query_as(
+            r#"
+            SELECT "id"
+            FROM app_user_notification_rule UNR
+            WHERE UNR.notification_type_code = $1
+            AND UNR.deleted_at IS NULL
+            AND (UNR.network_id IS NULL OR UNR.network_id = $2)
+            AND (
+                (
+                    UNR.is_for_all_validators = true
+                    AND EXISTS (
+                        SELECT DISTINCT "id"
+                        FROM app_user_validator UV1
+                        WHERE UV1.network_id = $2
+                        AND UV1.validator_account_id = $3
+                        AND UV1.deleted_at IS NULL
+                    )
                 )
-            )
+                OR
+                (
+                    UNR.is_for_all_validators = false
+                    AND EXISTS (
+                        SELECT id FROM app_user_notification_rule_validator UNRV
+                        WHERE UNRV.user_notification_rule_id = UNR.id
+                        AND EXISTS(
+                            SELECT DISTINCT "id"
+                            FROM app_user_validator UV2
+                            WHERE UV2.network_id = $2
+                            AND UV2.validator_account_id = $3
+                            AND UV2.id = UNRV.user_validator_id
+                            AND UV2.deleted_at IS NULL
+                        )
+                    )
+                )
+            );
+            "#,
         )
-    );
-         */
+        .bind(notification_type_code)
+        .bind(network_id as i32)
+        .bind(validator_account_id.to_string())
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut result = Vec::new();
+        for rule_id in rule_ids {
+            if let Some(rule) = self
+                .get_user_notification_rule_by_id(rule_id.0 as u32)
+                .await?
+            {
+                result.push(rule);
+            }
+        }
+        Ok(result)
+    }
+
+    pub async fn save_notification(&self, notification: &Notification) -> anyhow::Result<u32> {
+        let result: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, notification_data_json, log)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            RETURNING id
+            "#,
+        )
+            .bind(notification.user_id as i32)
+            .bind(notification.user_notification_rule_id as i32)
+            .bind(notification.network_id as i32)
+            .bind(&notification.period_type)
+            .bind(notification.period as i32)
+            .bind(notification.validator_account_id.to_string())
+            .bind(&notification.notification_type_code)
+            .bind(notification.parameter_type_id.map(|id| id as i32))
+            .bind(notification.parameter_value.as_ref())
+            .bind(notification.block_hash.as_ref())
+            .bind(notification.block_number.map(|block_number| block_number as i64))
+            .bind(notification.block_timestamp.map(|block_number| block_number as i64))
+            .bind(notification.extrinsic_index.map(|id| id as i32))
+            .bind(notification.event_index.map(|id| id as i32))
+            .bind(notification.user_notification_channel_id as i32)
+            .bind(&notification.notification_channel_code)
+            .bind(&notification.notification_target)
+            .bind(&notification.notification_data_json)
+            .bind(&notification.log)
+            .fetch_one(&self.connection_pool)
+            .await?;
+        Ok(result.0 as u32)
+    }
 }

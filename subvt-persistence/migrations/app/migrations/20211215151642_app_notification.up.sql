@@ -4,21 +4,21 @@ CREATE TABLE IF NOT EXISTS app_notification
     user_id                         integer NOT NULL,
     user_notification_rule_id       integer NOT NULL,
     network_id                      integer NOT NULL,
-    user_validator_id               integer NOT NULL,
     period_type                     app_notification_period_type NOT NULL,
     period                          integer NOT NULL,
     validator_account_id            VARCHAR(66) NOT NULL,
     notification_type_code          VARCHAR(256) NOT NULL,
-    param_type_id                   integer NOT NULL,
+    param_type_id                   integer,
     param_value                     VARCHAR(128),
     block_hash                      VARCHAR(66),
     block_number                    bigint,
+    block_timestamp                 bigint,
     extrinsic_index                 integer,
     event_index                     integer,
     user_notification_channel_id    integer NOT NULL,
     notification_channel_code       VARCHAR(16) NOT NULL,
     notification_target             VARCHAR(1024) NOT NULL,
-    notification_data_json          json,
+    notification_data_json          text,
     log                             text,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     sent_at                         TIMESTAMP WITHOUT TIME ZONE,
@@ -37,11 +37,6 @@ CREATE TABLE IF NOT EXISTS app_notification
     CONSTRAINT app_notification_fk_network
         FOREIGN KEY (network_id)
             REFERENCES app_network (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    CONSTRAINT app_notification_fk_user_validator
-        FOREIGN KEY (user_validator_id)
-            REFERENCES app_user_validator (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
     CONSTRAINT app_notification_fk_notification_type

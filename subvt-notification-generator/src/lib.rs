@@ -4,12 +4,14 @@
 use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::error;
+use log::{error, info};
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
+use subvt_types::app::{Block, Notification, NotificationTypeCode, UserNotificationRule};
+use subvt_types::crypto::AccountId;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -19,24 +21,119 @@ lazy_static! {
 pub struct NotificationGenerator;
 
 impl NotificationGenerator {
+    async fn generate_notifications(
+        &self,
+        app_postgres: &Arc<PostgreSQLAppStorage>,
+        block: &Block,
+        rules: &[UserNotificationRule],
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<()> {
+        for rule in rules {
+            println!(
+                "Generate {} notification for {} in block #{}.",
+                block.number, rule.notification_type.code, validator_account_id,
+            );
+            for channel in &rule.notification_channels {
+                let notification = Notification {
+                    id: 0,
+                    user_id: rule.user_id,
+                    user_notification_rule_id: rule.id,
+                    network_id: CONFIG.substrate.network_id,
+                    period_type: rule.period_type.clone(),
+                    period: rule.period,
+                    validator_account_id: validator_account_id.clone(),
+                    notification_type_code: rule.notification_type.code.clone(),
+                    parameter_type_id: None,
+                    parameter_value: None,
+                    block_hash: Some(block.hash.clone()),
+                    block_number: Some(block.number),
+                    block_timestamp: block.timestamp,
+                    extrinsic_index: None,
+                    event_index: None,
+                    user_notification_channel_id: channel.id,
+                    notification_channel_code: channel.channel_code.clone(),
+                    notification_target: channel.target.clone(),
+                    notification_data_json: None,
+                    log: None,
+                    created_at: None,
+                    sent_at: None,
+                    delivered_at: None,
+                    read_at: None,
+                };
+                let _ = app_postgres.save_notification(&notification).await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn process_block_authorship(
+        &self,
+        app_postgres: &Arc<PostgreSQLAppStorage>,
+        block: &Block,
+    ) -> anyhow::Result<()> {
+        let validator_account_id = if let Some(author_account_id) = &block.author_account_id {
+            author_account_id
+        } else {
+            error!("Block ${} author is null.", block.number);
+            return Ok(());
+        };
+        let rules = app_postgres
+            .get_notification_rules_for_validator(
+                &NotificationTypeCode::ChainValidatorBlockAuthorship.to_string(),
+                CONFIG.substrate.network_id,
+                validator_account_id,
+            )
+            .await?;
+        self.generate_notifications(app_postgres, block, &rules, validator_account_id)
+            .await?;
+        Ok(())
+    }
+
+    async fn process_offline_offences(
+        &self,
+        app_postgres: &Arc<PostgreSQLAppStorage>,
+        network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        block: &Block,
+    ) -> anyhow::Result<()> {
+        for event in network_postgres
+            .get_validator_offline_events_in_block(&block.hash)
+            .await?
+        {
+            let rules = app_postgres
+                .get_notification_rules_for_validator(
+                    &NotificationTypeCode::ChainValidatorOfflineOffence.to_string(),
+                    CONFIG.substrate.network_id,
+                    &event.validator_account_id,
+                )
+                .await?;
+            self.generate_notifications(app_postgres, block, &rules, &event.validator_account_id)
+                .await?;
+        }
+        Ok(())
+    }
+
     async fn process_block(
         &self,
-        postgres: &Arc<PostgreSQLNetworkStorage>,
+        app_postgres: &Arc<PostgreSQLAppStorage>,
+        network_postgres: &Arc<PostgreSQLNetworkStorage>,
         block_number: u64,
     ) -> anyhow::Result<()> {
-        let block = match postgres.get_block_by_number(block_number).await? {
+        info!("Process block #{}.", block_number);
+        let block = match network_postgres.get_block_by_number(block_number).await? {
             Some(block) => block,
             None => {
                 error!("Block ${} not found.", block_number);
                 return Ok(());
             }
         };
-        // get authorship notification
+        self.process_block_authorship(app_postgres, &block).await?;
+        self.process_offline_offences(app_postgres, network_postgres, &block)
+            .await?;
         // offences
         // chills
         // commission changes
 
-        postgres
+        network_postgres
             .save_notification_generator_state(&block.hash, block_number)
             .await
     }
@@ -45,7 +142,7 @@ impl NotificationGenerator {
 #[async_trait(?Send)]
 impl Service for NotificationGenerator {
     async fn run(&'static self) -> anyhow::Result<()> {
-        let _app_postgres =
+        let app_postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
         let network_postgres = Arc::new(
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
@@ -59,7 +156,8 @@ impl Service for NotificationGenerator {
 
         network_postgres
             .subscribe_to_processed_blocks(|notification| {
-                let postgres = network_postgres.clone();
+                let app_postgres = app_postgres.clone();
+                let network_postgres = network_postgres.clone();
                 let maybe_last_processed_block_number_mutex =
                     maybe_last_processed_block_number_mutex.clone();
                 tokio::spawn(async move {
@@ -73,7 +171,10 @@ impl Service for NotificationGenerator {
 
                     for block_number in start_block_number..=notification.block_number {
                         // process all, update last processed & database
-                        match self.process_block(&postgres, block_number).await {
+                        match self
+                            .process_block(&app_postgres, &network_postgres, block_number)
+                            .await
+                        {
                             Ok(()) => {
                                 // update database
                                 *maybe_block_number = Some(block_number);

@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS app_network
     CONSTRAINT app_network_u_name UNIQUE (name)
 );
 
-INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(1, '0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe', 'Kusama', 2);
-INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(2, '0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3', 'Polkadot', 0);
-INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(3, '0x401a1f9dca3da46f5c4091016c8a2f26dcea05865116b286f60f668207d1474b', 'Moonriver', 1285);
+INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'Kusama', 2);
+INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'Polkadot', 0);
+INSERT INTO app_network(id, hash, name, ss58_prefix) VALUES(3, '0x401A1F9DCA3DA46F5C4091016C8A2F26DCEA05865116B286F60F668207D1474B', 'Moonriver', 1285);

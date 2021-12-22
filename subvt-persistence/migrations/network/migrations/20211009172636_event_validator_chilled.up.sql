@@ -20,3 +20,6 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_chilled
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_event_validator_chilled_idx_block_hash
+    ON sub_event_validator_chilled (block_hash);

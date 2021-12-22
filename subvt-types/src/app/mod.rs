@@ -1,8 +1,10 @@
 use crate::crypto::AccountId;
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 pub mod db;
+pub mod event;
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
@@ -44,6 +46,77 @@ pub struct User {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct NotificationChannel {
     pub code: String,
+}
+
+pub enum NotificationTypeCode {
+    ChainValidatorOfflineOffence,
+    ChainValidatorNewNomination,
+    ChainValidatorLostNomination,
+    ChainValidatorChilled,
+    ChainValidatorActiveSetInclusion,
+    ChainValidatorActiveSetExclusion,
+    ChainValidatorCommissionChange,
+    ChainValidatorUnclaimedPayout,
+    ChainValidatorBlockAuthorship,
+    TelemetryValidatorOffline,
+    TelemetryValidatorBinaryOutOfDate,
+    TelemetryValidatorPeerCountLow,
+    TelemetryValidatorTooManyTxsInQueue,
+    TelemetryValidatorLagging,
+    TelemetryValidatorFinalityLagging,
+    TelemetryValidatorDownloadBwLow,
+    TelemetryValidatorUploadBwLow,
+    OneKVValidatorRankChange,
+    OneKVValidatorValidityChange,
+}
+
+impl Display for NotificationTypeCode {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let code = match self {
+            NotificationTypeCode::ChainValidatorOfflineOffence => "chain_validator_offline_offence",
+            NotificationTypeCode::ChainValidatorNewNomination => "chain_validator_new_nomination",
+            NotificationTypeCode::ChainValidatorLostNomination => "chain_validator_lost_nomination",
+            NotificationTypeCode::ChainValidatorChilled => "chain_validator_chilled",
+            NotificationTypeCode::ChainValidatorActiveSetInclusion => {
+                "chain_validator_active_set_inclusion"
+            }
+            NotificationTypeCode::ChainValidatorActiveSetExclusion => {
+                "chain_validator_active_set_exclusion"
+            }
+            NotificationTypeCode::ChainValidatorCommissionChange => {
+                "chain_validator_commission_change"
+            }
+            NotificationTypeCode::ChainValidatorUnclaimedPayout => {
+                "chain_validator_unclaimed_payout"
+            }
+            NotificationTypeCode::ChainValidatorBlockAuthorship => {
+                "chain_validator_block_authorship"
+            }
+            NotificationTypeCode::TelemetryValidatorOffline => "telemetry_validator_offline",
+            NotificationTypeCode::TelemetryValidatorBinaryOutOfDate => {
+                "telemetry_validator_binary_out_of_date"
+            }
+            NotificationTypeCode::TelemetryValidatorPeerCountLow => {
+                "telemetry_validator_peer_count_low"
+            }
+            NotificationTypeCode::TelemetryValidatorTooManyTxsInQueue => {
+                "telemetry_validator_too_many_txs_in_queue"
+            }
+            NotificationTypeCode::TelemetryValidatorLagging => "telemetry_validator_lagging",
+            NotificationTypeCode::TelemetryValidatorFinalityLagging => {
+                "telemetry_validator_finality_lagging"
+            }
+            NotificationTypeCode::TelemetryValidatorDownloadBwLow => {
+                "telemetry_validator_download_bw_low"
+            }
+            NotificationTypeCode::TelemetryValidatorUploadBwLow => {
+                "telemetry_validator_upload_bw_low"
+            }
+            NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
+            NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
+        };
+        write!(f, "{}", code)
+    }
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
@@ -258,6 +331,7 @@ impl Display for NotificationPeriodType {
 #[derive(Clone, Debug, Serialize)]
 pub struct UserNotificationRule {
     pub id: u32,
+    pub user_id: u32,
     pub notification_type: NotificationType,
     pub name: Option<String>,
     pub network: Option<Network>,
@@ -268,4 +342,31 @@ pub struct UserNotificationRule {
     pub notification_channels: Vec<UserNotificationChannel>,
     pub parameters: Vec<UserNotificationRuleParameter>,
     pub notes: Option<String>,
+}
+
+pub struct Notification {
+    pub id: u32,
+    pub user_id: u32,
+    pub user_notification_rule_id: u32,
+    pub network_id: u32,
+    pub period_type: NotificationPeriodType,
+    pub period: u16,
+    pub validator_account_id: AccountId,
+    pub notification_type_code: String,
+    pub parameter_type_id: Option<u32>,
+    pub parameter_value: Option<String>,
+    pub block_hash: Option<String>,
+    pub block_number: Option<u64>,
+    pub block_timestamp: Option<u64>,
+    pub extrinsic_index: Option<u32>,
+    pub event_index: Option<u32>,
+    pub user_notification_channel_id: u32,
+    pub notification_channel_code: String,
+    pub notification_target: String,
+    pub notification_data_json: Option<String>,
+    pub log: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub sent_at: Option<NaiveDateTime>,
+    pub delivered_at: Option<NaiveDateTime>,
+    pub read_at: Option<NaiveDateTime>,
 }
