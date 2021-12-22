@@ -27,7 +27,7 @@ pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch =
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.13" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
-polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.13" }
+polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.13" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.13" }
 scale-info = "1.0.0"
