@@ -96,7 +96,7 @@ impl Service for ValidatorListServer {
             .version("0.1.0")
             .author("Kutsal Kaan Bilgin <kutsa@helikon.io>")
             .about("Serves the live active or inactive validator list for the SubVT app.")
-            .arg(Arg::new("inactive").long("inactive").short('i').about(
+            .arg(Arg::new("inactive").long("inactive").short('i').help(
                 "Active list is served by default. Use this flag to serve the inactive list.",
             ))
             .get_matches();

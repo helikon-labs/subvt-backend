@@ -7,7 +7,7 @@ rust-version = "1.56.0"
 [dependencies]
 actix-web = "4.0.0-beta.15"
 anyhow = "1.0.51"
-async-trait = "0.1.51"
+async-trait = "0.1.52"
 log = "0.4.14"
 serde_json = "1.0.73"
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.14" }
