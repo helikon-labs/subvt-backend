@@ -570,7 +570,7 @@ impl PostgreSQLNetworkStorage {
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
             INSERT INTO sub_event_slashed (block_hash, extrinsic_index, event_index, validator_account_id, amount)
-            VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             RETURNING id
             "#,
