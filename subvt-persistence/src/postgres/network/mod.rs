@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::app::db::PostgresBlock;
-use subvt_types::app::event::ValidatorOfflineEvent;
+use subvt_types::app::event::{ValidatorChilledEvent, ValidatorOfflineEvent};
 use subvt_types::app::Block;
 use subvt_types::substrate::RewardDestination;
 use subvt_types::{
@@ -477,6 +477,34 @@ impl PostgreSQLNetworkStorage {
             }
         }
         Ok(())
+    }
+
+    pub async fn get_validator_chilled_events_in_block(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<ValidatorChilledEvent>> {
+        let db_events: Vec<(i32, String, Option<i32>, i32, String)> = sqlx::query_as(
+            r#"
+            SELECT "id", block_hash, extrinsic_index, event_index, validator_account_id
+            FROM sub_event_validator_chilled
+            WHERE block_hash = $1
+            ORDER BY "id" ASC
+            "#,
+        )
+        .bind(block_hash)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut events = Vec::new();
+        for db_event in db_events {
+            events.push(ValidatorChilledEvent {
+                id: db_event.0 as u32,
+                block_hash: db_event.1.clone(),
+                extrinsic_index: db_event.2.map(|index| index as u32),
+                event_index: db_event.3 as u32,
+                validator_account_id: AccountId::from_str(&db_event.4)?,
+            })
+        }
+        Ok(events)
     }
 
     pub async fn save_validator_chilled_event(

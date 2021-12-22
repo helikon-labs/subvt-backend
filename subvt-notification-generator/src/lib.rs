@@ -25,6 +25,8 @@ impl NotificationGenerator {
         &self,
         app_postgres: &Arc<PostgreSQLAppStorage>,
         block: &Block,
+        extrinsic_index: Option<u32>,
+        event_index: Option<u32>,
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
     ) -> anyhow::Result<()> {
@@ -48,8 +50,8 @@ impl NotificationGenerator {
                     block_hash: Some(block.hash.clone()),
                     block_number: Some(block.number),
                     block_timestamp: block.timestamp,
-                    extrinsic_index: None,
-                    event_index: None,
+                    extrinsic_index,
+                    event_index,
                     user_notification_channel_id: channel.id,
                     notification_channel_code: channel.channel_code.clone(),
                     notification_target: channel.target.clone(),
@@ -84,8 +86,15 @@ impl NotificationGenerator {
                 validator_account_id,
             )
             .await?;
-        self.generate_notifications(app_postgres, block, &rules, validator_account_id)
-            .await?;
+        self.generate_notifications(
+            app_postgres,
+            block,
+            None,
+            None,
+            &rules,
+            validator_account_id,
+        )
+        .await?;
         Ok(())
     }
 
@@ -106,8 +115,45 @@ impl NotificationGenerator {
                     &event.validator_account_id,
                 )
                 .await?;
-            self.generate_notifications(app_postgres, block, &rules, &event.validator_account_id)
+            self.generate_notifications(
+                app_postgres,
+                block,
+                None,
+                event.event_index,
+                &rules,
+                &event.validator_account_id,
+            )
+            .await?;
+        }
+        Ok(())
+    }
+
+    async fn process_chillings(
+        &self,
+        app_postgres: &Arc<PostgreSQLAppStorage>,
+        network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        block: &Block,
+    ) -> anyhow::Result<()> {
+        for event in network_postgres
+            .get_validator_chilled_events_in_block(&block.hash)
+            .await?
+        {
+            let rules = app_postgres
+                .get_notification_rules_for_validator(
+                    &NotificationTypeCode::ChainValidatorChilled.to_string(),
+                    CONFIG.substrate.network_id,
+                    &event.validator_account_id,
+                )
                 .await?;
+            self.generate_notifications(
+                app_postgres,
+                block,
+                event.extrinsic_index,
+                Some(event.event_index),
+                &rules,
+                &event.validator_account_id,
+            )
+            .await?;
         }
         Ok(())
     }
@@ -128,6 +174,8 @@ impl NotificationGenerator {
         };
         self.process_block_authorship(app_postgres, &block).await?;
         self.process_offline_offences(app_postgres, network_postgres, &block)
+            .await?;
+        self.process_chillings(app_postgres, network_postgres, &block)
             .await?;
         // offences
         // chills

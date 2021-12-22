@@ -894,7 +894,8 @@ impl Service for BlockProcessor {
                                         "History block processing failed for block #{}.",
                                         block_number,
                                     );
-                                    break;
+                                    is_indexing_past_blocks.store(false, Ordering::Relaxed);
+                                    return;
                                 }
                             }
                         }

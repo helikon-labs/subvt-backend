@@ -6,3 +6,11 @@ pub struct ValidatorOfflineEvent {
     pub event_index: Option<u32>,
     pub validator_account_id: AccountId,
 }
+
+pub struct ValidatorChilledEvent {
+    pub id: u32,
+    pub block_hash: String,
+    pub extrinsic_index: Option<u32>,
+    pub event_index: u32,
+    pub validator_account_id: AccountId,
+}

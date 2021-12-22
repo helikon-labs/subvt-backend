@@ -10,8 +10,8 @@ rpc_url = "wss://kusama-rpc.polkadot.io:443"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30
-# for internal use, 1 for Polkadot, 2 for Kusama
-network_id = 2
+# for internal use, 1 for Kusama, 2 for Polkadot
+network_id = 1
 
 [log]
 subvt_level = "debug"
@@ -53,7 +53,7 @@ connection_timeout_seconds = 3
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 10629680
+start_block_number = 10631855
 
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
