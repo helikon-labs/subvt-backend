@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 
 pub mod db;
 pub mod event;
+pub mod extrinsic;
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
@@ -55,7 +56,7 @@ pub enum NotificationTypeCode {
     ChainValidatorChilled,
     ChainValidatorActiveSetInclusion,
     ChainValidatorActiveSetExclusion,
-    ChainValidatorCommissionChange,
+    ChainValidateExtrinsic,
     ChainValidatorUnclaimedPayout,
     ChainValidatorBlockAuthorship,
     TelemetryValidatorOffline,
@@ -83,9 +84,7 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::ChainValidatorActiveSetExclusion => {
                 "chain_validator_active_set_exclusion"
             }
-            NotificationTypeCode::ChainValidatorCommissionChange => {
-                "chain_validator_commission_change"
-            }
+            NotificationTypeCode::ChainValidateExtrinsic => "chain_validate_extrinsic",
             NotificationTypeCode::ChainValidatorUnclaimedPayout => {
                 "chain_validator_unclaimed_payout"
             }

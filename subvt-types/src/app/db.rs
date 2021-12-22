@@ -1,3 +1,4 @@
+use crate::app::extrinsic::ValidateExtrinsic;
 use crate::app::{
     Block, Network, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
     UserValidator,
@@ -109,6 +110,24 @@ impl Block {
             is_finalized: db_block.6,
             metadata_version: db_block.7 as u16,
             runtime_version: db_block.8 as u16,
+        })
+    }
+}
+
+pub type PostgresValidateExtrinsic = (i32, String, i32, bool, String, String, i64, bool, bool);
+
+impl ValidateExtrinsic {
+    pub fn from(db_extrinsic: PostgresValidateExtrinsic) -> anyhow::Result<ValidateExtrinsic> {
+        Ok(ValidateExtrinsic {
+            id: db_extrinsic.0 as u32,
+            block_hash: db_extrinsic.1.clone(),
+            extrinsic_index: db_extrinsic.2 as u32,
+            is_nested_call: db_extrinsic.3,
+            stash_account_id: AccountId::from_str(&db_extrinsic.4)?,
+            controller_account_id: AccountId::from_str(&db_extrinsic.5)?,
+            commission_per_billion: db_extrinsic.6 as u64,
+            blocks_nominations: db_extrinsic.7,
+            is_successful: db_extrinsic.8,
         })
     }
 }

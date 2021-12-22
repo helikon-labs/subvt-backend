@@ -346,6 +346,7 @@ impl BlockProcessor {
     #[async_recursion]
     async fn process_extrinsic(
         &self,
+        substrate_client: &SubstrateClient,
         postgres: &PostgreSQLNetworkStorage,
         block_hash: &str,
         active_validator_account_ids: &[AccountId],
@@ -393,6 +394,7 @@ impl BlockProcessor {
                     max_weight: _,
                 } => {
                     self.process_extrinsic(
+                        substrate_client,
                         postgres,
                         block_hash,
                         active_validator_account_ids,
@@ -406,6 +408,7 @@ impl BlockProcessor {
                     call,
                 } => {
                     self.process_extrinsic(
+                        substrate_client,
                         postgres,
                         block_hash,
                         active_validator_account_ids,
@@ -423,6 +426,7 @@ impl BlockProcessor {
                     call,
                 } => {
                     self.process_extrinsic(
+                        substrate_client,
                         postgres,
                         block_hash,
                         active_validator_account_ids,
@@ -439,6 +443,7 @@ impl BlockProcessor {
                     call,
                 } => {
                     self.process_extrinsic(
+                        substrate_client,
                         postgres,
                         block_hash,
                         active_validator_account_ids,
@@ -582,16 +587,27 @@ impl BlockProcessor {
                         _ => None,
                     };
                     if let Some(controller_account_id) = maybe_controller_account_id {
-                        postgres
-                            .save_validate_extrinsic(
-                                block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                &controller_account_id,
-                                preferences,
-                            )
-                            .await?;
+                        // get stash account id
+                        if let Some(stash_account_id) = substrate_client
+                            .get_stash_account_id(&controller_account_id, block_hash)
+                            .await?
+                        {
+                            postgres
+                                .save_validate_extrinsic(
+                                    block_hash,
+                                    index as i32,
+                                    is_nested_call,
+                                    is_successful,
+                                    (&stash_account_id, &controller_account_id),
+                                    preferences,
+                                )
+                                .await?;
+                        } else {
+                            error!(
+                                "Cannot get stash account id for controller {}.",
+                                controller_account_id.to_string()
+                            );
+                        }
                     } else {
                         error!("Cannot get controller account id from signature for extrinsic #{} Staking.validate.", index);
                     }
@@ -604,6 +620,7 @@ impl BlockProcessor {
                 } => {
                     for call in calls {
                         self.process_extrinsic(
+                            substrate_client,
                             postgres,
                             block_hash,
                             active_validator_account_ids,
@@ -619,6 +636,7 @@ impl BlockProcessor {
                 } => {
                     for call in calls {
                         self.process_extrinsic(
+                            substrate_client,
                             postgres,
                             block_hash,
                             active_validator_account_ids,
@@ -821,6 +839,7 @@ impl BlockProcessor {
             // check events for batch & batch_all
             let is_successful = successful_extrinsic_indices.contains(&(index as u32));
             self.process_extrinsic(
+                substrate_client,
                 postgres,
                 &block_hash,
                 &active_validator_account_ids,

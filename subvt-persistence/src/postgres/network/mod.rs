@@ -4,8 +4,9 @@ use sqlx::{Pool, Postgres};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
-use subvt_types::app::db::PostgresBlock;
+use subvt_types::app::db::{PostgresBlock, PostgresValidateExtrinsic};
 use subvt_types::app::event::{ValidatorChilledEvent, ValidatorOfflineEvent};
+use subvt_types::app::extrinsic::ValidateExtrinsic;
 use subvt_types::app::Block;
 use subvt_types::substrate::RewardDestination;
 use subvt_types::{
@@ -837,20 +838,43 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
+    pub async fn get_validate_extrinsics_in_block(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<ValidateExtrinsic>> {
+        let db_extrinsics: Vec<PostgresValidateExtrinsic> = sqlx::query_as(
+            r#"
+            SELECT "id", block_hash, extrinsic_index, is_nested_call, stash_account_id, controller_account_id, commission_per_billion, blocks_nominations, is_successful
+            FROM sub_extrinsic_validate
+            WHERE block_hash = $1
+            ORDER BY "id" ASC
+            "#,
+        )
+            .bind(block_hash)
+            .fetch_all(&self.connection_pool)
+            .await?;
+        let mut extrinsics = Vec::new();
+        for db_extrinsic in db_extrinsics {
+            extrinsics.push(ValidateExtrinsic::from(db_extrinsic)?)
+        }
+        Ok(extrinsics)
+    }
+
     pub async fn save_validate_extrinsic(
         &self,
         block_hash: &str,
         extrinsic_index: i32,
         is_nested_call: bool,
         is_successful: bool,
-        controller_account_id: &AccountId,
+        (stash_account_id, controller_account_id): (&AccountId, &AccountId),
         validator_preferences: &ValidatorPreferences,
     ) -> anyhow::Result<Option<i32>> {
+        self.save_account(stash_account_id).await?;
         self.save_account(controller_account_id).await?;
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO sub_extrinsic_validate (block_hash, extrinsic_index, is_nested_call, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO sub_extrinsic_validate (block_hash, extrinsic_index, is_nested_call, stash_account_id, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (block_hash, controller_account_id) DO NOTHING
             RETURNING id
             "#,
@@ -858,6 +882,7 @@ impl PostgreSQLNetworkStorage {
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(is_nested_call)
+            .bind(stash_account_id.to_string())
             .bind(controller_account_id.to_string())
             .bind(validator_preferences.commission_per_billion)
             .bind(validator_preferences.blocks_nominations)

@@ -11,7 +11,7 @@ INSERT INTO app_notification_type(code) VALUES('chain_validator_lost_nomination'
 INSERT INTO app_notification_type(code) VALUES('chain_validator_chilled');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_inclusion');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_exclusion');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_commission_change');
+INSERT INTO app_notification_type(code) VALUES('chain_validate_extrinsic');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_unclaimed_payout');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_block_authorship');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_offline');
@@ -98,7 +98,7 @@ INSERT INTO app_notification_param_type(
 -- chain_validator_chilled :: no param
 -- chain_validator_active_set_inclusion :: no param
 -- chain_validator_active_set_exclusion :: no param
--- chain_validator_commission_change :: no param
+-- chain_validate_extrinsic :: no param
 -- chain_validator_unclaimed_payout
 INSERT INTO app_notification_param_type(
     notification_type_code,
