@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS sub_era_staker
     nominator_account_id    VARCHAR(66) NOT NULL,
     stake                   VARCHAR(128) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_era_staker_u_era_index_validator_nominator
         UNIQUE (era_index, validator_account_id, nominator_account_id),
     CONSTRAINT sub_era_staker_fk_era

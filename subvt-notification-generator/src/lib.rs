@@ -28,7 +28,6 @@ impl NotificationGenerator {
         (extrinsic_index, event_index): (Option<u32>, Option<u32>),
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
-        data_json: Option<String>,
     ) -> anyhow::Result<()> {
         for rule in rules {
             println!(
@@ -55,7 +54,6 @@ impl NotificationGenerator {
                     user_notification_channel_id: channel.id,
                     notification_channel_code: channel.channel_code.clone(),
                     notification_target: channel.target.clone(),
-                    notification_data_json: data_json.clone(),
                     log: None,
                     created_at: None,
                     sent_at: None,
@@ -92,7 +90,6 @@ impl NotificationGenerator {
             (None, None),
             &rules,
             validator_account_id,
-            None,
         )
         .await?;
         Ok(())
@@ -121,7 +118,6 @@ impl NotificationGenerator {
                 (None, event.event_index),
                 &rules,
                 &event.validator_account_id,
-                None,
             )
             .await?;
         }
@@ -151,7 +147,6 @@ impl NotificationGenerator {
                 (event.extrinsic_index, Some(event.event_index)),
                 &rules,
                 &event.validator_account_id,
-                None,
             )
             .await?;
         }
@@ -181,7 +176,6 @@ impl NotificationGenerator {
                 (Some(extrinsic.extrinsic_index), None),
                 &rules,
                 &extrinsic.stash_account_id,
-                Some(serde_json::to_string(&extrinsic)?),
             )
             .await?;
         }

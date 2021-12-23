@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS sub_block
     metadata_version    smallint NOT NULL,
     runtime_version     smallint NOT NULL,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_block_fk_account
         FOREIGN KEY (author_account_id)
             REFERENCES sub_account (id)

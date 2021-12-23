@@ -348,9 +348,14 @@ impl BlockProcessor {
         &self,
         substrate_client: &SubstrateClient,
         postgres: &PostgreSQLNetworkStorage,
-        block_hash: &str,
+        (block_hash, block_number): (String, u64),
         active_validator_account_ids: &[AccountId],
-        (index, is_nested_call, is_successful): (usize, bool, bool),
+        (index, is_nested_call, maybe_real_account_id, is_successful): (
+            usize,
+            bool,
+            Option<AccountId>,
+            bool,
+        ),
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<()> {
         match extrinsic {
@@ -366,7 +371,7 @@ impl BlockProcessor {
                     {
                         let _ = postgres
                             .save_heartbeat_extrinsic(
-                                block_hash,
+                                &block_hash,
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
@@ -396,9 +401,9 @@ impl BlockProcessor {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
-                        block_hash,
+                        (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, is_successful),
+                        (index, true, None, is_successful),
                         call,
                     )
                     .await?;
@@ -410,9 +415,9 @@ impl BlockProcessor {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
-                        block_hash,
+                        (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, is_successful),
+                        (index, true, None, is_successful),
                         call,
                     )
                     .await?;
@@ -421,16 +426,16 @@ impl BlockProcessor {
             SubstrateExtrinsic::Proxy(proxy_extrinsic) => match proxy_extrinsic {
                 ProxyExtrinsic::Proxy {
                     signature: _,
-                    real_account_id: _,
+                    real_account_id,
                     force_proxy_type: _,
                     call,
                 } => {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
-                        block_hash,
+                        (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, is_successful),
+                        (index, true, Some(real_account_id.clone()), is_successful),
                         call,
                     )
                     .await?;
@@ -438,16 +443,16 @@ impl BlockProcessor {
                 ProxyExtrinsic::ProxyAnnounced {
                     signature: _,
                     delegate_account_id: _,
-                    real_account_id: _,
+                    real_account_id,
                     force_proxy_type: _,
                     call,
                 } => {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
-                        block_hash,
+                        (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, is_successful),
+                        (index, true, Some(real_account_id.clone()), is_successful),
                         call,
                     )
                     .await?;
@@ -460,10 +465,15 @@ impl BlockProcessor {
                     amount,
                     reward_destination,
                 } => {
-                    let maybe_caller_account_id = match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    };
+                    let maybe_stash_account_id =
+                        if let Some(real_account_id) = maybe_real_account_id {
+                            Some(real_account_id)
+                        } else {
+                            match signature {
+                                Some(signature) => signature.get_signer_account_id(),
+                                _ => None,
+                            }
+                        };
                     let controller_account_id = if let Some(account_id) =
                         controller.get_account_id()
                     {
@@ -472,15 +482,15 @@ impl BlockProcessor {
                         error!("Controller address is not raw account id in staking.bond. Cannot persist.");
                         return Ok(());
                     };
-                    if let Some(caller_account_id) = maybe_caller_account_id {
+                    if let Some(stash_account_id) = maybe_stash_account_id {
                         postgres
                             .save_bond_extrinsic(
-                                block_hash,
+                                &block_hash,
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
                                 (
-                                    &caller_account_id,
+                                    &stash_account_id,
                                     &controller_account_id,
                                     *amount,
                                     reward_destination,
@@ -492,31 +502,67 @@ impl BlockProcessor {
                     }
                 }
                 StakingExtrinsic::Nominate { signature, targets } => {
-                    let maybe_nominator_account_id = match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    };
-                    if let Some(nominator_account_id) = maybe_nominator_account_id {
+                    let maybe_controller_account_id =
+                        if let Some(real_account_id) = maybe_real_account_id {
+                            Some(real_account_id)
+                        } else {
+                            match signature {
+                                Some(signature) => signature.get_signer_account_id(),
+                                _ => None,
+                            }
+                        };
+                    if let Some(controller_account_id) = maybe_controller_account_id {
+                        let stash_account_id = if let Some(stash_account_id) = substrate_client
+                            .get_stash_account_id(&controller_account_id, &block_hash)
+                            .await?
+                        {
+                            stash_account_id
+                        } else {
+                            error!("Cannot get stash account id for controller account id {} while processing extrinsic {}-{}.", controller_account_id, block_number, index);
+                            return Ok(());
+                        };
                         let target_account_ids: Vec<AccountId> = targets
                             .iter()
                             .filter_map(|target_multi_address| match target_multi_address {
                                 MultiAddress::Id(account_id) => Some(account_id.clone()),
                                 _ => {
-                                    error!("Unsupported multi address type for nomination target.");
+                                    error!("Unsupported multi-address type for nomination target.");
                                     None
                                 }
                             })
                             .collect();
                         postgres
                             .save_nomination(
-                                block_hash,
+                                &block_hash,
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
-                                &nominator_account_id,
+                                (&stash_account_id, &controller_account_id),
                                 &target_account_ids,
                             )
                             .await?;
+                        // get previous block nomination
+                        let prev_block_hash =
+                            substrate_client.get_block_hash(block_number - 1).await?;
+                        let maybe_last_nomination = substrate_client
+                            .get_nomination(&stash_account_id, &prev_block_hash)
+                            .await?;
+                        if let Some(last_nomination) = maybe_last_nomination {
+                            println!(
+                                "Last nom count {} current count {}",
+                                last_nomination.target_account_ids.len(),
+                                target_account_ids.len(),
+                            );
+                            println!("LAST: {:?}", last_nomination.target_account_ids);
+                            println!("CURRENT: {:?}", target_account_ids);
+                        } else {
+                            println!("Last nomination not found");
+                            println!(
+                                "CURRENT[{}]: {:?}",
+                                target_account_ids.len(),
+                                target_account_ids
+                            );
+                        }
                     } else {
                         error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
                     }
@@ -526,16 +572,21 @@ impl BlockProcessor {
                     validator_account_id,
                     era_index,
                 } => {
-                    let maybe_caller_account_id = match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    };
+                    let maybe_caller_account_id =
+                        if let Some(real_account_id) = maybe_real_account_id {
+                            Some(real_account_id)
+                        } else {
+                            match signature {
+                                Some(signature) => signature.get_signer_account_id(),
+                                _ => None,
+                            }
+                        };
                     if let Some(caller_account_id) = maybe_caller_account_id {
                         // ignore the errors here - may fail due to non-existent era foreign key
                         //  past eras may not have been saved
                         let _ = postgres
                             .save_payout_stakers_extrinsic(
-                                block_hash,
+                                &block_hash,
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
@@ -551,10 +602,15 @@ impl BlockProcessor {
                     signature,
                     controller,
                 } => {
-                    let maybe_caller_account_id = match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    };
+                    let maybe_caller_account_id =
+                        if let Some(real_account_id) = maybe_real_account_id {
+                            Some(real_account_id)
+                        } else {
+                            match signature {
+                                Some(signature) => signature.get_signer_account_id(),
+                                _ => None,
+                            }
+                        };
                     let controller_account_id = if let Some(account_id) =
                         controller.get_account_id()
                     {
@@ -566,7 +622,7 @@ impl BlockProcessor {
                     if let Some(caller_account_id) = maybe_caller_account_id {
                         postgres
                             .save_set_controller_extrinsic(
-                                block_hash,
+                                &block_hash,
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
@@ -582,19 +638,24 @@ impl BlockProcessor {
                     signature,
                     preferences,
                 } => {
-                    let maybe_controller_account_id = match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    };
+                    let maybe_controller_account_id =
+                        if let Some(real_account_id) = maybe_real_account_id {
+                            Some(real_account_id)
+                        } else {
+                            match signature {
+                                Some(signature) => signature.get_signer_account_id(),
+                                _ => None,
+                            }
+                        };
                     if let Some(controller_account_id) = maybe_controller_account_id {
                         // get stash account id
                         if let Some(stash_account_id) = substrate_client
-                            .get_stash_account_id(&controller_account_id, block_hash)
+                            .get_stash_account_id(&controller_account_id, &block_hash)
                             .await?
                         {
                             postgres
                                 .save_validate_extrinsic(
-                                    block_hash,
+                                    &block_hash,
                                     index as i32,
                                     is_nested_call,
                                     is_successful,
@@ -622,9 +683,9 @@ impl BlockProcessor {
                         self.process_extrinsic(
                             substrate_client,
                             postgres,
-                            block_hash,
+                            (block_hash.clone(), block_number),
                             active_validator_account_ids,
-                            (index, true, is_successful),
+                            (index, true, None, is_successful),
                             call,
                         )
                         .await?;
@@ -638,9 +699,9 @@ impl BlockProcessor {
                         self.process_extrinsic(
                             substrate_client,
                             postgres,
-                            block_hash,
+                            (block_hash.clone(), block_number),
                             active_validator_account_ids,
-                            (index, true, is_successful),
+                            (index, true, None, is_successful),
                             call,
                         )
                         .await?;
@@ -841,9 +902,9 @@ impl BlockProcessor {
             self.process_extrinsic(
                 substrate_client,
                 postgres,
-                &block_hash,
+                (block_hash.clone(), block_number),
                 &active_validator_account_ids,
-                (index, false, is_successful),
+                (index, false, None, is_successful),
                 extrinsic,
             )
             .await?

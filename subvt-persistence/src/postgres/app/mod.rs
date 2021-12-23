@@ -780,8 +780,8 @@ impl PostgreSQLAppStorage {
     pub async fn save_notification(&self, notification: &Notification) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, notification_data_json, log)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, log)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
             RETURNING id
             "#,
         )
@@ -802,7 +802,6 @@ impl PostgreSQLAppStorage {
             .bind(notification.user_notification_channel_id as i32)
             .bind(&notification.notification_channel_code)
             .bind(&notification.notification_target)
-            .bind(&notification.notification_data_json)
             .bind(&notification.log)
             .fetch_one(&self.connection_pool)
             .await?;

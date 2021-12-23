@@ -18,6 +18,7 @@ pub struct Candidate {
 pub struct CandidateDetails {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
+    pub identity: Identity,
     pub bonded: Option<u128>,
     pub commission: f32,
     pub controller: String,
@@ -103,8 +104,8 @@ pub struct Identity {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     pub name: String,
-    pub sub: String,
-    pub verified: bool,
+    pub sub: Option<String>,
+    pub verified: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

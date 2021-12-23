@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS sub_event_rewarded
     event_index         integer NOT NULL,
     rewardee_account_id VARCHAR(66) NOT NULL,
     amount              VARCHAR(128) NOT NULL,
-    updated_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_event_rewarded_u_block_hash_rewardee
         UNIQUE (block_hash, rewardee_account_id),
     CONSTRAINT sub_event_rewarded_fk_block

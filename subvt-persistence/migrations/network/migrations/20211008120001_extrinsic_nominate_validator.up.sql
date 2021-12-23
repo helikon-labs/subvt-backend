@@ -3,7 +3,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_nominate_validator
     extrinsic_nominate_id   SERIAL,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_extrinsic_nominate_validator_fk_extrinsic_nominate
         FOREIGN KEY (extrinsic_nominate_id)
             REFERENCES sub_extrinsic_nominate (id)

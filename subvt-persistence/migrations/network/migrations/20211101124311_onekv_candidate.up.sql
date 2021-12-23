@@ -31,7 +31,6 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate
     score_span_inclusion    double precision,
     score_location          double precision,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_onekv_candidate_fk_validator_account_id
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)

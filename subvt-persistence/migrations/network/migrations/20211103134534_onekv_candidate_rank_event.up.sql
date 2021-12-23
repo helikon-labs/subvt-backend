@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_rank_event
     start_era               integer                     NOT NULL,
     happened_at             bigint                      NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_onekv_candidate_rank_event_fk_validator_account_id
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)

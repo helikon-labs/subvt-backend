@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS app_notification
     user_notification_channel_id    integer NOT NULL,
     notification_channel_code       VARCHAR(16) NOT NULL,
     notification_target             VARCHAR(1024) NOT NULL,
-    notification_data_json          text,
     log                             text,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     sent_at                         TIMESTAMP WITHOUT TIME ZONE,

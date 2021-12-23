@@ -5383,7 +5383,6 @@ dependencies = [
  "config",
  "lazy_static",
  "log",
- "serde_json",
  "subvt-config",
  "subvt-logging",
  "subvt-persistence",

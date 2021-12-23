@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS sub_event_slashed
     validator_account_id    VARCHAR(66) NOT NULL,
     amount                  VARCHAR(128) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_event_slashed_u_block_hash_rewardee
         UNIQUE (block_hash, validator_account_id),
     CONSTRAINT sub_event_slashed_fk_block

@@ -4,22 +4,21 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
     block_hash                      VARCHAR(66) NOT NULL,
     extrinsic_index                 integer NOT NULL,
     is_nested_call                  boolean NOT NULL,
-    caller_account_id               VARCHAR(66) NOT NULL,
+    stash_account_id                VARCHAR(66) NOT NULL,
     controller_account_id           VARCHAR(66) NOT NULL,
     amount                          VARCHAR(128) NOT NULL,
     reward_destination_encoded_hex  text NOT NULL,
     is_successful                   boolean NOT NULL,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_bond_u_block_hash_caller
-        UNIQUE (block_hash, caller_account_id),
+    CONSTRAINT sub_extrinsic_bond_u_block_hash_stash
+        UNIQUE (block_hash, stash_account_id),
     CONSTRAINT sub_extrinsic_bond_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
-    CONSTRAINT sub_extrinsic_bond_fk_caller_account
-        FOREIGN KEY (caller_account_id)
+    CONSTRAINT sub_extrinsic_bond_fk_stash_account
+        FOREIGN KEY (stash_account_id)
             REFERENCES sub_account (id)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
@@ -30,11 +29,11 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
             ON UPDATE CASCADE
 );
 
-CREATE INDEX sub_extrinsic_bond_idx_caller_account_id
-    ON sub_extrinsic_bond (caller_account_id);
+CREATE INDEX sub_extrinsic_bond_idx_stash_account_id
+    ON sub_extrinsic_bond (stash_account_id);
 
 CREATE INDEX sub_extrinsic_bond_idx_controller_account_id
     ON sub_extrinsic_bond (controller_account_id);
 
 CREATE INDEX sub_extrinsic_bond_idx_caller_controller
-    ON sub_extrinsic_bond (caller_account_id, controller_account_id);
+    ON sub_extrinsic_bond (stash_account_id, controller_account_id);

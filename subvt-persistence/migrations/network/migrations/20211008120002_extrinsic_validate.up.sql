@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_validate
     blocks_nominations      boolean NOT NULL,
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT now(),
     CONSTRAINT sub_extrinsic_validate_u_block_hash_controller
         UNIQUE (block_hash, controller_account_id),
     CONSTRAINT sub_extrinsic_validate_fk_block

@@ -257,6 +257,29 @@ impl SubstrateClient {
             .unwrap()
     }
 
+    pub async fn get_controller_account_id(
+        &self,
+        stash_account_id: &AccountId,
+        block_hash: &str,
+    ) -> anyhow::Result<Option<AccountId>> {
+        let storage_key =
+            get_storage_map_key(&self.metadata, "Staking", "Bonded", stash_account_id);
+        let chunk_values: Vec<StorageChangeSet<String>> = self
+            .ws_client
+            .request(
+                "state_queryStorageAt",
+                rpc_params!(vec![storage_key], block_hash),
+            )
+            .await?;
+        if let Some(value) = chunk_values.get(0) {
+            if let Some((_, Some(data))) = value.changes.get(0) {
+                let bytes: [u8; 32] = (&data.0 as &[u8]).try_into()?;
+                return Ok(Some(AccountId::from(bytes)));
+            }
+        }
+        Ok(None)
+    }
+
     pub async fn get_stash_account_id(
         &self,
         controller_account_id: &AccountId,
@@ -268,19 +291,45 @@ impl SubstrateClient {
             .ws_client
             .request(
                 "state_queryStorageAt",
-                rpc_params!(vec![storage_key], &block_hash),
+                rpc_params!(vec![storage_key], block_hash),
             )
             .await?;
         if let Some(value) = chunk_values.get(0) {
             if let Some((_, Some(data))) = value.changes.get(0) {
                 let stake = Stake::from_bytes(&data.0 as &[u8])?;
-                Ok(Some(stake.stash_account_id))
-            } else {
-                Ok(None)
+                return Ok(Some(stake.stash_account_id));
             }
-        } else {
-            Ok(None)
         }
+        Ok(None)
+    }
+
+    pub async fn get_nomination(
+        &self,
+        nominator_stash_account_id: &AccountId,
+        block_hash: &str,
+    ) -> anyhow::Result<Option<Nomination>> {
+        let storage_key = get_storage_map_key(
+            &self.metadata,
+            "Staking",
+            "Nominators",
+            nominator_stash_account_id,
+        );
+        let chunk_values: Vec<StorageChangeSet<String>> = self
+            .ws_client
+            .request(
+                "state_queryStorageAt",
+                rpc_params!(vec![storage_key], block_hash),
+            )
+            .await?;
+        if let Some(value) = chunk_values.get(0) {
+            if let Some((_, Some(data))) = value.changes.get(0) {
+                return Ok(Some(Nomination::from_bytes(
+                    &data.0 as &[u8],
+                    nominator_stash_account_id.clone(),
+                )?));
+            }
+        }
+        Ok(None)
     }
 
     /// Get the list of the account ids of all validators (active and inactive) at the given block.

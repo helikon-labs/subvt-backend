@@ -9,7 +9,6 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_validity
     ty                      VARCHAR(128) NOT NULL,
     validity_updated_at     bigint NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_onekv_candidate_validity_fk_one_kv_candidate
         FOREIGN KEY (onekv_candidate_id)
             REFERENCES sub_onekv_candidate (id)
