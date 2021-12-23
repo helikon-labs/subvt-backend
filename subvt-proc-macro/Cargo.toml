@@ -9,5 +9,5 @@ rust-version = "1.56.0"
 
 [dependencies]
 proc-macro2 = "1.0.34"
-syn = "1.0.77"
+syn = "1.0.83"
 quote = "1.0.9"
