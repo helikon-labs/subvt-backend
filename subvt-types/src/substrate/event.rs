@@ -416,7 +416,7 @@ pub enum StakingEvent {
     },
     Chilled {
         extrinsic_index: Option<u32>,
-        validator_account_id: AccountId,
+        stash_account_id: AccountId,
     },
     EraPaid {
         extrinsic_index: Option<u32>,
@@ -480,7 +480,7 @@ impl StakingEvent {
             })),
             "Chilled" => Some(SubstrateEvent::Staking(StakingEvent::Chilled {
                 extrinsic_index,
-                validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                stash_account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
             "EraPaid" | "EraPayout" => Some(SubstrateEvent::Staking(StakingEvent::EraPaid {
                 extrinsic_index,

@@ -174,16 +174,16 @@ impl BlockProcessor {
             SubstrateEvent::Staking(staking_event) => match staking_event {
                 StakingEvent::Chilled {
                     extrinsic_index,
-                    validator_account_id,
+                    stash_account_id,
                 } => {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
                     postgres
-                        .save_validator_chilled_event(
+                        .save_chilled_event(
                             block_hash,
                             extrinsic_index,
                             event_index as i32,
-                            validator_account_id,
+                            stash_account_id,
                         )
                         .await?;
                 }
@@ -582,8 +582,8 @@ impl BlockProcessor {
                             }
                         };
                     if let Some(caller_account_id) = maybe_caller_account_id {
-                        // ignore the errors here - may fail due to non-existent era foreign key
-                        //  past eras may not have been saved
+                        // ignore the errors here - may fail due to non-existent era foreign key,
+                        // past eras may not have been saved
                         let _ = postgres
                             .save_payout_stakers_extrinsic(
                                 &block_hash,

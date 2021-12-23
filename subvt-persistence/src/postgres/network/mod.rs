@@ -510,25 +510,25 @@ impl PostgreSQLNetworkStorage {
         Ok(events)
     }
 
-    pub async fn save_validator_chilled_event(
+    pub async fn save_chilled_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
         event_index: i32,
-        validator_account_id: &AccountId,
+        stash_account_id: &AccountId,
     ) -> anyhow::Result<()> {
-        self.save_account(validator_account_id).await?;
+        self.save_account(stash_account_id).await?;
         sqlx::query(
             r#"
-            INSERT INTO sub_event_validator_chilled (block_hash, extrinsic_index, event_index, validator_account_id)
+            INSERT INTO sub_event_chilled (block_hash, extrinsic_index, event_index, stash_account_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
+            ON CONFLICT (block_hash, stash_account_id) DO NOTHING
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(validator_account_id.to_string())
+            .bind(stash_account_id.to_string())
             .execute(&self.connection_pool)
             .await?;
         Ok(())
