@@ -93,7 +93,7 @@ impl ValidatorDetailsServer {
                             error!("Error while fetching validator details: {:?}", error);
                             let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
                             let _ = sink.send(&error_message);
-                            return Err(jsonrpsee_types::Error::Custom(error_message));
+                            return Err(jsonrpsee_core::error::Error::Custom(error_message));
                         }
                     };
                     let _ = sink.send(&ValidatorDetailsUpdate {

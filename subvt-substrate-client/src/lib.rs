@@ -3,12 +3,9 @@ use crate::storage_utility::{
     get_rpc_storage_plain_params, get_storage_map_key,
 };
 use jsonrpsee::{
+    core::client::{Client, ClientT, Subscription, SubscriptionClientT},
     rpc_params,
-    types::{
-        traits::{Client, SubscriptionClient},
-        Subscription,
-    },
-    ws_client::{WsClient, WsClientBuilder},
+    ws_client::WsClientBuilder,
 };
 use log::{debug, error, trace};
 use parity_scale_codec::Decode;
@@ -41,7 +38,7 @@ pub struct SubstrateClient {
     pub chain: Chain,
     pub metadata: Metadata,
     pub system_properties: SystemProperties,
-    ws_client: WsClient,
+    ws_client: Client,
 }
 
 impl SubstrateClient {
@@ -1213,9 +1210,15 @@ impl SubstrateClient {
             .subscribe(subscribe_method_name, None, unsubscribe_method_name)
             .await?;
         loop {
-            let block_header = subscription.next().await?;
-            match block_header {
-                Some(header) => callback(header),
+            let maybe_block_header_result = subscription.next().await;
+            match maybe_block_header_result {
+                Some(block_header_result) => match block_header_result {
+                    Ok(block_header) => callback(block_header),
+                    Err(error) => {
+                        error!("Error while getting block header: {:?}", error);
+                        error!("Will exit new block subscription.");
+                    }
+                },
                 None => {
                     error!("Empty block header. Will exit new block subscription.");
                     break;

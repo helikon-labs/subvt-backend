@@ -1,6 +1,7 @@
 //! Substrate storage RPC access helper functions.
-use jsonrpsee_types::{v2::ParamsSer, JsonValue};
+use jsonrpsee_types::params::ParamsSer;
 use parity_scale_codec::Encode;
+use serde_json::Value as JsonValue;
 use subvt_types::substrate::metadata::{
     Metadata, StorageEntryType, StorageHasher, StorageMetadata,
 };
