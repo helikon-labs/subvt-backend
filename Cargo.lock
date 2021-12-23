@@ -1917,7 +1917,7 @@ dependencies = [
  "jsonrpsee-http-client",
  "jsonrpsee-http-server",
  "jsonrpsee-proc-macros",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "jsonrpsee-utils",
  "jsonrpsee-ws-client",
  "jsonrpsee-ws-server",
@@ -1933,7 +1933,7 @@ dependencies = [
  "fnv",
  "hyper",
  "hyper-rustls",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "jsonrpsee-utils",
  "serde 1.0.132",
  "serde_json",
@@ -1953,7 +1953,7 @@ dependencies = [
  "futures-util",
  "globset",
  "hyper",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "jsonrpsee-utils",
  "lazy_static",
  "serde_json",
@@ -1995,6 +1995,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee-types"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e169725e476234f3f96079fb9d8a6d00226db602d3fa056f044994239a490d78"
+dependencies = [
+ "anyhow",
+ "beef",
+ "serde 1.0.132",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "jsonrpsee-utils"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2005,7 +2019,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "hyper",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "parking_lot",
  "rand 0.8.4",
  "rustc-hash",
@@ -2026,7 +2040,7 @@ dependencies = [
  "fnv",
  "futures",
  "http",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "pin-project",
  "rustls-native-certs",
  "serde 1.0.132",
@@ -2048,7 +2062,7 @@ checksum = "1ecd70df0c6c90eec7b17c8858023e92126dccbf7c3c8027d75de24cff24974a"
 dependencies = [
  "futures-channel",
  "futures-util",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.6.1",
  "jsonrpsee-utils",
  "serde_json",
  "soketto",
@@ -5316,7 +5330,7 @@ dependencies = [
  "config",
  "env_logger",
  "jsonrpsee",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.7.0",
  "lazy_static",
  "log",
  "redis",
@@ -5482,7 +5496,7 @@ dependencies = [
  "frame-metadata",
  "hex",
  "jsonrpsee",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.7.0",
  "log",
  "parity-scale-codec",
  "serde 1.0.132",
@@ -5581,7 +5595,7 @@ dependencies = [
  "bus",
  "config",
  "jsonrpsee",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.7.0",
  "lazy_static",
  "log",
  "redis",
@@ -5606,7 +5620,7 @@ dependencies = [
  "config",
  "env_logger",
  "jsonrpsee",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.7.0",
  "lazy_static",
  "log",
  "redis",
