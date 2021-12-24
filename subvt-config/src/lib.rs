@@ -18,7 +18,7 @@ const CONFIG_FILE_PREFIX: &str = "./config/";
 #[derive(Clone, Debug, Deserialize)]
 pub enum Environment {
     Development,
-    Testing,
+    Test,
     Production,
 }
 
@@ -26,7 +26,7 @@ impl fmt::Display for Environment {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Environment::Development => write!(f, "Development"),
-            Environment::Testing => write!(f, "Testing"),
+            Environment::Test => write!(f, "Test"),
             Environment::Production => write!(f, "Production"),
         }
     }
@@ -35,7 +35,7 @@ impl fmt::Display for Environment {
 impl From<&str> for Environment {
     fn from(env: &str) -> Self {
         match env.to_lowercase().as_str() {
-            "testing" | "test" => Environment::Testing,
+            "testing" | "test" => Environment::Test,
             "production" | "prod" => Environment::Production,
             "development" | "dev" => Environment::Development,
             _ => panic!("Unknown environment: {}", env),
@@ -164,6 +164,20 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn test() -> Result<Self, config::ConfigError> {
+        let env = Environment::Test;
+        let mut c = config::Config::new();
+        c.set("env", env.to_string())?;
+        c.merge(config::File::with_name(DEV_CONFIG_FILE_PATH))?;
+        c.merge(config::File::with_name(&format!(
+            "{}{}",
+            DEV_CONFIG_FILE_PREFIX, env
+        )))?;
+        // this makes it so SUBVT_REDIS__URL overrides redis.url
+        c.merge(config::Environment::with_prefix("subvt").separator("__"))?;
+        c.try_into()
+    }
+
     fn new() -> Result<Self, config::ConfigError> {
         let env = Environment::from(
             std::env::var("SUBVT_ENV")
