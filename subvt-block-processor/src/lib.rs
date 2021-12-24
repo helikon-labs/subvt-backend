@@ -5,7 +5,7 @@ use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error, trace};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
@@ -350,9 +350,10 @@ impl BlockProcessor {
         postgres: &PostgreSQLNetworkStorage,
         (block_hash, block_number): (String, u64),
         active_validator_account_ids: &[AccountId],
-        (index, is_nested_call, maybe_real_account_id, is_successful): (
+        (index, is_nested_call, maybe_multisig_account_id, maybe_real_account_id, is_successful): (
             usize,
             bool,
+            Option<AccountId>,
             Option<AccountId>,
             bool,
         ),
@@ -361,7 +362,7 @@ impl BlockProcessor {
         match extrinsic {
             SubstrateExtrinsic::ImOnline(imonline_extrinsic) => match imonline_extrinsic {
                 ImOnlineExtrinsic::Hearbeat {
-                    signature: _,
+                    maybe_signature: _,
                     block_number,
                     session_index,
                     validator_index,
@@ -390,34 +391,70 @@ impl BlockProcessor {
             },
             SubstrateExtrinsic::Multisig(multisig_extrinsic) => match multisig_extrinsic {
                 MultisigExtrinsic::AsMulti {
-                    signature: _,
-                    threshold: _,
-                    other_signatories: _,
+                    maybe_signature: signature,
+                    threshold,
+                    other_signatories,
                     maybe_timepoint: _,
                     call,
                     store_call: _,
                     max_weight: _,
                 } => {
+                    let signature = if let Some(signature) = signature {
+                        signature
+                    } else {
+                        error!(
+                            "Cannot get signature while processing AsMulti extrinsic {}-{}.",
+                            block_number, index
+                        );
+                        return Ok(());
+                    };
+                    let multisig_account_id = if let Some(signer_account_id) =
+                        signature.get_signer_account_id()
+                    {
+                        AccountId::multisig_account_id(
+                            &signer_account_id,
+                            other_signatories,
+                            *threshold,
+                        )
+                    } else {
+                        error!("Cannot get multisig account id while processing AsMulti extrinsic {}-{}.", block_number, index);
+                        return Ok(());
+                    };
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
                         (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, None, is_successful),
+                        (index, true, Some(multisig_account_id), None, is_successful),
                         call,
                     )
                     .await?;
                 }
                 MultisigExtrinsic::AsMultiThreshold1 {
-                    other_signatories: _,
+                    maybe_signature: signature,
+                    other_signatories,
                     call,
                 } => {
+                    let signature = if let Some(signature) = signature {
+                        signature
+                    } else {
+                        error!("Cannot get signature while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
+                        return Ok(());
+                    };
+                    let multisig_account_id = if let Some(signer_account_id) =
+                        signature.get_signer_account_id()
+                    {
+                        AccountId::multisig_account_id(&signer_account_id, other_signatories, 1)
+                    } else {
+                        error!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
+                        return Ok(());
+                    };
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
                         (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, None, is_successful),
+                        (index, true, Some(multisig_account_id), None, is_successful),
                         call,
                     )
                     .await?;
@@ -425,7 +462,7 @@ impl BlockProcessor {
             },
             SubstrateExtrinsic::Proxy(proxy_extrinsic) => match proxy_extrinsic {
                 ProxyExtrinsic::Proxy {
-                    signature: _,
+                    maybe_signature: _,
                     real_account_id,
                     force_proxy_type: _,
                     call,
@@ -435,13 +472,19 @@ impl BlockProcessor {
                         postgres,
                         (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, Some(real_account_id.clone()), is_successful),
+                        (
+                            index,
+                            true,
+                            maybe_multisig_account_id,
+                            Some(real_account_id.clone()),
+                            is_successful,
+                        ),
                         call,
                     )
                     .await?;
                 }
                 ProxyExtrinsic::ProxyAnnounced {
-                    signature: _,
+                    maybe_signature: _,
                     delegate_account_id: _,
                     real_account_id,
                     force_proxy_type: _,
@@ -452,7 +495,13 @@ impl BlockProcessor {
                         postgres,
                         (block_hash, block_number),
                         active_validator_account_ids,
-                        (index, true, Some(real_account_id.clone()), is_successful),
+                        (
+                            index,
+                            true,
+                            maybe_multisig_account_id,
+                            Some(real_account_id.clone()),
+                            is_successful,
+                        ),
                         call,
                     )
                     .await?;
@@ -460,7 +509,7 @@ impl BlockProcessor {
             },
             SubstrateExtrinsic::Staking(staking_extrinsic) => match staking_extrinsic {
                 StakingExtrinsic::Bond {
-                    signature,
+                    maybe_signature: signature,
                     controller,
                     amount,
                     reward_destination,
@@ -468,6 +517,8 @@ impl BlockProcessor {
                     let maybe_stash_account_id =
                         if let Some(real_account_id) = maybe_real_account_id {
                             Some(real_account_id)
+                        } else if let Some(multisig_account_id) = maybe_multisig_account_id {
+                            Some(multisig_account_id)
                         } else {
                             match signature {
                                 Some(signature) => signature.get_signer_account_id(),
@@ -501,10 +552,15 @@ impl BlockProcessor {
                         error!("Cannot get caller account id from signature for extrinsic #{} Staking.bond.", index);
                     }
                 }
-                StakingExtrinsic::Nominate { signature, targets } => {
+                StakingExtrinsic::Nominate {
+                    maybe_signature: signature,
+                    targets,
+                } => {
                     let maybe_controller_account_id =
                         if let Some(real_account_id) = maybe_real_account_id {
                             Some(real_account_id)
+                        } else if let Some(multisig_account_id) = maybe_multisig_account_id {
+                            Some(multisig_account_id)
                         } else {
                             match signature {
                                 Some(signature) => signature.get_signer_account_id(),
@@ -512,18 +568,6 @@ impl BlockProcessor {
                             }
                         };
                     if let Some(controller_account_id) = maybe_controller_account_id {
-                        let stake = match substrate_client
-                            .get_stake(&controller_account_id, &block_hash)
-                            .await?
-                        {
-                            Some(stake) => stake,
-                            None => {
-                                error!("Cannot get stake for controller account id {} while processing extrinsic {}-{}.", controller_account_id, block_number, index);
-                                return Ok(());
-                            }
-                        };
-                        let stash_account_id = stake.stash_account_id;
-
                         let target_account_ids: Vec<AccountId> = targets
                             .iter()
                             .filter_map(|target_multi_address| match target_multi_address {
@@ -540,93 +584,23 @@ impl BlockProcessor {
                                 index as i32,
                                 is_nested_call,
                                 is_successful,
-                                (&stash_account_id, &controller_account_id),
+                                &controller_account_id,
                                 &target_account_ids,
                             )
                             .await?;
-                        // get previous block nomination
-                        let prev_block_hash =
-                            substrate_client.get_block_hash(block_number - 1).await?;
-                        let maybe_last_nomination = substrate_client
-                            .get_nomination(&stash_account_id, &prev_block_hash)
-                            .await?;
-                        if let Some(last_nomination) = maybe_last_nomination {
-                            let current_target_account_ids: HashSet<&AccountId> =
-                                target_account_ids.iter().collect();
-                            let prev_target_account_ids: HashSet<&AccountId> =
-                                last_nomination.target_account_ids.iter().collect();
-                            let added_targets =
-                                &current_target_account_ids - &prev_target_account_ids;
-                            let removed_targets =
-                                &prev_target_account_ids - &current_target_account_ids;
-                            for added_target in added_targets {
-                                println!("Added target {}.", added_target);
-                                postgres
-                                    .save_app_new_nomination_event(
-                                        &block_hash,
-                                        index as i32,
-                                        &stash_account_id,
-                                        &controller_account_id,
-                                        added_target,
-                                        (stake.active_amount, target_account_ids.len() as i32),
-                                    )
-                                    .await?;
-                            }
-                            if let Some(prev_stake) = substrate_client
-                                .get_stake(&controller_account_id, &prev_block_hash)
-                                .await?
-                            {
-                                for removed_target in removed_targets {
-                                    println!("Removed target {}.", removed_target);
-                                    postgres
-                                        .save_app_lost_nomination_event(
-                                            &block_hash,
-                                            index as i32,
-                                            &stash_account_id,
-                                            &controller_account_id,
-                                            removed_target,
-                                            prev_stake.active_amount,
-                                        )
-                                        .await?;
-                                }
-                            } else {
-                                error!(
-                                    "Cannot get previous stake for {} while processing extrinsic {}-{}. Cannot save lost nomination events.",
-                                    controller_account_id, block_number, index
-                                );
-                            }
-                        } else {
-                            println!("Last nomination not found");
-                            println!(
-                                "CURRENT[{}]: {:?}",
-                                target_account_ids.len(),
-                                target_account_ids
-                            );
-                            // generate new nomination event for all nominees
-                            for validator_account_id in &target_account_ids {
-                                postgres
-                                    .save_app_new_nomination_event(
-                                        &block_hash,
-                                        index as i32,
-                                        &stash_account_id,
-                                        &controller_account_id,
-                                        validator_account_id,
-                                        (stake.active_amount, target_account_ids.len() as i32),
-                                    )
-                                    .await?;
-                            }
-                        }
                     } else {
                         error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
                     }
                 }
                 StakingExtrinsic::PayoutStakers {
-                    signature,
+                    maybe_signature: signature,
                     validator_account_id,
                     era_index,
                 } => {
                     let maybe_caller_account_id =
-                        if let Some(real_account_id) = maybe_real_account_id {
+                        if let Some(multisig_account_id) = maybe_multisig_account_id {
+                            Some(multisig_account_id)
+                        } else if let Some(real_account_id) = maybe_real_account_id {
                             Some(real_account_id)
                         } else {
                             match signature {
@@ -652,11 +626,13 @@ impl BlockProcessor {
                     }
                 }
                 StakingExtrinsic::SetController {
-                    signature,
+                    maybe_signature: signature,
                     controller,
                 } => {
                     let maybe_caller_account_id =
-                        if let Some(real_account_id) = maybe_real_account_id {
+                        if let Some(multisig_account_id) = maybe_multisig_account_id {
+                            Some(multisig_account_id)
+                        } else if let Some(real_account_id) = maybe_real_account_id {
                             Some(real_account_id)
                         } else {
                             match signature {
@@ -688,11 +664,13 @@ impl BlockProcessor {
                     }
                 }
                 StakingExtrinsic::Validate {
-                    signature,
+                    maybe_signature: signature,
                     preferences,
                 } => {
                     let maybe_controller_account_id =
-                        if let Some(real_account_id) = maybe_real_account_id {
+                        if let Some(multisig_account_id) = maybe_multisig_account_id {
+                            Some(multisig_account_id)
+                        } else if let Some(real_account_id) = maybe_real_account_id {
                             Some(real_account_id)
                         } else {
                             match signature {
@@ -729,7 +707,7 @@ impl BlockProcessor {
             },
             SubstrateExtrinsic::Utility(utility_extrinsic) => match utility_extrinsic {
                 UtilityExtrinsic::Batch {
-                    signature: _,
+                    maybe_signature: _,
                     calls,
                 } => {
                     for call in calls {
@@ -738,14 +716,20 @@ impl BlockProcessor {
                             postgres,
                             (block_hash.clone(), block_number),
                             active_validator_account_ids,
-                            (index, true, None, is_successful),
+                            (
+                                index,
+                                true,
+                                maybe_multisig_account_id.clone(),
+                                None,
+                                is_successful,
+                            ),
                             call,
                         )
                         .await?;
                     }
                 }
                 UtilityExtrinsic::BatchAll {
-                    signature: _,
+                    maybe_signature: _,
                     calls,
                 } => {
                     for call in calls {
@@ -754,7 +738,13 @@ impl BlockProcessor {
                             postgres,
                             (block_hash.clone(), block_number),
                             active_validator_account_ids,
-                            (index, true, None, is_successful),
+                            (
+                                index,
+                                true,
+                                maybe_multisig_account_id.clone(),
+                                None,
+                                is_successful,
+                            ),
                             call,
                         )
                         .await?;
@@ -905,7 +895,7 @@ impl BlockProcessor {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
                     TimestampExtrinsic::Set {
-                        signature: _,
+                        maybe_signature: _,
                         timestamp,
                     } => {
                         block_timestamp = Some(*timestamp);
@@ -957,7 +947,7 @@ impl BlockProcessor {
                 postgres,
                 (block_hash.clone(), block_number),
                 &active_validator_account_ids,
-                (index, false, None, is_successful),
+                (index, false, None, None, is_successful),
                 extrinsic,
             )
             .await?

@@ -20,7 +20,7 @@ use polkadot_core_primitives::BlockNumber;
 #[derive(Clone, Debug)]
 pub enum MultisigExtrinsic {
     AsMulti {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         threshold: u16,
         other_signatories: Vec<AccountId>,
         maybe_timepoint: Option<Timepoint<BlockNumber>>,
@@ -29,6 +29,7 @@ pub enum MultisigExtrinsic {
         max_weight: u64,
     },
     AsMultiThreshold1 {
+        maybe_signature: Option<Signature>,
         other_signatories: Vec<AccountId>,
         call: Box<SubstrateExtrinsic>,
     },
@@ -37,7 +38,7 @@ pub enum MultisigExtrinsic {
 impl MultisigExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
@@ -53,7 +54,7 @@ impl MultisigExtrinsic {
                     );
                 }
                 Some(SubstrateExtrinsic::Multisig(MultisigExtrinsic::AsMulti {
-                    signature,
+                    maybe_signature,
                     threshold: get_argument_primitive!(&arguments[0], U16),
                     other_signatories: get_argument_vector!(&arguments[1], AccountId),
                     maybe_timepoint: get_optional_argument_primitive!(
@@ -78,6 +79,7 @@ impl MultisigExtrinsic {
                 }
                 Some(SubstrateExtrinsic::Multisig(
                     MultisigExtrinsic::AsMultiThreshold1 {
+                        maybe_signature,
                         other_signatories: get_argument_vector!(&arguments[0], AccountId),
                         call: Box::new(get_argument_primitive!(&arguments[1], Call)),
                     },
@@ -92,13 +94,13 @@ impl MultisigExtrinsic {
 #[derive(Clone, Debug)]
 pub enum ProxyExtrinsic {
     Proxy {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         real_account_id: AccountId,
         force_proxy_type: Option<ProxyType>,
         call: Box<SubstrateExtrinsic>,
     },
     ProxyAnnounced {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         delegate_account_id: AccountId,
         real_account_id: AccountId,
         force_proxy_type: Option<ProxyType>,
@@ -109,7 +111,7 @@ pub enum ProxyExtrinsic {
 impl ProxyExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
@@ -125,7 +127,7 @@ impl ProxyExtrinsic {
                     );
                 }
                 Some(SubstrateExtrinsic::Proxy(ProxyExtrinsic::Proxy {
-                    signature,
+                    maybe_signature,
                     real_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     force_proxy_type: get_optional_argument_primitive!(&arguments[1], ProxyType),
                     call: Box::new(get_argument_primitive!(&arguments[2], Call)),
@@ -143,7 +145,7 @@ impl ProxyExtrinsic {
                     );
                 }
                 Some(SubstrateExtrinsic::Proxy(ProxyExtrinsic::ProxyAnnounced {
-                    signature,
+                    maybe_signature,
                     delegate_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     real_account_id: get_argument_primitive!(&arguments[1], AccountId),
                     force_proxy_type: get_optional_argument_primitive!(&arguments[2], ProxyType),
@@ -159,7 +161,7 @@ impl ProxyExtrinsic {
 #[derive(Clone, Debug)]
 pub enum ImOnlineExtrinsic {
     Hearbeat {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         block_number: u32,
         session_index: u32,
         validator_index: u32,
@@ -169,14 +171,14 @@ pub enum ImOnlineExtrinsic {
 impl ImOnlineExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_event = match name {
             "heartbeat" => {
                 let heartbeat = get_argument_primitive!(&arguments[0], Heartbeat);
                 Some(SubstrateExtrinsic::ImOnline(ImOnlineExtrinsic::Hearbeat {
-                    signature,
+                    maybe_signature,
                     block_number: heartbeat.block_number,
                     session_index: heartbeat.session_index,
                     validator_index: heartbeat.authority_index,
@@ -191,7 +193,7 @@ impl ImOnlineExtrinsic {
 #[derive(Clone, Debug)]
 pub enum TimestampExtrinsic {
     Set {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         timestamp: u64,
     },
 }
@@ -199,12 +201,12 @@ pub enum TimestampExtrinsic {
 impl TimestampExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_event = match name {
             "set" => Some(SubstrateExtrinsic::Timestamp(TimestampExtrinsic::Set {
-                signature,
+                maybe_signature,
                 timestamp: get_argument_primitive!(&arguments[0], CompactMoment).0,
             })),
             _ => None,
@@ -216,26 +218,26 @@ impl TimestampExtrinsic {
 #[derive(Clone, Debug)]
 pub enum StakingExtrinsic {
     Bond {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         controller: MultiAddress,
         amount: Balance,
         reward_destination: RewardDestination,
     },
     Nominate {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         targets: Vec<MultiAddress>,
     },
     PayoutStakers {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         validator_account_id: AccountId,
         era_index: EraIndex,
     },
     SetController {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         controller: MultiAddress,
     },
     Validate {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         preferences: ValidatorPreferences,
     },
 }
@@ -248,30 +250,30 @@ impl StakingExtrinsic {
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
             "bond" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Bond {
-                signature,
+                maybe_signature: signature,
                 controller: get_argument_primitive!(&arguments[0], MultiAddress),
                 amount: get_argument_primitive!(&arguments[1], CompactBalance).0,
                 reward_destination: get_argument_primitive!(&arguments[2], RewardDestination),
             })),
             "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
-                signature,
+                maybe_signature: signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
             })),
             "payout_stakers" => Some(SubstrateExtrinsic::Staking(
                 StakingExtrinsic::PayoutStakers {
-                    signature,
+                    maybe_signature: signature,
                     validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     era_index: get_argument_primitive!(&arguments[1], EraIndex),
                 },
             )),
             "set_controller" => Some(SubstrateExtrinsic::Staking(
                 StakingExtrinsic::SetController {
-                    signature,
+                    maybe_signature: signature,
                     controller: get_argument_primitive!(&arguments[0], MultiAddress),
                 },
             )),
             "validate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
-                signature,
+                maybe_signature: signature,
                 preferences: get_argument_primitive!(&arguments[0], ValidatorPreferences),
             })),
             _ => None,
@@ -283,11 +285,11 @@ impl StakingExtrinsic {
 #[derive(Clone, Debug)]
 pub enum UtilityExtrinsic {
     Batch {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         calls: Vec<SubstrateExtrinsic>,
     },
     BatchAll {
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         calls: Vec<SubstrateExtrinsic>,
     },
 }
@@ -295,7 +297,7 @@ pub enum UtilityExtrinsic {
 impl UtilityExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
@@ -305,9 +307,15 @@ impl UtilityExtrinsic {
                     calls.push(call);
                 }
                 let extrinsic = if name == "batch" {
-                    UtilityExtrinsic::Batch { signature, calls }
+                    UtilityExtrinsic::Batch {
+                        maybe_signature,
+                        calls,
+                    }
                 } else {
-                    UtilityExtrinsic::BatchAll { signature, calls }
+                    UtilityExtrinsic::BatchAll {
+                        maybe_signature,
+                        calls,
+                    }
                 };
                 Some(SubstrateExtrinsic::Utility(extrinsic))
             }
@@ -351,10 +359,10 @@ impl SubstrateExtrinsic {
     pub fn decode_extrinsic(
         chain: &Chain,
         metadata: &Metadata,
-        signature: &Option<Signature>,
+        maybe_signature: &Option<Signature>,
         bytes: &mut &[u8],
     ) -> Result<Self, DecodeError> {
-        let mut signature = signature.clone();
+        let mut signature = maybe_signature.clone();
         if signature.is_none() {
             let signed_version = bytes.read_byte()?;
             let sign_mask = 0b10000000;

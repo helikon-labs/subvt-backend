@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::app::db::{PostgresBlock, PostgresValidateExtrinsic};
-use subvt_types::app::event::{ValidatorChilledEvent, ValidatorOfflineEvent};
+use subvt_types::app::event::{ChilledEvent, ValidatorOfflineEvent};
 use subvt_types::app::extrinsic::ValidateExtrinsic;
 use subvt_types::app::Block;
 use subvt_types::substrate::RewardDestination;
@@ -443,23 +443,20 @@ impl PostgreSQLNetworkStorage {
         extrinsic_index: i32,
         is_nested_call: bool,
         is_successful: bool,
-        (stash_account_id, controller_account_id): (&AccountId, &AccountId),
+        controller_account_id: &AccountId,
         validator_account_ids: &[AccountId],
     ) -> anyhow::Result<()> {
-        self.save_account(stash_account_id).await?;
         self.save_account(controller_account_id).await?;
         let maybe_extrinsic_nominate_id: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, stash_account_id, controller_account_id, is_successful)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (block_hash, stash_account_id) DO NOTHING
+            INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, controller_account_id, is_successful)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(is_nested_call)
-            .bind(stash_account_id.to_string())
             .bind(controller_account_id.to_string())
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)
@@ -482,14 +479,14 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
-    pub async fn get_validator_chilled_events_in_block(
+    pub async fn get_chilled_events_in_block(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<ValidatorChilledEvent>> {
+    ) -> anyhow::Result<Vec<ChilledEvent>> {
         let db_events: Vec<(i32, String, Option<i32>, i32, String)> = sqlx::query_as(
             r#"
-            SELECT "id", block_hash, extrinsic_index, event_index, validator_account_id
-            FROM sub_event_validator_chilled
+            SELECT "id", block_hash, extrinsic_index, event_index, stash_account_id
+            FROM sub_event_chilled
             WHERE block_hash = $1
             ORDER BY "id" ASC
             "#,
@@ -499,12 +496,12 @@ impl PostgreSQLNetworkStorage {
         .await?;
         let mut events = Vec::new();
         for db_event in db_events {
-            events.push(ValidatorChilledEvent {
+            events.push(ChilledEvent {
                 id: db_event.0 as u32,
                 block_hash: db_event.1.clone(),
                 extrinsic_index: db_event.2.map(|index| index as u32),
                 event_index: db_event.3 as u32,
-                validator_account_id: AccountId::from_str(&db_event.4)?,
+                stash_account_id: AccountId::from_str(&db_event.4)?,
             })
         }
         Ok(events)
@@ -1209,69 +1206,6 @@ impl PostgreSQLNetworkStorage {
             .bind(validator_index as i64)
             .bind(validator_account_id.to_string())
             .bind(is_successful)
-            .fetch_optional(&self.connection_pool)
-            .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn save_app_new_nomination_event(
-        &self,
-        block_hash: &str,
-        extrinsic_index: i32,
-        nominator_stash_account_id: &AccountId,
-        nominator_controller_account_id: &AccountId,
-        validator_account_id: &AccountId,
-        (amount, nominee_count): (Balance, i32),
-    ) -> anyhow::Result<Option<i32>> {
-        let maybe_result: Option<(i32, )> = sqlx::query_as(
-            r#"
-            INSERT INTO sub_app_event_new_nomination (block_hash, extrinsic_index, nominator_stash_account_id, nominator_controller_account_id, validator_account_id, amount, nominee_count)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id
-            "#,
-        )
-            .bind(block_hash)
-            .bind(extrinsic_index)
-            .bind(nominator_stash_account_id.to_string())
-            .bind(nominator_controller_account_id.to_string())
-            .bind(validator_account_id.to_string())
-            .bind(amount.to_string())
-            .bind(nominee_count)
-            .fetch_optional(&self.connection_pool)
-            .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn save_app_lost_nomination_event(
-        &self,
-        block_hash: &str,
-        extrinsic_index: i32,
-        nominator_stash_account_id: &AccountId,
-        nominator_controller_account_id: &AccountId,
-        validator_account_id: &AccountId,
-        amount: Balance,
-    ) -> anyhow::Result<Option<i32>> {
-        let maybe_result: Option<(i32, )> = sqlx::query_as(
-            r#"
-            INSERT INTO sub_app_event_lost_nomination (block_hash, extrinsic_index, nominator_stash_account_id, nominator_controller_account_id, validator_account_id, amount)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-            "#,
-        )
-            .bind(block_hash)
-            .bind(extrinsic_index)
-            .bind(nominator_stash_account_id.to_string())
-            .bind(nominator_controller_account_id.to_string())
-            .bind(validator_account_id.to_string())
-            .bind(amount.to_string())
             .fetch_optional(&self.connection_pool)
             .await?;
         if let Some(result) = maybe_result {

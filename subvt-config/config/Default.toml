@@ -53,7 +53,7 @@ connection_timeout_seconds = 3
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 10654929
+start_block_number = 10658458
 
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"

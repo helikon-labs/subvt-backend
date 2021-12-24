@@ -131,14 +131,14 @@ impl NotificationGenerator {
         block: &Block,
     ) -> anyhow::Result<()> {
         for event in network_postgres
-            .get_validator_chilled_events_in_block(&block.hash)
+            .get_chilled_events_in_block(&block.hash)
             .await?
         {
             let rules = app_postgres
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::ChainValidatorChilled.to_string(),
                     CONFIG.substrate.network_id,
-                    &event.validator_account_id,
+                    &event.stash_account_id,
                 )
                 .await?;
             self.generate_notifications(
@@ -146,7 +146,7 @@ impl NotificationGenerator {
                 block,
                 (event.extrinsic_index, Some(event.event_index)),
                 &rules,
-                &event.validator_account_id,
+                &event.stash_account_id,
             )
             .await?;
         }

@@ -26,6 +26,20 @@ impl AccountId {
             )))
         }
     }
+
+    pub fn multisig_account_id(
+        signatory: &AccountId,
+        other_signatories: &[AccountId],
+        threshold: u16,
+    ) -> AccountId {
+        let mut account_ids = vec![signatory];
+        for other_signatory in other_signatories {
+            account_ids.push(other_signatory);
+        }
+        let entropy =
+            (b"modlpy/utilisuba", account_ids, threshold).using_encoded(sp_core::blake2_256);
+        AccountId::from(entropy)
+    }
 }
 
 impl Display for AccountId {

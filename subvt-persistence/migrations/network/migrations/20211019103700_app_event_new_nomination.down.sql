@@ -1,1 +1,0 @@
-DROP TABLE sub_app_event_new_nomination CASCADE;
