@@ -277,11 +277,11 @@ impl SubstrateClient {
         Ok(None)
     }
 
-    pub async fn get_stash_account_id(
+    pub async fn get_stake(
         &self,
         controller_account_id: &AccountId,
         block_hash: &str,
-    ) -> anyhow::Result<Option<AccountId>> {
+    ) -> anyhow::Result<Option<Stake>> {
         let storage_key =
             get_storage_map_key(&self.metadata, "Staking", "Ledger", controller_account_id);
         let chunk_values: Vec<StorageChangeSet<String>> = self
@@ -294,10 +294,21 @@ impl SubstrateClient {
         if let Some(value) = chunk_values.get(0) {
             if let Some((_, Some(data))) = value.changes.get(0) {
                 let stake = Stake::from_bytes(&data.0 as &[u8])?;
-                return Ok(Some(stake.stash_account_id));
+                return Ok(Some(stake));
             }
         }
         Ok(None)
+    }
+
+    pub async fn get_stash_account_id(
+        &self,
+        controller_account_id: &AccountId,
+        block_hash: &str,
+    ) -> anyhow::Result<Option<AccountId>> {
+        match self.get_stake(controller_account_id, block_hash).await? {
+            Some(stake) => Ok(Some(stake.stash_account_id)),
+            None => Ok(None),
+        }
     }
 
     pub async fn get_nomination(

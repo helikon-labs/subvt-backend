@@ -1217,4 +1217,67 @@ impl PostgreSQLNetworkStorage {
             Ok(None)
         }
     }
+
+    pub async fn save_app_new_nomination_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        nominator_stash_account_id: &AccountId,
+        nominator_controller_account_id: &AccountId,
+        validator_account_id: &AccountId,
+        (amount, nominee_count): (Balance, i32),
+    ) -> anyhow::Result<Option<i32>> {
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO sub_app_event_new_nomination (block_hash, extrinsic_index, nominator_stash_account_id, nominator_controller_account_id, validator_account_id, amount, nominee_count)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(nominator_stash_account_id.to_string())
+            .bind(nominator_controller_account_id.to_string())
+            .bind(validator_account_id.to_string())
+            .bind(amount.to_string())
+            .bind(nominee_count)
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn save_app_lost_nomination_event(
+        &self,
+        block_hash: &str,
+        extrinsic_index: i32,
+        nominator_stash_account_id: &AccountId,
+        nominator_controller_account_id: &AccountId,
+        validator_account_id: &AccountId,
+        amount: Balance,
+    ) -> anyhow::Result<Option<i32>> {
+        let maybe_result: Option<(i32, )> = sqlx::query_as(
+            r#"
+            INSERT INTO sub_app_event_lost_nomination (block_hash, extrinsic_index, nominator_stash_account_id, nominator_controller_account_id, validator_account_id, amount)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+            "#,
+        )
+            .bind(block_hash)
+            .bind(extrinsic_index)
+            .bind(nominator_stash_account_id.to_string())
+            .bind(nominator_controller_account_id.to_string())
+            .bind(validator_account_id.to_string())
+            .bind(amount.to_string())
+            .fetch_optional(&self.connection_pool)
+            .await?;
+        if let Some(result) = maybe_result {
+            Ok(Some(result.0))
+        } else {
+            Ok(None)
+        }
+    }
 }

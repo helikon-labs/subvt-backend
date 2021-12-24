@@ -5,7 +5,7 @@ use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error, trace};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
@@ -512,15 +512,18 @@ impl BlockProcessor {
                             }
                         };
                     if let Some(controller_account_id) = maybe_controller_account_id {
-                        let stash_account_id = if let Some(stash_account_id) = substrate_client
-                            .get_stash_account_id(&controller_account_id, &block_hash)
+                        let stake = match substrate_client
+                            .get_stake(&controller_account_id, &block_hash)
                             .await?
                         {
-                            stash_account_id
-                        } else {
-                            error!("Cannot get stash account id for controller account id {} while processing extrinsic {}-{}.", controller_account_id, block_number, index);
-                            return Ok(());
+                            Some(stake) => stake,
+                            None => {
+                                error!("Cannot get stake for controller account id {} while processing extrinsic {}-{}.", controller_account_id, block_number, index);
+                                return Ok(());
+                            }
                         };
+                        let stash_account_id = stake.stash_account_id;
+
                         let target_account_ids: Vec<AccountId> = targets
                             .iter()
                             .filter_map(|target_multi_address| match target_multi_address {
@@ -548,13 +551,50 @@ impl BlockProcessor {
                             .get_nomination(&stash_account_id, &prev_block_hash)
                             .await?;
                         if let Some(last_nomination) = maybe_last_nomination {
-                            println!(
-                                "Last nom count {} current count {}",
-                                last_nomination.target_account_ids.len(),
-                                target_account_ids.len(),
-                            );
-                            println!("LAST: {:?}", last_nomination.target_account_ids);
-                            println!("CURRENT: {:?}", target_account_ids);
+                            let current_target_account_ids: HashSet<&AccountId> =
+                                target_account_ids.iter().collect();
+                            let prev_target_account_ids: HashSet<&AccountId> =
+                                last_nomination.target_account_ids.iter().collect();
+                            let added_targets =
+                                &current_target_account_ids - &prev_target_account_ids;
+                            let removed_targets =
+                                &prev_target_account_ids - &current_target_account_ids;
+                            for added_target in added_targets {
+                                println!("Added target {}.", added_target);
+                                postgres
+                                    .save_app_new_nomination_event(
+                                        &block_hash,
+                                        index as i32,
+                                        &stash_account_id,
+                                        &controller_account_id,
+                                        added_target,
+                                        (stake.active_amount, target_account_ids.len() as i32),
+                                    )
+                                    .await?;
+                            }
+                            if let Some(prev_stake) = substrate_client
+                                .get_stake(&controller_account_id, &prev_block_hash)
+                                .await?
+                            {
+                                for removed_target in removed_targets {
+                                    println!("Removed target {}.", removed_target);
+                                    postgres
+                                        .save_app_lost_nomination_event(
+                                            &block_hash,
+                                            index as i32,
+                                            &stash_account_id,
+                                            &controller_account_id,
+                                            removed_target,
+                                            prev_stake.active_amount,
+                                        )
+                                        .await?;
+                                }
+                            } else {
+                                error!(
+                                    "Cannot get previous stake for {} while processing extrinsic {}-{}. Cannot save lost nomination events.",
+                                    controller_account_id, block_number, index
+                                );
+                            }
                         } else {
                             println!("Last nomination not found");
                             println!(
@@ -562,6 +602,19 @@ impl BlockProcessor {
                                 target_account_ids.len(),
                                 target_account_ids
                             );
+                            // generate new nomination event for all nominees
+                            for validator_account_id in &target_account_ids {
+                                postgres
+                                    .save_app_new_nomination_event(
+                                        &block_hash,
+                                        index as i32,
+                                        &stash_account_id,
+                                        &controller_account_id,
+                                        validator_account_id,
+                                        (stake.active_amount, target_account_ids.len() as i32),
+                                    )
+                                    .await?;
+                            }
                         }
                     } else {
                         error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
