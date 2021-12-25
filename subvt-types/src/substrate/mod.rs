@@ -511,8 +511,7 @@ pub type SuperAccountId = (AccountId, Data);
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
-    pub nominator_account: Account,
-    pub controller_account_id: AccountId,
+    pub stash_account_id: AccountId,
     pub submission_era_index: u32,
     pub target_account_ids: Vec<AccountId>,
     pub stake: Stake,
@@ -523,10 +522,7 @@ impl Nomination {
         let nomination: Nominations<AccountId> = Decode::decode(&mut bytes)?;
         let submission_era_index: u32 = nomination.submitted_in;
         Ok(Nomination {
-            nominator_account: Account {
-                id: account_id,
-                ..Default::default()
-            },
+            stash_account_id: account_id,
             submission_era_index,
             target_account_ids: nomination.targets,
             ..Default::default()

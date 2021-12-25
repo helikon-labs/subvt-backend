@@ -745,44 +745,18 @@ impl SubstrateClient {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let bytes: &[u8] = &data.0;
                         let nomination = Nomination::from_bytes(bytes, account_id).unwrap();
-                        nomination_map.insert(nomination.nominator_account.id.clone(), nomination);
+                        nomination_map.insert(nomination.stash_account_id.clone(), nomination);
                     }
                 }
             }
-            debug!(
-                "Got {} nominations. Get nominator account details.",
-                nomination_map.len()
-            );
-            // get nominator account details
-            {
-                let nominator_account_ids: Vec<AccountId> =
-                    nomination_map.keys().cloned().collect();
-                for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
-                    let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
-                    for account in accounts {
-                        nomination_map
-                            .get_mut(&account.id)
-                            .unwrap()
-                            .nominator_account = account.clone();
-                    }
-                }
-            }
-            debug!("Get nominator controller accounts.");
-            let mut controller_storage_keys: Vec<String> = nomination_map
+            debug!("Got {} nominations.", nomination_map.len());
+            debug!("Get validator controller account ids.");
+            let controller_storage_keys: Vec<String> = validator_map
                 .keys()
-                .map(|nominator_account_id| {
-                    get_storage_map_key(&self.metadata, "Staking", "Bonded", &nominator_account_id)
+                .map(|validator_account_id| {
+                    get_storage_map_key(&self.metadata, "Staking", "Bonded", validator_account_id)
                 })
                 .collect();
-            // add validator addresses
-            for validator_account_id in validator_map.keys() {
-                controller_storage_keys.push(get_storage_map_key(
-                    &self.metadata,
-                    "Staking",
-                    "Bonded",
-                    validator_account_id,
-                ))
-            }
             let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
             let mut validator_controller_account_ids: Vec<AccountId> = Vec::new();
             for chunk in controller_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
@@ -795,19 +769,14 @@ impl SubstrateClient {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let mut bytes: &[u8] = &data.0;
                         let controller_account_id: AccountId = Decode::decode(&mut bytes).unwrap();
-                        if let Some(nomination) = nomination_map.get_mut(&account_id) {
-                            nomination.controller_account_id = controller_account_id.clone();
-                        } else {
-                            validator_controller_account_ids.push(controller_account_id.clone())
-                        }
+                        validator_controller_account_ids.push(controller_account_id.clone());
                         controller_account_id_map.insert(account_id, controller_account_id);
                     }
                 }
             }
             let controller_account_ids: Vec<AccountId> =
                 controller_account_id_map.values().cloned().collect();
-            // get validator controller account details
-            debug!("Get validator controller accounts.");
+            debug!("Get validator controller account details.");
             {
                 let mut validator_controller_account_map: HashMap<AccountId, Account> =
                     HashMap::new();
@@ -833,14 +802,12 @@ impl SubstrateClient {
                 }
             }
             debug!("Get nomination amounts and self stakes.");
-            // her biri için bonding'i al (staking.bonded)
             let ledger_storage_keys: Vec<String> = controller_account_ids
                 .iter()
                 .map(|controller_account_id| {
                     get_storage_map_key(&self.metadata, "Staking", "Ledger", &controller_account_id)
                 })
                 .collect();
-            // her biri için bonded miktarı al (staking.ledger)
             for chunk in ledger_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
@@ -872,7 +839,7 @@ impl SubstrateClient {
             for validator in validator_map.values_mut() {
                 validator.nominations.sort_by_key(|nomination| {
                     let mut hasher = DefaultHasher::new();
-                    nomination.nominator_account.id.hash(&mut hasher);
+                    nomination.stash_account_id.hash(&mut hasher);
                     hasher.finish()
                 });
             }
