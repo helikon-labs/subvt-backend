@@ -7,10 +7,12 @@ CREATE TYPE sub_validator_info AS (
     inactive_era_count bigint,
     total_reward_points bigint,
     unclaimed_eras text,
-    is_enrolled_in_onekv boolean,
     blocks_authored bigint,
     reward_points bigint,
-    heartbeat_received boolean
+    heartbeat_received boolean,
+    onekv_candidate_record_id bigint,
+    onekv_rank bigint,
+    onekv_is_valid boolean
 );
 
 CREATE OR REPLACE FUNCTION sub_get_validator_info (block_hash_param VARCHAR(66), account_id_param VARCHAR(66), is_active_param boolean, era_index_param bigint)
@@ -68,12 +70,6 @@ BEGIN
     WHERE sub_account.killed_at_block_hash = sub_block.hash
     AND sub_account.id = account_id_param;
 
-    SELECT EXISTS(
-        SELECT 1
-        FROM sub_onekv_candidate
-        WHERE validator_account_id = account_id_param
-    ) INTO result_record.is_enrolled_in_onekv;
-
     if is_active_param then
         SELECT COUNT(DISTINCT number)
         FROM sub_block
@@ -96,6 +92,13 @@ BEGIN
             AND E.is_successful = true
         ) INTO result_record.heartbeat_received;
     end if;
+
+    SELECT id, rank, is_valid
+    FROM sub_onekv_candidate C
+    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_is_valid
+    WHERE C.validator_account_id = account_id_param
+    ORDER BY id DESC
+    LIMIT 1;
 	
     RETURN result_record;
 END

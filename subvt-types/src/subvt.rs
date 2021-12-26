@@ -48,7 +48,7 @@ pub struct LiveNetworkStatusUpdate {
 pub struct ValidatorDetails {
     #[diff_key]
     pub account: Account,
-    pub controller_account: Account,
+    pub controller_account_id: AccountId,
     pub preferences: ValidatorPreferences,
     pub self_stake: Stake,
     pub reward_destination: RewardDestination,
@@ -63,7 +63,6 @@ pub struct ValidatorDetails {
     pub offline_offence_count: u64,
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
-    pub is_enrolled_in_1kv: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub is_parachain_validator: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -76,12 +75,19 @@ pub struct ValidatorDetails {
     pub heartbeat_received: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validator_stake: Option<ValidatorStake>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onekv_candidate_record_id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onekv_rank: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onekv_is_valid: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
 pub struct ValidatorSummary {
     #[diff_key]
     pub account_id: AccountId,
+    pub controller_account_id: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -154,6 +160,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
 
         ValidatorSummary {
             account_id: validator.account.id.clone(),
+            controller_account_id: validator.controller_account_id.clone(),
             display: validator.get_display(),
             parent_display: validator.get_parent_display(),
             child_display: validator.account.child_display.clone(),
@@ -166,7 +173,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             inactive_nominations: InactiveNominationsSummary::from(&inactive_nominations),
             oversubscribed: validator.oversubscribed,
             slash_count: validator.slash_count,
-            is_enrolled_in_1kv: validator.is_enrolled_in_1kv,
+            is_enrolled_in_1kv: validator.onekv_candidate_record_id.is_some(),
             blocks_authored: validator.blocks_authored,
             reward_points: validator.reward_points,
             heartbeat_received: validator.heartbeat_received,

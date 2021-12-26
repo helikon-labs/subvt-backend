@@ -9,10 +9,12 @@ pub struct ValidatorInfo {
     pub inactive_era_count: u64,
     pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
-    pub is_enrolled_in_1kv: bool,
     pub blocks_authored: Option<u64>,
     pub reward_points: Option<u64>,
     pub heartbeat_received: Option<bool>,
+    pub onekv_candidate_record_id: Option<u32>,
+    pub onekv_rank: Option<u64>,
+    pub onekv_is_valid: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

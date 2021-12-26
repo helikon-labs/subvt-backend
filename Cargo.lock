@@ -5388,6 +5388,8 @@ dependencies = [
  "config",
  "lazy_static",
  "log",
+ "redis",
+ "serde_json",
  "subvt-config",
  "subvt-logging",
  "subvt-persistence",

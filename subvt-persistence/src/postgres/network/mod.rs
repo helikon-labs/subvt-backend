@@ -32,11 +32,15 @@ type PostgresValidatorInfo = (
     i64,
     i64,
     Option<String>,
-    bool,
     Option<i64>,
     Option<i64>,
     Option<bool>,
+    Option<i32>,
+    Option<i64>,
+    Option<bool>,
 );
+
+const ONEKV_MAX_CANDIDATE_RECORD_COUNT: i64 = 5;
 
 pub struct PostgreSQLNetworkStorage {
     uri: String,
@@ -1010,7 +1014,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, is_enrolled_in_onekv, blocks_authored, reward_points, heartbeat_received
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_rank, onekv_is_valid
             FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
@@ -1037,10 +1041,12 @@ impl PostgreSQLNetworkStorage {
             inactive_era_count: validator_info.5 as u64,
             total_reward_points: validator_info.6 as u64,
             unclaimed_era_indices,
-            is_enrolled_in_1kv: validator_info.8,
-            blocks_authored: validator_info.9.map(|value| value as u64),
-            reward_points: validator_info.10.map(|value| value as u64),
-            heartbeat_received: validator_info.11,
+            blocks_authored: validator_info.8.map(|value| value as u64),
+            reward_points: validator_info.9.map(|value| value as u64),
+            heartbeat_received: validator_info.10,
+            onekv_candidate_record_id: validator_info.11.map(|value| value as u32),
+            onekv_rank: validator_info.12.map(|value| value as u64),
+            onekv_is_valid: validator_info.13,
         })
     }
 
@@ -1150,7 +1156,7 @@ impl PostgreSQLNetworkStorage {
         }
         transaction.commit().await?;
 
-        // only keep the last two records
+        // only keep the relevant number of candidate records
         let candidate_record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM sub_onekv_candidate
@@ -1160,7 +1166,7 @@ impl PostgreSQLNetworkStorage {
         .bind(validator_account_id.to_string())
         .fetch_one(&self.connection_pool)
         .await?;
-        if candidate_record_count.0 > 2 {
+        if candidate_record_count.0 > ONEKV_MAX_CANDIDATE_RECORD_COUNT {
             sqlx::query(
                 r#"
                 DELETE FROM sub_onekv_candidate
@@ -1174,7 +1180,7 @@ impl PostgreSQLNetworkStorage {
                 "#,
             )
             .bind(validator_account_id.to_string())
-            .bind(candidate_record_count.0 - 2)
+            .bind(candidate_record_count.0 - ONEKV_MAX_CANDIDATE_RECORD_COUNT)
             .execute(&self.connection_pool)
             .await?;
         }

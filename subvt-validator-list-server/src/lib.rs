@@ -104,11 +104,6 @@ impl Service for ValidatorListServer {
         let mut last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
-        let prefix = format!(
-            "subvt:{}:validators:{}",
-            CONFIG.substrate.chain,
-            if is_active_list { "active" } else { "inactive" }
-        );
 
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -151,14 +146,19 @@ impl Service for ValidatorListServer {
                 continue 'outer;
             }
             debug!("New finalized block #{}.", finalized_block_number);
-
-            let validator_addresses: HashSet<String> = redis::cmd("SMEMBERS")
-                .arg(format!("{}:addresses", prefix))
+            let prefix = format!(
+                "subvt:{}:validators:{}:{}",
+                CONFIG.substrate.chain,
+                finalized_block_number,
+                if is_active_list { "active" } else { "inactive" }
+            );
+            let validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
+                .arg(format!("{}:account_id_set", prefix))
                 .query(&mut data_connection)
-                .context("Can't read validator addresses from Redis.")?;
+                .context("Can't read validator account ids from Redis.")?;
             debug!(
-                "Got {} validator addresses. Checking for changes...",
-                validator_addresses.len()
+                "Got {} validator account ids. Checking for changes...",
+                validator_account_ids.len()
             );
             let mut update = ValidatorListUpdate {
                 finalized_block_number: Some(finalized_block_number),
@@ -168,7 +168,7 @@ impl Service for ValidatorListServer {
                 // find the ones to remove
                 let validator_map = validator_map.read().unwrap();
                 for validator_account_id in validator_map.keys() {
-                    if !validator_addresses.contains(&validator_account_id.to_string()) {
+                    if !validator_account_ids.contains(&validator_account_id.to_string()) {
                         update.remove_ids.push(validator_account_id.clone());
                     }
                 }
@@ -185,9 +185,9 @@ impl Service for ValidatorListServer {
             {
                 // update/insert
                 let validator_map = validator_map.read().unwrap();
-                for validator_address in validator_addresses {
-                    let validator_account_id = AccountId::from_str(&validator_address).unwrap();
-                    let prefix = format!("{}:validator:{}", prefix, validator_address);
+                for validator_account_id in validator_account_ids {
+                    let validator_account_id = AccountId::from_str(&validator_account_id).unwrap();
+                    let prefix = format!("{}:validator:{}", prefix, validator_account_id);
                     if let Some(validator) = validator_map.get(&validator_account_id) {
                         // check hash, if different, fetch, calculate and add to list
                         let summary_hash = {
@@ -200,11 +200,11 @@ impl Service for ValidatorListServer {
                             .query(&mut data_connection)
                             .context("Can't read validator hash from Redis.")?;
                         if summary_hash != db_summary_hash {
-                            debug!("Summary hash changed for {}.", validator_address);
+                            debug!("Summary hash changed for {}.", validator_account_id);
                             let validator_json_string: String = redis::cmd("GET")
                                 .arg(prefix)
                                 .query(&mut data_connection)
-                                .context("Can't read validator addresses from Redis.")?;
+                                .context("Can't read validator JSON string (1) from Redis.")?;
                             let db_validator: ValidatorDetails =
                                 serde_json::from_str(&validator_json_string)?;
                             let db_validator_summary: ValidatorSummary =
@@ -217,9 +217,9 @@ impl Service for ValidatorListServer {
                         }
                     } else {
                         let validator_json_string: String = redis::cmd("GET")
-                            .arg(prefix)
+                            .arg(&prefix)
                             .query(&mut data_connection)
-                            .context("Can't read validator addresses from Redis.")?;
+                            .context(format!("Can't read validator JSON string (2) from Redis :: {}", &prefix))?;
                         let validator_deser_result: serde_json::error::Result<ValidatorDetails> =
                             serde_json::from_str(&validator_json_string);
                         match validator_deser_result {
