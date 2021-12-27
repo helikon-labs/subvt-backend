@@ -22,7 +22,7 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
-twox-hash = { version = "1.6.1", features = ["digest_0_9"] }
+twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
 
 [dev-dependencies]
 hex = "0.4"
