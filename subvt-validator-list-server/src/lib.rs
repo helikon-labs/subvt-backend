@@ -198,7 +198,7 @@ impl Service for ValidatorListServer {
                         let db_summary_hash: u64 = redis::cmd("GET")
                             .arg(format!("{}:summary_hash", prefix))
                             .query(&mut data_connection)
-                            .context("Can't read validator hash from Redis.")?;
+                            .context("Can't read validator summary hash from Redis.")?;
                         if summary_hash != db_summary_hash {
                             debug!("Summary hash changed for {}.", validator_account_id);
                             let validator_json_string: String = redis::cmd("GET")

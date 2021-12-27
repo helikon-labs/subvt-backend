@@ -19,6 +19,7 @@ use subvt_types::{
     },
 };
 
+pub mod app_event;
 pub mod notify;
 pub mod report;
 pub mod telemetry;

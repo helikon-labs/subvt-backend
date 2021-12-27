@@ -1,0 +1,1 @@
+DROP TABLE sub_app_event_new_validator CASCADE;

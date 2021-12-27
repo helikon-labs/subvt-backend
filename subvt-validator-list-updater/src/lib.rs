@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error, trace};
 use redis::Pipeline;
-use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -17,15 +17,14 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::crypto::AccountId;
-use subvt_types::substrate::{BlockHeader, Nomination};
+use subvt_types::substrate::BlockHeader;
 use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-const HISTORY_BLOCK_DEPTH: u64 = 2;
+const HISTORY_BLOCK_DEPTH: u64 = 20;
 
 #[derive(Default)]
 pub struct ValidatorListUpdater;
@@ -205,235 +204,6 @@ impl ValidatorListUpdater {
         let elapsed = start.elapsed();
         debug!("Redis updated. Took {} ms.", elapsed.as_millis());
         Ok(validators)
-    }
-}
-
-impl ValidatorListUpdater {
-    async fn _generate_app_events(
-        _last_finalized_block_number: u64,
-        last_validator_list: &[ValidatorDetails],
-        _current_finalized_block_number: u64,
-        current_validator_list: &[ValidatorDetails],
-    ) -> anyhow::Result<()> {
-        println!("begin events");
-        let last_validator_ids: HashSet<AccountId> = last_validator_list
-            .iter()
-            .map(|validator| &validator.account.id)
-            .cloned()
-            .collect();
-        let current_validator_ids: HashSet<AccountId> = current_validator_list
-            .iter()
-            .map(|validator| &validator.account.id)
-            .cloned()
-            .collect();
-        let added_validator_ids = &current_validator_ids - &last_validator_ids;
-        let removed_validator_ids = &last_validator_ids - &current_validator_ids;
-        let retargeted_validator_ids = &current_validator_ids - &added_validator_ids;
-        println!(
-            "added {} removed {} retargeted {}",
-            added_validator_ids.len(),
-            removed_validator_ids.len(),
-            retargeted_validator_ids.len(),
-        );
-        let mut current_validator_map: HashMap<&AccountId, &ValidatorDetails> = HashMap::new();
-        for validator in current_validator_list {
-            current_validator_map.insert(&validator.account.id, validator);
-        }
-        let mut last_validator_map: HashMap<&AccountId, &ValidatorDetails> = HashMap::new();
-        for validator in last_validator_list {
-            last_validator_map.insert(&validator.account.id, validator);
-        }
-        // for all added :: create in active set event
-        for added_validator_id in added_validator_ids {
-            println!("ADDED validator: {}", added_validator_id.to_ss58_check());
-            /*
-            id
-            block hash
-            era index
-            epoch index
-            validator account id
-            is processed
-            created at
-             */
-        }
-        // for all removed :: create out active set event
-        for removed_validator_id in removed_validator_ids {
-            println!(
-                "REMOVED validator: {}",
-                removed_validator_id.to_ss58_check()
-            );
-            /*
-            id
-            block hash
-            era index
-            epoch index
-            validator account id
-            is processed
-            created at
-             */
-        }
-        for retargeted_id in retargeted_validator_ids {
-            let current = *current_validator_map.get(&retargeted_id).unwrap();
-            let last = *last_validator_map.get(&retargeted_id).unwrap();
-            let current_nominator_ids: HashSet<AccountId> = current
-                .nominations
-                .iter()
-                .map(|nomination| &nomination.stash_account_id)
-                .cloned()
-                .collect();
-            let last_nominator_ids: HashSet<AccountId> = last
-                .nominations
-                .iter()
-                .map(|nomination| &nomination.stash_account_id)
-                .cloned()
-                .collect();
-            let new_nominator_ids = &current_nominator_ids - &last_nominator_ids;
-            let lost_nominator_ids = &last_nominator_ids - &current_nominator_ids;
-            let renominator_ids = &current_nominator_ids - &new_nominator_ids;
-            let mut current_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
-            for nomination in &current.nominations {
-                current_nomination_map.insert(&nomination.stash_account_id, nomination);
-            }
-            let mut last_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
-            for nomination in &last.nominations {
-                last_nomination_map.insert(&nomination.stash_account_id, nomination);
-            }
-            // find added
-            for new_nominator_id in new_nominator_ids {
-                let new_nomination = *current_nomination_map.get(&new_nominator_id).unwrap();
-                // create app event
-                println!(
-                    "NEW nomination for {} :: {} :: {:?}",
-                    retargeted_id.to_ss58_check(),
-                    new_nominator_id.to_ss58_check(),
-                    new_nomination.stake,
-                );
-                /*
-                id
-                block hash
-                validator account id
-                nominator stash account id
-                active amount
-                total amount
-                is processed
-                created at
-                 */
-            }
-            // find removed
-            for lost_nominator_id in lost_nominator_ids {
-                let lost_nomination = *last_nomination_map.get(&lost_nominator_id).unwrap();
-                // create app event
-                println!(
-                    "LOST nomination for {} :: {} :: {:?}",
-                    retargeted_id.to_ss58_check(),
-                    lost_nominator_id.to_ss58_check(),
-                    lost_nomination.stake,
-                );
-                /*
-                id
-                block hash
-                validator account id
-                nominator stash account id
-                active amount
-                total amount
-                is processed
-                created at
-                 */
-            }
-            // find amount changed
-            for renominator_id in renominator_ids {
-                let current = *current_nomination_map.get(&renominator_id).unwrap();
-                let last = *last_nomination_map.get(&renominator_id).unwrap();
-                if current.stake.active_amount != last.stake.active_amount {
-                    // create app event
-                    println!(
-                        "CHANGED nomination for {} :: {}  :: {} -> {:?}",
-                        retargeted_id.to_ss58_check(),
-                        renominator_id.to_ss58_check(),
-                        last.stake.active_amount,
-                        current.stake,
-                    );
-                    /*
-                    id
-                    block hash
-                    validator account id
-                    nominator stash account id
-                    prev active amount
-                    prev total amount
-                    active amount
-                    total amount
-                    is processed
-                    created at
-                     */
-                }
-            }
-
-            // check active next session
-            if current.active_next_session != last.active_next_session {
-                if current.active_next_session {
-                    println!("active next");
-                    /*
-                    id
-                    block hash
-                    era index
-                    epoch index
-                    validator account id
-                    is processed
-                    created at
-                     */
-                } else {
-                    println!("inactive next");
-                    /*
-                    id
-                    block hash
-                    era index
-                    epoch index
-                    validator account id
-                    is processed
-                    created at
-                     */
-                }
-            }
-            // check active
-            if current.is_active != last.is_active {
-                if current.is_active {
-                    println!("active");
-                    /*
-                    id
-                    block hash
-                    era index
-                    epoch index
-                    validator account id
-                    is processed
-                    created at
-                     */
-                } else {
-                    println!("inactive");
-                    /*
-                    id
-                    block hash
-                    era index
-                    epoch index
-                    validator account id
-                    is processed
-                    created at
-                     */
-                }
-            }
-            // check 1kv
-            if current.onekv_candidate_record_id.is_some() {
-                // check score
-                if current.onekv_rank != last.onekv_rank {
-                    println!("onekv rank changed");
-                }
-                // check validity
-                if current.onekv_is_valid != last.onekv_is_valid {
-                    println!("onekv validity changed");
-                }
-            }
-        }
-        println!("done events");
-        Ok(())
     }
 }
 

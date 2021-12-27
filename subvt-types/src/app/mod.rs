@@ -55,7 +55,9 @@ pub enum NotificationTypeCode {
     ChainValidatorLostNomination,
     ChainValidatorChilled,
     ChainValidatorActiveSetInclusion,
+    ChainValidatorActiveSetNextSessionInclusion,
     ChainValidatorActiveSetExclusion,
+    ChainValidatorActiveSetNextSessionExclusion,
     ChainValidateExtrinsic,
     ChainValidatorUnclaimedPayout,
     ChainValidatorBlockAuthorship,
@@ -81,8 +83,14 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::ChainValidatorActiveSetInclusion => {
                 "chain_validator_active_set_inclusion"
             }
+            NotificationTypeCode::ChainValidatorActiveSetNextSessionInclusion => {
+                "chain_validator_active_set_next_session_inclusion"
+            }
             NotificationTypeCode::ChainValidatorActiveSetExclusion => {
                 "chain_validator_active_set_exclusion"
+            }
+            NotificationTypeCode::ChainValidatorActiveSetNextSessionExclusion => {
+                "chain_validator_active_set_next_session_exclusion"
             }
             NotificationTypeCode::ChainValidateExtrinsic => "chain_validate_extrinsic",
             NotificationTypeCode::ChainValidatorUnclaimedPayout => {
