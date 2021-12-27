@@ -1,8 +1,8 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
 use log::{debug, error, warn};
-use std::collections::{HashMap, HashSet};
 use redis::Connection;
+use std::collections::{HashMap, HashSet};
 use subvt_config::Config;
 use subvt_types::subvt::ValidatorDetails;
 
@@ -36,10 +36,7 @@ fn populate_validator_map(
     println!("Got all JSON {}.", validator_json_strings.len());
     for validator_json_string in validator_json_strings {
         let validator: ValidatorDetails = serde_json::from_str(&validator_json_string).unwrap();
-        validator_map.insert(
-            validator.account.id.to_string(),
-            validator
-        );
+        validator_map.insert(validator.account.id.to_string(), validator);
     }
     println!("Complete {}.", validator_map.len());
     Ok(())
@@ -90,16 +87,21 @@ impl NotificationGenerator {
                     "New finalized block from validator list updater #{}.",
                     finalized_block_number
                 );
-                let prefix = format!("subvt:{}:validators:{}", config.substrate.chain, finalized_block_number);
+                let prefix = format!(
+                    "subvt:{}:validators:{}",
+                    config.substrate.chain, finalized_block_number
+                );
                 let active_validator_account_ids: HashSet<String> = match redis::cmd("SMEMBERS")
                     .arg(format!("{}:active:account_id_set", prefix))
-                    .query(&mut data_connection) {
+                    .query(&mut data_connection)
+                {
                     Ok(set) => set,
                     Err(error) => break error.into(),
                 };
                 let inactive_validator_account_ids: HashSet<String> = match redis::cmd("SMEMBERS")
                     .arg(format!("{}:inactive:account_id_set", prefix))
-                    .query(&mut data_connection) {
+                    .query(&mut data_connection)
+                {
                     Ok(set) => set,
                     Err(error) => break error.into(),
                 };
@@ -113,13 +115,13 @@ impl NotificationGenerator {
                         &prefix,
                         &active_validator_account_ids,
                         &all_validator_account_ids,
-                        &mut validator_map
+                        &mut validator_map,
                     ) {
                         break error;
                     }
                     continue;
                 }
-
+                last_finalized_block_number = finalized_block_number;
             };
             let delay_seconds = config.common.recovery_retry_seconds;
             error!(

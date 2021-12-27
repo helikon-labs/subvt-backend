@@ -42,7 +42,10 @@ impl ValidatorListUpdater {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        let prefix = format!("subvt:{}:validators:{}", CONFIG.substrate.chain, finalized_block_number);
+        let prefix = format!(
+            "subvt:{}:validators:{}",
+            CONFIG.substrate.chain, finalized_block_number
+        );
         // prepare first command pipeline
         let mut redis_cmd_pipeline = Pipeline::new();
         // delete history
@@ -52,17 +55,18 @@ impl ValidatorListUpdater {
             let to_delete: Vec<u64> = processed_block_numbers
                 .iter()
                 .cloned()
-                .take(processed_block_numbers.len().saturating_sub(HISTORY_BLOCK_DEPTH as usize))
+                .take(
+                    processed_block_numbers
+                        .len()
+                        .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
+                )
                 .collect();
             for delete in to_delete {
                 debug!("Delete records for block #{}.", delete);
-                redis_cmd_pipeline
-                    .cmd("DEL")
-                    .arg(format!(
-                        "subvt:{}:validators:{}",
-                        CONFIG.substrate.chain,
-                        delete
-                    ));
+                redis_cmd_pipeline.cmd("DEL").arg(format!(
+                    "subvt:{}:validators:{}",
+                    CONFIG.substrate.chain, delete
+                ));
                 processed_block_numbers.remove(0);
             }
         }
@@ -196,7 +200,8 @@ impl ValidatorListUpdater {
             processed_block_numbers,
             finalized_block_number,
             &validators,
-        ).await?;
+        )
+        .await?;
         let elapsed = start.elapsed();
         debug!("Redis updated. Took {} ms.", elapsed.as_millis());
         Ok(validators)
@@ -204,7 +209,7 @@ impl ValidatorListUpdater {
 }
 
 impl ValidatorListUpdater {
-    async fn generate_app_events(
+    async fn _generate_app_events(
         _last_finalized_block_number: u64,
         last_validator_list: &[ValidatorDetails],
         _current_finalized_block_number: u64,
@@ -451,10 +456,7 @@ impl Service for ValidatorListUpdater {
                     CONFIG.redis.url
                 ))?;
                 redis::cmd("DEL")
-                    .arg(format!(
-                        "subvt:{}:validators:*",
-                        CONFIG.substrate.chain,
-                    ))
+                    .arg(format!("subvt:{}:validators:*", CONFIG.substrate.chain,))
                     .execute(&mut connection);
             }
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
