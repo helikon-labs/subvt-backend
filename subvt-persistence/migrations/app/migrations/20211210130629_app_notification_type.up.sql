@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS app_notification_type
 INSERT INTO app_notification_type(code) VALUES('chain_validator_offline_offence');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_new_nomination');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_lost_nomination');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_nomination_amount_change');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_chilled');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_inclusion');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_next_session_inclusion');
@@ -97,6 +98,7 @@ INSERT INTO app_notification_param_type(
     true,
     'Minimum nomination amount in native token.'
 );
+-- chain_validator_nomination_amount_change :: no param
 -- chain_validator_chilled :: no param
 -- chain_validator_active_set_inclusion :: no param
 -- chain_validator_active_set_next_session_inclusion :: no param

@@ -5389,6 +5389,7 @@ dependencies = [
  "lazy_static",
  "log",
  "redis",
+ "serde 1.0.132",
  "serde_json",
  "subvt-config",
  "subvt-logging",

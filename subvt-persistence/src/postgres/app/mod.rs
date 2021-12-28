@@ -1,4 +1,5 @@
 use log::debug;
+use serde::Serialize;
 use sqlx::{Pool, Postgres};
 use std::collections::HashSet;
 use std::str::FromStr;
@@ -777,11 +778,14 @@ impl PostgreSQLAppStorage {
         Ok(result)
     }
 
-    pub async fn save_notification(&self, notification: &Notification) -> anyhow::Result<u32> {
+    pub async fn save_notification<T: Serialize>(
+        &self,
+        notification: &Notification<T>,
+    ) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, log)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
             RETURNING id
             "#,
         )
@@ -802,6 +806,11 @@ impl PostgreSQLAppStorage {
             .bind(notification.user_notification_channel_id as i32)
             .bind(&notification.notification_channel_code)
             .bind(&notification.notification_target)
+            .bind(if let Some(data) = &notification.data {
+                Some(serde_json::to_string(data)?)
+            } else {
+                None
+            })
             .bind(&notification.log)
             .fetch_one(&self.connection_pool)
             .await?;

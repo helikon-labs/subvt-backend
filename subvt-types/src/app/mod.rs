@@ -53,6 +53,7 @@ pub enum NotificationTypeCode {
     ChainValidatorOfflineOffence,
     ChainValidatorNewNomination,
     ChainValidatorLostNomination,
+    ChainValidatorNominationAmountChange,
     ChainValidatorChilled,
     ChainValidatorActiveSetInclusion,
     ChainValidatorActiveSetNextSessionInclusion,
@@ -79,6 +80,9 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::ChainValidatorOfflineOffence => "chain_validator_offline_offence",
             NotificationTypeCode::ChainValidatorNewNomination => "chain_validator_new_nomination",
             NotificationTypeCode::ChainValidatorLostNomination => "chain_validator_lost_nomination",
+            NotificationTypeCode::ChainValidatorNominationAmountChange => {
+                "chain_validator_nomination_amount_change"
+            }
             NotificationTypeCode::ChainValidatorChilled => "chain_validator_chilled",
             NotificationTypeCode::ChainValidatorActiveSetInclusion => {
                 "chain_validator_active_set_inclusion"
@@ -355,7 +359,7 @@ pub struct UserNotificationRule {
     pub notes: Option<String>,
 }
 
-pub struct Notification {
+pub struct Notification<T: Serialize> {
     pub id: u32,
     pub user_id: u32,
     pub user_notification_rule_id: u32,
@@ -379,4 +383,5 @@ pub struct Notification {
     pub sent_at: Option<NaiveDateTime>,
     pub delivered_at: Option<NaiveDateTime>,
     pub read_at: Option<NaiveDateTime>,
+    pub data: Option<T>,
 }

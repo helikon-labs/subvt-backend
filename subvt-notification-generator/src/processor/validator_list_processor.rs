@@ -149,7 +149,7 @@ impl NotificationGenerator {
                     (None, None),
                     &[rule],
                     &current.account.id,
-                    (param_type_id, param_value),
+                    (param_type_id, param_value, None::<()>),
                 )
                 .await?;
             }
@@ -204,7 +204,7 @@ impl NotificationGenerator {
                     (None, None),
                     &[rule],
                     &current.account.id,
-                    (param_type_id, param_value),
+                    (param_type_id, param_value, None::<()>),
                 )
                 .await?;
             }
@@ -220,17 +220,24 @@ impl NotificationGenerator {
         }
         // find amount changed
         for renominator_id in renominator_ids {
-            let current = *current_nomination_map.get(&renominator_id).unwrap();
-            let last = *last_nomination_map.get(&renominator_id).unwrap();
-            if current.stake.active_amount != last.stake.active_amount {
+            let current_nomination = *current_nomination_map.get(&renominator_id).unwrap();
+            let last_nomination = *last_nomination_map.get(&renominator_id).unwrap();
+            if current_nomination.stake.active_amount != last_nomination.stake.active_amount {
                 // create app event
                 println!(
                     "CHANGED nomination for {} :: {}  :: {} -> {:?}",
                     account_id.to_ss58_check(),
                     renominator_id.to_ss58_check(),
-                    last.stake.active_amount,
-                    current.stake,
+                    last_nomination.stake.active_amount,
+                    current_nomination.stake,
                 );
+                let _rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::ChainValidatorNominationAmountChange.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
                 /*
                 id
                 block hash

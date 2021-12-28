@@ -3,6 +3,7 @@
 //!
 use async_trait::async_trait;
 use lazy_static::lazy_static;
+use serde::Serialize;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
@@ -20,14 +21,18 @@ lazy_static! {
 pub struct NotificationGenerator;
 
 impl NotificationGenerator {
-    async fn generate_notifications(
+    async fn generate_notifications<T: Clone + Serialize>(
         config: &Config,
         app_postgres: &PostgreSQLAppStorage,
         maybe_block: &Option<&Block>,
         (extrinsic_index, event_index): (Option<u32>, Option<u32>),
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
-        (parameter_type_id, parameter_value): (Option<u32>, Option<String>),
+        (parameter_type_id, parameter_value, notification_data): (
+            Option<u32>,
+            Option<String>,
+            Option<T>,
+        ),
     ) -> anyhow::Result<()> {
         for rule in rules {
             println!(
@@ -68,6 +73,7 @@ impl NotificationGenerator {
                     sent_at: None,
                     delivered_at: None,
                     read_at: None,
+                    data: notification_data.clone(),
                 };
                 let _ = app_postgres.save_notification(&notification).await?;
             }
