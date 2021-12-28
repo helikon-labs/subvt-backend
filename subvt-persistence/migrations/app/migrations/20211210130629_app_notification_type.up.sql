@@ -31,15 +31,15 @@ CREATE TYPE app_notification_type_param_data_type AS ENUM ('string', 'integer', 
 
 CREATE TABLE IF NOT EXISTS app_notification_param_type
 (
-    id SERIAL PRIMARY KEY,
-    notification_type_code VARCHAR(256),
-    code VARCHAR(256),
-    "order" smallint NOT NULL,
-    type app_notification_type_param_data_type NOT NULL,
-    "min" VARCHAR(128),
-    "max" VARCHAR(128),
-    is_optional boolean NOT NULL,
-    description text,
+    id                      SERIAL PRIMARY KEY,
+    notification_type_code  VARCHAR(256) NOT NULL,
+    code                    VARCHAR(256) NOT NULL,
+    "order"                 smallint NOT NULL,
+    type                    app_notification_type_param_data_type NOT NULL,
+    "min"                   VARCHAR(128),
+    "max"                   VARCHAR(128),
+    is_optional             boolean NOT NULL,
+    description             text,
     CONSTRAINT app_notification_param_type_u_notification_type_order
             UNIQUE (notification_type_code, "order"),
     CONSTRAINT app_notification_param_type_u_notification_type_code
@@ -69,7 +69,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'chain_validator_new_nomination',
-    'nomination_min_amount',
+    'minimum_amount',
     0,
     'balance',
     '0',
@@ -89,7 +89,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'chain_validator_lost_nomination',
-    'nomination_min_amount',
+    'minimum_amount',
     0,
     'balance',
     '0',
@@ -115,7 +115,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'chain_validator_unclaimed_payout',
-    'number_of_eras',
+    'minimum_era_count',
     0,
     'integer',
     '1',
@@ -136,7 +136,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_offline',
-    'offline_duration_sec',
+    'duration_sec',
     0,
     'integer',
     '60',
@@ -156,7 +156,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_binary_out_of_date',
-    'out_of_date_duration_sec',
+    'duration_sec',
     0,
     'integer',
     '60',
@@ -195,7 +195,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_peer_count_low',
-    'peer_count_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',
@@ -234,7 +234,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_too_many_txs_in_queue',
-    'tx_count_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',
@@ -273,7 +273,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_lagging',
-    'block_count_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',
@@ -293,7 +293,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_finality_lagging',
-    'finalized_block_count',
+    'block_count',
     0,
     'integer',
     '5',
@@ -312,7 +312,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_finality_lagging',
-    'finalized_block_count_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',
@@ -332,7 +332,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_download_bw_low',
-    'download_bandwidth_kilo_bits_per_second',
+    'kilo_bits_per_second',
     0,
     'integer',
     '10240', -- 10 kilobytes per second
@@ -351,7 +351,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_download_bw_low',
-    'bandwidth_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',
@@ -371,7 +371,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_upload_bw_low',
-    'upload_bandwidth_kilo_bits_per_second',
+    'kilo_bits_per_second',
     0,
     'integer',
     '10240', -- 10 kilobytes per second
@@ -390,7 +390,7 @@ INSERT INTO app_notification_param_type(
     description
 ) VALUES(
     'telemetry_validator_upload_bw_low',
-    'bandwidth_duration_sec',
+    'duration_sec',
     1,
     'integer',
     '10',

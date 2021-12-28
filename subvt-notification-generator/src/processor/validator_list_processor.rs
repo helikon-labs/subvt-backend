@@ -8,8 +8,9 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::Nomination;
+use subvt_types::substrate::{Balance, Nomination};
 use subvt_types::subvt::ValidatorDetails;
 
 fn populate_validator_map(
@@ -56,7 +57,8 @@ fn populate_validator_map(
 
 impl NotificationGenerator {
     async fn check_validator_changes(
-        _app_postgres: &PostgreSQLAppStorage,
+        config: &Config,
+        app_postgres: &PostgreSQLAppStorage,
         _network_postgres: &PostgreSQLNetworkStorage,
         redis_connection: &mut Connection,
         redis_prefix: &str,
@@ -116,6 +118,35 @@ impl NotificationGenerator {
                 new_nominator_id.to_ss58_check(),
                 new_nomination.stake,
             );
+            let rules: Vec<UserNotificationRule> = app_postgres
+                .get_notification_rules_for_validator(
+                    &NotificationTypeCode::ChainValidatorNewNomination.to_string(),
+                    config.substrate.network_id,
+                    &current.account.id,
+                )
+                .await?
+                .iter()
+                .filter(|rule| {
+                    if let Some(min_param) = rule.parameters.get(0) {
+                        if let Ok(min_amount) = min_param.value.parse::<Balance>() {
+                            if new_nomination.stake.active_amount < min_amount {
+                                return false;
+                            }
+                        }
+                    }
+                    true
+                })
+                .cloned()
+                .collect();
+            NotificationGenerator::generate_notifications(
+                config,
+                app_postgres,
+                &None,
+                (None, None),
+                &rules,
+                &current.account.id,
+            )
+            .await?;
             /*
             id
             block hash
@@ -303,6 +334,7 @@ impl NotificationGenerator {
                     validator_id
                 );
                 if let Some(updated) = NotificationGenerator::check_validator_changes(
+                    config,
                     app_postgres,
                     network_postgres,
                     redis_connection,

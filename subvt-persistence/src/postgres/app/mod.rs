@@ -513,12 +513,13 @@ impl PostgreSQLAppStorage {
         &self,
         rule_id: u32,
     ) -> anyhow::Result<Vec<UserNotificationRuleParameter>> {
-        let db_user_notification_rule_parameters: Vec<(i32, i32, i16, String)> = sqlx::query_as(
+        let db_user_notification_rule_parameters: Vec<(i32, i32, String, i16, String)> = sqlx::query_as(
             r#"
-            SELECT user_notification_rule_id, notification_param_type_id, "order", "value"
-            FROM app_user_notification_rule_param
-            WHERE user_notification_rule_id = $1
-            ORDER BY "order" ASC
+            SELECT AUNRP.user_notification_rule_id, AUNRP.notification_param_type_id, ANPT.code, ANPT."order", AUNRP."value"
+            FROM app_user_notification_rule_param AUNRP, app_notification_param_type ANPT
+            WHERE AUNRP.notification_param_type_id = ANPT.id
+            AND AUNRP.user_notification_rule_id = $1
+            ORDER BY ANPT."order" ASC
             "#,
         )
         .bind(rule_id as i32)
@@ -702,13 +703,12 @@ impl PostgreSQLAppStorage {
         for param in parameters {
             sqlx::query(
                 r#"
-                INSERT INTO app_user_notification_rule_param (user_notification_rule_id, notification_param_type_id, "order", value)
-                VALUES ($1, $2, $3, $4)
+                INSERT INTO app_user_notification_rule_param (user_notification_rule_id, notification_param_type_id, value)
+                VALUES ($1, $2, $3)
                 "#,
             )
                 .bind(user_notification_rule_id)
                 .bind(param.parameter_type_id as i32)
-                .bind(param.order as i16)
                 .bind(&param.value)
                 .execute(&mut transaction)
                 .await?;

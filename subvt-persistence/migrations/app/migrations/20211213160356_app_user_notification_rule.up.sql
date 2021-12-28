@@ -98,7 +98,6 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
 (
     user_notification_rule_id   integer NOT NULL,
     notification_param_type_id  integer NOT NULL,
-    "order"                     smallint NOT NULL,
     "value"                     VARCHAR(128),
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_param_pk

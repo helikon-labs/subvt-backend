@@ -200,17 +200,21 @@ pub struct UserNotificationRuleParameter {
     #[serde(default = "default_id")]
     pub user_notification_rule_id: u32,
     pub parameter_type_id: u32,
+    #[serde(default)]
+    pub parameter_type_code: String,
+    #[serde(default)]
     pub order: u8,
     pub value: String,
 }
 
-impl From<&(i32, i32, i16, String)> for UserNotificationRuleParameter {
-    fn from(input: &(i32, i32, i16, String)) -> Self {
+impl From<&(i32, i32, String, i16, String)> for UserNotificationRuleParameter {
+    fn from(input: &(i32, i32, String, i16, String)) -> Self {
         UserNotificationRuleParameter {
             user_notification_rule_id: input.0 as u32,
             parameter_type_id: input.1 as u32,
-            order: input.2 as u8,
-            value: input.3.clone(),
+            parameter_type_code: input.2.clone(),
+            order: input.3 as u8,
+            value: input.4.clone(),
         }
     }
 }
