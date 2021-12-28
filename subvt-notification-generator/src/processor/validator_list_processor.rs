@@ -8,10 +8,13 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::NotificationTypeCode;
-use subvt_types::crypto::AccountId;
-use subvt_types::substrate::{Balance, Nomination};
-use subvt_types::subvt::ValidatorDetails;
+use subvt_types::{
+    app::app_event,
+    app::NotificationTypeCode,
+    crypto::AccountId,
+    substrate::{Balance, Nomination},
+    subvt::ValidatorDetails,
+};
 
 fn populate_validator_map(
     connection: &mut Connection,
@@ -59,9 +62,10 @@ impl NotificationGenerator {
     async fn check_validator_changes(
         config: &Config,
         app_postgres: &PostgreSQLAppStorage,
-        _network_postgres: &PostgreSQLNetworkStorage,
+        network_postgres: &PostgreSQLNetworkStorage,
         redis_connection: &mut Connection,
         redis_prefix: &str,
+        finalized_block_number: u64,
         last: &ValidatorDetails,
     ) -> anyhow::Result<Option<ValidatorDetails>> {
         let account_id = &last.account.id;
@@ -108,11 +112,11 @@ impl NotificationGenerator {
         for nomination in &last.nominations {
             last_nomination_map.insert(&nomination.stash_account_id, nomination);
         }
-        // find added
+        // new nominations
         for new_nominator_id in new_nominator_ids {
             let new_nomination = *current_nomination_map.get(&new_nominator_id).unwrap();
             // create app event
-            println!(
+            debug!(
                 "New nomination for {} :: {} :: {}",
                 account_id.to_ss58_check(),
                 new_nominator_id.to_ss58_check(),
@@ -125,6 +129,15 @@ impl NotificationGenerator {
                     &current.account.id,
                 )
                 .await?;
+            let event = app_event::NewNomination {
+                id: 0,
+                validator_account_id: current.account.id.clone(),
+                discovered_block_number: finalized_block_number,
+                nominator_stash_account_id: new_nomination.stash_account_id.clone(),
+                active_amount: new_nomination.stake.active_amount,
+                total_amount: new_nomination.stake.total_amount,
+                nominee_count: new_nomination.target_account_ids.len() as u64,
+            };
             for rule in rules {
                 if let Some(min_param) = rule.parameters.get(0) {
                     if let Ok(min_amount) = min_param.value.parse::<Balance>() {
@@ -138,25 +151,17 @@ impl NotificationGenerator {
                     app_postgres,
                     &[rule],
                     &current.account.id,
-                    None::<()>,
+                    Some(&event),
                 )
                 .await?;
             }
-            /* PERSIST APP EVENT
-            id
-            validator account id
-            block
-            nominator stash account id
-            active amount
-            total amount
-            created at
-             */
+            network_postgres.save_new_nomination(&event).await?;
         }
-        // find removed
+        // lost nominations
         for lost_nominator_id in lost_nominator_ids {
             let lost_nomination = *last_nomination_map.get(&lost_nominator_id).unwrap();
             // create app event
-            println!(
+            debug!(
                 "Lost nomination for {} :: {} :: {}",
                 account_id.to_ss58_check(),
                 lost_nominator_id.to_ss58_check(),
@@ -169,6 +174,15 @@ impl NotificationGenerator {
                     &current.account.id,
                 )
                 .await?;
+            let event = app_event::LostNomination {
+                id: 0,
+                validator_account_id: current.account.id.clone(),
+                discovered_block_number: finalized_block_number,
+                nominator_stash_account_id: lost_nomination.stash_account_id.clone(),
+                active_amount: lost_nomination.stake.active_amount,
+                total_amount: lost_nomination.stake.total_amount,
+                nominee_count: lost_nomination.target_account_ids.len() as u64,
+            };
             for rule in rules {
                 if let Some(min_param) = rule.parameters.get(0) {
                     if let Ok(min_amount) = min_param.value.parse::<Balance>() {
@@ -182,52 +196,55 @@ impl NotificationGenerator {
                     app_postgres,
                     &[rule],
                     &current.account.id,
-                    None::<()>,
+                    Some(&event),
                 )
                 .await?;
             }
-            /* PERSIST APP EVENT
-            id
-            validator account id
-            block
-            nominator stash account id
-            active amount
-            total amount
-            created at
-             */
+            network_postgres.save_lost_nomination(&event).await?;
         }
-        // find amount changed
+        // nomination amount changes
         for renominator_id in renominator_ids {
             let current_nomination = *current_nomination_map.get(&renominator_id).unwrap();
-            let last_nomination = *last_nomination_map.get(&renominator_id).unwrap();
-            if current_nomination.stake.active_amount != last_nomination.stake.active_amount {
+            let prev_nomination = *last_nomination_map.get(&renominator_id).unwrap();
+            if current_nomination.stake.active_amount != prev_nomination.stake.active_amount {
                 // create app event
-                println!(
-                    "CHANGED nomination for {} :: {}  :: {} -> {:?}",
+                debug!(
+                    "Changed nomination for {} :: {} :: {} -> {}",
                     account_id.to_ss58_check(),
                     renominator_id.to_ss58_check(),
-                    last_nomination.stake.active_amount,
-                    current_nomination.stake,
+                    prev_nomination.stake.active_amount,
+                    current_nomination.stake.active_amount,
                 );
-                let _rules = app_postgres
+                let rules = app_postgres
                     .get_notification_rules_for_validator(
                         &NotificationTypeCode::ChainValidatorNominationAmountChange.to_string(),
                         config.substrate.network_id,
                         &current.account.id,
                     )
                     .await?;
-                /*
-                id
-                block hash
-                validator account id
-                nominator stash account id
-                prev active amount
-                prev total amount
-                active amount
-                total amount
-                is processed
-                created at
-                 */
+                let event = app_event::NominationAmountChange {
+                    id: 0,
+                    validator_account_id: current.account.id.clone(),
+                    discovered_block_number: finalized_block_number,
+                    nominator_stash_account_id: current_nomination.stash_account_id.clone(),
+                    prev_active_amount: prev_nomination.stake.active_amount,
+                    prev_total_amount: prev_nomination.stake.total_amount,
+                    prev_nominee_count: prev_nomination.target_account_ids.len() as u64,
+                    active_amount: current_nomination.stake.active_amount,
+                    total_amount: current_nomination.stake.total_amount,
+                    nominee_count: current_nomination.target_account_ids.len() as u64,
+                };
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    Some(&event),
+                )
+                .await?;
+                network_postgres
+                    .save_nomination_amount_change(&event)
+                    .await?;
             }
         }
 
@@ -237,22 +254,20 @@ impl NotificationGenerator {
                 println!("active next");
                 /*
                 id
-                block hash
-                era index
-                epoch index
+                discovered block hash
+                current era index
+                current epoch index
                 validator account id
-                is processed
                 created at
                  */
             } else {
                 println!("inactive next");
                 /*
                 id
-                block hash
-                era index
-                epoch index
+                discovered block hash
+                current era index
+                current epoch index
                 validator account id
-                is processed
                 created at
                  */
             }
@@ -263,22 +278,20 @@ impl NotificationGenerator {
                 println!("active");
                 /*
                 id
-                block hash
+                discovered block hash
                 era index
                 epoch index
                 validator account id
-                is processed
                 created at
                  */
             } else {
                 println!("inactive");
                 /*
                 id
-                block hash
+                discovered block hash
                 era index
                 epoch index
                 validator account id
-                is processed
                 created at
                  */
             }
@@ -306,6 +319,10 @@ impl NotificationGenerator {
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
     ) -> anyhow::Result<()> {
+        info!(
+            "Process new update from validator list updater. Block #{}.",
+            finalized_block_number
+        );
         let prefix = format!(
             "subvt:{}:validators:{}",
             config.substrate.chain, finalized_block_number
@@ -338,14 +355,38 @@ impl NotificationGenerator {
             for added_id in &added_validator_ids {
                 let account_id = AccountId::from_str(added_id)?;
                 info!("Persist new validator: {}", account_id.to_ss58_check());
-                network_postgres.save_new_validator(&account_id).await?;
+                network_postgres
+                    .save_new_validator(&account_id, finalized_block_number)
+                    .await?;
+                // add to validator map
+                let validator_prefix = format!(
+                    "{}:{}:validator:{}",
+                    prefix,
+                    if active_validator_account_ids.contains(added_id) {
+                        "active"
+                    } else {
+                        "inactive"
+                    },
+                    added_id
+                );
+                let validator = {
+                    let db_validator_json: String = redis::cmd("GET")
+                        .arg(validator_prefix)
+                        .query(redis_connection)
+                        .context("Can't read validator JSON from Redis.")?;
+                    serde_json::from_str::<ValidatorDetails>(&db_validator_json)?
+                };
+                validator_map.insert(added_id.clone(), validator);
             }
             for removed_id in &removed_validator_ids {
                 let account_id = AccountId::from_str(removed_id)?;
                 info!("Remove validator: {}", account_id.to_ss58_check());
-                network_postgres.save_removed_validator(&account_id).await?;
+                network_postgres
+                    .save_removed_validator(&account_id, finalized_block_number)
+                    .await?;
+                validator_map.remove(removed_id);
             }
-            debug!("Checking for changes in the remaining validators.");
+            debug!("Checking for changes in existing validators.");
             for validator_id in &remaining_validator_ids {
                 let validator_prefix = format!(
                     "{}:{}:validator:{}",
@@ -363,6 +404,7 @@ impl NotificationGenerator {
                     network_postgres,
                     redis_connection,
                     &validator_prefix,
+                    finalized_block_number,
                     validator_map.get(validator_id).unwrap(),
                 )
                 .await?
@@ -422,10 +464,6 @@ impl NotificationGenerator {
                     );
                     continue;
                 }
-                debug!(
-                    "New finalized block from validator list updater #{}.",
-                    finalized_block_number
-                );
                 if let Err(error) = NotificationGenerator::process(
                     config,
                     &app_postgres,

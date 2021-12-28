@@ -3,6 +3,7 @@
 //!
 use async_trait::async_trait;
 use lazy_static::lazy_static;
+use log::debug;
 use serde::Serialize;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -26,12 +27,13 @@ impl NotificationGenerator {
         app_postgres: &PostgreSQLAppStorage,
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
-        notification_data: Option<T>,
+        notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
         for rule in rules {
-            println!(
+            debug!(
                 "Generate {} notification for {}.",
-                rule.notification_type.code, validator_account_id,
+                rule.notification_type.code,
+                validator_account_id.to_ss58_check(),
             );
             for channel in &rule.notification_channels {
                 let notification = Notification {
@@ -51,7 +53,7 @@ impl NotificationGenerator {
                     sent_at: None,
                     delivered_at: None,
                     read_at: None,
-                    data: notification_data.clone(),
+                    data: notification_data,
                 };
                 let _ = app_postgres.save_notification(&notification).await?;
             }

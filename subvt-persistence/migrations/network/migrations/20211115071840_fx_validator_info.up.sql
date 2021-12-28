@@ -10,7 +10,7 @@ CREATE TYPE sub_validator_info AS (
     blocks_authored bigint,
     reward_points bigint,
     heartbeat_received boolean,
-    onekv_candidate_record_id bigint,
+    onekv_candidate_record_id integer,
     onekv_rank bigint,
     onekv_is_valid boolean
 );

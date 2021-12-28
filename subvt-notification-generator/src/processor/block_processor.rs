@@ -31,7 +31,7 @@ impl NotificationGenerator {
             app_postgres,
             &rules,
             validator_account_id,
-            Some(block.clone()),
+            Some(&block.clone()),
         )
         .await?;
         Ok(())
@@ -59,7 +59,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 &event.validator_account_id,
-                Some(event.clone()),
+                Some(&event.clone()),
             )
             .await?;
         }
@@ -88,7 +88,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 &event.stash_account_id,
-                Some(event.clone()),
+                Some(&event.clone()),
             )
             .await?;
         }
@@ -117,7 +117,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 &extrinsic.stash_account_id,
-                Some(extrinsic.clone()),
+                Some(&extrinsic.clone()),
             )
             .await?;
         }

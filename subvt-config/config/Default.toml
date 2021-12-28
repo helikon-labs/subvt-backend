@@ -58,7 +58,7 @@ start_block_number = 10658458
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
-refresh_seconds = 10
+refresh_seconds = 300
 request_timeout_seconds = 60
 
 [report]

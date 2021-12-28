@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS app_notification
     data_json                       text,
     log                             text,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    processing_started_at           TIMESTAMP WITHOUT TIME ZONE,
+    failed_at                       TIMESTAMP WITHOUT TIME ZONE,
     sent_at                         TIMESTAMP WITHOUT TIME ZONE,
     delivered_at                    TIMESTAMP WITHOUT TIME ZONE,
     read_at                         TIMESTAMP WITHOUT TIME ZONE,
