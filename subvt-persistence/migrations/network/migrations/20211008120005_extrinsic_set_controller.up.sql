@@ -8,8 +8,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
     controller_account_id   VARCHAR(66) NOT NULL,
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_set_controller_u_block_hash_caller
-        UNIQUE (block_hash, caller_account_id),
     CONSTRAINT sub_extrinsic_set_controller_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

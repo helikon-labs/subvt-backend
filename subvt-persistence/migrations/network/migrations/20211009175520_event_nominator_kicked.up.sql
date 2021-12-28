@@ -7,8 +7,6 @@ CREATE TABLE IF NOT EXISTS sub_event_nominator_kicked
     validator_account_id    VARCHAR(66) NOT NULL,
     nominator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_event_nominator_kicked_u_block_hash_validator_nominator
-        UNIQUE (block_hash, validator_account_id, nominator_account_id),
     CONSTRAINT sub_event_nominator_kicked_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

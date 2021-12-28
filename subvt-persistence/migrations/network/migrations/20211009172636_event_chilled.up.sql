@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS sub_event_chilled
     event_index             integer NOT NULL,
     stash_account_id        VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_event_chilled_u_block_hash_account_id
-        UNIQUE (block_hash, stash_account_id),
     CONSTRAINT sub_event_chilled_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

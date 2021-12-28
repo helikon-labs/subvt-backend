@@ -10,8 +10,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
     reward_destination_encoded_hex  text NOT NULL,
     is_successful                   boolean NOT NULL,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_bond_u_block_hash_stash
-        UNIQUE (block_hash, stash_account_id),
     CONSTRAINT sub_extrinsic_bond_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

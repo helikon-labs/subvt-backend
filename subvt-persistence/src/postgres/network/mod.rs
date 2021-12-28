@@ -377,7 +377,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_heartbeat_received (block_hash, extrinsic_index, event_index, session_index, im_online_key, validator_account_id)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             "#,
         )
             .bind(block_hash)
@@ -430,7 +429,6 @@ impl PostgreSQLNetworkStorage {
                 r#"
                 INSERT INTO sub_event_validator_offline (block_hash, event_index, validator_account_id)
                 VALUES ($1, $2, $3)
-                ON CONFLICT (block_hash, validator_account_id) DO NOTHING
                 "#,
             )
                 .bind(block_hash)
@@ -524,7 +522,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_chilled (block_hash, extrinsic_index, event_index, stash_account_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (block_hash, stash_account_id) DO NOTHING
             "#,
         )
             .bind(block_hash)
@@ -549,7 +546,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_era_paid (block_hash, extrinsic_index, event_index, era_index, validator_payout, remainder)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (era_index) DO NOTHING
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
@@ -576,7 +572,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_nominator_kicked (block_hash, extrinsic_index, event_index, validator_account_id, nominator_account_id)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (block_hash, validator_account_id, nominator_account_id) DO NOTHING
             "#)
             .bind(block_hash)
             .bind(extrinsic_index)
@@ -601,7 +596,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_rewarded (block_hash, extrinsic_index, event_index, rewardee_account_id, amount)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (block_hash, rewardee_account_id) DO NOTHING
             RETURNING id
             "#,
         )
@@ -632,7 +626,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_slashed (block_hash, extrinsic_index, event_index, validator_account_id, amount)
             VALUES ($1, $2, $3, $4, $5)
-            ON CONFLICT (block_hash, validator_account_id) DO NOTHING
             RETURNING id
             "#,
         )
@@ -662,7 +655,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_new_account (block_hash, extrinsic_index, event_index, account_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
             "#,
         )
@@ -706,7 +698,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_killed_account (block_hash, extrinsic_index, event_index, account_id)
             VALUES ($1, $2, $3, $4)
-            ON CONFLICT (block_hash, account_id) DO NOTHING
             RETURNING id
             "#,
         )
@@ -879,7 +870,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_extrinsic_validate (block_hash, extrinsic_index, is_nested_call, stash_account_id, controller_account_id, commission_per_billion, blocks_nominations, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT (block_hash, controller_account_id) DO NOTHING
             RETURNING id
             "#,
         )

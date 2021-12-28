@@ -8,8 +8,6 @@ CREATE TABLE IF NOT EXISTS sub_event_era_paid
     validator_payout    VARCHAR(128) NOT NULL,
     remainder           VARCHAR(128) NOT NULL,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_event_era_paid_u_era_index
-        UNIQUE (era_index),
     CONSTRAINT sub_event_era_paid_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
