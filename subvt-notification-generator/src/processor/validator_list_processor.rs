@@ -8,7 +8,7 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
+use subvt_types::app::NotificationTypeCode;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{Balance, Nomination};
 use subvt_types::subvt::ValidatorDetails;
@@ -113,48 +113,53 @@ impl NotificationGenerator {
             let new_nomination = *current_nomination_map.get(&new_nominator_id).unwrap();
             // create app event
             println!(
-                "NEW nomination for {} :: {} :: {:?}",
+                "New nomination for {} :: {} :: {}",
                 account_id.to_ss58_check(),
                 new_nominator_id.to_ss58_check(),
-                new_nomination.stake,
+                new_nomination.stake.active_amount,
             );
-            let rules: Vec<UserNotificationRule> = app_postgres
+            let rules = app_postgres
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::ChainValidatorNewNomination.to_string(),
                     config.substrate.network_id,
                     &current.account.id,
                 )
-                .await?
-                .iter()
-                .filter(|rule| {
-                    if let Some(min_param) = rule.parameters.get(0) {
-                        if let Ok(min_amount) = min_param.value.parse::<Balance>() {
-                            if new_nomination.stake.active_amount < min_amount {
-                                return false;
-                            }
+                .await?;
+            for rule in rules {
+                let (param_type_id, param_value) = if let Some(min_param) = rule.parameters.get(0) {
+                    if let Ok(min_amount) = min_param.value.parse::<Balance>() {
+                        if new_nomination.stake.active_amount < min_amount {
+                            continue;
+                        } else {
+                            (
+                                Some(min_param.parameter_type_id),
+                                Some(new_nomination.stake.active_amount.to_string()),
+                            )
                         }
+                    } else {
+                        (None, None)
                     }
-                    true
-                })
-                .cloned()
-                .collect();
-            NotificationGenerator::generate_notifications(
-                config,
-                app_postgres,
-                &None,
-                (None, None),
-                &rules,
-                &current.account.id,
-            )
-            .await?;
-            /*
+                } else {
+                    (None, None)
+                };
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &None,
+                    (None, None),
+                    &[rule],
+                    &current.account.id,
+                    (param_type_id, param_value),
+                )
+                .await?;
+            }
+            /* PERSIST APP EVENT
             id
-            block hash
             validator account id
+            block
             nominator stash account id
             active amount
             total amount
-            is processed
             created at
              */
         }
@@ -163,19 +168,53 @@ impl NotificationGenerator {
             let lost_nomination = *last_nomination_map.get(&lost_nominator_id).unwrap();
             // create app event
             println!(
-                "LOST nomination for {} :: {} :: {:?}",
+                "Lost nomination for {} :: {} :: {}",
                 account_id.to_ss58_check(),
                 lost_nominator_id.to_ss58_check(),
-                lost_nomination.stake,
+                lost_nomination.stake.active_amount,
             );
-            /*
+            let rules = app_postgres
+                .get_notification_rules_for_validator(
+                    &NotificationTypeCode::ChainValidatorLostNomination.to_string(),
+                    config.substrate.network_id,
+                    &current.account.id,
+                )
+                .await?;
+            for rule in rules {
+                let (param_type_id, param_value) = if let Some(min_param) = rule.parameters.get(0) {
+                    if let Ok(min_amount) = min_param.value.parse::<Balance>() {
+                        if lost_nomination.stake.active_amount < min_amount {
+                            continue;
+                        } else {
+                            (
+                                Some(min_param.parameter_type_id),
+                                Some(lost_nomination.stake.active_amount.to_string()),
+                            )
+                        }
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                };
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &None,
+                    (None, None),
+                    &[rule],
+                    &current.account.id,
+                    (param_type_id, param_value),
+                )
+                .await?;
+            }
+            /* PERSIST APP EVENT
             id
-            block hash
             validator account id
+            block
             nominator stash account id
             active amount
             total amount
-            is processed
             created at
              */
         }

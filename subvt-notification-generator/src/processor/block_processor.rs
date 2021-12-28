@@ -33,6 +33,7 @@ impl NotificationGenerator {
             (None, None),
             &rules,
             validator_account_id,
+            (None, None),
         )
         .await?;
         Ok(())
@@ -62,6 +63,7 @@ impl NotificationGenerator {
                 (None, event.event_index),
                 &rules,
                 &event.validator_account_id,
+                (None, None),
             )
             .await?;
         }
@@ -92,6 +94,7 @@ impl NotificationGenerator {
                 (event.extrinsic_index, Some(event.event_index)),
                 &rules,
                 &event.stash_account_id,
+                (None, None),
             )
             .await?;
         }
@@ -122,6 +125,7 @@ impl NotificationGenerator {
                 (Some(extrinsic.extrinsic_index), None),
                 &rules,
                 &extrinsic.stash_account_id,
+                (None, None),
             )
             .await?;
         }

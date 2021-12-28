@@ -27,6 +27,7 @@ impl NotificationGenerator {
         (extrinsic_index, event_index): (Option<u32>, Option<u32>),
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
+        (parameter_type_id, parameter_value): (Option<u32>, Option<String>),
     ) -> anyhow::Result<()> {
         for rule in rules {
             println!(
@@ -52,8 +53,8 @@ impl NotificationGenerator {
                     period: rule.period,
                     validator_account_id: validator_account_id.clone(),
                     notification_type_code: rule.notification_type.code.clone(),
-                    parameter_type_id: None,
-                    parameter_value: None,
+                    parameter_type_id,
+                    parameter_value: parameter_value.clone(),
                     block_hash: block_hash.clone(),
                     block_number,
                     block_timestamp,
