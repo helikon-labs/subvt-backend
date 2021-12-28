@@ -784,8 +784,8 @@ impl PostgreSQLAppStorage {
     ) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, param_type_id, param_value, block_hash, block_number, block_timestamp, extrinsic_index, event_index, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING id
             "#,
         )
@@ -796,13 +796,6 @@ impl PostgreSQLAppStorage {
             .bind(notification.period as i32)
             .bind(notification.validator_account_id.to_string())
             .bind(&notification.notification_type_code)
-            .bind(notification.parameter_type_id.map(|id| id as i32))
-            .bind(notification.parameter_value.as_ref())
-            .bind(notification.block_hash.as_ref())
-            .bind(notification.block_number.map(|block_number| block_number as i64))
-            .bind(notification.block_timestamp.map(|block_number| block_number as i64))
-            .bind(notification.extrinsic_index.map(|id| id as i32))
-            .bind(notification.event_index.map(|id| id as i32))
             .bind(notification.user_notification_channel_id as i32)
             .bind(&notification.notification_channel_code)
             .bind(&notification.notification_target)

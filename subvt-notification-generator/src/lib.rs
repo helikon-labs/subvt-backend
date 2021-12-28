@@ -7,7 +7,7 @@ use serde::Serialize;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
-use subvt_types::app::{Block, Notification, UserNotificationRule};
+use subvt_types::app::{Notification, UserNotificationRule};
 use subvt_types::crypto::AccountId;
 use tokio::runtime::Builder;
 
@@ -24,30 +24,15 @@ impl NotificationGenerator {
     async fn generate_notifications<T: Clone + Serialize>(
         config: &Config,
         app_postgres: &PostgreSQLAppStorage,
-        maybe_block: &Option<&Block>,
-        (extrinsic_index, event_index): (Option<u32>, Option<u32>),
         rules: &[UserNotificationRule],
         validator_account_id: &AccountId,
-        (parameter_type_id, parameter_value, notification_data): (
-            Option<u32>,
-            Option<String>,
-            Option<T>,
-        ),
+        notification_data: Option<T>,
     ) -> anyhow::Result<()> {
         for rule in rules {
             println!(
                 "Generate {} notification for {}.",
                 rule.notification_type.code, validator_account_id,
             );
-            let (block_hash, block_number, block_timestamp) = if let Some(block) = maybe_block {
-                (
-                    Some(block.hash.clone()),
-                    Some(block.number),
-                    block.timestamp,
-                )
-            } else {
-                (None, None, None)
-            };
             for channel in &rule.notification_channels {
                 let notification = Notification {
                     id: 0,
@@ -58,13 +43,6 @@ impl NotificationGenerator {
                     period: rule.period,
                     validator_account_id: validator_account_id.clone(),
                     notification_type_code: rule.notification_type.code.clone(),
-                    parameter_type_id,
-                    parameter_value: parameter_value.clone(),
-                    block_hash: block_hash.clone(),
-                    block_number,
-                    block_timestamp,
-                    extrinsic_index,
-                    event_index,
                     user_notification_channel_id: channel.id,
                     notification_channel_code: channel.channel_code.clone(),
                     notification_target: channel.target.clone(),

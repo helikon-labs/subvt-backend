@@ -1,5 +1,7 @@
 use crate::crypto::AccountId;
+use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ValidatorOfflineEvent {
     pub id: u32,
     pub block_hash: String,
@@ -7,6 +9,7 @@ pub struct ValidatorOfflineEvent {
     pub validator_account_id: AccountId,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ChilledEvent {
     pub id: u32,
     pub block_hash: String,

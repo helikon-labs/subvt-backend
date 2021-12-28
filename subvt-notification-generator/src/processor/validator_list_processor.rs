@@ -126,30 +126,19 @@ impl NotificationGenerator {
                 )
                 .await?;
             for rule in rules {
-                let (param_type_id, param_value) = if let Some(min_param) = rule.parameters.get(0) {
+                if let Some(min_param) = rule.parameters.get(0) {
                     if let Ok(min_amount) = min_param.value.parse::<Balance>() {
                         if new_nomination.stake.active_amount < min_amount {
                             continue;
-                        } else {
-                            (
-                                Some(min_param.parameter_type_id),
-                                Some(new_nomination.stake.active_amount.to_string()),
-                            )
                         }
-                    } else {
-                        (None, None)
                     }
-                } else {
-                    (None, None)
-                };
+                }
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
-                    &None,
-                    (None, None),
                     &[rule],
                     &current.account.id,
-                    (param_type_id, param_value, None::<()>),
+                    None::<()>,
                 )
                 .await?;
             }
@@ -181,30 +170,19 @@ impl NotificationGenerator {
                 )
                 .await?;
             for rule in rules {
-                let (param_type_id, param_value) = if let Some(min_param) = rule.parameters.get(0) {
+                if let Some(min_param) = rule.parameters.get(0) {
                     if let Ok(min_amount) = min_param.value.parse::<Balance>() {
                         if lost_nomination.stake.active_amount < min_amount {
                             continue;
-                        } else {
-                            (
-                                Some(min_param.parameter_type_id),
-                                Some(lost_nomination.stake.active_amount.to_string()),
-                            )
                         }
-                    } else {
-                        (None, None)
                     }
-                } else {
-                    (None, None)
-                };
+                }
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
-                    &None,
-                    (None, None),
                     &[rule],
                     &current.account.id,
-                    (param_type_id, param_value, None::<()>),
+                    None::<()>,
                 )
                 .await?;
             }

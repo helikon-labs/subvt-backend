@@ -1,7 +1,7 @@
 use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ValidateExtrinsic {
     pub id: u32,
     pub block_hash: String,

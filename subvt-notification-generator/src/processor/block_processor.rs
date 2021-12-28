@@ -29,11 +29,9 @@ impl NotificationGenerator {
         NotificationGenerator::generate_notifications(
             config,
             app_postgres,
-            &Some(block),
-            (None, None),
             &rules,
             validator_account_id,
-            (None, None, None::<()>),
+            Some(block.clone()),
         )
         .await?;
         Ok(())
@@ -59,11 +57,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
-                &Some(block),
-                (None, event.event_index),
                 &rules,
                 &event.validator_account_id,
-                (None, None, None::<()>),
+                Some(event.clone()),
             )
             .await?;
         }
@@ -90,11 +86,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
-                &Some(block),
-                (event.extrinsic_index, Some(event.event_index)),
                 &rules,
                 &event.stash_account_id,
-                (None, None, None::<()>),
+                Some(event.clone()),
             )
             .await?;
         }
@@ -121,11 +115,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
-                &Some(block),
-                (Some(extrinsic.extrinsic_index), None),
                 &rules,
                 &extrinsic.stash_account_id,
-                (None, None, None::<()>),
+                Some(extrinsic.clone()),
             )
             .await?;
         }

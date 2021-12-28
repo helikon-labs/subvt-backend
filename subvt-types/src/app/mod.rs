@@ -3,12 +3,14 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
+pub mod app_event;
 pub mod db;
 pub mod event;
 pub mod extrinsic;
 
 pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Block {
     pub hash: String,
     pub number: u64,
@@ -368,20 +370,13 @@ pub struct Notification<T: Serialize> {
     pub period: u16,
     pub validator_account_id: AccountId,
     pub notification_type_code: String,
-    pub parameter_type_id: Option<u32>,
-    pub parameter_value: Option<String>,
-    pub block_hash: Option<String>,
-    pub block_number: Option<u64>,
-    pub block_timestamp: Option<u64>,
-    pub extrinsic_index: Option<u32>,
-    pub event_index: Option<u32>,
     pub user_notification_channel_id: u32,
     pub notification_channel_code: String,
     pub notification_target: String,
+    pub data: Option<T>,
     pub log: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub sent_at: Option<NaiveDateTime>,
     pub delivered_at: Option<NaiveDateTime>,
     pub read_at: Option<NaiveDateTime>,
-    pub data: Option<T>,
 }
