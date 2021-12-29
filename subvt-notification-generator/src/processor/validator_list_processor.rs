@@ -8,6 +8,7 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_types::app::app_event::{OneKVRankChange, OneKVValidityChange};
 use subvt_types::{
     app::app_event,
     app::NotificationTypeCode,
@@ -130,7 +131,6 @@ impl NotificationGenerator {
                 )
                 .await?;
             let event = app_event::NewNomination {
-                id: 0,
                 validator_account_id: current.account.id.clone(),
                 discovered_block_number: finalized_block_number,
                 nominator_stash_account_id: new_nomination.stash_account_id.clone(),
@@ -155,7 +155,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             }
-            network_postgres.save_new_nomination(&event).await?;
+            network_postgres.save_new_nomination_event(&event).await?;
         }
         // lost nominations
         for lost_nominator_id in lost_nominator_ids {
@@ -175,7 +175,6 @@ impl NotificationGenerator {
                 )
                 .await?;
             let event = app_event::LostNomination {
-                id: 0,
                 validator_account_id: current.account.id.clone(),
                 discovered_block_number: finalized_block_number,
                 nominator_stash_account_id: lost_nomination.stash_account_id.clone(),
@@ -200,7 +199,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             }
-            network_postgres.save_lost_nomination(&event).await?;
+            network_postgres.save_lost_nomination_event(&event).await?;
         }
         // nomination amount changes
         for renominator_id in renominator_ids {
@@ -223,7 +222,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 let event = app_event::NominationAmountChange {
-                    id: 0,
                     validator_account_id: current.account.id.clone(),
                     discovered_block_number: finalized_block_number,
                     nominator_stash_account_id: current_nomination.stash_account_id.clone(),
@@ -243,7 +241,7 @@ impl NotificationGenerator {
                 )
                 .await?;
                 network_postgres
-                    .save_nomination_amount_change(&event)
+                    .save_nomination_amount_change_event(&event)
                     .await?;
             }
         }
@@ -251,63 +249,171 @@ impl NotificationGenerator {
         // check active next session
         if current.active_next_session != last.active_next_session {
             if current.active_next_session {
-                println!("active next");
-                /*
-                id
-                discovered block hash
-                current era index
-                current epoch index
-                validator account id
-                created at
-                 */
+                debug!(
+                    "Active next session: {}",
+                    current.account.id.to_ss58_check()
+                );
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::ChainValidatorActiveNextSession.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    None::<&()>,
+                )
+                .await?;
+                network_postgres
+                    .save_active_next_session_event(&current.account.id, finalized_block_number)
+                    .await?;
             } else {
-                println!("inactive next");
-                /*
-                id
-                discovered block hash
-                current era index
-                current epoch index
-                validator account id
-                created at
-                 */
+                debug!(
+                    "Inactive next session: {}",
+                    current.account.id.to_ss58_check()
+                );
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::ChainValidatorInactiveNextSession.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    None::<&()>,
+                )
+                .await?;
+                network_postgres
+                    .save_inactive_next_session_event(&current.account.id, finalized_block_number)
+                    .await?;
             }
         }
         // check active
         if current.is_active != last.is_active {
             if current.is_active {
-                println!("active");
-                /*
-                id
-                discovered block hash
-                era index
-                epoch index
-                validator account id
-                created at
-                 */
+                debug!("Now active: {}", current.account.id.to_ss58_check());
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::ChainValidatorActive.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    None::<&()>,
+                )
+                .await?;
+                network_postgres
+                    .save_active_event(&current.account.id, finalized_block_number)
+                    .await?;
             } else {
-                println!("inactive");
-                /*
-                id
-                discovered block hash
-                era index
-                epoch index
-                validator account id
-                created at
-                 */
+                debug!("Now inactive: {}", current.account.id.to_ss58_check());
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::ChainValidatorInactive.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    None::<&()>,
+                )
+                .await?;
+                network_postgres
+                    .save_inactive_event(&current.account.id, finalized_block_number)
+                    .await?;
             }
         }
         // check 1kv
         if current.onekv_candidate_record_id.is_some() {
-            // check score
             if current.onekv_rank != last.onekv_rank {
-                println!("onekv rank changed");
+                debug!(
+                    "1KV rank of {} changed from {} to {}.",
+                    current.account.id.to_ss58_check(),
+                    last.onekv_rank.unwrap(),
+                    current.onekv_rank.unwrap(),
+                );
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::OneKVValidatorRankChange.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    Some(&OneKVRankChange {
+                        validator_account_id: current.account.id.clone(),
+                        prev_rank: last.onekv_rank.unwrap(),
+                        current_rank: current.onekv_rank.unwrap(),
+                    }),
+                )
+                .await?;
+                network_postgres
+                    .save_onekv_rank_change_event(
+                        &current.account.id,
+                        last.onekv_rank.unwrap(),
+                        current.onekv_rank.unwrap(),
+                    )
+                    .await?;
             }
             // check validity
             if current.onekv_is_valid != last.onekv_is_valid {
-                println!("onekv validity changed");
+                debug!(
+                    "1KV validity of {} changed from {} to {}.",
+                    current.account.id.to_ss58_check(),
+                    last.onekv_is_valid.unwrap(),
+                    current.onekv_is_valid.unwrap(),
+                );
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::OneKVValidatorValidityChange.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                let validity_items = network_postgres
+                    .get_onekv_candidate_validity_items(current.onekv_candidate_record_id.unwrap())
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    &rules,
+                    &current.account.id,
+                    Some(&OneKVValidityChange {
+                        validator_account_id: current.account.id.clone(),
+                        is_valid: current.onekv_is_valid.unwrap(),
+                        validity_items,
+                    }),
+                )
+                .await?;
+                network_postgres
+                    .save_onekv_validity_change_event(
+                        &current.account.id,
+                        current.onekv_is_valid.unwrap(),
+                    )
+                    .await?;
             }
         }
-
         Ok(Some(current))
     }
 
@@ -356,7 +462,7 @@ impl NotificationGenerator {
                 let account_id = AccountId::from_str(added_id)?;
                 info!("Persist new validator: {}", account_id.to_ss58_check());
                 network_postgres
-                    .save_new_validator(&account_id, finalized_block_number)
+                    .save_new_validator_event(&account_id, finalized_block_number)
                     .await?;
                 // add to validator map
                 let validator_prefix = format!(
@@ -382,7 +488,7 @@ impl NotificationGenerator {
                 let account_id = AccountId::from_str(removed_id)?;
                 info!("Remove validator: {}", account_id.to_ss58_check());
                 network_postgres
-                    .save_removed_validator(&account_id, finalized_block_number)
+                    .save_removed_validator_event(&account_id, finalized_block_number)
                     .await?;
                 validator_map.remove(removed_id);
             }

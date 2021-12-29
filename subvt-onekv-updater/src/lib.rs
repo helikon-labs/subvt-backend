@@ -6,7 +6,7 @@ use log::{debug, error, info};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
-use subvt_types::onekv::{Candidate, CandidateDetails};
+use subvt_types::onekv::{OneKVCandidate, OneKVCandidateDetails};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -39,7 +39,7 @@ impl OneKVUpdater {
             .get(&CONFIG.onekv.candidate_list_endpoint)
             .send()
             .await?;
-        let candidates: Vec<Candidate> = response.json().await?;
+        let candidates: Vec<OneKVCandidate> = response.json().await?;
         info!(
             "Fetched {} candidates. Fetch candidate details.",
             candidates.len()
@@ -65,7 +65,8 @@ impl OneKVUpdater {
                 }
             };
 
-            let candidate_details_result: reqwest::Result<CandidateDetails> = response.json().await;
+            let candidate_details_result: reqwest::Result<OneKVCandidateDetails> =
+                response.json().await;
             let mut candidate_details = match candidate_details_result {
                 Ok(candidate_details) => candidate_details,
                 Err(error) => {

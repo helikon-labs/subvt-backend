@@ -5,25 +5,25 @@ use subvt_proc_macro::Diff;
 
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Candidate {
+pub struct OneKVCandidate {
     #[serde(rename(deserialize = "kusamaStash"))]
     pub kusama_stash_address: String,
     #[serde(rename(deserialize = "stash"))]
     pub stash_address: String,
-    pub score: Option<Score>,
+    pub score: Option<OneKVScore>,
 }
 
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct CandidateDetails {
+pub struct OneKVCandidateDetails {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
-    pub identity: Identity,
+    pub identity: OneKVIdentity,
     pub bonded: Option<u128>,
     pub commission: f32,
     pub controller: String,
     pub discovered_at: u64,
-    pub fault_events: Vec<FaultEvent>,
+    pub fault_events: Vec<OneKVFaultEvent>,
     pub inclusion: f32,
     #[serde(rename(deserialize = "active"))]
     pub is_active: bool,
@@ -37,21 +37,21 @@ pub struct CandidateDetails {
     pub online_since: u64,
     pub node_refs: u32,
     pub rank: i64,
-    pub rank_events: Vec<RankEvent>,
+    pub rank_events: Vec<OneKVRankEvent>,
     pub reward_destination: String,
-    pub score: Option<Score>,
+    pub score: Option<OneKVScore>,
     pub span_inclusion: f32,
     #[serde(rename(deserialize = "stash"))]
     pub stash_address: String,
     pub telemetry_id: Option<u32>,
     pub unclaimed_eras: Option<Vec<u32>>,
     #[serde(rename(deserialize = "invalidity"))]
-    pub validity: Vec<Validity>,
+    pub validity: Vec<OneKVValidity>,
     pub version: Option<String>,
     pub location: Option<String>,
 }
 
-impl CandidateDetails {
+impl OneKVCandidateDetails {
     pub fn is_valid(&self) -> bool {
         self.validity.iter().all(|validity| validity.is_valid)
     }
@@ -59,7 +59,7 @@ impl CandidateDetails {
 
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Score {
+pub struct OneKVScore {
     #[serde(rename(deserialize = "updated"))]
     pub updated_at: u64,
     pub total: f64,
@@ -79,7 +79,7 @@ pub struct Score {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FaultEvent {
+pub struct OneKVFaultEvent {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     #[serde(rename(deserialize = "prevRank"))]
@@ -90,7 +90,7 @@ pub struct FaultEvent {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct RankEvent {
+pub struct OneKVRankEvent {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     pub active_era: u32,
@@ -100,7 +100,7 @@ pub struct RankEvent {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Identity {
+pub struct OneKVIdentity {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     pub name: String,
@@ -110,7 +110,7 @@ pub struct Identity {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Validity {
+pub struct OneKVValidity {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     pub details: String,

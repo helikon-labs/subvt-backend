@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sub_app_event_new_nomination
 (
     id                          SERIAL PRIMARY KEY,
     validator_account_id        VARCHAR(66) NOT NULL,
-    dicovered_block_number      bigint NOT NULL,
+    discovered_block_number     bigint NOT NULL,
     nominator_stash_account_id  VARCHAR(66) NOT NULL,
     active_amount               VARCHAR(128) NOT NULL,
     total_amount                VARCHAR(128) NOT NULL,

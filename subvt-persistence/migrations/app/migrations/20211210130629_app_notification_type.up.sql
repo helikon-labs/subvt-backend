@@ -10,10 +10,10 @@ INSERT INTO app_notification_type(code) VALUES('chain_validator_new_nomination')
 INSERT INTO app_notification_type(code) VALUES('chain_validator_lost_nomination');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_nomination_amount_change');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_chilled');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_inclusion');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_next_session_inclusion');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_exclusion');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active_set_next_session_exclusion');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_active');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_active_next_session');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive_next_session');
 INSERT INTO app_notification_type(code) VALUES('chain_validate_extrinsic');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_unclaimed_payout');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_block_authorship');
@@ -100,10 +100,10 @@ INSERT INTO app_notification_param_type(
 );
 -- chain_validator_nomination_amount_change :: no param
 -- chain_validator_chilled :: no param
--- chain_validator_active_set_inclusion :: no param
--- chain_validator_active_set_next_session_inclusion :: no param
--- chain_validator_active_set_exclusion :: no param
--- chain_validator_active_set_next_session_exclusion :: no param
+-- chain_validator_active :: no param
+-- chain_validator_active_next_session :: no param
+-- chain_validator_inactive :: no param
+-- chain_validator_inactive_next_session :: no param
 -- chain_validate_extrinsic :: no param
 -- chain_validator_unclaimed_payout
 INSERT INTO app_notification_param_type(

@@ -57,10 +57,10 @@ pub enum NotificationTypeCode {
     ChainValidatorLostNomination,
     ChainValidatorNominationAmountChange,
     ChainValidatorChilled,
-    ChainValidatorActiveSetInclusion,
-    ChainValidatorActiveSetNextSessionInclusion,
-    ChainValidatorActiveSetExclusion,
-    ChainValidatorActiveSetNextSessionExclusion,
+    ChainValidatorActive,
+    ChainValidatorActiveNextSession,
+    ChainValidatorInactive,
+    ChainValidatorInactiveNextSession,
     ChainValidateExtrinsic,
     ChainValidatorUnclaimedPayout,
     ChainValidatorBlockAuthorship,
@@ -86,17 +86,13 @@ impl Display for NotificationTypeCode {
                 "chain_validator_nomination_amount_change"
             }
             NotificationTypeCode::ChainValidatorChilled => "chain_validator_chilled",
-            NotificationTypeCode::ChainValidatorActiveSetInclusion => {
-                "chain_validator_active_set_inclusion"
+            NotificationTypeCode::ChainValidatorActive => "chain_validator_active",
+            NotificationTypeCode::ChainValidatorActiveNextSession => {
+                "chain_validator_active_next_session"
             }
-            NotificationTypeCode::ChainValidatorActiveSetNextSessionInclusion => {
-                "chain_validator_active_set_next_session_inclusion"
-            }
-            NotificationTypeCode::ChainValidatorActiveSetExclusion => {
-                "chain_validator_active_set_exclusion"
-            }
-            NotificationTypeCode::ChainValidatorActiveSetNextSessionExclusion => {
-                "chain_validator_active_set_next_session_exclusion"
+            NotificationTypeCode::ChainValidatorInactive => "chain_validator_inactive",
+            NotificationTypeCode::ChainValidatorInactiveNextSession => {
+                "chain_validator_inactive_next_session"
             }
             NotificationTypeCode::ChainValidateExtrinsic => "chain_validate_extrinsic",
             NotificationTypeCode::ChainValidatorUnclaimedPayout => {

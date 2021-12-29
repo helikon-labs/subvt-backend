@@ -1,10 +1,10 @@
 use crate::crypto::AccountId;
+use crate::onekv::OneKVValidity;
 use crate::substrate::Balance;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NewNomination {
-    pub id: u32,
     pub validator_account_id: AccountId,
     pub discovered_block_number: u64,
     pub nominator_stash_account_id: AccountId,
@@ -15,7 +15,6 @@ pub struct NewNomination {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct LostNomination {
-    pub id: u32,
     pub validator_account_id: AccountId,
     pub discovered_block_number: u64,
     pub nominator_stash_account_id: AccountId,
@@ -26,7 +25,6 @@ pub struct LostNomination {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NominationAmountChange {
-    pub id: u32,
     pub validator_account_id: AccountId,
     pub discovered_block_number: u64,
     pub nominator_stash_account_id: AccountId,
@@ -36,4 +34,18 @@ pub struct NominationAmountChange {
     pub active_amount: Balance,
     pub total_amount: Balance,
     pub nominee_count: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OneKVRankChange {
+    pub validator_account_id: AccountId,
+    pub prev_rank: u64,
+    pub current_rank: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OneKVValidityChange {
+    pub validator_account_id: AccountId,
+    pub is_valid: bool,
+    pub validity_items: Vec<OneKVValidity>,
 }
