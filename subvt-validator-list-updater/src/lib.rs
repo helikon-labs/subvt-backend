@@ -61,10 +61,12 @@ impl ValidatorListUpdater {
                 )
                 .collect();
             for delete in to_delete {
-                let keys: Vec<String> = redis::cmd("KEYS").arg(format!(
-                    "subvt:{}:validators:{}:*",
-                    CONFIG.substrate.chain, delete
-                )).query(&mut redis_connection)?;
+                let keys: Vec<String> = redis::cmd("KEYS")
+                    .arg(format!(
+                        "subvt:{}:validators:{}:*",
+                        CONFIG.substrate.chain, delete
+                    ))
+                    .query(&mut redis_connection)?;
                 debug!("Delete {} records for block #{}.", keys.len(), delete);
                 for key in keys {
                     redis_cmd_pipeline.cmd("DEL").arg(key);
@@ -228,16 +230,14 @@ impl Service for ValidatorListUpdater {
                     "Cannot connect to Redis at URL {}.",
                     CONFIG.redis.url
                 ))?;
-                let keys: Vec<String> = redis::cmd("KEYS").arg(format!(
-                    "subvt:{}:*",
-                    CONFIG.substrate.chain
-                )).query(&mut connection)?;
+                let keys: Vec<String> = redis::cmd("KEYS")
+                    .arg(format!("subvt:{}:*", CONFIG.substrate.chain))
+                    .query(&mut connection)?;
                 let mut redis_cmd_pipeline = Pipeline::new();
                 for key in keys {
                     redis_cmd_pipeline.cmd("DEL").arg(key);
                 }
-                redis_cmd_pipeline
-                    .query(&mut connection)?;
+                redis_cmd_pipeline.query(&mut connection)?;
             }
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let finalized_block_number = match finalized_block_header.get_number() {
