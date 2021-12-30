@@ -1,5 +1,5 @@
 <p align="center">
-	<img width="400" src="https://raw.githubusercontent.com/helikon-labs/subvt/main/assets/logo/subvt_logo_blue.png">
+	<img width="400" src="https://raw.githubusercontent.com/helikon-labs/subvt/main/assets/design/logo/subvt_logo_blue.png">
 </p>
 
 ⛓ **WIP** ⛓
