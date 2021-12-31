@@ -23,7 +23,7 @@ pub struct Block {
     pub runtime_version: u16,
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Network {
     pub id: u32,
     pub hash: String,

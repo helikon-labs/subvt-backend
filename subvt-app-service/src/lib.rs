@@ -22,8 +22,8 @@ lazy_static! {
 type ResultResponse = Result<HttpResponse, InternalServerError>;
 
 #[derive(Clone)]
-struct ServiceState {
-    postgres: Arc<PostgreSQLAppStorage>,
+pub struct ServiceState {
+    pub postgres: Arc<PostgreSQLAppStorage>,
 }
 
 async fn check_user_exists_by_id(
@@ -39,7 +39,7 @@ async fn check_user_exists_by_id(
 }
 
 #[get("/service/network")]
-async fn get_networks(state: web::Data<ServiceState>) -> ResultResponse {
+pub async fn get_networks(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_networks().await?))
 }
 
