@@ -4,3 +4,21 @@ chain = "kusama"
 chain_genesis_hash = "0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE"
 rpc_url = "wss://kusama-rpc.polkadot.io:443"
 network_id = 1
+
+[app_postgres]
+host = "127.0.0.1"
+port = 5432
+username = "subvt"
+password = "subvt"
+database_name = "subvt_app_test"
+pool_max_connections = 20
+connection_timeout_seconds = 3
+
+[network_postgres]
+host = "127.0.0.1"
+port = 5432
+username = "subvt"
+password = "subvt"
+database_name = "subvt_kusama_test"
+pool_max_connections = 20
+connection_timeout_seconds = 3
