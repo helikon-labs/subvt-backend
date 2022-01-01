@@ -839,7 +839,7 @@ impl PostgreSQLNetworkStorage {
             r#"
             SELECT "id", block_hash, extrinsic_index, is_nested_call, stash_account_id, controller_account_id, commission_per_billion, blocks_nominations, is_successful
             FROM sub_extrinsic_validate
-            WHERE block_hash = $1
+            WHERE block_hash = $1 AND is_successful = true
             ORDER BY "id" ASC
             "#,
         )

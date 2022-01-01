@@ -7,11 +7,16 @@ rust-version = "1.56.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+a2 = "0.6.2"
 anyhow = "1.0.52"
 async-trait = "0.1.52"
 config = "0.11.0"
+fcm = "0.9.1"
 lazy_static = "1.4.0"
+lettre = "0.9.6"
+lettre_email = "0.9.4"
 subvt-config = { path = "../subvt-config" }
+subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
