@@ -17,7 +17,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::substrate::BlockHeader;
+use subvt_types::substrate::{BlockHeader, Era};
 use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
 
 lazy_static! {
@@ -31,6 +31,7 @@ pub struct ValidatorListUpdater;
 
 impl ValidatorListUpdater {
     async fn update_redis(
+        active_era: &Era,
         processed_block_numbers: &Arc<RwLock<Vec<u64>>>,
         finalized_block_number: u64,
         validators: &[ValidatorDetails],
@@ -104,11 +105,15 @@ impl ValidatorListUpdater {
             .arg(inactive_account_ids);
         // each validator
         redis_cmd_pipeline.cmd("MSET");
+        // set era
+        redis_cmd_pipeline
+            .arg(format!("{}:active_era", prefix))
+            .arg(serde_json::to_string(active_era)?);
+        // set validator details
         for validator in validators {
             let validator_prefix = format!(
-                "subvt:{}:validators:{}:{}:validator:{}",
-                CONFIG.substrate.chain,
-                finalized_block_number,
+                "{}:{}:validator:{}",
+                prefix,
                 if validator.is_active {
                     "active"
                 } else {
@@ -116,13 +121,13 @@ impl ValidatorListUpdater {
                 },
                 validator.account.id
             );
-
             // calculate hash
             let hash = {
                 let mut hasher = DefaultHasher::new();
                 validator.hash(&mut hasher);
                 hasher.finish()
             };
+            // calculate summary hash
             let summary_hash = {
                 let mut hasher = DefaultHasher::new();
                 ValidatorSummary::from(validator).hash(&mut hasher);
@@ -202,6 +207,7 @@ impl ValidatorListUpdater {
         debug!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
         ValidatorListUpdater::update_redis(
+            &active_era,
             processed_block_numbers,
             finalized_block_number,
             &validators,
@@ -245,11 +251,11 @@ impl Service for ValidatorListUpdater {
                     Ok(block_number) => block_number,
                     Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
-                if is_busy.load(Ordering::Relaxed) {
+                if is_busy.load(Ordering::SeqCst) {
                     trace!("Busy processing a past block. Skip block #{}.", finalized_block_number);
                     return;
                 }
-                is_busy.store(true, Ordering::Relaxed);
+                is_busy.store(true, Ordering::SeqCst);
                 let processed_block_numbers = processed_block_numbers.clone();
                 let substrate_client = Arc::clone(&substrate_client);
                 let postgres = postgres.clone();
@@ -268,7 +274,7 @@ impl Service for ValidatorListUpdater {
                             finalized_block_header.get_number().unwrap_or(0),
                         );
                     }
-                    is_busy.store(false, Ordering::Relaxed);
+                    is_busy.store(false, Ordering::SeqCst);
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;

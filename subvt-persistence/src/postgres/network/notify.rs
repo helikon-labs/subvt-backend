@@ -94,4 +94,40 @@ impl PostgreSQLNetworkStorage {
             .await?;
         Ok(())
     }
+
+    pub async fn notification_generator_has_processed_era(
+        &self,
+        era_index: u32,
+    ) -> anyhow::Result<bool> {
+        let result: (bool,) = sqlx::query_as(
+            r#"
+                SELECT EXISTS(
+                    SELECT era_index
+                    FROM sub_notification_generator_processed_era
+                    WHERE era_index = $1
+                )
+                "#,
+        )
+        .bind(era_index as i64)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(result.0)
+    }
+
+    pub async fn save_notification_generator_processed_era(
+        &self,
+        era_index: u32,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO sub_notification_generator_processed_era(era_index)
+            VALUES ($1)
+            ON CONFLICT(era_index) DO NOTHING
+            "#,
+        )
+        .bind(era_index as i64)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
 }

@@ -145,6 +145,11 @@ pub struct TelemetryConfig {
     pub websocket_url: String,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct NotificationGeneratorConfig {
+    pub unclaimed_payout_check_delay_hours: u32,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -161,6 +166,7 @@ pub struct Config {
     pub substrate: SubstrateConfig,
     pub report: ReportConfig,
     pub telemetry: TelemetryConfig,
+    pub notification_generator: NotificationGeneratorConfig,
 }
 
 impl Config {

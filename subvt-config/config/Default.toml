@@ -68,3 +68,6 @@ max_era_index_range = 100
 # W3F       wss://telemetry.w3f.community/feed
 # Polkadot  wss://feed.telemetry.polkadot.io/feed/
 websocket_url = "wss://telemetry.w3f.community/feed"
+
+[notification_generator]
+unclaimed_payout_check_delay_hours = 1

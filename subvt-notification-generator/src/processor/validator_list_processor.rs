@@ -1,14 +1,17 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
+use chrono::Utc;
 use log::{debug, error, info, warn};
 use redis::Connection;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU32, Ordering};
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::app_event::{OneKVRankChange, OneKVValidityChange};
+use subvt_types::substrate::Era;
 use subvt_types::{
     app::app_event,
     app::NotificationTypeCode,
@@ -426,6 +429,7 @@ impl NotificationGenerator {
         redis_connection: &mut Connection,
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
+        last_active_era_index: &AtomicU32,
     ) -> anyhow::Result<()> {
         info!(
             "Process new update from validator list updater. Block #{}.",
@@ -520,6 +524,53 @@ impl NotificationGenerator {
                     validator_map.insert(validator_id.clone(), updated);
                 }
             }
+            // check era change & unclaimed payouts
+            let db_active_era_json: String = redis::cmd("GET")
+                .arg(format!("{}:active_era", prefix))
+                .query(redis_connection)
+                .context("Can't read active era JSON from Redis.")?;
+            let active_era: Era = serde_json::from_str(&db_active_era_json)?;
+            let era_start = active_era.get_start_date_time();
+            let era_elapsed = Utc::now() - era_start;
+            if era_elapsed.num_hours()
+                >= config
+                    .notification_generator
+                    .unclaimed_payout_check_delay_hours as i64
+                && last_active_era_index.load(Ordering::SeqCst) != active_era.index
+            {
+                if !network_postgres
+                    .notification_generator_has_processed_era(active_era.index)
+                    .await?
+                {
+                    debug!("Process era #{} for unclaimed payouts.", active_era.index);
+                    for validator in validator_map.values() {
+                        if !validator.unclaimed_era_indices.is_empty() {
+                            let rules = app_postgres
+                                .get_notification_rules_for_validator(
+                                    &NotificationTypeCode::ChainValidatorUnclaimedPayout
+                                        .to_string(),
+                                    config.substrate.network_id,
+                                    &validator.account.id,
+                                )
+                                .await?;
+                            // generate notifications
+                            NotificationGenerator::generate_notifications(
+                                config,
+                                app_postgres,
+                                &rules,
+                                &validator.account.id,
+                                Some(&validator.unclaimed_era_indices),
+                            )
+                            .await?;
+                        }
+                    }
+                    network_postgres
+                        .save_notification_generator_processed_era(active_era.index)
+                        .await?;
+                }
+                // and add the era index to processed era indices
+                last_active_era_index.store(active_era.index, Ordering::SeqCst);
+            }
         }
         Ok(())
     }
@@ -554,6 +605,7 @@ impl NotificationGenerator {
             let mut last_finalized_block_number = 0;
             // keep track of validators
             let mut validator_map: HashMap<String, ValidatorDetails> = HashMap::new();
+            let last_active_era_index = AtomicU32::new(0);
 
             let error: anyhow::Error = loop {
                 let message = pub_sub.get_message();
@@ -579,6 +631,7 @@ impl NotificationGenerator {
                     &mut data_connection,
                     &mut validator_map,
                     finalized_block_number,
+                    &last_active_era_index,
                 )
                 .await
                 {

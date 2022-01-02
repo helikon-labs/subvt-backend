@@ -981,7 +981,7 @@ impl Service for BlockProcessor {
                 let block_processor_substrate_client = block_processor_substrate_client.clone();
                 let runtime_information = runtime_information.clone();
                 let postgres = postgres.clone();
-                if is_indexing_past_blocks.load(Ordering::Relaxed) {
+                if is_indexing_past_blocks.load(Ordering::SeqCst) {
                     trace!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
                     return;
                 }
@@ -997,7 +997,7 @@ impl Service for BlockProcessor {
                         }
                     };
                     if ((processed_block_height + 1) as u64) < finalized_block_number {
-                        is_indexing_past_blocks.store(true, Ordering::Relaxed);
+                        is_indexing_past_blocks.store(true, Ordering::SeqCst);
                         let mut block_number = std::cmp::max(
                             (processed_block_height + 1) as u64,
                             CONFIG.block_processor.start_block_number
@@ -1017,12 +1017,12 @@ impl Service for BlockProcessor {
                                         "History block processing failed for block #{}.",
                                         block_number,
                                     );
-                                    is_indexing_past_blocks.store(false, Ordering::Relaxed);
+                                    is_indexing_past_blocks.store(false, Ordering::SeqCst);
                                     return;
                                 }
                             }
                         }
-                        is_indexing_past_blocks.store(false, Ordering::Relaxed);
+                        is_indexing_past_blocks.store(false, Ordering::SeqCst);
                     } else {
                         let update_result = self.process_block(
                             &mut block_processor_substrate_client,

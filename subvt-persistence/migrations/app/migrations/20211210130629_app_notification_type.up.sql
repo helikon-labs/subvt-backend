@@ -105,26 +105,7 @@ INSERT INTO app_notification_param_type(
 -- chain_validator_inactive :: no param
 -- chain_validator_inactive_next_session :: no param
 -- chain_validate_extrinsic :: no param
--- chain_validator_unclaimed_payout
-INSERT INTO app_notification_param_type(
-    notification_type_code,
-    code,
-    "order",
-    type,
-    "min",
-    "max",
-    is_optional,
-    description
-) VALUES(
-    'chain_validator_unclaimed_payout',
-    'minimum_era_count',
-    0,
-    'integer',
-    '1',
-    NULL,
-    false,
-    'Number of unclaimed eras for the notification to happen.'
-);
+-- chain_validator_unclaimed_payout :: no param
 -- chain_validator_block_authorship :: no param
 -- telemetry_validator_offline
 INSERT INTO app_notification_param_type(
