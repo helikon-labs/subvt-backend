@@ -1,3 +1,6 @@
+//! Application REST interface. Contains services such as user registration, network list,
+//! notification channels, user validator registration, user notification rules persistence
+//! and deletion, etc.
 use actix_web::web::Data;
 use actix_web::{delete, get, post, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
@@ -38,32 +41,36 @@ async fn check_user_exists_by_id(
     Ok(None)
 }
 
+/// `GET`s the list of networks supported by SubVT.
 #[get("/service/network")]
 pub async fn get_networks(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_networks().await?))
 }
 
+/// `GET`s the list of supported notification channels, such as email, push notification, SMS, etc.
 #[get("/service/notification/channel")]
 async fn get_notification_channels(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_notification_channels().await?))
 }
 
+/// `GET`s the list of notification types and their parameters supported by SubVT.
 #[get("/service/notification/type")]
 async fn get_notification_types(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_notification_types().await?))
 }
 
+/// Validates and creates a new user.
 #[post("/service/user")]
 async fn create_user(state: web::Data<ServiceState>, mut user: web::Json<User>) -> ResultResponse {
     let public_key_hex = user.public_key_hex.trim_start_matches("0x").to_uppercase();
-    // validate length
+    // validate public key hex length
     if public_key_hex.len() != PUBLIC_KEY_HEX_LENGTH {
         return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
             "Public key should be {} characters long hexadecimal string.",
             PUBLIC_KEY_HEX_LENGTH
         ))));
     }
-    // validate hex
+    // validate hex format
     if hex::decode(&public_key_hex).is_err() {
         return Ok(HttpResponse::BadRequest().json(ServiceError::from(
             "Public key should be valid hexadecimal string.".to_string(),
@@ -89,6 +96,7 @@ struct UserIdPathParameter {
     pub user_id: u32,
 }
 
+/// `GET`s the list of notification channels that the user has created for herself so far.
 #[get("/service/user/{user_id}/notification/channel")]
 async fn get_user_notification_channels(
     path_params: web::Path<UserIdPathParameter>,
@@ -105,6 +113,7 @@ async fn get_user_notification_channels(
     ))
 }
 
+/// Creates a new notification channel for the user.
 #[post("/service/user/{user_id}/notification/channel")]
 async fn add_user_notification_channel(
     path_params: web::Path<UserIdPathParameter>,
@@ -153,6 +162,8 @@ struct UserNotificationChannelIdPathParameter {
     pub channel_id: u32,
 }
 
+/// `DELETE`s the notification channel from the user's list of notification channels.
+/// A soft delete, but the user will no longer receive notifications on this channel.
 #[delete("/service/user/{user_id}/notification/channel/{channel_id}")]
 async fn delete_user_notification_channel(
     path_params: web::Path<UserNotificationChannelIdPathParameter>,
@@ -179,6 +190,7 @@ async fn delete_user_notification_channel(
     }
 }
 
+/// `GET`s the list of all validators registered to the user.
 #[get("/service/user/{user_id}/validator")]
 async fn get_user_validators(
     path_params: web::Path<UserIdPathParameter>,
@@ -195,6 +207,7 @@ async fn get_user_validators(
     ))
 }
 
+/// Adds a new validator to the user's list of validators.
 #[post("/service/user/{user_id}/validator")]
 async fn add_user_validator(
     path_params: web::Path<UserIdPathParameter>,
@@ -231,6 +244,8 @@ struct UserValidatorIdPathParameter {
     pub user_validator_id: u32,
 }
 
+/// `DELETE`s a validator from the user's list of validators.
+/// A soft delete, i.e. only marks the validator as deleted.
 #[delete("/service/user/{user_id}/validator/{user_validator_id}")]
 async fn delete_user_validator(
     path_params: web::Path<UserValidatorIdPathParameter>,
@@ -271,6 +286,7 @@ struct CreateUserNotificationRuleRequest {
     pub notes: Option<String>,
 }
 
+/// `GET`s the list of the user's non-deleted notification rules.
 #[get("/service/user/{user_id}/notification/rule")]
 async fn get_user_notification_rules(
     path_params: web::Path<UserIdPathParameter>,
@@ -287,6 +303,8 @@ async fn get_user_notification_rules(
     ))
 }
 
+/// Creates a new notification rule for the user. The new rule starts getting evaluated for possible
+/// notifications as soon as it gets created.
 #[post("/service/user/{user_id}/notification/rule")]
 async fn create_user_notification_rule(
     path_params: web::Path<UserIdPathParameter>,
@@ -432,6 +450,9 @@ struct UserNotificationRuleIdPathParameter {
     pub user_notification_rule_id: u32,
 }
 
+/// `DELETE` a rule from the list of the user's notification rules.
+/// A soft delete, the rule will not be able to generate new notifications as soon as
+/// it gets deleted.
 #[delete("/service/user/{user_id}/notification/rule/{user_notification_rule_id}")]
 async fn delete_user_notification_rule(
     path_params: web::Path<UserNotificationRuleIdPathParameter>,
@@ -462,16 +483,22 @@ async fn delete_user_notification_rule(
     }
 }
 
+async fn on_server_ready() {
+    debug!("HTTP service started.");
+}
+
 #[derive(Default)]
 pub struct AppService;
 
+/// Service implmentation.
 #[async_trait(?Send)]
 impl Service for AppService {
     async fn run(&'static self) -> anyhow::Result<()> {
+        // persistence instance
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        debug!("Starting HTTP service...");
-        let result = HttpServer::new(move || {
+        debug!("Starting HTTP service.");
+        let server = HttpServer::new(move || {
             App::new()
                 .app_data(Data::new(ServiceState {
                     postgres: postgres.clone(),
@@ -503,8 +530,8 @@ impl Service for AppService {
             "{}:{}",
             CONFIG.http.host, CONFIG.http.app_service_port,
         ))?
-        .run()
-        .await;
-        Ok(result?)
+        .run();
+        let (server_result, _) = tokio::join!(server, on_server_ready());
+        Ok(server_result?)
     }
 }
