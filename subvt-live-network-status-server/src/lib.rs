@@ -1,5 +1,5 @@
-//! Subscribes to the live network status data on Redis and publishes the data
-//! through WebSocket pub/sub.
+//! Subscribes to the live network status data on Redis and publishes the data through
+//! websocket pub/sub.
 
 use anyhow::Context;
 use async_trait::async_trait;
@@ -103,6 +103,7 @@ impl LiveNetworkStatusServer {
     }
 }
 
+/// Service implementation.
 #[async_trait(?Send)]
 impl Service for LiveNetworkStatusServer {
     async fn run(&'static self) -> anyhow::Result<()> {

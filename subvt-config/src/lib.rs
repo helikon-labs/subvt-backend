@@ -81,33 +81,33 @@ pub struct LogConfig {
 pub struct RPCConfig {
     /// Host IP address.
     pub host: String,
-    /// TCP port for the live network status WS RPC server.
+    /// Live network status WS RPC server TCP port.
     pub live_network_status_port: String,
-    /// TCP port for the active validator list WS RPC server.
+    /// Active validator list WS RPC server TCP port.
     pub active_validator_list_port: u16,
-    /// TCP port for the inactive validator list WS RPC server.
+    /// Inactive validator list WS RPC server TCP port.
     pub inactive_validator_list_port: u16,
-    /// TCP port for the validator details WS RPC server.
+    /// Validator details WS RPC server TCP port.
     pub validator_details_port: u16,
 }
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HTTPConfig {
     pub host: String,
+    /// Report REST service TCP port.
     pub report_service_port: u16,
+    /// Application REST service TCP port.
     pub app_service_port: u16,
 }
 
-/// Redis configuration. Redis is utilized as in-memory
-/// buffer storage for real-time data.
+/// Redis configuration. Redis is utilized as in-memory buffer storage for real-time
+/// validator list and network status data.
 #[derive(Clone, Debug, Deserialize)]
 pub struct RedisConfig {
-    /// Redis URL.
     pub url: String,
 }
 
-/// PostgreSQL configuration. PostgreSQL is used for historical
-/// indexed blockchain data storage.
+/// PostgreSQL configuration. PostgreSQL is used for historical indexed blockchain data storage.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PostgreSQLConfig {
     pub host: String,
@@ -127,6 +127,7 @@ pub struct BlockProcessorConfig {
     pub start_block_number: u64,
 }
 
+/// 1KV configuration - only used for Polkadot and Kusama.
 #[derive(Clone, Debug, Deserialize)]
 pub struct OneKVConfig {
     pub candidate_list_endpoint: String,
@@ -135,16 +136,19 @@ pub struct OneKVConfig {
     pub request_timeout_seconds: u64,
 }
 
+/// Report service configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct ReportConfig {
     pub max_era_index_range: u32,
 }
 
+/// Telemetry processor configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelemetryConfig {
     pub websocket_url: String,
 }
 
+/// Notification generator configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct NotificationGeneratorConfig {
     pub unclaimed_payout_check_delay_hours: u32,

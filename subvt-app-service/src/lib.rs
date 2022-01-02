@@ -490,7 +490,7 @@ async fn on_server_ready() {
 #[derive(Default)]
 pub struct AppService;
 
-/// Service implmentation.
+/// Service implementation.
 #[async_trait(?Send)]
 impl Service for AppService {
     async fn run(&'static self) -> anyhow::Result<()> {
