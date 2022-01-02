@@ -195,6 +195,7 @@ impl ValidatorListUpdater {
             validator.blocks_authored = db_validator_info.blocks_authored;
             validator.reward_points = db_validator_info.reward_points;
             validator.heartbeat_received = db_validator_info.heartbeat_received;
+            validator.onekv_candidate_record_id = db_validator_info.onekv_candidate_record_id;
             validator.onekv_rank = db_validator_info.onekv_rank;
             validator.onekv_is_valid = db_validator_info.onekv_is_valid;
         }

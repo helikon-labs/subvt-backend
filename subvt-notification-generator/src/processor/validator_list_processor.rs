@@ -341,7 +341,8 @@ impl NotificationGenerator {
             }
         }
         // check 1kv
-        if current.onekv_candidate_record_id.is_some() {
+        if current.onekv_candidate_record_id.is_some() &&
+            (current.onekv_candidate_record_id == last.onekv_candidate_record_id) {
             if current.onekv_rank != last.onekv_rank {
                 debug!(
                     "1KV rank of {} changed from {} to {}.",
