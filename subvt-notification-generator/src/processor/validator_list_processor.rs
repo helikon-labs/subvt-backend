@@ -7,9 +7,11 @@ use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event::{OneKVRankChange, OneKVValidityChange};
 use subvt_types::substrate::Era;
 use subvt_types::{
@@ -65,8 +67,8 @@ fn populate_validator_map(
 impl NotificationGenerator {
     async fn check_validator_changes(
         config: &Config,
-        app_postgres: &PostgreSQLAppStorage,
-        network_postgres: &PostgreSQLNetworkStorage,
+        (app_postgres, network_postgres): (&PostgreSQLAppStorage, &PostgreSQLNetworkStorage),
+        substrate_client: &Arc<SubstrateClient>,
         redis_connection: &mut Connection,
         redis_prefix: &str,
         finalized_block_number: u64,
@@ -152,7 +154,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &[rule],
+                    finalized_block_number,
                     &current.account.id,
                     Some(&event),
                 )
@@ -196,7 +200,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &[rule],
+                    finalized_block_number,
                     &current.account.id,
                     Some(&event),
                 )
@@ -238,7 +244,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     Some(&event),
                 )
@@ -266,7 +274,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     None::<&()>,
                 )
@@ -289,7 +299,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     None::<&()>,
                 )
@@ -313,7 +325,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     None::<&()>,
                 )
@@ -333,7 +347,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     None::<&()>,
                 )
@@ -364,7 +380,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     Some(&OneKVRankChange {
                         validator_account_id: current.account.id.clone(),
@@ -402,7 +420,9 @@ impl NotificationGenerator {
                 NotificationGenerator::generate_notifications(
                     config,
                     app_postgres,
+                    substrate_client,
                     &rules,
+                    finalized_block_number,
                     &current.account.id,
                     Some(&OneKVValidityChange {
                         validator_account_id: current.account.id.clone(),
@@ -424,8 +444,8 @@ impl NotificationGenerator {
 
     async fn process(
         config: &Config,
-        app_postgres: &PostgreSQLAppStorage,
-        network_postgres: &PostgreSQLNetworkStorage,
+        (app_postgres, network_postgres): (&PostgreSQLAppStorage, &PostgreSQLNetworkStorage),
+        substrate_client: &Arc<SubstrateClient>,
         redis_connection: &mut Connection,
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
@@ -512,8 +532,8 @@ impl NotificationGenerator {
                 );
                 if let Some(updated) = NotificationGenerator::check_validator_changes(
                     config,
-                    app_postgres,
-                    network_postgres,
+                    (app_postgres, network_postgres),
+                    substrate_client,
                     redis_connection,
                     &validator_prefix,
                     finalized_block_number,
@@ -557,7 +577,9 @@ impl NotificationGenerator {
                             NotificationGenerator::generate_notifications(
                                 config,
                                 app_postgres,
+                                substrate_client,
                                 &rules,
+                                finalized_block_number,
                                 &validator.account.id,
                                 Some(&validator.unclaimed_era_indices),
                             )
@@ -575,7 +597,10 @@ impl NotificationGenerator {
         Ok(())
     }
 
-    pub async fn process_validator_list_updates(config: &Config) {
+    pub async fn process_validator_list_updates(
+        config: &Config,
+        substrate_client: Arc<SubstrateClient>,
+    ) {
         loop {
             // initialize Postgres connection
             let app_postgres = PostgreSQLAppStorage::new(config, config.get_app_postgres_url())
@@ -626,8 +651,8 @@ impl NotificationGenerator {
                 }
                 if let Err(error) = NotificationGenerator::process(
                     config,
-                    &app_postgres,
-                    &network_postgres,
+                    (&app_postgres, &network_postgres),
+                    &substrate_client,
                     &mut data_connection,
                     &mut validator_map,
                     finalized_block_number,

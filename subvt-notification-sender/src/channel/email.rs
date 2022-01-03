@@ -6,30 +6,24 @@ use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::Notification;
 
-pub(crate) struct EmailSender {
-    pub mailer: AsyncSmtpTransport<Tokio1Executor>,
-}
+pub(crate) type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 
-impl EmailSender {
-    pub(crate) fn new(config: &Config) -> anyhow::Result<EmailSender> {
-        Ok(EmailSender {
-            mailer: AsyncSmtpTransport::<Tokio1Executor>::relay(
-                &config.notification_sender.email_smtp_server_url,
-            )?
+pub(crate) fn new_mailer(config: &Config) -> anyhow::Result<Mailer> {
+    Ok(
+        Mailer::relay(&config.notification_sender.email_smtp_server_url)?
             .credentials(Credentials::new(
                 config.notification_sender.email_account.clone(),
                 config.notification_sender.email_password.clone(),
             ))
-            .port(config.notification_sender.email_smtp_server_tls_port)
+            // .port(config.notification_sender.email_smtp_server_tls_port)
             .build(),
-        })
-    }
+    )
 }
 
 pub(crate) async fn send_email(
     config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
-    email_sender: &Arc<EmailSender>,
+    mailer: &Arc<Mailer>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
     let message = lettre::Message::builder()
@@ -45,7 +39,7 @@ pub(crate) async fn send_email(
     postgres
         .mark_notification_processing(notification.id)
         .await?;
-    match email_sender.mailer.send(message).await {
+    match mailer.send(message).await {
         Ok(response) => {
             debug!(
                 "Mail sent succesfully for notification #{}.",

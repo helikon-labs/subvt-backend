@@ -5,12 +5,14 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
     async fn process_block_authorship(
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
+        substrate_client: &Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         let validator_account_id = if let Some(author_account_id) = &block.author_account_id {
@@ -29,7 +31,9 @@ impl NotificationGenerator {
         NotificationGenerator::generate_notifications(
             config,
             app_postgres,
+            substrate_client,
             &rules,
+            block.number,
             validator_account_id,
             Some(&block.clone()),
         )
@@ -41,6 +45,7 @@ impl NotificationGenerator {
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
         network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        substrate_client: &Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         for event in network_postgres
@@ -57,7 +62,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
+                substrate_client,
                 &rules,
+                block.number,
                 &event.validator_account_id,
                 Some(&event.clone()),
             )
@@ -70,6 +77,7 @@ impl NotificationGenerator {
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
         network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        substrate_client: &Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         for event in network_postgres
@@ -86,7 +94,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
+                substrate_client,
                 &rules,
+                block.number,
                 &event.stash_account_id,
                 Some(&event.clone()),
             )
@@ -99,6 +109,7 @@ impl NotificationGenerator {
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
         network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        substrate_client: &Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         for extrinsic in network_postgres
@@ -115,7 +126,9 @@ impl NotificationGenerator {
             NotificationGenerator::generate_notifications(
                 config,
                 app_postgres,
+                substrate_client,
                 &rules,
+                block.number,
                 &extrinsic.stash_account_id,
                 Some(&extrinsic.clone()),
             )
@@ -128,6 +141,7 @@ impl NotificationGenerator {
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
         network_postgres: &Arc<PostgreSQLNetworkStorage>,
+        substrate_client: &Arc<SubstrateClient>,
         block_number: u64,
     ) -> anyhow::Result<()> {
         info!("Process block #{}.", block_number);
@@ -138,20 +152,34 @@ impl NotificationGenerator {
                 return Ok(());
             }
         };
-        NotificationGenerator::process_block_authorship(config, app_postgres, &block).await?;
+        NotificationGenerator::process_block_authorship(
+            config,
+            app_postgres,
+            substrate_client,
+            &block,
+        )
+        .await?;
         NotificationGenerator::process_offline_offences(
             config,
             app_postgres,
             network_postgres,
+            substrate_client,
             &block,
         )
         .await?;
-        NotificationGenerator::process_chillings(config, app_postgres, network_postgres, &block)
-            .await?;
+        NotificationGenerator::process_chillings(
+            config,
+            app_postgres,
+            network_postgres,
+            substrate_client,
+            &block,
+        )
+        .await?;
         NotificationGenerator::process_validate_extrinsics(
             config,
             app_postgres,
             network_postgres,
+            substrate_client,
             &block,
         )
         .await?;
@@ -161,7 +189,10 @@ impl NotificationGenerator {
             .await
     }
 
-    pub async fn start_processing_blocks(config: &'static Config) -> anyhow::Result<()> {
+    pub async fn start_processing_blocks(
+        config: &'static Config,
+        substrate_client: Arc<SubstrateClient>,
+    ) -> anyhow::Result<()> {
         let app_postgres =
             Arc::new(PostgreSQLAppStorage::new(config, config.get_app_postgres_url()).await?);
         let network_postgres = Arc::new(
@@ -179,6 +210,7 @@ impl NotificationGenerator {
                 let network_postgres = network_postgres.clone();
                 let maybe_last_processed_block_number_mutex =
                     maybe_last_processed_block_number_mutex.clone();
+                let substrate_client = substrate_client.clone();
                 tokio::spawn(async move {
                     let mut maybe_block_number =
                         maybe_last_processed_block_number_mutex.lock().await;
@@ -194,6 +226,7 @@ impl NotificationGenerator {
                             config,
                             &app_postgres,
                             &network_postgres,
+                            &substrate_client,
                             block_number,
                         )
                         .await

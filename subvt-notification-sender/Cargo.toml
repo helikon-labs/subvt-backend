@@ -24,3 +24,4 @@ subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
 tera = "1.15.0"
 tokio = { version = "1.15.0", features = ["full"] }
+tokio-cron-scheduler = "0.3.1"

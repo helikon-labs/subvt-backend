@@ -1,6 +1,7 @@
 //! Sends the persisted notifications to various channels (email, push, SMS, GSM, etc.).
 
-use crate::channel::email::EmailSender;
+use crate::channel::email;
+use crate::channel::email::Mailer;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
@@ -22,7 +23,7 @@ pub struct NotificationSender;
 impl NotificationSender {
     async fn send_notification(
         postgres: Arc<PostgreSQLAppStorage>,
-        email_sender: Arc<EmailSender>,
+        mailer: Arc<Mailer>,
         notification: Notification,
     ) -> anyhow::Result<()> {
         debug!(
@@ -34,8 +35,7 @@ impl NotificationSender {
         if notification.id % 4 == 0 {
             match notification.notification_channel_code.as_ref() {
                 "email" => {
-                    channel::email::send_email(&CONFIG, &postgres, &email_sender, &notification)
-                        .await?;
+                    channel::email::send_email(&CONFIG, &postgres, &mailer, &notification).await?;
                 }
                 _ => todo!(
                     "Channel not implemented yet: {}",
@@ -48,7 +48,7 @@ impl NotificationSender {
 
     async fn start_immediate_notification_processor(
         postgres: &Arc<PostgreSQLAppStorage>,
-        email_sender: &Arc<EmailSender>,
+        mailer: &Arc<Mailer>,
     ) {
         loop {
             match postgres
@@ -61,7 +61,7 @@ impl NotificationSender {
                     for notification in notifications {
                         futures.push(NotificationSender::send_notification(
                             postgres.clone(),
-                            email_sender.clone(),
+                            mailer.clone(),
                             notification,
                         ));
                     }
@@ -89,12 +89,11 @@ impl Service for NotificationSender {
     async fn run(&'static self) -> anyhow::Result<()> {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        let email_sender = Arc::new(EmailSender::new(&CONFIG)?);
+        let mailer = Arc::new(email::new_mailer(&CONFIG)?);
         debug!("Reset pending and failed notifications.");
         postgres.reset_pending_and_failed_notifications().await?;
         tokio::join!(NotificationSender::start_immediate_notification_processor(
-            &postgres,
-            &email_sender
+            &postgres, &mailer
         ),);
         Ok(())
     }

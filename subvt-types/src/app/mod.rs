@@ -365,6 +365,7 @@ pub struct Notification {
     pub period_type: NotificationPeriodType,
     pub period: u16,
     pub validator_account_id: AccountId,
+    pub validator_account_json: Option<String>,
     pub notification_type_code: String,
     pub user_notification_channel_id: u32,
     pub notification_channel_code: String,

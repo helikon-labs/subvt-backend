@@ -892,6 +892,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cron"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "628a3464535cee4e75af89e8c293bab926deaddfa166553b75029066c846be3f"
+dependencies = [
+ "chrono",
+ "nom 4.1.1",
+]
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2402,7 +2412,7 @@ dependencies = [
  "lettre 0.9.6",
  "mime",
  "time 0.1.44",
- "uuid",
+ "uuid 0.7.4",
 ]
 
 [[package]]
@@ -2736,6 +2746,15 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
+name = "nom"
+version = "4.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c349f68f25f596b9f44cf0e7c69752a5c633b0550c3ff849518bfba0233774a"
+dependencies = [
+ "memchr",
+]
 
 [[package]]
 name = "nom"
@@ -5908,6 +5927,7 @@ dependencies = [
  "subvt-types",
  "tera",
  "tokio",
+ "tokio-cron-scheduler",
 ]
 
 [[package]]
@@ -5928,6 +5948,7 @@ dependencies = [
  "subvt-logging",
  "subvt-persistence",
  "subvt-service-common",
+ "subvt-substrate-client",
  "subvt-types",
  "tokio",
 ]
@@ -6384,6 +6405,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-cron-scheduler"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f16e49c5ca6199f6af561fd72370f29888a99859d7628263bfb6f88dc7d1463"
+dependencies = [
+ "chrono",
+ "cron",
+ "tokio",
+ "uuid 0.8.2",
+]
+
+[[package]]
 name = "tokio-macros"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6764,6 +6797,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90dbc611eb48397705a6b0f6e917da23ae517e4d127123d2cf7674206627d32a"
 dependencies = [
  "rand 0.6.5",
+]
+
+[[package]]
+name = "uuid"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom 0.2.3",
 ]
 
 [[package]]

@@ -100,8 +100,8 @@ impl PostgreSQLAppStorage {
     pub async fn save_notification(&self, notification: &Notification) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id
             "#,
         )
@@ -111,6 +111,7 @@ impl PostgreSQLAppStorage {
             .bind(&notification.period_type)
             .bind(notification.period as i32)
             .bind(notification.validator_account_id.to_string())
+            .bind(&notification.validator_account_json)
             .bind(&notification.notification_type_code)
             .bind(notification.user_notification_channel_id as i32)
             .bind(&notification.notification_channel_code)
@@ -128,7 +129,7 @@ impl PostgreSQLAppStorage {
     ) -> anyhow::Result<Vec<Notification>> {
         let db_notifications: Vec<PostgresNotification> = sqlx::query_as(
             r#"
-            SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
+            SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
             FROM app_notification
             WHERE processing_started_at IS NULL
             AND period_type = $1
