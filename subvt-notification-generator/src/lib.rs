@@ -53,7 +53,11 @@ impl NotificationGenerator {
                     sent_at: None,
                     delivered_at: None,
                     read_at: None,
-                    data: notification_data,
+                    data_json: if let Ok(data_json) = serde_json::to_string(&notification_data) {
+                        Some(data_json)
+                    } else {
+                        None
+                    },
                 };
                 let _ = app_postgres.save_notification(&notification).await?;
             }
@@ -66,12 +70,13 @@ impl NotificationGenerator {
 impl Service for NotificationGenerator {
     async fn run(&'static self) -> anyhow::Result<()> {
         let tokio_rt = Builder::new_current_thread().enable_all().build().unwrap();
-
+        // start processing validator list updates
         std::thread::spawn(move || {
             tokio_rt.block_on(NotificationGenerator::process_validator_list_updates(
                 &CONFIG,
             ));
         });
+        // start processing new blocks
         NotificationGenerator::start_processing_blocks(&CONFIG).await
     }
 }

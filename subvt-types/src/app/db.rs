@@ -1,7 +1,7 @@
 use crate::app::extrinsic::ValidateExtrinsic;
 use crate::app::{
-    Block, Network, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
-    UserValidator,
+    Block, Network, Notification, NotificationParamDataType, NotificationPeriodType,
+    UserNotificationChannel, UserValidator,
 };
 use crate::crypto::AccountId;
 use std::str::FromStr;
@@ -128,6 +128,46 @@ impl ValidateExtrinsic {
             commission_per_billion: db_extrinsic.6 as u64,
             blocks_nominations: db_extrinsic.7,
             is_successful: db_extrinsic.8,
+        })
+    }
+}
+
+pub type PostgresNotification = (
+    i32,
+    i32,
+    i32,
+    i32,
+    NotificationPeriodType,
+    i32,
+    String,
+    String,
+    i32,
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+);
+
+impl Notification {
+    pub fn from(db_notification: PostgresNotification) -> anyhow::Result<Notification> {
+        Ok(Notification {
+            id: db_notification.0 as u32,
+            user_id: db_notification.1 as u32,
+            user_notification_rule_id: db_notification.2 as u32,
+            network_id: db_notification.3 as u32,
+            period_type: db_notification.4.clone(),
+            period: db_notification.5 as u16,
+            validator_account_id: AccountId::from_str(&db_notification.6)?,
+            notification_type_code: db_notification.7.clone(),
+            user_notification_channel_id: db_notification.8 as u32,
+            notification_channel_code: db_notification.9.clone(),
+            notification_target: db_notification.10.clone(),
+            data_json: db_notification.11.clone(),
+            log: db_notification.12.clone(),
+            created_at: None,
+            sent_at: None,
+            delivered_at: None,
+            read_at: None,
         })
     }
 }

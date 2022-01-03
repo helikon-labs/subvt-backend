@@ -357,7 +357,7 @@ pub struct UserNotificationRule {
     pub notes: Option<String>,
 }
 
-pub struct Notification<T: Serialize> {
+pub struct Notification {
     pub id: u32,
     pub user_id: u32,
     pub user_notification_rule_id: u32,
@@ -369,7 +369,7 @@ pub struct Notification<T: Serialize> {
     pub user_notification_channel_id: u32,
     pub notification_channel_code: String,
     pub notification_target: String,
-    pub data: Option<T>,
+    pub data_json: Option<String>,
     pub log: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub sent_at: Option<NaiveDateTime>,

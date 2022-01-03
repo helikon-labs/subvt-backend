@@ -154,6 +154,18 @@ pub struct NotificationGeneratorConfig {
     pub unclaimed_payout_check_delay_hours: u32,
 }
 
+/// Notification sender configuration.
+#[derive(Clone, Debug, Deserialize)]
+pub struct NotificationSenderConfig {
+    pub sleep_millis: u64,
+    pub email_from: String,
+    pub email_reply_to: String,
+    pub email_account: String,
+    pub email_password: String,
+    pub email_smtp_server_url: String,
+    pub email_smtp_server_tls_port: u16,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -171,6 +183,7 @@ pub struct Config {
     pub report: ReportConfig,
     pub telemetry: TelemetryConfig,
     pub notification_generator: NotificationGeneratorConfig,
+    pub notification_sender: NotificationSenderConfig,
 }
 
 impl Config {

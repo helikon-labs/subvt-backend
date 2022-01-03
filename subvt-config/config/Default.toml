@@ -6,7 +6,7 @@ chain = "kusama"
 # Kusama    0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE
 # Polkadot  0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3
 chain_genesis_hash = "0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE"
-rpc_url = "ws://192.168.0.101:9944"
+rpc_url = "wss://kusama-rpc.polkadot.io:443"
 timeout_seconds = 30
 connection_timeout_seconds = 30
 request_timeout_seconds = 30
@@ -53,7 +53,7 @@ connection_timeout_seconds = 3
 [block_processor]
 # min supported for Kusama is 4401243, metadata v12
 # for Polkadot it is 2005673
-start_block_number = 10658458
+start_block_number = 4401243
 
 [onekv]
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
@@ -71,3 +71,13 @@ websocket_url = "wss://telemetry.w3f.community/feed"
 
 [notification_generator]
 unclaimed_payout_check_delay_hours = 1
+
+[notification_sender]
+sleep_millis = 2000
+email_from = "SubVT Notifications <mail@host.com>"
+email_reply_to = "noreply@host.com"
+email_account = "mail@host.com"
+email_password = "password"
+email_smtp_server_url = "mail.host.com"
+email_smtp_server_tls_port = 587
+
