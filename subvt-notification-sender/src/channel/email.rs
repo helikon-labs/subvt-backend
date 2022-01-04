@@ -1,3 +1,5 @@
+use crate::ContentProvider;
+use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
 use log::{debug, error};
@@ -24,18 +26,29 @@ pub(crate) async fn send_email(
     config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
     mailer: &Arc<Mailer>,
+    content_provider: &Arc<ContentProvider>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
+    let (subject, text_body, html_body) =
+        content_provider.get_email_content_for_notification(config, notification)?;
     let message = lettre::Message::builder()
         .from(config.notification_sender.email_from.parse()?)
         .reply_to(config.notification_sender.email_reply_to.parse()?)
         .to("kutsalbilgin@gmail.com".parse()?)
-        .subject(format!(
-            "Block xyz authored by {}",
-            notification.validator_account_id.to_ss58_check()
-        ))
-        .body(String::from("Your validator has authored a block."))
-        .unwrap();
+        .subject(subject)
+        .multipart(
+            MultiPart::alternative()
+                .singlepart(
+                    SinglePart::builder()
+                        .header(header::ContentType::TEXT_PLAIN)
+                        .body(text_body),
+                )
+                .singlepart(
+                    SinglePart::builder()
+                        .header(header::ContentType::TEXT_HTML)
+                        .body(html_body),
+                ),
+        )?;
     postgres
         .mark_notification_processing(notification.id)
         .await?;

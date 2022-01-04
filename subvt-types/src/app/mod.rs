@@ -1,4 +1,5 @@
 use crate::crypto::AccountId;
+use crate::substrate::Account;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -125,6 +126,58 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
         };
         write!(f, "{}", code)
+    }
+}
+
+impl From<&str> for NotificationTypeCode {
+    fn from(code: &str) -> Self {
+        match code.to_lowercase().as_str() {
+            "chain_validator_offline_offence" => NotificationTypeCode::ChainValidatorOfflineOffence,
+            "chain_validator_new_nomination" => NotificationTypeCode::ChainValidatorNewNomination,
+            "chain_validator_lost_nomination" => NotificationTypeCode::ChainValidatorLostNomination,
+            "chain_validator_nomination_amount_change" => {
+                NotificationTypeCode::ChainValidatorNominationAmountChange
+            }
+            "chain_validator_chilled" => NotificationTypeCode::ChainValidatorChilled,
+            "chain_validator_active" => NotificationTypeCode::ChainValidatorActive,
+            "chain_validator_active_next_session" => {
+                NotificationTypeCode::ChainValidatorActiveNextSession
+            }
+            "chain_validator_inactive" => NotificationTypeCode::ChainValidatorInactive,
+            "chain_validator_inactive_next_session" => {
+                NotificationTypeCode::ChainValidatorInactiveNextSession
+            }
+            "chain_validate_extrinsic" => NotificationTypeCode::ChainValidateExtrinsic,
+            "chain_validator_unclaimed_payout" => {
+                NotificationTypeCode::ChainValidatorUnclaimedPayout
+            }
+            "chain_validator_block_authorship" => {
+                NotificationTypeCode::ChainValidatorBlockAuthorship
+            }
+            "telemetry_validator_offline" => NotificationTypeCode::TelemetryValidatorOffline,
+            "telemetry_validator_binary_out_of_date" => {
+                NotificationTypeCode::TelemetryValidatorBinaryOutOfDate
+            }
+            "telemetry_validator_peer_count_low" => {
+                NotificationTypeCode::TelemetryValidatorPeerCountLow
+            }
+            "telemetry_validator_too_many_txs_in_queue" => {
+                NotificationTypeCode::TelemetryValidatorTooManyTxsInQueue
+            }
+            "telemetry_validator_lagging" => NotificationTypeCode::TelemetryValidatorLagging,
+            "telemetry_validator_finality_lagging" => {
+                NotificationTypeCode::TelemetryValidatorFinalityLagging
+            }
+            "telemetry_validator_download_bw_low" => {
+                NotificationTypeCode::TelemetryValidatorDownloadBwLow
+            }
+            "telemetry_validator_upload_bw_low" => {
+                NotificationTypeCode::TelemetryValidatorUploadBwLow
+            }
+            "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
+            "onekv_validator_validity_change" => NotificationTypeCode::OneKVValidatorValidityChange,
+            _ => panic!("Unknown notification type code: {}", code),
+        }
     }
 }
 
@@ -376,4 +429,14 @@ pub struct Notification {
     pub sent_at: Option<NaiveDateTime>,
     pub delivered_at: Option<NaiveDateTime>,
     pub read_at: Option<NaiveDateTime>,
+}
+
+impl Notification {
+    pub fn get_account(&self) -> anyhow::Result<Option<Account>> {
+        if let Some(account_json) = &self.validator_account_json {
+            Ok(Some(serde_json::from_str(account_json)?))
+        } else {
+            Ok(None)
+        }
+    }
 }

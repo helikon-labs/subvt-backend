@@ -1,0 +1,1 @@
+Your validator <a href="https://{{ chain }}.subscan.io/account/{{ validator_address }}" target="_blank">{{ validator_display }}</a> has authored block <a href="https://{{ chain }}.subscan.io/block/{{ block_number }}" target="_blank">{{ block_number }}.</a>

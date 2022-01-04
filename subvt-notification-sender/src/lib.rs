@@ -2,6 +2,7 @@
 
 use crate::channel::email;
 use crate::channel::email::Mailer;
+use crate::content::ContentProvider;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::{debug, error};
@@ -12,6 +13,7 @@ use subvt_service_common::Service;
 use subvt_types::app::{Notification, NotificationPeriodType};
 
 mod channel;
+mod content;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -24,6 +26,7 @@ impl NotificationSender {
     async fn send_notification(
         postgres: Arc<PostgreSQLAppStorage>,
         mailer: Arc<Mailer>,
+        content_provider: Arc<ContentProvider>,
         notification: Notification,
     ) -> anyhow::Result<()> {
         debug!(
@@ -32,16 +35,21 @@ impl NotificationSender {
             notification.id,
             notification.validator_account_id.to_ss58_check()
         );
-        if notification.id % 4 == 0 {
-            match notification.notification_channel_code.as_ref() {
-                "email" => {
-                    channel::email::send_email(&CONFIG, &postgres, &mailer, &notification).await?;
-                }
-                _ => todo!(
-                    "Channel not implemented yet: {}",
-                    notification.notification_channel_code
-                ),
+        match notification.notification_channel_code.as_ref() {
+            "email" => {
+                channel::email::send_email(
+                    &CONFIG,
+                    &postgres,
+                    &mailer,
+                    &content_provider,
+                    &notification,
+                )
+                .await?;
             }
+            _ => todo!(
+                "Channel not implemented yet: {}",
+                notification.notification_channel_code
+            ),
         }
         Ok(())
     }
@@ -49,6 +57,7 @@ impl NotificationSender {
     async fn start_immediate_notification_processor(
         postgres: &Arc<PostgreSQLAppStorage>,
         mailer: &Arc<Mailer>,
+        content_provider: &Arc<ContentProvider>,
     ) {
         loop {
             match postgres
@@ -62,6 +71,7 @@ impl NotificationSender {
                         futures.push(NotificationSender::send_notification(
                             postgres.clone(),
                             mailer.clone(),
+                            content_provider.clone(),
                             notification,
                         ));
                     }
@@ -90,10 +100,13 @@ impl Service for NotificationSender {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
         let mailer = Arc::new(email::new_mailer(&CONFIG)?);
+        let content_provider = Arc::new(ContentProvider::new()?);
         debug!("Reset pending and failed notifications.");
         postgres.reset_pending_and_failed_notifications().await?;
         tokio::join!(NotificationSender::start_immediate_notification_processor(
-            &postgres, &mailer
+            &postgres,
+            &mailer,
+            &content_provider
         ),);
         Ok(())
     }

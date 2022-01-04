@@ -145,6 +145,27 @@ impl Account {
     }
 }
 
+impl Display for Account {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let display = if let Some(parent) = &*self.parent {
+            if let Some(child_display) = &self.child_display {
+                format!("{} / {}", parent, child_display,)
+            } else {
+                self.id.to_ss58_check()
+            }
+        } else if let Some(identity) = &self.identity {
+            if let Some(display) = &identity.display {
+                display.clone()
+            } else {
+                self.id.to_ss58_check()
+            }
+        } else {
+            self.id.to_ss58_check()
+        };
+        write!(f, "{}", display)
+    }
+}
+
 /// Block wrapper as returned by the RPC method.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BlockWrapper {
