@@ -5944,6 +5944,7 @@ dependencies = [
  "lettre_email",
  "log",
  "redis",
+ "serde 1.0.133",
  "serde_json",
  "subvt-config",
  "subvt-logging",

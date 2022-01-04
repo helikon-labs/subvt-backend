@@ -86,3 +86,4 @@ apns_key_id = "KEY_ID_12345"
 apns_team_id = "APNS_TEAM_ID"
 apns_topic = "APP_BUNDLE"
 apns_is_production = false
+fcm_api_key = "FCM_API_KEY"

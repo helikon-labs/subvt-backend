@@ -31,6 +31,7 @@ impl NotificationSender {
         postgres: Arc<PostgreSQLAppStorage>,
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
+        fcm_client: Arc<fcm::Client>,
         content_provider: Arc<ContentProvider>,
         notification: Notification,
     ) -> anyhow::Result<()> {
@@ -61,6 +62,16 @@ impl NotificationSender {
                 )
                 .await?
             }
+            "fcm" => {
+                channel::fcm::send_fcm_message(
+                    &CONFIG,
+                    &postgres,
+                    &fcm_client,
+                    &content_provider,
+                    &notification,
+                )
+                .await?
+            }
             _ => todo!(
                 "Notification channel not implemented yet: {}",
                 notification.notification_channel_code
@@ -73,6 +84,7 @@ impl NotificationSender {
         postgres: &Arc<PostgreSQLAppStorage>,
         mailer: &Arc<Mailer>,
         apns_client: &Arc<a2::Client>,
+        fcm_client: &Arc<fcm::Client>,
         content_provider: &Arc<ContentProvider>,
     ) {
         loop {
@@ -81,6 +93,7 @@ impl NotificationSender {
                 postgres,
                 mailer,
                 apns_client,
+                fcm_client,
                 content_provider,
                 NotificationPeriodType::Immediate,
                 0,
@@ -97,6 +110,7 @@ impl NotificationSender {
         postgres: Arc<PostgreSQLAppStorage>,
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
+        fcm_client: Arc<fcm::Client>,
         content_provider: Arc<ContentProvider>,
     ) -> anyhow::Result<()> {
         let tokio_rt = Builder::new_current_thread().enable_all().build()?;
@@ -109,6 +123,7 @@ impl NotificationSender {
                         &postgres,
                         &mailer,
                         &apns_client,
+                        &fcm_client,
                         &content_provider,
                         NotificationPeriodType::Hour,
                         Utc::now().hour(),
@@ -123,6 +138,7 @@ impl NotificationSender {
                         &postgres,
                         &mailer,
                         &apns_client,
+                        &fcm_client,
                         &content_provider,
                         NotificationPeriodType::Day,
                         Utc::now().day(),
@@ -141,6 +157,7 @@ impl NotificationSender {
         postgres: Arc<PostgreSQLAppStorage>,
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
+        fcm_client: Arc<fcm::Client>,
         content_provider: Arc<ContentProvider>,
     ) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
@@ -173,6 +190,7 @@ impl NotificationSender {
                         &postgres,
                         &mailer,
                         &apns_client,
+                        &fcm_client,
                         &content_provider,
                         NotificationPeriodType::Epoch,
                         current_epoch_index as u32,
@@ -184,6 +202,7 @@ impl NotificationSender {
                         &postgres,
                         &mailer,
                         &apns_client,
+                        &fcm_client,
                         &content_provider,
                         NotificationPeriodType::Era,
                         active_era_index,
@@ -199,6 +218,7 @@ impl NotificationSender {
         postgres: &Arc<PostgreSQLAppStorage>,
         mailer: &Arc<Mailer>,
         apns_client: &Arc<a2::Client>,
+        fcm_client: &Arc<fcm::Client>,
         content_provider: &Arc<ContentProvider>,
         period_type: NotificationPeriodType,
         period: u32,
@@ -223,6 +243,7 @@ impl NotificationSender {
                         postgres.clone(),
                         mailer.clone(),
                         apns_client.clone(),
+                        fcm_client.clone(),
                         content_provider.clone(),
                         notification,
                     ));
@@ -262,24 +283,28 @@ impl Service for NotificationSender {
                 a2::Endpoint::Sandbox
             },
         )?);
+        let fcm_client = Arc::new(fcm::Client::new());
         debug!("Reset pending and failed notifications.");
         postgres.reset_pending_and_failed_notifications().await?;
         NotificationSender::start_era_and_epoch_notification_processor(
             postgres.clone(),
             mailer.clone(),
             apns_client.clone(),
+            fcm_client.clone(),
             content_provider.clone(),
         )?;
         NotificationSender::start_hourly_and_daily_notification_processor(
             postgres.clone(),
             mailer.clone(),
             apns_client.clone(),
+            fcm_client.clone(),
             content_provider.clone(),
         )?;
         tokio::join!(NotificationSender::start_immediate_notification_processor(
             &postgres,
             &mailer,
             &apns_client,
+            &fcm_client,
             &content_provider
         ),);
         Ok(())

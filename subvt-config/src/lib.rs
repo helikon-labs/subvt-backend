@@ -171,6 +171,7 @@ pub struct NotificationSenderConfig {
     pub apns_team_id: String,
     pub apns_topic: String,
     pub apns_is_production: bool,
+    pub fcm_api_key: String,
 }
 
 /// Whole configuration.
