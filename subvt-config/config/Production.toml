@@ -4,3 +4,6 @@ other_level = "info"
 
 [redis]
 url = "redis://127.0.0.1:6379/"
+
+[notification_sender]
+apns_is_production = true

@@ -1,1 +1,1 @@
-Your validator {{ validator_display }} has authored block {{ block_number }}.
+{{ validator_display }} has authored block {{ block_number }}.

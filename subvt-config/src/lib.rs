@@ -55,6 +55,8 @@ pub struct CommonConfig {
 pub struct SubstrateConfig {
     /// Name of the chain (`kusama`, `polkadot`, `darwinia`, etc.).
     pub chain: String,
+    /// Display name of the chain (`Kusama`, `Polkadot`, `Darwinia`, etc.).
+    pub chain_display: String,
     /// Hash of the genesis block of the chain.
     pub chain_genesis_hash: String,
     /// Node WebSocket RPC URL (e.g. `wss://kusama-rpc.polkadot.io` for Kusama).
@@ -164,6 +166,11 @@ pub struct NotificationSenderConfig {
     pub email_password: String,
     pub email_smtp_server_url: String,
     pub email_smtp_server_tls_port: u16,
+    pub apns_key_location: String,
+    pub apns_key_id: String,
+    pub apns_team_id: String,
+    pub apns_topic: String,
+    pub apns_is_production: bool,
 }
 
 /// Whole configuration.
