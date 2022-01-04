@@ -3,6 +3,7 @@
 use crate::channel::email;
 use crate::channel::email::Mailer;
 use crate::content::ContentProvider;
+use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{Datelike, Timelike, Utc};
 use lazy_static::lazy_static;
@@ -12,6 +13,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
 use subvt_types::app::{Notification, NotificationPeriodType};
+use subvt_types::subvt::LiveNetworkStatus;
 use tokio::runtime::Builder;
 
 mod channel;
@@ -82,14 +84,13 @@ impl NotificationSender {
         postgres: Arc<PostgreSQLAppStorage>,
         mailer: Arc<Mailer>,
         content_provider: Arc<ContentProvider>,
-    ) {
-        let tokio_rt = Builder::new_current_thread().enable_all().build().unwrap();
+    ) -> anyhow::Result<()> {
+        let tokio_rt = Builder::new_current_thread().enable_all().build()?;
         std::thread::spawn(move || {
             let mut scheduler = job_scheduler::JobScheduler::new();
             scheduler.add(job_scheduler::Job::new(
                 "0 0/1 * * * *".parse().unwrap(),
                 || {
-                    println!("Check hourly notifications.");
                     tokio_rt.block_on(NotificationSender::process_notifications(
                         &postgres,
                         &mailer,
@@ -117,6 +118,62 @@ impl NotificationSender {
                 std::thread::sleep(std::time::Duration::from_millis(1000));
             }
         });
+        Ok(())
+    }
+
+    fn start_era_and_epoch_notification_processor(
+        postgres: Arc<PostgreSQLAppStorage>,
+        mailer: Arc<Mailer>,
+        content_provider: Arc<ContentProvider>,
+    ) -> anyhow::Result<()> {
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
+        let mut data_connection = redis_client.get_connection()?;
+        let mut pub_sub_connection = redis_client.get_connection()?;
+        let tokio_rt = Builder::new_current_thread().enable_all().build()?;
+        std::thread::spawn(move || {
+            let mut active_era_index = 0;
+            let mut current_epoch_index = 0;
+            let mut pub_sub = pub_sub_connection.as_pubsub();
+            pub_sub
+                .subscribe(format!(
+                    "subvt:{}:live_network_status:publish:best_block_number",
+                    CONFIG.substrate.chain
+                ))
+                .unwrap();
+            loop {
+                let _ = pub_sub.get_message();
+                let key = format!("subvt:{}:live_network_status", CONFIG.substrate.chain);
+                let status_json_string: String = redis::cmd("GET")
+                    .arg(key)
+                    .query(&mut data_connection)
+                    .unwrap();
+                let status: LiveNetworkStatus = serde_json::from_str(&status_json_string).unwrap();
+                if current_epoch_index != status.current_epoch.index {
+                    tokio_rt.block_on(NotificationSender::process_notifications(
+                        &postgres,
+                        &mailer,
+                        &content_provider,
+                        NotificationPeriodType::Epoch,
+                        current_epoch_index as u32,
+                    ));
+                    current_epoch_index = status.current_epoch.index;
+                }
+                if active_era_index != status.active_era.index {
+                    tokio_rt.block_on(NotificationSender::process_notifications(
+                        &postgres,
+                        &mailer,
+                        &content_provider,
+                        NotificationPeriodType::Era,
+                        active_era_index,
+                    ));
+                    active_era_index = status.active_era.index;
+                }
+            }
+        });
+        Ok(())
     }
 
     async fn process_notifications(
@@ -126,6 +183,10 @@ impl NotificationSender {
         period_type: NotificationPeriodType,
         period: u32,
     ) {
+        debug!(
+            "Process {} notification for period {}.",
+            period_type, period,
+        );
         match postgres
             .get_pending_notifications_by_period_type(&period_type, period)
             .await
@@ -171,30 +232,16 @@ impl Service for NotificationSender {
         let content_provider = Arc::new(ContentProvider::new()?);
         debug!("Reset pending and failed notifications.");
         postgres.reset_pending_and_failed_notifications().await?;
+        NotificationSender::start_era_and_epoch_notification_processor(
+            postgres.clone(),
+            mailer.clone(),
+            content_provider.clone(),
+        )?;
         NotificationSender::start_hourly_and_daily_notification_processor(
             postgres.clone(),
             mailer.clone(),
             content_provider.clone(),
-        );
-        /*
-        // hourly
-        let postgres_1 = postgres.clone();
-        let mailer_1 = mailer.clone();
-        let content_provider_1 = content_provider.clone();
-        let _ = scheduler.add(
-            Job::new_async("0 * * * * *", |_, _| Box::pin(async move {
-                debug!("Run hourly check.");
-                NotificationSender::process_notifications(
-                    &postgres_1,
-                    &mailer_1,
-                    &content_provider_1,
-                    NotificationPeriodType::Hour,
-                    1
-                ).await;
-            })).unwrap()
-        );
-         */
-
+        )?;
         tokio::join!(NotificationSender::start_immediate_notification_processor(
             &postgres,
             &mailer,

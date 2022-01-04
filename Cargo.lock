@@ -5943,6 +5943,7 @@ dependencies = [
  "lettre 0.10.0-rc.4",
  "lettre_email",
  "log",
+ "redis",
  "serde_json",
  "subvt-config",
  "subvt-logging",

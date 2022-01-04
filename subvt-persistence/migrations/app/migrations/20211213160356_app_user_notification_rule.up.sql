@@ -1,4 +1,4 @@
-CREATE TYPE app_notification_period_type AS ENUM ('immediate', 'hour', 'day', 'epoch', 'session', 'era');
+CREATE TYPE app_notification_period_type AS ENUM ('immediate', 'hour', 'day', 'epoch', 'era');
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule
 (

@@ -373,7 +373,6 @@ pub enum NotificationPeriodType {
     Hour,
     Day,
     Epoch,
-    Session,
     Era,
 }
 
@@ -387,7 +386,6 @@ impl Display for NotificationPeriodType {
                 NotificationPeriodType::Hour => "hour",
                 NotificationPeriodType::Day => "day",
                 NotificationPeriodType::Epoch => "epoch",
-                NotificationPeriodType::Session => "session",
                 NotificationPeriodType::Era => "era",
             }
         )
