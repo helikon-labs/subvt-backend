@@ -126,6 +126,7 @@ impl PostgreSQLAppStorage {
     pub async fn get_pending_notifications_by_period_type(
         &self,
         period_type: &NotificationPeriodType,
+        period: u32,
     ) -> anyhow::Result<Vec<Notification>> {
         let db_notifications: Vec<PostgresNotification> = sqlx::query_as(
             r#"
@@ -133,9 +134,11 @@ impl PostgreSQLAppStorage {
             FROM app_notification
             WHERE processing_started_at IS NULL
             AND period_type = $1
+            AND (period = 0 OR ($2 % period) = 0)
             "#,
         )
             .bind(period_type)
+            .bind(period as i32)
             .fetch_all(&self.connection_pool)
             .await?;
         let mut notifications = vec![];

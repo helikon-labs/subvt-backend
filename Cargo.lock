@@ -893,11 +893,12 @@ dependencies = [
 
 [[package]]
 name = "cron"
-version = "0.8.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "628a3464535cee4e75af89e8c293bab926deaddfa166553b75029066c846be3f"
+checksum = "ab00a636277f7ea5d8dd92ac7a5099fc9a46e5327bba84d3640b41ae127eada9"
 dependencies = [
  "chrono",
+ "error-chain",
  "nom 4.1.1",
 ]
 
@@ -1311,6 +1312,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "44a5d80251b806a14cd3e4e1a582e912d5cbf6904ab19fdefbd7a56adca088e1"
 dependencies = [
  "serde 1.0.133",
+]
+
+[[package]]
+name = "error-chain"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9435d864e017c3c6afeac1654189b06cdb491cf2ff73dbf0d73b0f292f42ff8"
+dependencies = [
+ "backtrace",
 ]
 
 [[package]]
@@ -2175,6 +2185,17 @@ name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+
+[[package]]
+name = "job_scheduler"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51f368c9c76dde2282714ae32dc274b79c27527a0c06c816f6dda048904d0d7c"
+dependencies = [
+ "chrono",
+ "cron",
+ "uuid 0.8.2",
+]
 
 [[package]]
 name = "jobserver"
@@ -5913,9 +5934,11 @@ dependencies = [
  "a2",
  "anyhow",
  "async-trait",
+ "chrono",
  "config",
  "fcm",
  "futures",
+ "job_scheduler",
  "lazy_static",
  "lettre 0.10.0-rc.4",
  "lettre_email",
@@ -5928,7 +5951,6 @@ dependencies = [
  "subvt-types",
  "tera",
  "tokio",
- "tokio-cron-scheduler",
 ]
 
 [[package]]
@@ -6403,18 +6425,6 @@ dependencies = [
  "signal-hook-registry",
  "tokio-macros",
  "winapi",
-]
-
-[[package]]
-name = "tokio-cron-scheduler"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f16e49c5ca6199f6af561fd72370f29888a99859d7628263bfb6f88dc7d1463"
-dependencies = [
- "chrono",
- "cron",
- "tokio",
- "uuid 0.8.2",
 ]
 
 [[package]]
