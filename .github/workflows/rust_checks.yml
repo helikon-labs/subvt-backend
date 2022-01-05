@@ -11,6 +11,10 @@ on:
       - reopened
       - synchronize
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   format-clippy-test:
     name: Format, Clippy and Tests
