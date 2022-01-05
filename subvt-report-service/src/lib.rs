@@ -1,4 +1,5 @@
 //!  Public reporting REST services.
+use std::str::FromStr;
 use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
@@ -9,6 +10,7 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::{err::InternalServerError, Service};
+use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 
 lazy_static! {
@@ -57,20 +59,26 @@ async fn era_validator_report_service(
             ))));
         }
     }
-    Ok(HttpResponse::Ok().json(
-        data.postgres
-            .get_era_validator_report(
-                query.start_era_index,
-                query.maybe_end_era_index.unwrap_or(query.start_era_index),
-                &path.account_id_hex_string,
-            )
-            .await?,
-    ))
+    if  let Ok(account_id) = AccountId::from_str(&path.account_id_hex_string) {
+        Ok(HttpResponse::Ok().json(
+            data.postgres
+                .get_era_validator_report(
+                    query.start_era_index,
+                    query.maybe_end_era_index.unwrap_or(query.start_era_index),
+                    &account_id.to_string(),
+                )
+                .await?,
+        ))
+    } else {
+        return Ok(HttpResponse::BadRequest().json(ServiceError::from(
+            "Invalid account id.".to_string(),
+        )));
+    }
 }
 
 /// Gets the report for a range of eras, or a single era.
 /// See `EraReport` struct in the `subvt-types` definition for details.
-#[get("/service/report/era")]
+#[get("/report/era")]
 async fn era_report_service(
     query: web::Query<EraReportQueryParameters>,
     data: web::Data<ServiceState>,
@@ -99,6 +107,10 @@ async fn era_report_service(
     ))
 }
 
+async fn on_server_ready() {
+    debug!("HTTP service started.");
+}
+
 #[derive(Default)]
 pub struct ReportService;
 
@@ -108,8 +120,8 @@ impl Service for ReportService {
         let postgres = Arc::new(
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
         );
-        debug!("Starting HTTP service...");
-        let result = HttpServer::new(move || {
+        debug!("Starting HTTP service.");
+        let server = HttpServer::new(move || {
             App::new()
                 .app_data(Data::new(ServiceState {
                     postgres: postgres.clone(),
@@ -123,8 +135,8 @@ impl Service for ReportService {
             "{}:{}",
             CONFIG.http.host, CONFIG.http.report_service_port,
         ))?
-        .run()
-        .await;
-        Ok(result?)
+        .run();
+        let (server_result, _) = tokio::join!(server, on_server_ready());
+        Ok(server_result?)
     }
 }

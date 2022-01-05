@@ -53,7 +53,7 @@ BEGIN
 	AND B.era_index = era_index_param;
 	
 	SELECT COUNT(DISTINCT EVC.id)
-	FROM sub_event_validator_chilled EVC, sub_block B
+	FROM sub_event_chilled EVC, sub_block B
 	INTO result_record.chilling_count
 	WHERE EVC.block_hash = B.hash
 	AND B.era_index = era_index_param;
