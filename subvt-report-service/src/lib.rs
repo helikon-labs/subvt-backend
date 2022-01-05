@@ -1,11 +1,11 @@
 //!  Public reporting REST services.
-use std::str::FromStr;
 use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
 use serde::Deserialize;
+use std::str::FromStr;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -59,7 +59,7 @@ async fn era_validator_report_service(
             ))));
         }
     }
-    if  let Ok(account_id) = AccountId::from_str(&path.account_id_hex_string) {
+    if let Ok(account_id) = AccountId::from_str(&path.account_id_hex_string) {
         Ok(HttpResponse::Ok().json(
             data.postgres
                 .get_era_validator_report(
@@ -70,9 +70,7 @@ async fn era_validator_report_service(
                 .await?,
         ))
     } else {
-        return Ok(HttpResponse::BadRequest().json(ServiceError::from(
-            "Invalid account id.".to_string(),
-        )));
+        Ok(HttpResponse::BadRequest().json(ServiceError::from("Invalid account id.".to_string())))
     }
 }
 
