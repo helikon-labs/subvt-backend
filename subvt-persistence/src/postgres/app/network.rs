@@ -1,3 +1,4 @@
+//! Application storage related to the networks supported by SubVT.
 use crate::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::db::PostgresNetwork;
 use subvt_types::app::Network;

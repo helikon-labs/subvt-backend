@@ -1,3 +1,5 @@
+//! Substrate extrinsic types, and decode logic.
+//! Note: These are only the extrinsics that are utilized in SubVT.
 use crate::substrate::{Balance, Chain, RewardDestination};
 use crate::{
     crypto::AccountId,

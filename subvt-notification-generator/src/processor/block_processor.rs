@@ -1,3 +1,6 @@
+//! Contains the logic to process new blocks' events and extrinsics and persist notifications
+//! to be later sent by `subvt-notification-sender`.
+
 use crate::NotificationGenerator;
 use async_lock::Mutex;
 use log::{error, info};
@@ -9,6 +12,7 @@ use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
+    /// Checks if there's any rule watching the author of the block for authorship.
     async fn process_block_authorship(
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
@@ -41,6 +45,7 @@ impl NotificationGenerator {
         Ok(())
     }
 
+    /// Checks validator offline events.
     async fn process_offline_offences(
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
@@ -73,6 +78,7 @@ impl NotificationGenerator {
         Ok(())
     }
 
+    /// Checks chilling events.
     async fn process_chillings(
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,
@@ -105,6 +111,7 @@ impl NotificationGenerator {
         Ok(())
     }
 
+    /// Checks validation intentions (extrinsics).
     async fn process_validate_extrinsics(
         config: &Config,
         app_postgres: &Arc<PostgreSQLAppStorage>,

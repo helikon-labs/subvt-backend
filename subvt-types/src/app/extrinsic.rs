@@ -1,3 +1,4 @@
+//! These types are used when reading Substrate extrinsics from PostgreSQL into the SubVT domain.
 use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
 

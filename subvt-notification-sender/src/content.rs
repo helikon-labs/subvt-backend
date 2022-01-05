@@ -1,7 +1,11 @@
+//! Templated notification content provider.
+
 use subvt_config::Config;
 use subvt_types::app::{Block, Notification, NotificationTypeCode, NotificationTypeCode::*};
 use tera::{Context, Tera};
 
+/// Provider struct. Hash separate renderers for separate text notification channels.
+/// Expects the `template` folder in this crate to be in the same folder as the executable.
 pub struct ContentProvider {
     email_renderer: Tera,
     push_notification_renderer: Tera,

@@ -1,4 +1,4 @@
-//! Updates the complete 1KV data for the network on the database.
+//! Updates the complete 1KV data for the network (only Polkadot and Kusama) on the database.
 
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -78,7 +78,12 @@ impl OneKVUpdater {
                 }
             };
             candidate_details.score = candidate.score.clone();
-            let save_result = postgres.save_onekv_candidate(&candidate_details).await;
+            let save_result = postgres
+                .save_onekv_candidate(
+                    &candidate_details,
+                    CONFIG.onekv.candidate_history_record_count as i64,
+                )
+                .await;
             match save_result {
                 Ok(_) => {
                     debug!(

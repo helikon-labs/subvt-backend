@@ -1,5 +1,6 @@
-// https://github.com/paritytech/substrate-telemetry/blob/master/backend/test_utils/src/feed_message_de.rs
-
+//! Connects to the WebSocket feed stream of the given Telemetry and stores the feed data in
+//! the time series database (TimeScaleDB on PostgreSQL). Can be configured to connect to the
+//! W3F or Polkadot Telemetry servers.
 use anyhow::Context;
 use async_lock::Mutex;
 use async_trait::async_trait;
@@ -36,7 +37,7 @@ impl TelemetryProcessor {
                 timestamp,
                 avg_block_time,
             } => {
-                // PERSIST
+                // TODO persist
                 trace!(
                     "Best block: {} {} {:?}.",
                     block_number,
@@ -48,7 +49,7 @@ impl TelemetryProcessor {
                 block_number,
                 block_hash,
             } => {
-                // PERSIST
+                // TODO persist
                 trace!("Best finalized: {} {}.", block_number, block_hash);
             }
             FeedMessage::AddedNode {
@@ -226,7 +227,7 @@ impl Service for TelemetryProcessor {
     async fn run(&'static self) -> anyhow::Result<()> {
         info!("Running the Telemetry processor.");
         let (tx, rx) = mpsc::channel();
-        let a1 = tokio::spawn(async move {
+        let receiver_join_handle = tokio::spawn(async move {
             loop {
                 let tx = tx.clone();
                 if let Err(error) = TelemetryProcessor::receive_messages(tx).await {
@@ -235,15 +236,16 @@ impl Service for TelemetryProcessor {
             }
         });
         let node_map: Mutex<HashMap<u64, NodeDetails>> = Default::default();
-        let b1 = tokio::spawn(async move {
+        let processor_join_handle = tokio::spawn(async move {
             if let Err(error) = TelemetryProcessor::process_messages(node_map, rx).await {
                 error!("Error while processing feed messages: {:?}", error);
             }
         });
         info!("Receiving and processing messages.");
-        let (a1_result, b1_result) = tokio::join!(a1, b1,);
-        a1_result?;
-        b1_result?;
+        let (receiver_result, processor_result) =
+            tokio::join!(receiver_join_handle, processor_join_handle);
+        receiver_result?;
+        processor_result?;
         Ok(())
     }
 }

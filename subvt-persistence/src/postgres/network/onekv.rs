@@ -1,13 +1,13 @@
+//! 1KV-related storage - for Polkadot and Kusama.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::{OneKVCandidateDetails, OneKVValidity};
-
-const ONEKV_MAX_CANDIDATE_RECORD_COUNT: i64 = 5;
 
 impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_candidate(
         &self,
         candidate_details: &OneKVCandidateDetails,
+        history_record_count: i64,
     ) -> anyhow::Result<i32> {
         let validator_account_id = AccountId::from_ss58_check(&candidate_details.stash_address)?;
         let kusama_account_id = if !candidate_details.kusama_stash_address.is_empty() {
@@ -121,7 +121,7 @@ impl PostgreSQLNetworkStorage {
         .bind(validator_account_id.to_string())
         .fetch_one(&self.connection_pool)
         .await?;
-        if candidate_record_count.0 > ONEKV_MAX_CANDIDATE_RECORD_COUNT {
+        if candidate_record_count.0 > history_record_count {
             sqlx::query(
                 r#"
                 DELETE FROM sub_onekv_candidate
@@ -135,7 +135,7 @@ impl PostgreSQLNetworkStorage {
                 "#,
             )
             .bind(validator_account_id.to_string())
-            .bind(candidate_record_count.0 - ONEKV_MAX_CANDIDATE_RECORD_COUNT)
+            .bind(candidate_record_count.0 - history_record_count)
             .execute(&self.connection_pool)
             .await?;
         }

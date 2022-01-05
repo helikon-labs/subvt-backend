@@ -1,3 +1,4 @@
+//! PostgreSQL notifications support, and SubVT notification generator state storage.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use serde::Serialize;
 use sqlx::postgres::PgListener;

@@ -1,3 +1,4 @@
+//! Extrinsic and event arguments, and the decode logic for them.
 use crate::{
     crypto::AccountId,
     substrate::{

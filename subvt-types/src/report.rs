@@ -1,3 +1,5 @@
+//! Report presentation types. Utilized by the `subvt-report-service` crate to server era and
+//! validator reports.
 use crate::substrate::Era;
 use serde::{Deserialize, Serialize};
 

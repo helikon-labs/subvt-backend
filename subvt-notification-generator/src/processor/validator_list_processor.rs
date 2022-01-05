@@ -1,3 +1,7 @@
+//! Checks validator changes for notifications. Validator list in Redis gets updated by
+//! `subvt-validator-list-updater`, and the update is notified using the Redis PUBLISH function.
+//! Keeps a copy of the validator list in heap memory (vector) to track changes.
+
 use crate::NotificationGenerator;
 use anyhow::Context;
 use chrono::Utc;
@@ -22,6 +26,7 @@ use subvt_types::{
     subvt::ValidatorDetails,
 };
 
+/// Does the initial population of the cached validator map.
 fn populate_validator_map(
     connection: &mut Connection,
     prefix: &str,
@@ -65,6 +70,8 @@ fn populate_validator_map(
 }
 
 impl NotificationGenerator {
+    /// Runs after each notification from the validator list updater for each validator,
+    /// checks for changes in the validator and persists notifications where a rule requires it.
     async fn check_validator_changes(
         config: &Config,
         (app_postgres, network_postgres): (&PostgreSQLAppStorage, &PostgreSQLNetworkStorage),
@@ -75,15 +82,18 @@ impl NotificationGenerator {
         last: &ValidatorDetails,
     ) -> anyhow::Result<Option<ValidatorDetails>> {
         let account_id = &last.account.id;
+        // last hash
         let hash = {
             let mut hasher = DefaultHasher::new();
             last.hash(&mut hasher);
             hasher.finish()
         };
+        // current hash
         let db_hash: u64 = redis::cmd("GET")
             .arg(format!("{}:hash", redis_prefix))
             .query(redis_connection)
             .context("Can't read validator hash from Redis.")?;
+        // return if there's no change in the validator's details
         if hash == db_hash {
             return Ok(None);
         }
@@ -121,7 +131,6 @@ impl NotificationGenerator {
         // new nominations
         for new_nominator_id in new_nominator_ids {
             let new_nomination = *current_nomination_map.get(&new_nominator_id).unwrap();
-            // create app event
             debug!(
                 "New nomination for {} :: {} :: {}",
                 account_id.to_ss58_check(),
@@ -256,8 +265,7 @@ impl NotificationGenerator {
                     .await?;
             }
         }
-
-        // check active next session
+        // check (in)active next session
         if current.active_next_session != last.active_next_session {
             if current.active_next_session {
                 debug!(
@@ -311,7 +319,7 @@ impl NotificationGenerator {
                     .await?;
             }
         }
-        // check active
+        // check (in)active now
         if current.is_active != last.is_active {
             if current.is_active {
                 debug!("Now active: {}", current.account.id.to_ss58_check());
@@ -359,7 +367,7 @@ impl NotificationGenerator {
                     .await?;
             }
         }
-        // check 1kv
+        // check 1kv rank and validity
         if current.onekv_candidate_record_id.is_some()
             && (current.onekv_candidate_record_id == last.onekv_candidate_record_id)
         {
@@ -442,6 +450,7 @@ impl NotificationGenerator {
         Ok(Some(current))
     }
 
+    /// Called after each validator list update PUBLISH event.
     async fn process(
         config: &Config,
         (app_postgres, network_postgres): (&PostgreSQLAppStorage, &PostgreSQLNetworkStorage),
@@ -470,6 +479,7 @@ impl NotificationGenerator {
             .cloned()
             .collect();
         if validator_map.is_empty() {
+            // first run
             info!("Validator map is empty. Populate.");
             populate_validator_map(
                 redis_connection,

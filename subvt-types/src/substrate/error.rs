@@ -1,3 +1,4 @@
+//! Errors related to the Substrate types decoding/conversion.
 #[derive(thiserror::Error, Clone, Debug)]
 pub enum DecodeError {
     #[error("Decode error: {0}")]

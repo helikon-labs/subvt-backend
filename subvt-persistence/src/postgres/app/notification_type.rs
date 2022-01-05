@@ -1,3 +1,4 @@
+//! Notification type (authorship, offences, new/lost/changed nominations, etc.) related storage.
 use crate::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::NotificationType;
 

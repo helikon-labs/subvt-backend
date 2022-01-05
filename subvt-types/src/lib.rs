@@ -1,3 +1,4 @@
+//! SubVT types. Refer to module documentations for details.
 pub mod app;
 pub mod crypto;
 pub mod err;

@@ -1,3 +1,5 @@
+//! Telemetry-related storage. Used by the `subvt-telemetry-processor` crate, and other crates
+//! that query the telemetry data (validator details, notification generator, etc.).
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 use subvt_types::telemetry::{NodeDetails, NodeHardware, NodeLocation, NodeStats};

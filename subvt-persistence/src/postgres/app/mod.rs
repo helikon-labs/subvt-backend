@@ -1,3 +1,5 @@
+//! PostgreSQL persistence for SubVT application-related storage.
+//! The application database is separate from the databases for each supported network.
 use log::debug;
 use sqlx::{Pool, Postgres};
 use subvt_config::Config;
@@ -15,7 +17,7 @@ pub struct PostgreSQLAppStorage {
 
 impl PostgreSQLAppStorage {
     pub async fn new(config: &Config, uri: String) -> anyhow::Result<PostgreSQLAppStorage> {
-        debug!("Establishing application database connection pool...");
+        debug!("Establishing application database connection pool.");
         let connection_pool = sqlx::postgres::PgPoolOptions::new()
             .connect_timeout(std::time::Duration::from_secs(
                 config.network_postgres.connection_timeout_seconds,

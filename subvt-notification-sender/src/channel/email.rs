@@ -1,3 +1,5 @@
+//! Email sending logic.
+
 use crate::ContentProvider;
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;

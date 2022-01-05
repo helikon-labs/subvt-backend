@@ -1,3 +1,5 @@
+//! Storage related to a network supported by SubVT.
+//! Each supported network has a separate database.
 use log::debug;
 use parity_scale_codec::Encode;
 use sqlx::{Pool, Postgres};

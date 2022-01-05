@@ -1,3 +1,5 @@
+//! Substrate event types, and decode logic.
+//! Note: These are only the events that are utilized in SubVT.
 use crate::{
     crypto::AccountId,
     substrate::{

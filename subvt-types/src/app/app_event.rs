@@ -1,3 +1,4 @@
+//! SubVT application events, on top of the Substrate events.
 use crate::crypto::AccountId;
 use crate::onekv::OneKVValidity;
 use crate::substrate::Balance;

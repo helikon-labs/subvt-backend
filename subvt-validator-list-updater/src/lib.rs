@@ -1,6 +1,5 @@
-//! Updates the Redis database after every block with validator list data.
+//! Updates the Redis database with the complete validator list after every block.
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
-
 use anyhow::Context;
 use async_lock::RwLock;
 use async_trait::async_trait;

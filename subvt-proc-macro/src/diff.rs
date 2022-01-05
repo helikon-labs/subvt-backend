@@ -1,7 +1,15 @@
+//! A derive macro that generates a diff struct for a struct, which contains `Option`s
+//! for each field of the marked struct. Diff struct's name is the original struct's name
+//! suffixed with `Diff`.
+//!
+//! A `diff`d struct can use the `get_diff` function on itself to calculate
+//! the diff between itself and another instance, and the `apply_diff` function to
+//! apply a diff struct to itself.
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{Data, DataStruct, DeriveInput, Fields};
 
+/// See module documentation for details.
 pub fn derive_diff(input: DeriveInput) -> TokenStream {
     const KEY_ATTR_NAME: &str = "diff_key";
 

@@ -1,3 +1,4 @@
+//! All Telemetry-related data types.
 use anyhow::Context;
 use serde::Deserialize;
 use serde_json::value::RawValue;

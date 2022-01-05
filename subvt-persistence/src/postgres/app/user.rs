@@ -1,3 +1,4 @@
+//! Storage related to SubVT application users.
 use crate::postgres::app::PostgreSQLAppStorage;
 use std::collections::HashSet;
 use std::str::FromStr;

@@ -1,3 +1,5 @@
+//! Firebase Cloud Messaging (FCM) notification sending logic for Android.
+
 use crate::ContentProvider;
 use log::{debug, error};
 use serde::Serialize;

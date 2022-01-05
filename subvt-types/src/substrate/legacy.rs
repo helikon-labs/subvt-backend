@@ -1,3 +1,4 @@
+//! Types to support the older metadata/runtime versions.
 use crate::crypto::AccountId;
 use pallet_election_provider_multi_phase::ElectionCompute;
 use parity_scale_codec::{Compact, Decode};

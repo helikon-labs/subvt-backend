@@ -1,3 +1,4 @@
+//! Storage related to the supported notification channels (email, APNS, FCM, SMS, etc.).
 use crate::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::NotificationChannel;
 

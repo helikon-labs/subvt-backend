@@ -1,3 +1,4 @@
+//! Substrate client tests. WiP.
 use subvt_config::Config;
 use subvt_substrate_client::SubstrateClient;
 

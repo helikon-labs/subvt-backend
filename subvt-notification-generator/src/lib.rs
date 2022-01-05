@@ -1,6 +1,10 @@
-//! Subscribes to the inactive validator list data on Redis and publishes the data
-//! through WebSocket pub/sub.
-//!
+//! Generates notifications according to the notification rules depending on three sources of data:
+//! 1. Validator list updates from Redis, updated by `subvt-validator-list-updater`, and published
+//! using the Redis notification (PUBLISH) support.
+//! 2. Events and extrinsics in new blocks. Block are processed by `subvt-block-processor`, and the
+//! finishing of the processing of a block is signalled by the processor by means of PostgreSQL
+//! notifications.
+//! 3. Regular Telemetry checks (this is work in progress still).
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
@@ -24,6 +28,8 @@ lazy_static! {
 pub struct NotificationGenerator;
 
 impl NotificationGenerator {
+    /// Persist notifications for a validator, which will later be be processed by
+    /// `subvt-notification-sender`.
     async fn generate_notifications<T: Clone + Serialize>(
         config: &Config,
         app_postgres: &PostgreSQLAppStorage,
@@ -34,6 +40,8 @@ impl NotificationGenerator {
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
         let block_hash = substrate_client.get_block_hash(block_number).await?;
+        // get account information for the validator stash address, which is used to display
+        // identity information if exists
         let account_json = if let Some(account) = substrate_client
             .get_accounts(&[validator_account_id.clone()], &block_hash)
             .await?
@@ -43,6 +51,7 @@ impl NotificationGenerator {
         } else {
             None
         };
+        // create separate notifications for each rule and notification channel
         for rule in rules {
             debug!(
                 "Generate {} notification for {}.",
@@ -85,6 +94,7 @@ impl NotificationGenerator {
 impl Service for NotificationGenerator {
     async fn run(&'static self) -> anyhow::Result<()> {
         let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
+        // for async in sync context
         let tokio_rt = Builder::new_current_thread().enable_all().build().unwrap();
         let validator_list_processor_substrate_client = substrate_client.clone();
         // start processing validator list updates
@@ -94,7 +104,7 @@ impl Service for NotificationGenerator {
                 validator_list_processor_substrate_client,
             ));
         });
-        // start processing new blocks
+        // start processing events and extrinsics in new blocks
         NotificationGenerator::start_processing_blocks(&CONFIG, substrate_client).await
     }
 }

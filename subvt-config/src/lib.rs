@@ -132,6 +132,7 @@ pub struct BlockProcessorConfig {
 /// 1KV configuration - only used for Polkadot and Kusama.
 #[derive(Clone, Debug, Deserialize)]
 pub struct OneKVConfig {
+    pub candidate_history_record_count: u64,
     pub candidate_list_endpoint: String,
     pub candidate_details_endpoint: String,
     pub refresh_seconds: u64,
@@ -166,11 +167,13 @@ pub struct NotificationSenderConfig {
     pub email_password: String,
     pub email_smtp_server_url: String,
     pub email_smtp_server_tls_port: u16,
+    // Apple Push Notification Service
     pub apns_key_location: String,
     pub apns_key_id: String,
     pub apns_team_id: String,
     pub apns_topic: String,
     pub apns_is_production: bool,
+    // Firebase Cloud Messaging
     pub fcm_api_key: String,
 }
 

@@ -1,3 +1,5 @@
+//! Non-Substrate application events storage, such as new validator on network, 1KV rank change,
+//! lost/new/changed nomination, etc.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::{app::app_event, crypto::AccountId};
 

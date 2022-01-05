@@ -1,3 +1,4 @@
+//! SubVT Substrate client implementation.
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_map_key,
@@ -25,7 +26,7 @@ use subvt_types::substrate::{
     ValidatorStake,
 };
 /// Substrate client structure and its functions.
-/// This is the main gateway to a Substrate node through its RPC interface.
+/// This is the main gateway for SubVT to a Substrate node RPC interface.
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::decode_hex_string;
 
@@ -192,6 +193,7 @@ impl SubstrateClient {
         Ok(active_era_info)
     }
 
+    /// Get the index of the epoch at the given block hash.
     pub async fn get_current_epoch_index(&self, block_hash: &str) -> anyhow::Result<u64> {
         let hex_string: String = self
             .ws_client
@@ -243,6 +245,7 @@ impl SubstrateClient {
         })
     }
 
+    /// Decode account if from a transparent key.
     fn account_id_from_storage_key_string(&self, storage_key_string: &str) -> AccountId {
         let hex_string = &storage_key_string[(storage_key_string.len() - 64)..];
         decode_hex_string(hex_string).unwrap()
@@ -254,6 +257,7 @@ impl SubstrateClient {
             .unwrap()
     }
 
+    /// Get controller account id for a given stash account id at the given block.
     pub async fn get_controller_account_id(
         &self,
         stash_account_id: &AccountId,
@@ -277,6 +281,7 @@ impl SubstrateClient {
         Ok(None)
     }
 
+    /// Get the ledger for a controller account at the given block.
     pub async fn get_stake(
         &self,
         controller_account_id: &AccountId,
@@ -300,6 +305,7 @@ impl SubstrateClient {
         Ok(None)
     }
 
+    /// Get the stash account id for a controller account id at the given block.
     pub async fn get_stash_account_id(
         &self,
         controller_account_id: &AccountId,
@@ -311,6 +317,7 @@ impl SubstrateClient {
         }
     }
 
+    /// Get the nomination details for a nominator stash account id at the given block.
     pub async fn get_nomination(
         &self,
         nominator_stash_account_id: &AccountId,
@@ -354,6 +361,8 @@ impl SubstrateClient {
         Ok(all_validator_ids)
     }
 
+    /// Gets the map from stash account ids to controller account ids at the given block
+    /// for the given stash account ids.
     pub async fn get_bonded_account_id_map(
         &self,
         account_ids: &[AccountId],
@@ -385,7 +394,7 @@ impl SubstrateClient {
         Ok(map)
     }
 
-    /// Get the list of all active validators at the given block.
+    /// Get the list of all active validators' stash account ids at the given block.
     pub async fn get_active_validator_account_ids(
         &self,
         block_hash: &str,
@@ -400,6 +409,8 @@ impl SubstrateClient {
         Ok(decode_hex_string(hex_string.as_str())?)
     }
 
+    /// Maps the given accounts ids to tuples that contain the parent account id and child display.
+    /// Returned map will not contain an entry for the account id that has no parent.
     pub async fn get_parent_account_ids(
         &self,
         account_ids: &[AccountId],
@@ -446,6 +457,7 @@ impl SubstrateClient {
         Ok(parent_account_map)
     }
 
+    /// Get identity records for the given account ids at the given block.
     pub async fn get_identities(
         &self,
         account_ids: &[AccountId],
@@ -477,6 +489,7 @@ impl SubstrateClient {
         Ok(identity_map)
     }
 
+    /// Get complete account details for the given account ids at the given block.
     pub async fn get_accounts(
         &self,
         account_ids: &[AccountId],
@@ -521,6 +534,8 @@ impl SubstrateClient {
         Ok(accounts)
     }
 
+    /// Get the complete keys for the given module (pallet) and storage.
+    /// An example would be the complete keys for `Staking.Nominators`.
     async fn get_all_keys_for_storage(
         &self,
         module_name: &str,
@@ -556,7 +571,7 @@ impl SubstrateClient {
         Ok(all_keys)
     }
 
-    /// Get the details of all validators at the given block.
+    /// Get the complete details of all validators, active and inactive, at the given block.
     pub async fn get_all_validators(
         &self,
         block_hash: &str,
@@ -1024,6 +1039,7 @@ impl SubstrateClient {
         decode_hex_string(hex_string.as_str())
     }
 
+    /// Get the complete events in the given block.
     pub async fn get_block_events(&self, block_hash: &str) -> anyhow::Result<Vec<SubstrateEvent>> {
         let block = self.get_block(block_hash).await?;
         let mut event_bytes: &[u8] = {
@@ -1039,6 +1055,7 @@ impl SubstrateClient {
         SubstrateEvent::decode_events(&self.chain, &self.metadata, block, &mut event_bytes)
     }
 
+    /// Get the complete extrinsics in the given block.
     pub async fn get_block_extrinsics(
         &self,
         block_hash: &str,
@@ -1047,7 +1064,7 @@ impl SubstrateClient {
         SubstrateExtrinsic::decode_extrinsics(&self.chain, &self.metadata, block)
     }
 
-    /// Get the number of all validation intents at the given block.
+    /// Get runtime info at the given block.
     pub async fn get_last_runtime_upgrade_info(
         &self,
         block_hash: &str,
@@ -1064,6 +1081,7 @@ impl SubstrateClient {
         )?)
     }
 
+    /// Figure the account id of the owner of an imonline key at a given block.
     pub async fn get_im_online_key_owner_account_id(
         &self,
         block_hash: &str,
@@ -1083,6 +1101,7 @@ impl SubstrateClient {
         Ok(decode_hex_string(&account_id_hex_string)?)
     }
 
+    /// Get the indices of the paravalidators at the given block.
     pub async fn get_parachain_active_validator_indices(
         &self,
         block_hash: &str,
@@ -1094,6 +1113,7 @@ impl SubstrateClient {
         Ok(decode_hex_string(&indices_vector_hex_string)?)
     }
 
+    /// Validator preferences map at a given block.
     pub async fn get_era_validator_prefs(
         &self,
         era_index: u32,

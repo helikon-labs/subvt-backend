@@ -1,3 +1,4 @@
+//! Types used in relational database storage.
 use serde::{Deserialize, Serialize};
 
 pub struct ValidatorInfo {

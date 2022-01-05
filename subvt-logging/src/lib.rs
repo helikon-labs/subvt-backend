@@ -13,6 +13,7 @@ pub fn init(config: &subvt_config::Config) {
     let mut builder = Builder::from_env(Env::default());
     builder.target(Target::Stdout);
     builder.filter(None, other_modules_log_level);
+    // include all executable SubVT modules here
     builder.filter(Some("subvt_app_service"), log_level);
     builder.filter(Some("subvt_block_processor"), log_level);
     builder.filter(Some("subvt_live_network_status_server"), log_level);

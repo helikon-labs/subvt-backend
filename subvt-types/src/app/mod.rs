@@ -1,3 +1,4 @@
+//! Types used in the application logic of SubVT.
 use crate::crypto::AccountId;
 use crate::substrate::Account;
 use chrono::NaiveDateTime;

@@ -1,3 +1,4 @@
+//! Era and validator report storage and types.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
 use subvt_types::report::{EraReport, EraValidatorReport};

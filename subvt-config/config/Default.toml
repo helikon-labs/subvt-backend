@@ -57,6 +57,8 @@ connection_timeout_seconds = 3
 start_block_number = 4401243
 
 [onekv]
+# this many most recent records will always be kept in the database for reference
+candidate_history_record_count = 5
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
 refresh_seconds = 300

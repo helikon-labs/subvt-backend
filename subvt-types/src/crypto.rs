@@ -1,3 +1,4 @@
+//! Contains the `AccountId` struct, a 32-byte value that uniquely identifies a Substrate account.
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sp_core::crypto::Ss58Codec;
@@ -27,6 +28,8 @@ impl AccountId {
         }
     }
 
+    /// Calculate a multisig account id from the combination of signatory account ids
+    /// and the other signatories' account ids.
     pub fn multisig_account_id(
         signatory: &AccountId,
         other_signatories: &[AccountId],
@@ -42,6 +45,7 @@ impl AccountId {
     }
 }
 
+/// Display in hex format.
 impl Display for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str("0x")?;
@@ -49,6 +53,7 @@ impl Display for AccountId {
     }
 }
 
+/// Parse account id from a hex string, prefixed with `0x` or not.
 impl FromStr for AccountId {
     type Err = hex::FromHexError;
 

@@ -1,6 +1,6 @@
-//! SubVT types. These types are used to communicate the network status to
-//! the database as a buffer or direct to the applications depending on the
-//! implementation.
+//! SubVT types. These types are used to send the network status and
+//! validator details/summary to Redis in-memory database. This data then gets consumed
+//! by other services that require it.
 
 use crate::crypto::AccountId;
 use crate::substrate::{

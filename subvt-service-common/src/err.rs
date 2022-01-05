@@ -1,3 +1,4 @@
+//! Service error types.
 use log::error;
 use std::fmt::{Display, Formatter};
 use subvt_types::err::ServiceError;

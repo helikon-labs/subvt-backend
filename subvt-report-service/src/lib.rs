@@ -1,3 +1,4 @@
+//!  Public reporting REST services.
 use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
@@ -29,11 +30,14 @@ struct ValidatorReportPathParameters {
 #[derive(Deserialize)]
 struct EraReportQueryParameters {
     start_era_index: u32,
+    /// Report will be generated for a single era when this parameter is omitted.
     #[serde(rename(deserialize = "end_era_index"))]
     maybe_end_era_index: Option<u32>,
 }
 
-#[get("/service/report/validator/{account_id_hex_string}")]
+/// Gets the report for a certain validator in a range of eras, or a single era.
+/// See `EraValidatorReport` struct in the `subvt-types` for details.
+#[get("/report/validator/{account_id_hex_string}")]
 async fn era_validator_report_service(
     path: web::Path<ValidatorReportPathParameters>,
     query: web::Query<EraReportQueryParameters>,
@@ -64,6 +68,8 @@ async fn era_validator_report_service(
     ))
 }
 
+/// Gets the report for a range of eras, or a single era.
+/// See `EraReport` struct in the `subvt-types` definition for details.
 #[get("/service/report/era")]
 async fn era_report_service(
     query: web::Query<EraReportQueryParameters>,

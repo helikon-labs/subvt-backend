@@ -1,3 +1,4 @@
+//! Helper types to read data from PostgreSQL using SQLx.
 use crate::app::extrinsic::ValidateExtrinsic;
 use crate::app::{
     Block, Network, Notification, NotificationParamDataType, NotificationPeriodType,

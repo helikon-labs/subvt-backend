@@ -1,6 +1,10 @@
-//! Subscribes to the validator list data on Redis and publishes the data
-//! through WebSocket pub/sub.
-
+//! Validator list WebSocket server. Operates on the configured port. Serves the inactive validator
+//! list if the `--inactive` command-line flag is provided at startup, otherwise serves the active
+//! validator list.
+//!
+//! Supports two RPC methods: `subscribe_validator_list` and `unsubscribe_validator_list`.
+//! Gives the complete list at first connection, then publishes only the changed validators' fields
+//! after each update from `subvt-validator-list-updater`.
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
@@ -94,7 +98,7 @@ impl Service for ValidatorListServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let matches = App::new("SubVT Validator List Server")
             .version("0.1.0")
-            .author("Kutsal Kaan Bilgin <kutsa@helikon.io>")
+            .author("Kutsal Kaan Bilgin <kutsal@helikon.io>")
             .about("Serves the live active or inactive validator list for the SubVT app.")
             .arg(Arg::new("inactive").long("inactive").short('i').help(
                 "Active list is served by default. Use this flag to serve the inactive list.",

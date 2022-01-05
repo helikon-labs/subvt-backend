@@ -1,3 +1,9 @@
+//! Validator details WebSocket server. Operates on the configured port.
+//!
+//! Supports two RPC methods: `subscribe_validator_details` and `unsubscribe_validator_details`.
+//! `subscribe_validator_details` accepts a single parameter: 0x-prefixed hex-encoded account id
+//! of the validator. Gives the complete details at first connection, then publishes only the
+//! changed fields after each update from `subvt-validator-list-updater`.
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;

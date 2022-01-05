@@ -1,3 +1,5 @@
+//! Apple Push Notification Service (APNS) notification sending logic.
+
 use crate::ContentProvider;
 use a2::NotificationBuilder;
 use log::{debug, error};
