@@ -7,7 +7,7 @@ rust-version = "1.56.0"
 [dependencies]
 anyhow = "1.0.52"
 async-lock = "2.4.0"
-async-recursion = "0.3.2"
+async-recursion = "1.0.0"
 async-trait = "0.1.52"
 chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
 lazy_static = "1.4.0"
