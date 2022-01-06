@@ -23,9 +23,10 @@ async fn test_get_networks() {
     )
     .await;
     let request = test::TestRequest::get()
-        .uri("/service/network")
+        .uri("/network")
         .to_request();
     let response = test::call_service(&app, request).await;
+    println!("RESPONSE {:?}", response);
     let networks: Vec<Network> = test::read_body_json(response).await;
     assert!(!networks.is_empty());
 }
