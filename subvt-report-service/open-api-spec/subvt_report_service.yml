@@ -218,6 +218,7 @@ definitions:
         description: "Number of chilling events for the validator in era."
   Error:
     type: "object"
+    required: ["description"]
     properties:
       description:
         type: "string"

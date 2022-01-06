@@ -403,6 +403,7 @@ paths:
 definitions:
   CreateNotificationChannelRequest:
     type: "object"
+    required: ["channel_code", "target"]
     properties:
       channel_code:
         type: "string"
@@ -412,12 +413,14 @@ definitions:
         description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
   CreateUserRequest:
     type: "object"
+    required: ["public_key_hex"]
     properties:
       public_key_hex:
         type: "string"
         description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
   CreateUserValidatorRequest:
     type: "object"
+    required: ["network_id", "validator_account_id"]
     properties:
       network_id:
         type: "integer"
@@ -428,6 +431,7 @@ definitions:
         description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed."
   Error:
     type: "object"
+    required: ["description"]
     properties:
       description:
         type: "string"
@@ -467,12 +471,14 @@ definitions:
         description: "URL for the SubVT inactive validator list WS RPC service for the network."
   NotificationChannel:
     type: "object"
+    required: ["code"]
     properties:
       code:
         type: "string"
         description: "Short code of the notification channel (email, fcm, apns, etc.)."
   NotificationType:
     type: "object"
+    required: ["code", "param_types"]
     properties:
       code:
         type: "string"
@@ -514,6 +520,7 @@ definitions:
         description: "Whether the parameter is optional."
   User:
     type: "object"
+    required: ["id", "public_key_hex"]
     properties:
       id:
         type: "integer"
@@ -524,6 +531,7 @@ definitions:
         description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
   UserNotificationChannel:
     type: "object"
+    required: ["id", "user_id", "channel_code", "target"]
     properties:
       id:
         type: "integer"
@@ -541,6 +549,7 @@ definitions:
         description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
   UserValidator:
     type: "object"
+    required: ["id", "user_id", "network_id", "validator_account_id"]
     properties:
       id:
         type: "integer"
@@ -557,6 +566,3 @@ definitions:
       validator_account_id:
         type: "string"
         description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed."
-externalDocs:
-  description: "Find out more about SubVT"
-  url: "http://subvt.helikon.io"
