@@ -88,7 +88,7 @@ paths:
       tags:
         - "user"
       summary: "Create new user"
-      description: "Create a new SubVT user. Request body only has the public key of the user."
+      description: "Create a new SubVT user. Request body has only the public key of the user."
       consumes:
         - "application/json"
       produces:
@@ -124,14 +124,14 @@ paths:
     get:
       tags: ["notification", "user"]
       summary: "Get user notification channels list"
-      description: "Get the list of the user's all notification channels."
+      description: "Get the list of the user's notification channels."
       produces:
         - "application/json"
       operationId: "getUserNotificationChannelList"
       parameters:
         - name: "signature"
           in: "header"
-          description: "Request body signed with the user's private key."
+          description: "Relative request path (e.g. `/user/7465/notification/channel`) signed with the user's private key."
           required: true
           type: "string"
         - name: "user_id"
@@ -175,7 +175,7 @@ paths:
       parameters:
         - name: "signature"
           in: "header"
-          description: "Relative request path (e.g. `/user/7465/notification/channel`) signed with the user's private key."
+          description: "Request body signed with the user's private key."
           required: true
           type: "string"
         - name: "user_id"
@@ -260,6 +260,146 @@ paths:
           description: "Internal server error"
           schema:
             $ref: "#/definitions/Error"
+  /user/{user_id}/validator:
+    get:
+      tags: [ "validator", "user" ]
+      summary: "Get user validator list"
+      description: "Get the list of the user's validators."
+      produces:
+        - "application/json"
+      operationId: "getUserValidatorList"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/validator`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserValidator"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags: [ "validator", "user" ]
+      summary: "Create user validator"
+      description: "Create a new validator for the user."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      operationId: "createUserValidator"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Request body signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "validator"
+          in: "body"
+          description: "Validator."
+          required: true
+          schema:
+            $ref: "#/definitions/CreateUserValidatorRequest"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            $ref: "#/definitions/UserValidator"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User or network not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "409":
+          description: "User validator exists with the same network and account ids"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user/{user_id}/validator/{user_validator_id}:
+    delete:
+      tags: [ "validator", "user" ]
+      summary: "Delete user validator"
+      description: "Delete the validator from the user's validator list."
+      produces:
+        - "application/json"
+      operationId: "deleteUserValidator"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/validator/214`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "user_validator_id"
+          in: "path"
+          description: "User validator id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "204":
+          description: "Operation successful"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User notification channel not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
 definitions:
   CreateNotificationChannelRequest:
     type: "object"
@@ -276,6 +416,16 @@ definitions:
       public_key_hex:
         type: "string"
         description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
+  CreateUserValidatorRequest:
+    type: "object"
+    properties:
+      network_id:
+        type: "integer"
+        format: "int64"
+        description: "Id of the network that the validator is on."
+      validator_account_id:
+        type: "string"
+        description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed."
   Error:
     type: "object"
     properties:
@@ -389,6 +539,24 @@ definitions:
       target:
         type: "string"
         description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
+  UserValidator:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "User notification channel id."
+      user_id:
+        type: "integer"
+        format: "int64"
+        description: "User id."
+      network_id:
+        type: "integer"
+        format: "int64"
+        description: "Id of the network that the validator is on."
+      validator_account_id:
+        type: "string"
+        description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed."
 externalDocs:
   description: "Find out more about SubVT"
   url: "http://subvt.helikon.io"
