@@ -42,25 +42,25 @@ async fn check_user_exists_by_id(
 }
 
 /// `GET`s the list of networks supported by SubVT.
-#[get("/service/network")]
+#[get("/network")]
 pub async fn get_networks(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_networks().await?))
 }
 
 /// `GET`s the list of supported notification channels, such as email, push notification, SMS, etc.
-#[get("/service/notification/channel")]
+#[get("/notification/channel")]
 async fn get_notification_channels(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_notification_channels().await?))
 }
 
 /// `GET`s the list of notification types and their parameters supported by SubVT.
-#[get("/service/notification/type")]
+#[get("/notification/type")]
 async fn get_notification_types(state: web::Data<ServiceState>) -> ResultResponse {
     Ok(HttpResponse::Ok().json(state.postgres.get_notification_types().await?))
 }
 
 /// Validates and creates a new user.
-#[post("/service/user")]
+#[post("/user")]
 async fn create_user(state: web::Data<ServiceState>, mut user: web::Json<User>) -> ResultResponse {
     let public_key_hex = user.public_key_hex.trim_start_matches("0x").to_uppercase();
     // validate public key hex length
@@ -97,7 +97,7 @@ struct UserIdPathParameter {
 }
 
 /// `GET`s the list of notification channels that the user has created for herself so far.
-#[get("/service/user/{user_id}/notification/channel")]
+#[get("/user/{user_id}/notification/channel")]
 async fn get_user_notification_channels(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
@@ -114,7 +114,7 @@ async fn get_user_notification_channels(
 }
 
 /// Creates a new notification channel for the user.
-#[post("/service/user/{user_id}/notification/channel")]
+#[post("/user/{user_id}/notification/channel")]
 async fn add_user_notification_channel(
     path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<UserNotificationChannel>,
@@ -164,7 +164,7 @@ struct UserNotificationChannelIdPathParameter {
 
 /// `DELETE`s the notification channel from the user's list of notification channels.
 /// A soft delete, but the user will no longer receive notifications on this channel.
-#[delete("/service/user/{user_id}/notification/channel/{channel_id}")]
+#[delete("/user/{user_id}/notification/channel/{channel_id}")]
 async fn delete_user_notification_channel(
     path_params: web::Path<UserNotificationChannelIdPathParameter>,
     state: web::Data<ServiceState>,
@@ -191,7 +191,7 @@ async fn delete_user_notification_channel(
 }
 
 /// `GET`s the list of all validators registered to the user.
-#[get("/service/user/{user_id}/validator")]
+#[get("/user/{user_id}/validator")]
 async fn get_user_validators(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
@@ -208,7 +208,7 @@ async fn get_user_validators(
 }
 
 /// Adds a new validator to the user's list of validators.
-#[post("/service/user/{user_id}/validator")]
+#[post("/user/{user_id}/validator")]
 async fn add_user_validator(
     path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<UserValidator>,
@@ -246,7 +246,7 @@ struct UserValidatorIdPathParameter {
 
 /// `DELETE`s a validator from the user's list of validators.
 /// A soft delete, i.e. only marks the validator as deleted.
-#[delete("/service/user/{user_id}/validator/{user_validator_id}")]
+#[delete("/user/{user_id}/validator/{user_validator_id}")]
 async fn delete_user_validator(
     path_params: web::Path<UserValidatorIdPathParameter>,
     state: web::Data<ServiceState>,
@@ -287,7 +287,7 @@ struct CreateUserNotificationRuleRequest {
 }
 
 /// `GET`s the list of the user's non-deleted notification rules.
-#[get("/service/user/{user_id}/notification/rule")]
+#[get("/user/{user_id}/notification/rule")]
 async fn get_user_notification_rules(
     path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
@@ -305,7 +305,7 @@ async fn get_user_notification_rules(
 
 /// Creates a new notification rule for the user. The new rule starts getting evaluated for possible
 /// notifications as soon as it gets created.
-#[post("/service/user/{user_id}/notification/rule")]
+#[post("/user/{user_id}/notification/rule")]
 async fn create_user_notification_rule(
     path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<CreateUserNotificationRuleRequest>,
@@ -453,7 +453,7 @@ struct UserNotificationRuleIdPathParameter {
 /// `DELETE` a rule from the list of the user's notification rules.
 /// A soft delete, the rule will not be able to generate new notifications as soon as
 /// it gets deleted.
-#[delete("/service/user/{user_id}/notification/rule/{user_notification_rule_id}")]
+#[delete("/user/{user_id}/notification/rule/{user_notification_rule_id}")]
 async fn delete_user_notification_rule(
     path_params: web::Path<UserNotificationRuleIdPathParameter>,
     state: web::Data<ServiceState>,

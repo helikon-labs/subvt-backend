@@ -23,10 +23,11 @@ paths:
     get:
       tags:
         - "era"
-      summary: "Get era report for a single era or a range of eras."
-      description: ""
+      summary: "Get era(s) report"
+      description: "Get era report for a single era or a range of eras."
       produces:
         - "application/json"
+      operationId: "getEraReport"
       parameters:
         - name: "start_era_index"
           in: "query"
@@ -49,25 +50,26 @@ paths:
             items:
               $ref: "#/definitions/EraReport"
         "400":
-          description: "Invalid input"
+          description: "Bad request"
           schema:
-            $ref: "#/definitions/ReportServiceError"
+            $ref: "#/definitions/Error"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/ReportServiceError"
+            $ref: "#/definitions/Error"
   /validator/{account_id_hex}:
     get:
       tags:
         - "validator"
-      summary: "Get era-validator report for a single era or a range of eras."
-      description: ""
+      summary: "Get validator report for era(s)"
+      description: "Get validator report over a single era or a range of eras."
       produces:
         - "application/json"
+      operationId: "getValidatorReport"
       parameters:
         - name: "account_id_hex"
           in: "path"
-          description: "Account id of the validator in hex format (eg. 0xdc89c6865c029c1088fb27b41c1a715b0bb611b94e1d625fa0bb8a1294187454)."
+          description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed or not."
           required: true
           type: "string"
         - name: "start_era_index"
@@ -91,13 +93,13 @@ paths:
             items:
               $ref: "#/definitions/EraValidatorReport"
         "400":
-          description: "Invalid input"
+          description: "Bad request"
           schema:
-            $ref: "#/definitions/ReportServiceError"
+            $ref: "#/definitions/Error"
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/ReportServiceError"
+            $ref: "#/definitions/Error"
 definitions:
   Era:
     type: "object"
@@ -166,12 +168,6 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Number of validator chilling events in era."
-  ReportServiceError:
-    type: "object"
-    properties:
-      description:
-        type: "string"
-        description: "Error description."
   EraValidatorReport:
     type: "object"
     properties:
@@ -220,3 +216,9 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Number of chilling events for the validator in era."
+  Error:
+    type: "object"
+    properties:
+      description:
+        type: "string"
+        description: "Error description."

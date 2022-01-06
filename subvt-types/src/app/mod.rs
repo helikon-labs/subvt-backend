@@ -34,7 +34,8 @@ pub struct Network {
     pub live_network_status_service_url: Option<String>,
     pub report_service_url: Option<String>,
     pub validator_details_service_url: Option<String>,
-    pub validator_list_service_url: Option<String>,
+    pub active_validator_list_service_url: Option<String>,
+    pub inactive_validator_list_service_url: Option<String>,
 }
 
 fn default_id() -> u32 {

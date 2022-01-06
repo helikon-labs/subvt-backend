@@ -1,34 +1,37 @@
 swagger: "2.0"
 info:
-  description: "Specifies the SubVT mobile application service endpoints."
+  description: "SubVT application service endpoints."
   version: "0.1.0"
   title: "SubVT Application Service"
-  termsOfService: "https://helikon.io/terms/"
+  termsOfService: "https://subvt-test.helikon.io"
   contact:
     email: "info@helikon.io"
   license:
     name: "GPL-3.0"
     url: "https://www.gnu.org/licenses/gpl-3.0.en.html"
-host: "subvt.helikon.io"
-basePath: "/service/app"
+host: "78.181.100.160:17778"
+basePath: "/app"
 tags:
-  - name: "app"
-    description: "Mobile application services."
-    externalDocs:
-      description: "Find out more"
-      url: "https://subvt.helikon.io"
+  - name: "network"
+    description: "Services related to the networks supported by SubVT."
+  - name: "notification"
+    description: "All the services related to notifications, and notification metadata."
+  - name: "user"
+    description: "User services."
+  - name: "validator"
+    description: "User-validator services."
 schemes:
-  - "https"
   - "http"
 paths:
   /network:
     get:
       tags:
-        - "app"
-      summary: "Get a list of supported networks."
-      description: ""
+        - "network"
+      summary: "Get network list"
+      description: "Get a list of all supported networks."
       produces:
         - "application/json"
+      operationId: "getNetworkList"
       responses:
         "200":
           description: "Operation successful"
@@ -39,14 +42,241 @@ paths:
         "500":
           description: "Internal server error"
           schema:
-            $ref: "#/definitions/ReportError"
-securityDefinitions:
-  api_key:
-    type: "apiKey"
-    name: "api_key"
-    in: "header"
+            $ref: "#/definitions/Error"
+  /notification/channel:
+    get:
+      tags:
+        - "notification"
+      summary: "Get notification channel list"
+      description: "Get a list of all notification channels (email, sms, apns, fcm, etc.)."
+      produces:
+        - "application/json"
+      operationId: "getNotificationChannelList"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/NotificationChannel"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /notification/type:
+    get:
+      tags:
+        - "notification"
+      summary: "Get notification type list"
+      description: "Get a list of all notification types (block authored, new/lost/changed nomination, validator chilled, offline offence etc.)."
+      produces:
+        - "application/json"
+      operationId: "getNotificationTypeList"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/NotificationType"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user:
+    post:
+      tags:
+        - "user"
+      summary: "Create new user"
+      description: "Create a new SubVT user. Request body only has the public key of the user."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      operationId: "createUser"
+      parameters:
+        - name: "user"
+          in: "body"
+          description: "User public key."
+          required: true
+          schema:
+            $ref: "#/definitions/CreateUserRequest"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/User"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "409":
+          description: "User exists with the provided public key"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user/{user_id}/notification/channel:
+    get:
+      tags: ["notification", "user"]
+      summary: "Get user notification channels list"
+      description: "Get the list of the user's all notification channels."
+      produces:
+        - "application/json"
+      operationId: "getUserNotificationChannelList"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Request body signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserNotificationChannel"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags: [ "notification", "user" ]
+      summary: "Create user notification channel"
+      description: "Create a new notification channel for the user."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      operationId: "createUserNotificationChannel"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/notification/channel`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "notification_channel"
+          in: "body"
+          description: "Notification channel."
+          required: true
+          schema:
+            $ref: "#/definitions/CreateNotificationChannelRequest"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            $ref: "#/definitions/UserNotificationChannel"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User or notification channel not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "409":
+          description: "Given notification channel exists for the user"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user/{user_id}/notification/channel/{channel_id}:
+    delete:
+      tags: [ "notification", "user" ]
+      summary: "Delete user notification channel"
+      description: "Delete the notification channel from the user's notification channels."
+      produces:
+        - "application/json"
+      operationId: "deleteUserNotificationChannel"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/notification/channel/2`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "channel_id"
+          in: "path"
+          description: "User notification channel id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "204":
+          description: "Operation successful"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User notification channel not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
 definitions:
-  ReportError:
+  CreateNotificationChannelRequest:
+    type: "object"
+    properties:
+      channel_code:
+        type: "string"
+        description: "Short code of the notification channel (email, fcm, apns, etc.)."
+      target:
+        type: "string"
+        description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
+  CreateUserRequest:
+    type: "object"
+    properties:
+      public_key_hex:
+        type: "string"
+        description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
+  Error:
     type: "object"
     properties:
       description:
@@ -54,13 +284,111 @@ definitions:
         description: "Error description."
   Network:
     type: "object"
+    required: ["id", "hash", "name", "ss58_prefix"]
     properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "SubVT network id."
       hash:
         type: "string"
-        description: "Genesis block hash of the network (e.g. 0xb0a8d493285c2df73290dfb7e61f870f17b41801197a149ca93654499ea3dafe for Kusama)."
+        description: "Hex-encoded 32-byte genesis block hash of the network (0x-prefixed)."
       name:
         type: "string"
         description: "Network name (e.g. Polkadot, Kusama)."
+      ss58_prefix:
+        type: "integer"
+        format: "int64"
+        description: "Network's SS58 prefix as defined in the SS58 [registry](https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json)."
+      live_network_status_service_url:
+        type: "string"
+        description: "URL for the SubVT live network status WS RPC service for the network."
+      report_service_url:
+        type: "string"
+        description: "URL for the SubVT report REST service for the network."
+      validator_details_service_url:
+        type: "string"
+        description: "URL for the SubVT validator details WS RPC service for the network."
+      active_validator_list_service_url:
+        type: "string"
+        description: "URL for the SubVT active validator list WS RPC service for the network."
+      inactive_validator_list_service_url:
+        type: "string"
+        description: "URL for the SubVT inactive validator list WS RPC service for the network."
+  NotificationChannel:
+    type: "object"
+    properties:
+      code:
+        type: "string"
+        description: "Short code of the notification channel (email, fcm, apns, etc.)."
+  NotificationType:
+    type: "object"
+    properties:
+      code:
+        type: "string"
+        description: "Code name of the notification type."
+      param_types:
+        type: "array"
+        items:
+          $ref: "#/definitions/NotificationParamType"
+        description: "Notification parameter definition list."
+  NotificationParamType:
+    type: "object"
+    required: ["id", "notification_type_code", "order", "code", "type", "is_optional"]
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      notification_type_code:
+        type: "string"
+        description: "Code name of the notification type that the parameter belongs to."
+      order:
+        type: "integer"
+        format: "int32"
+        description: "Order of the parameter. Used when displaying the parameters in the correct order."
+      code:
+        type: "string"
+        description: "Code name for the parameter."
+      type:
+        type: "string"
+        enum: ["string", "integer", "balance", "float", "boolean"]
+        description: "Data type of the parameter. Balance type is the string representation of a 64-bit unsigned integer."
+      min:
+        type: "string"
+        description: "(Optional) Minimum value of the parameter. Used for validation."
+      max:
+        type: "string"
+        description: "(Optional) Minimum value of the parameter. Used for validation."
+      is_optional:
+        type: "boolean"
+        description: "Whether the parameter is optional."
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "User id."
+      public_key_hex:
+        type: "string"
+        description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
+  UserNotificationChannel:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "User notification channel id."
+      user_id:
+        type: "integer"
+        format: "int64"
+        description: "User id."
+      channel_code:
+        type: "string"
+        description: "Short code of the notification channel (email, fcm, apns, etc.)."
+      target:
+        type: "string"
+        description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
 externalDocs:
   description: "Find out more about SubVT"
   url: "http://subvt.helikon.io"
