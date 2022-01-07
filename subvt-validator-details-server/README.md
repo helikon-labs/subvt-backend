@@ -14,7 +14,7 @@ validator account id as the only parameter, as in:
     "jsonrpc":"2.0",
     "method": "subscribe_validator_details",
     "params": [
-        "0x00ba7F0D55312D16758EAC1F9D9285FD62CDEFED9FEE1C0312A87A401AFCEF25"
+        "0x00BA7F0D55312D16758EAC1F9D9285FD62CDEFED9FEE1C0312A87A401AFCEF25"
     ]
 }
     
