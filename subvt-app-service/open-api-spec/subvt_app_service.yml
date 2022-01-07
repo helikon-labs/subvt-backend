@@ -122,7 +122,7 @@ paths:
             $ref: "#/definitions/Error"
   /user/{user_id}/notification/channel:
     get:
-      tags: ["notification", "user"]
+      tags: [ "notification", "user" ]
       summary: "Get user notification channels list"
       description: "Get the list of the user's notification channels."
       produces:
@@ -254,6 +254,146 @@ paths:
             $ref: "#/definitions/Error"
         "404":
           description: "User notification channel not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user/{user_id}/notification/rule:
+    get:
+      tags: [ "notification", "user" ]
+      summary: "Get user notification rule list"
+      description: "Get the list of the user's notification rules."
+      produces:
+        - "application/json"
+      operationId: "getUserNotificationRuleList"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/notification/rule`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/UserNotificationRule"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User not found"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      tags: [ "notification", "user" ]
+      summary: "Create a user notification rule"
+      description: "Create a new notification rule for the user."
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      operationId: "createUserNotificationRule"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Request body signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "notification_rule"
+          in: "body"
+          description: "Notificaiton rule."
+          required: true
+          schema:
+            $ref: "#/definitions/CreateUserNotificationRuleRequest"
+      responses:
+        "200":
+          description: "Operation successful"
+          schema:
+            $ref: "#/definitions/UserNotificationRule"
+        "400":
+          description: "Bad request - could be a validation error"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User, notification type, network, validator or user notification channel not found."
+          schema:
+            $ref: "#/definitions/Error"
+        "409":
+          description: "User validator exists with the same network and account ids"
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: "Internal server error"
+          schema:
+            $ref: "#/definitions/Error"
+  /user/{user_id}/notification/rule/{user_notification_rule_id}:
+    delete:
+      tags: [ "notification", "user" ]
+      summary: "Delete user notification rule"
+      description: "Delete the notification rule from the user's rule list."
+      produces:
+        - "application/json"
+      operationId: "deleteUserNoticationRule"
+      parameters:
+        - name: "signature"
+          in: "header"
+          description: "Relative request path (e.g. `/user/7465/notification/rule/214`) signed with the user's private key."
+          required: true
+          type: "string"
+        - name: "user_id"
+          in: "path"
+          description: "User id."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: "user_notification_rule_id"
+          in: "path"
+          description: "User notification rule id."
+          required: true
+          type: "integer"
+          format: "int64"
+      responses:
+        "204":
+          description: "Operation successful"
+        "400":
+          description: "Bad request"
+          schema:
+            $ref: "#/definitions/Error"
+        "403":
+          description: "Forbidden: invalid signature"
+          schema:
+            $ref: "#/definitions/Error"
+        "404":
+          description: "User notification rule not found"
           schema:
             $ref: "#/definitions/Error"
         "500":
@@ -403,7 +543,7 @@ paths:
 definitions:
   CreateNotificationChannelRequest:
     type: "object"
-    required: ["channel_code", "target"]
+    required: [ "channel_code", "target" ]
     properties:
       channel_code:
         type: "string"
@@ -411,16 +551,66 @@ definitions:
       target:
         type: "string"
         description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
+  CreateUserNotificationRuleRequest:
+    type: "object"
+    required: [ "notification_type_code" ]
+    properties:
+      notification_type_code:
+        type: "string"
+        description: "Notification type."
+      name:
+        type: "string"
+        description: "Optional arbitrary name given to the rule by the user."
+      network_id:
+        type: "integer"
+        format: "int64"
+        description: "Id of the network that the notification is to be defined for. Null if for all networks."
+      is_for_all_validators:
+        type: "boolean"
+        description: "True if the rule is defined for all validators of the selected network, or for all validators if network is null."
+      user_validator_ids:
+        type: "array"
+        description: "Database ids of the user-validators that the notification rule is to be defined for. Empty if for all validators."
+        items:
+          type: "integer"
+          format: "int64"
+      period_type:
+        type: "string"
+        enum: [ "immediate", "hour", "day", "era", "epoch" ]
+        description: "Period type for the notification rule."
+      period:
+        type: "integer"
+        format: "int32"
+        description: "Together with `period_type` it defines the notification period. E.g. every 2 epoch."
+      user_notification_channel_ids:
+        type: "array"
+        description: "Database ids of the user's notification channels that the notifications resulting from this rule would be targeted at."
+        items:
+          type: "integer"
+          format: "int64"
+      parameters:
+        type: "array"
+        description: "Parameters for the rule. Non-optional parameters have to be supplied."
+        items:
+          type: "object"
+          properties:
+            parameter_type_id:
+              type: "integer"
+              format: "int64"
+              description: "Database id of the parameter type."
+            value:
+              type: "string"
+              description: "Parameter value."
   CreateUserRequest:
     type: "object"
-    required: ["public_key_hex"]
+    required: [ "public_key_hex" ]
     properties:
       public_key_hex:
         type: "string"
         description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
   CreateUserValidatorRequest:
     type: "object"
-    required: ["network_id", "validator_account_id"]
+    required: [ "network_id", "validator_account_id" ]
     properties:
       network_id:
         type: "integer"
@@ -431,14 +621,14 @@ definitions:
         description: "Hex-encoded 32-byte account id of the validator, 0x-prefixed."
   Error:
     type: "object"
-    required: ["description"]
+    required: [ "description" ]
     properties:
       description:
         type: "string"
         description: "Error description."
   Network:
     type: "object"
-    required: ["id", "hash", "name", "ss58_prefix"]
+    required: [ "id", "hash", "name", "ss58_prefix" ]
     properties:
       id:
         type: "integer"
@@ -471,14 +661,14 @@ definitions:
         description: "URL for the SubVT inactive validator list WS RPC service for the network."
   NotificationChannel:
     type: "object"
-    required: ["code"]
+    required: [ "code" ]
     properties:
       code:
         type: "string"
         description: "Short code of the notification channel (email, fcm, apns, etc.)."
   NotificationType:
     type: "object"
-    required: ["code", "param_types"]
+    required: [ "code", "param_types" ]
     properties:
       code:
         type: "string"
@@ -490,7 +680,7 @@ definitions:
         description: "Notification parameter definition list."
   NotificationParamType:
     type: "object"
-    required: ["id", "notification_type_code", "order", "code", "type", "is_optional"]
+    required: [ "id", "notification_type_code", "order", "code", "type", "is_optional" ]
     properties:
       id:
         type: "integer"
@@ -507,7 +697,7 @@ definitions:
         description: "Code name for the parameter."
       type:
         type: "string"
-        enum: ["string", "integer", "balance", "float", "boolean"]
+        enum: [ "string", "integer", "balance", "float", "boolean" ]
         description: "Data type of the parameter. Balance type is the string representation of a 64-bit unsigned integer."
       min:
         type: "string"
@@ -520,7 +710,7 @@ definitions:
         description: "Whether the parameter is optional."
   User:
     type: "object"
-    required: ["id", "public_key_hex"]
+    required: [ "id", "public_key_hex" ]
     properties:
       id:
         type: "integer"
@@ -531,7 +721,7 @@ definitions:
         description: "Hex-encoded 32-byte public key of the user public key, 0x-prefixed or not."
   UserNotificationChannel:
     type: "object"
-    required: ["id", "user_id", "channel_code", "target"]
+    required: [ "id", "user_id", "channel_code", "target" ]
     properties:
       id:
         type: "integer"
@@ -547,9 +737,79 @@ definitions:
       target:
         type: "string"
         description: "Notification target (e.g. phone number for SMS, email address for email, etc.)."
+  UserNotificationRule:
+    type: "object"
+    required: [ "id", "user_id", "notification_type", "is_for_all_validators", "period_type", "period", "validators", "notification_channels", "parameters" ]
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "User notification rule id."
+      user_id:
+        type: "integer"
+        format: "int64"
+        description: "User id."
+      notification_type:
+        $ref: "#/definitions/NotificationType"
+      name:
+        type: "string"
+        description: "Optional arbitrary name given to the rule by the user."
+      network:
+        $ref: "#/definitions/Network"
+      is_for_all_validators:
+        type: "boolean"
+        description: "True if the rule is defined for all validators of the selected network, or for all validators if network is null."
+      period_type:
+        type: "string"
+        enum: [ "immediate", "hour", "day", "era", "epoch" ]
+        description: "Period type for the notification rule."
+      period:
+        type: "integer"
+        format: "int32"
+        description: "Together with `period_type` it defines the notification period. E.g. every 2 epoch."
+      validators:
+        type: "array"
+        description: "List of the validators that the notification rule is defined for. Empty for a rule for all validators."
+        items:
+          $ref: "#/definitions/UserValidator"
+      notification_channels:
+        type: "array"
+        description: "Notification target channels."
+        items:
+          $ref: "#/definitions/UserNotificationChannel"
+      parameters:
+        type: "array"
+        description: "Notification rule parameters."
+        items:
+          $ref: "#/definitions/UserNotificationRuleParameter"
+      notes:
+        type: "string"
+        description: "Optional arbitrary notes for the rule by the user."
+  UserNotificationRuleParameter:
+    type: "object"
+    required: [ "" ]
+    properties:
+      user_notification_rule_id:
+        type: "integer"
+        format: "int64"
+        description: "Database id of the notification rule that this parameter belongs to."
+      parameter_type_id:
+        type: "integer"
+        format: "int64"
+        description: "Database id of the parameter type."
+      parameter_type_code:
+        type: "string"
+        description: "The descriptive code for the parameter, copied from the parameter type."
+      order:
+        type: "integer"
+        format: "int32"
+        description: "Order of the parameter. copied from the parameter type."
+      value:
+        type: "string"
+        description: "Parameter value."
   UserValidator:
     type: "object"
-    required: ["id", "user_id", "network_id", "validator_account_id"]
+    required: [ "id", "user_id", "network_id", "validator_account_id" ]
     properties:
       id:
         type: "integer"

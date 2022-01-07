@@ -402,7 +402,7 @@ async fn create_user_notification_rule(
         .map(|parameter_type| parameter_type.id)
         .collect();
     if !missing_non_optional_parameter_type_ids.is_empty() {
-        return Ok(HttpResponse::NotFound().json(ServiceError::from(format!(
+        return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
             "Missing non-optional parameter type ids: {:?}",
             missing_non_optional_parameter_type_ids
         ))));
