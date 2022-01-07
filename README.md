@@ -2,16 +2,43 @@
 	<img width="400" src="https://raw.githubusercontent.com/helikon-labs/subvt/main/assets/design/logo/subvt_logo_blue.png">
 </p>
 
-⛓ **WIP** ⛓
+SubVT (Substrate Validator Toolkit) backend system implementation.
 
-SubVT (Substrate Validator Toolkit - former Subvalt) is a native mobile application for iOS and Android phones, tablets and wearables that provides node operators with tools that aid them in running their validators on any Substrate-based blockchain network. Please visit the SubVT top-level [repository](https://github.com/helikon-labs/subvt) for documentation and other links and information.
+## Architecture
 
-This is the repository for the complete SubVT backend services:
+Complete details can be found in the
+[system architecture document](https://github.com/helikon-labs/subvt/blob/main/document/software/01-subvt_system_architecture.md).
 
-- Network status live data server.
-- Active and inactive validator lists and details server.
-- Era and validator reports server.
-- Block processor.
-- Push, email, SMS and GSM notification services.
+<p align="center">
+  <a href="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_large.jpg" target="_blank">
+    <img src="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_small.jpg"/>
+  </a>
+  <br/>
+</p>
 
-SubVT is in heavy progress, and this repository is subject to frequent change.
+Please refer to the top-level project [repository](https://github.com/helikon-labs/subvt) for more information.
+
+## Crates
+
+| Name                                                                     | Info                                                                                                                                                                                                                                                                                                                   |
+|:-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [subvt-app-service](./subvt-app-service)                                 | Application REST service with such endpoints as user registration, notification rule definitions, etc. OpenAPI YAML specification document [here](./subvt-app-service/open-api-spec/subvt_app_service.yml), viewable [here](https://helikon-labs.stoplight.io/docs/subvt/YXBpOjM0Mjg0NzAw-sub-vt-application-service). |
+| [subvt-block-processor](./subvt-block-processor)                         | Block processor and indexer. Stores in the PostgreSQL database the events and extrinsics of interest, era validator and staker inoformation and more.                                                                                                                                                                  |
+| [subvt-config](./subvt-config)                                           | Configuration component that is used by all SubVT executables for runtime configuration.                                                                                                                                                                                                                               |
+| [subvt-live-network-status-server](./subvt-live-network-status-server)   | Publishes the live network status data prepared by the network status updater through WS RPC.                                                                                                                                                                                                                          |
+| [subvt-live-network-status-updater](./subvt-live-network-status-updater) | Fetches the live network status data from the Substrate node after each finalized block and stores it in the Redis instance.                                                                                                                                                                                           |
+| [subvt-logging](./subvt-logging)                                         | Log configurator that is used by all crates.                                                                                                                                                                                                                                                                           |
+| [subvt-nofification-generator](./subvt-notification-generator)           | Processes the indexed block (PostgreSQL), validator list (Redis) and Telemetry time-series (TimescaleDB) data for possible notifications, and persists notifications according to the previously-defined notification rules.                                                                                           |
+| [subvt-notification-sender](./subvt-notification-sender)                 | Processes and sends the notifications persisted by the notification generator.                                                                                                                                                                                                                                         |
+| [subvt-onekv-updater](./subvt-onekv-updater)                             | Fetches the complete candidate data from the 1KV backend (only Polkadot or Kusama) in regular intervals, and Stores the candidate and all related data (ranking events, score, etc.) in the PostgreSQL network database.                                                                                               |
+| [subvt-persistence](./subvt-persistence)                                 | Complete persistence logic for PostgreSQL and Redis (TBD).                                                                                                                                                                                                                                                             |
+| [subvt-proc-macro](./subvt-proc-macro)                                   | Procedural macros.                                                                                                                                                                                                                                                                                                     |
+| [subvt-report-service](./subvt-report-service)                           | Era and validator report REST service. OpenAPI YAML specification document [here](./subvt-report-service/open-api-spec/subvt_report_service.yml), viewable [here](https://helikon-labs.stoplight.io/docs/subvt/YXBpOjM0Mjg0NzAw-sub-vt-application-service).                                                           |                                                                                                                                                                                                                                                                                                                       |
+| [subvt-service-common](./subvt-service-common)                           | Contains the service trait implemented by all SubVT services.                                                                                                                                                                                                                                                          |
+| [subvt-substrate-client](./subvt-substrate-client)                       | Facilitates all of the communication between SubVT and Substrate node RPC interfaces.                                                                                                                                                                                                                                  |
+| [subvt-telemetry-processor](./subvt-telemetry-processor)                 | Subscribes to the chain's feed on a Telemetry server, and persists the node data into the TimescaleDB instance for later analysis.                                                                                                                                                                                     |
+| [subvt-types](./subvt-types)                                             | Complete SubVT types.                                                                                                                                                                                                                                                                                                  |
+| [subvt-utility](./subvt-utility)                                         | Basic utility functions. Not used a lot at the moment, but more a place for later work.                                                                                                                                                                                                                                |
+| [subvt-validator-details-server](./subvt-validator-details-server)       | Publishes a validator's details through a WS RPC channel. Subscriber send the account id of the validator at the initial connection, receives the full validator data as the first response, then only the changes with the new finalized blocks.                                                                      |
+| [subvt-validator-list-server](./subvt-validator-list-server)             | Publishes through its WS RPC interface the live validator list data, which is prepared by the validator list updater.                                                                                                                                                                                                  |
+| [subvt-validator-list-updater](./subvt-validator-list-updater)           | Every few blocks, fetches the complete inactive and active validator data from the Substrate node and the PostgreSQL network instance stores it in the Redis instance and notifies the subscriber services.                                                                                                            |
