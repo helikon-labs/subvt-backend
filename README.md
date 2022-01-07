@@ -4,6 +4,8 @@
 
 SubVT (Substrate Validator Toolkit) backend system implementation.
 
+SubVT is proudly supported by the [Kusama](https://kusama.network/) Treasury. Please refer to the top-level project [repository](https://github.com/helikon-labs/subvt) for more information.
+
 ## Architecture
 
 Complete details can be found in the
@@ -15,8 +17,6 @@ Complete details can be found in the
   </a>
   <br/>
 </p>
-
-Please refer to the top-level project [repository](https://github.com/helikon-labs/subvt) for more information.
 
 ## Crates
 
@@ -31,7 +31,7 @@ Please refer to the top-level project [repository](https://github.com/helikon-la
 | [subvt-nofification-generator](./subvt-notification-generator)           | Processes the indexed block (PostgreSQL), validator list (Redis) and Telemetry time-series (TimescaleDB) data for possible notifications, and persists notifications according to the previously-defined notification rules.                                                                                           |
 | [subvt-notification-sender](./subvt-notification-sender)                 | Processes and sends the notifications persisted by the notification generator.                                                                                                                                                                                                                                         |
 | [subvt-onekv-updater](./subvt-onekv-updater)                             | Fetches the complete candidate data from the 1KV backend (only Polkadot or Kusama) in regular intervals, and Stores the candidate and all related data (ranking events, score, etc.) in the PostgreSQL network database.                                                                                               |
-| [subvt-persistence](./subvt-persistence)                                 | Complete persistence logic for PostgreSQL and Redis (TBD).                                                                                                                                                                                                                                                             |
+| [subvt-persistence](./subvt-persistence)                                 | Complete persistence logic for PostgreSQL and Redis (TBD). Contains the full migrations for the network and application PostgreSQL databases.                                                                                                                                                                          |
 | [subvt-proc-macro](./subvt-proc-macro)                                   | Procedural macros.                                                                                                                                                                                                                                                                                                     |
 | [subvt-report-service](./subvt-report-service)                           | Era and validator report REST service. OpenAPI YAML specification document [here](./subvt-report-service/open-api-spec/subvt_report_service.yml), viewable [here](https://helikon-labs.stoplight.io/docs/subvt/YXBpOjM0Mjg0NzAw-sub-vt-application-service).                                                           |                                                                                                                                                                                                                                                                                                                       |
 | [subvt-service-common](./subvt-service-common)                           | Contains the service trait implemented by all SubVT services.                                                                                                                                                                                                                                                          |
