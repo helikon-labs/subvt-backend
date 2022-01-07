@@ -1,6 +1,7 @@
 # SubVT Validator List Server
 
-Serves the active validator list by default. Start with the `--inactive` flag to serve the inactive validator list.
+Pub/sub WS RPC server for the validator list data. Serves the active validator list by default. Start with the 
+`--inactive` flag to serve the inactive validator list.
 
 Expects the `config` folder to be in the same folder as the executable.
 Copy the `config` folder from inside the [subvt-config](../subvt-config) crate and edit the configuration.
@@ -12,8 +13,8 @@ the update stream.
 Sample subscription request:
 ```
 {
-    "id":1,
-    "jsonrpc":"2.0",
+    "id": 1,
+    "jsonrpc": "2.0",
     "method": "subscribe_validator_list",
     "params": []
 }
@@ -22,9 +23,9 @@ Sample subscription request:
 Sample subscription response with the subscription id in the `result` field:
 ```
 {
-    "jsonrpc":"2.0",
-    "result":6291495589394582,
-    "id":1
+    "jsonrpc": "2.0",
+    "result": 6291495589394582,
+    "id": 1
 }
 ```
 

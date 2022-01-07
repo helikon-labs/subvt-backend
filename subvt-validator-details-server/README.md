@@ -1,17 +1,18 @@
 # SubVT Validator Details Server
 
-Serves validator details data. Client subscribes for a single validator and receives data as detailed below.
+Pub/sub WS RPC server for validator detail data. Client subscribes for a single validator and receives data as
+detailed below.
 
 Expects the `config` folder to be in the same folder as the executable.
 Copy the `config` folder from inside the [subvt-config](../subvt-config) crate and edit the configuration.
 
 Subscribe to a validator's details using the `subscribe_validator_details` RPC method with the hex-encoded 32-byte
-validator account id as the only parameter, as in:
+validator account id as the only parameter:
 
 ```
 {
-    "id":1,
-    "jsonrpc":"2.0",
+    "id": 1,
+    "jsonrpc": "2.0",
     "method": "subscribe_validator_details",
     "params": [
         "0x00BA7F0D55312D16758EAC1F9D9285FD62CDEFED9FEE1C0312A87A401AFCEF25"
@@ -22,9 +23,9 @@ validator account id as the only parameter, as in:
 Sample subscription response with the subscription id in the `result` field:
 ```
 {
-    "jsonrpc":"2.0",
-    "result":1672621751564676,
-    "id":1
+    "jsonrpc": "2.0",
+    "result": 1672621751564676,
+    "id": 1
 }
 ```
 
@@ -33,8 +34,8 @@ the update stream:
 
 ```
 {
-    "id":1,
-    "jsonrpc":"2.0",
+    "id": 1,
+    "jsonrpc": "2.0",
     "method": "unsubscribe_validator_details",
     "params": [1672621751564676]
 }
@@ -42,7 +43,7 @@ the update stream:
 
 ## Stream Specification
 
-Initial response comes the full validator details:
+Initial response comes with the full validator details:
 
 ```
 {
@@ -133,9 +134,9 @@ Initial response comes the full validator details:
 }
 ```
 
-After the initial subscription, the server is going to publish to the client only the updates regarding the validator.
-Validator update is going to have only the updated fields. In the case of a validator with no changes, the reponse will
-be only contained the last processed block number:
+After the initial response, the server is going to publish to the client only the updates regarding the validator.
+Validator update is going to have only the changed fields. In the case of a validator with no changes, the response will
+only contain the last processed finalized block number:
 
 ```
 {

@@ -1,17 +1,16 @@
 # SubVT Live Network Status Server
 
-Serves the live network status data for the configured chain.
+Pub/sub WS RPC server for the live network status of the configured chain.
 
 Expects the `config` folder to be in the same folder as the executable.
 Copy the `config` folder from inside the [subvt-config](../subvt-config) crate and edit the configuration.
 
-Subscribe to the network status with the  `subscribe_live_network_status` RPC method with the hex-encoded 32-byte
-validator account id as the only parameter, as in:
+Subscribe to the network status with the  `subscribe_live_network_status` RPC method:
 
 ```
 {
-    "id":1,
-    "jsonrpc":"2.0",
+    "id": 1,
+    "jsonrpc": "2.0",
     "method": "subscribe_live_network_status",
     "params": []
 }
@@ -20,9 +19,9 @@ validator account id as the only parameter, as in:
 Sample subscription response with the subscription id in the `result` field:
 ```
 {
-    "jsonrpc":"2.0",
-    "result":2248230140339139,
-    "id":1
+    "jsonrpc": "2.0",
+    "result": 2248230140339139,
+    "id": 1
 }
 ```
 
@@ -82,7 +81,7 @@ Initial response comes with the full network status:
 }
 ```
 
-After the initial subscription, the server is going to publish to the client only the network status update block by
+After the initial response, the server is going to publish to the client only the network status update block by
 finalized block.
 
 Status update is going to have only the updated data in the `diff` field. In the example below, only changes are
