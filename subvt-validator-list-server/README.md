@@ -80,6 +80,7 @@ After the initial subscription, the server is going to publish to the client a l
 	],
 	"update": [],
 	"remove_ids": []
+}
 ```
 
 After the initial data push, the client is going to receive only the changes, i.e. the new validators in the `insert`

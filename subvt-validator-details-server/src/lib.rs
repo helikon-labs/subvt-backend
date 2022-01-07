@@ -14,13 +14,17 @@ use redis::RedisResult;
 use serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::str::FromStr;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
+use subvt_types::crypto::AccountId;
 use subvt_types::subvt::{ValidatorDetails, ValidatorDetailsDiff};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
+    static ref LAST_FINALIZED_BLOCK_NUMBER: AtomicU64 = AtomicU64::new(0);
 }
 
 #[derive(Clone, Debug)]
@@ -48,8 +52,10 @@ impl ValidatorDetailsServer {
     ) -> anyhow::Result<ValidatorDetails> {
         let mut connection = redis_client.get_connection()?;
         let active_validator_key = format!(
-            "subvt:{}:validators:active:validator:{}",
-            CONFIG.substrate.chain, account_id,
+            "subvt:{}:validators:{}:active:validator:{}",
+            CONFIG.substrate.chain,
+            LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst),
+            account_id,
         );
         let active_validator_json_string_result: RedisResult<String> = redis::cmd("GET")
             .arg(active_validator_key)
@@ -58,8 +64,10 @@ impl ValidatorDetailsServer {
             Ok(validator_json_string) => validator_json_string,
             Err(_) => {
                 let inactive_validator_key = format!(
-                    "subvt:{}:validators:inactive:validator:{}",
-                    CONFIG.substrate.chain, account_id,
+                    "subvt:{}:validators:{}:inactive:validator:{}",
+                    CONFIG.substrate.chain,
+                    LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst),
+                    account_id,
                 );
                 redis::cmd("GET")
                     .arg(inactive_validator_key)
@@ -87,11 +95,15 @@ impl ValidatorDetailsServer {
             "subscribe_validator_details",
             "unsubscribe_validator_details",
             move |params, mut sink, _| {
-                let account_id: String = params.one()?;
+                let account_id = if let Ok(account_id) = AccountId::from_str(params.one()?) {
+                    account_id
+                } else {
+                    return Err(jsonrpsee_core::error::Error::Custom("Invalid account id.".to_string()));
+                };
                 debug!("New subscription {}.", account_id);
                 let mut validator_details = {
                     let validator_details = match ValidatorDetailsServer::fetch_validator_details(
-                        &account_id,
+                        &account_id.to_string(),
                         &redis_client,
                     ) {
                         Ok(validator_details) => validator_details,
@@ -103,7 +115,7 @@ impl ValidatorDetailsServer {
                         }
                     };
                     let _ = sink.send(&ValidatorDetailsUpdate {
-                        finalized_block_number: None,
+                        finalized_block_number: Some(LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst)),
                         validator_details: Some(validator_details.clone()),
                         validator_details_update: None
                     });
@@ -111,29 +123,50 @@ impl ValidatorDetailsServer {
                 };
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
                 let data_connection = data_connection.clone();
-                let validator_storage_key_prefix =  format!(
-                    "subvt:{}:validators:active:validator:{}",
-                    CONFIG.substrate.chain, account_id,
-                );
                 std::thread::spawn(move || {
                     loop {
                         if let Ok(update) = bus_receiver.recv() {
                             match update {
                                 BusEvent::NewFinalizedBlock(finalized_block_number) => {
+                                    let active_validator_storage_key_prefix =  format!(
+                                        "subvt:{}:validators:{}:active:validator:{}",
+                                        CONFIG.substrate.chain,
+                                        finalized_block_number,
+                                        account_id,
+                                    );
+                                    let inactive_validator_storage_key_prefix =  format!(
+                                        "subvt:{}:validators:{}:active:validator:{}",
+                                        CONFIG.substrate.chain,
+                                        finalized_block_number,
+                                        account_id,
+                                    );
                                     let hash = {
                                         let mut hasher = DefaultHasher::new();
                                         validator_details.hash(&mut hasher);
                                         hasher.finish()
                                     };
-                                    let validator_hash_key = format!(
-                                        "{}:hash",
-                                        validator_storage_key_prefix,
-                                    );
                                     let mut data_connection = data_connection.write().unwrap();
-                                    let db_hash: u64 = redis::cmd("GET")
-                                        .arg(validator_hash_key)
-                                        .query(&mut *data_connection)
-                                        .unwrap();
+                                    let (validator_storage_key_prefix, db_hash) = if let Ok(db_hash) = redis::cmd("GET")
+                                        .arg(format!(
+                                            "{}:hash",
+                                            active_validator_storage_key_prefix,
+                                        ))
+                                        .query::<u64>(&mut *data_connection) {
+                                        (active_validator_storage_key_prefix, db_hash)
+                                    } else if let Ok(db_hash) = redis::cmd("GET")
+                                        .arg(format!(
+                                            "{}:hash",
+                                            inactive_validator_storage_key_prefix,
+                                        ))
+                                        .query::<u64>(&mut *data_connection) {
+                                        (inactive_validator_storage_key_prefix, db_hash)
+                                    } else {
+                                        error!(
+                                            "Validator {} not found.",
+                                            account_id
+                                        );
+                                        return;
+                                    };
                                     let update = if hash != db_hash {
                                         let validator_json_string_result = redis::cmd("GET")
                                             .arg(&validator_storage_key_prefix)
@@ -201,7 +234,7 @@ impl ValidatorDetailsServer {
 #[async_trait(?Send)]
 impl Service for ValidatorDetailsServer {
     async fn run(&'static self) -> anyhow::Result<()> {
-        let mut last_finalized_block_number = 0;
+        // let last_finalized_block_number = Arc::new(AtomicU64::new(0));
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -230,7 +263,7 @@ impl Service for ValidatorDetailsServer {
                 break error.into();
             }
             let finalized_block_number: u64 = payload.unwrap();
-            if last_finalized_block_number == finalized_block_number {
+            if LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst) == finalized_block_number {
                 warn!(
                     "Skip duplicate finalized block #{}.",
                     finalized_block_number
@@ -243,7 +276,7 @@ impl Service for ValidatorDetailsServer {
                 bus.broadcast(BusEvent::NewFinalizedBlock(finalized_block_number));
                 debug!("Update published to the bus.");
             }
-            last_finalized_block_number = finalized_block_number;
+            LAST_FINALIZED_BLOCK_NUMBER.store(finalized_block_number, Ordering::SeqCst);
         };
         error!("{:?}", error);
         {
