@@ -75,6 +75,9 @@ pub struct OneKVScore {
     pub randomness: f64,
     pub span_inclusion: f64,
     pub location: Option<f64>,
+    #[serde(rename(deserialize = "councilStake"))]
+    pub council_stake: Option<f64>,
+    pub democracy: Option<f64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
