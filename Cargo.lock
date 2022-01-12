@@ -3562,7 +3562,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.14",
  "xcm-executor",
 ]
 
@@ -3966,7 +3966,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
+ "xcm 0.9.14",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -4013,7 +4013,7 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "static_assertions",
- "xcm",
+ "xcm 0.9.14",
 ]
 
 [[package]]
@@ -4051,7 +4051,7 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
- "xcm",
+ "xcm 0.9.14",
  "xcm-executor",
 ]
 
@@ -6150,7 +6150,7 @@ dependencies = [
  "subvt-proc-macro",
  "subvt-utility",
  "thiserror",
- "xcm",
+ "xcm 0.9.15",
 ]
 
 [[package]]
@@ -6651,7 +6651,7 @@ checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.9.0",
- "rand 0.8.4",
+ "rand 0.4.6",
  "static_assertions",
 ]
 
@@ -7088,7 +7088,20 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "scale-info",
- "xcm-procedural",
+ "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot.git?tag=v0.9.14)",
+]
+
+[[package]]
+name = "xcm"
+version = "0.9.15"
+source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.15#53dc81cddceed656f14b262ba9d82d571b21832a"
+dependencies = [
+ "derivative",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot.git?tag=v0.9.15)",
 ]
 
 [[package]]
@@ -7107,7 +7120,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.14",
  "xcm-executor",
 ]
 
@@ -7125,13 +7138,23 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.14",
 ]
 
 [[package]]
 name = "xcm-procedural"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.14#80dfb926f40114841d3894fd75f39098dff9d5d4"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "xcm-procedural"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.15#53dc81cddceed656f14b262ba9d82d571b21832a"
 dependencies = [
  "proc-macro2",
  "quote",
