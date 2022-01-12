@@ -29,7 +29,7 @@ polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git",
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
 polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.14" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.15" }
 scale-info = "1.0.0"
 serde = { version = "1.0.133", features = ["derive"] }
 serde_json = "1.0.74"
