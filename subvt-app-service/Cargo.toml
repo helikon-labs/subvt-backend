@@ -22,4 +22,4 @@ subvt-logging = { path = "../subvt-logging" }
 tokio = { version = "1.15.0", features = ["full"] }
 
 [dev-dependencies]
-actix-rt = "2.5.1"
+actix-rt = "2.6.0"
