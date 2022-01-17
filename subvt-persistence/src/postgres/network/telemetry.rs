@@ -88,7 +88,11 @@ impl PostgreSQLNetworkStorage {
         location: &Option<NodeLocation>,
     ) -> anyhow::Result<()> {
         let account_id_str = if let Some(address) = &node_details.controller_address {
-            Some(AccountId::from_ss58_check(address)?.to_string())
+            if let Ok(account_id) = AccountId::from_ss58_check(address) {
+                Some(account_id.to_string())
+            } else {
+                None
+            }
         } else {
             None
         };
