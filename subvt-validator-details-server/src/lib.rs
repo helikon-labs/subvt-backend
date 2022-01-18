@@ -1,7 +1,7 @@
 //! Validator details WebSocket server. Operates on the configured port.
 //!
-//! Supports two RPC methods: `subscribe_validator_details` and `unsubscribe_validator_details`.
-//! `subscribe_validator_details` accepts a single parameter: 0x-prefixed hex-encoded account id
+//! Supports two RPC methods: `subscribe_validatorDetails` and `unsubscribe_validatorDetails`.
+//! `subscribe_validatorDetails` accepts a single parameter: 0x-prefixed hex-encoded account id
 //! of the validator. Gives the complete details at first connection, then publishes only the
 //! changed fields after each update from `subvt-validator-list-updater`.
 use anyhow::Context;
@@ -91,9 +91,9 @@ impl ValidatorDetailsServer {
         let redis_client = redis_client.clone();
         let data_connection = Arc::new(RwLock::new(redis_client.get_connection()?));
         rpc_module.register_subscription(
-            "subscribe_validator_details",
-            "subscribe_validator_details",
-            "unsubscribe_validator_details",
+            "subscribe_validatorDetails",
+            "subscribe_validatorDetails",
+            "unsubscribe_validatorDetails",
             move |params, mut sink, _| {
                 let account_id = if let Ok(account_id) = AccountId::from_str(params.one()?) {
                     account_id

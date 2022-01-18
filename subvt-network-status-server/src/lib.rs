@@ -1,4 +1,4 @@
-//! Subscribes to the live network status data on Redis and publishes the data through
+//! Subscribes to the network status data on Redis and publishes the data through
 //! websocket pub/sub.
 
 use anyhow::Context;
@@ -11,7 +11,7 @@ use redis::Connection;
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
-use subvt_types::subvt::{LiveNetworkStatus, LiveNetworkStatusDiff, LiveNetworkStatusUpdate};
+use subvt_types::subvt::{NetworkStatus, NetworkStatusDiff, NetworkStatusUpdate};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -19,51 +19,51 @@ lazy_static! {
 
 #[derive(Clone, Debug)]
 pub enum BusEvent {
-    NewBlock(Box<LiveNetworkStatusDiff>),
+    NewBlock(Box<NetworkStatusDiff>),
     Error,
 }
 
 #[derive(Default)]
-pub struct LiveNetworkStatusServer;
+pub struct NetworkStatusServer;
 
-impl LiveNetworkStatusServer {
+impl NetworkStatusServer {
     async fn read_current_network_status(
         connection: &mut Connection,
-    ) -> anyhow::Result<LiveNetworkStatus> {
-        let key = format!("subvt:{}:live_network_status", CONFIG.substrate.chain);
+    ) -> anyhow::Result<NetworkStatus> {
+        let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
         let status_json_string: String = redis::cmd("GET")
             .arg(key)
             .query(connection)
             .context("Can't read network status from Redis.")?;
-        let status: LiveNetworkStatus = serde_json::from_str(&status_json_string)
+        let status: NetworkStatus = serde_json::from_str(&status_json_string)
             .context("Can't deserialize network status json.")?;
         Ok(status)
     }
 
     async fn run_rpc_server(
-        current_status: &Arc<RwLock<LiveNetworkStatus>>,
+        current_status: &Arc<RwLock<NetworkStatus>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
     ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .build(format!(
                 "{}:{}",
-                CONFIG.rpc.host, CONFIG.rpc.live_network_status_port
+                CONFIG.rpc.host, CONFIG.rpc.network_status_port
             ))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let current_status = current_status.clone();
         let bus = bus.clone();
         rpc_module.register_subscription(
-            "subscribe_live_network_status",
-            "subscribe_live_network_status",
-            "unsubscribe_live_network_status",
+            "subscribe_networkStatus",
+            "subscribe_networkStatus",
+            "unsubscribe_networkStatus",
             move |_params, mut sink, _| {
                 debug!("New subscription.");
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
                 {
                     let current_status = current_status.read().unwrap();
                     if current_status.best_block_number != 0 {
-                        let update = LiveNetworkStatusUpdate {
+                        let update = NetworkStatusUpdate {
                             network: CONFIG.substrate.chain.clone(),
                             status: Some(current_status.clone()),
                             diff_base_block_number: None,
@@ -76,7 +76,7 @@ impl LiveNetworkStatusServer {
                     if let Ok(status_diff) = bus_receiver.recv() {
                         match status_diff {
                             BusEvent::NewBlock(status_diff) => {
-                                let update = LiveNetworkStatusUpdate {
+                                let update = NetworkStatusUpdate {
                                     network: CONFIG.substrate.chain.clone(),
                                     status: None,
                                     diff_base_block_number: None,
@@ -105,10 +105,10 @@ impl LiveNetworkStatusServer {
 
 /// Service implementation.
 #[async_trait(?Send)]
-impl Service for LiveNetworkStatusServer {
+impl Service for NetworkStatusServer {
     async fn run(&'static self) -> anyhow::Result<()> {
         let bus = Arc::new(Mutex::new(Bus::new(100)));
-        let current_status = Arc::new(RwLock::new(LiveNetworkStatus::default()));
+        let current_status = Arc::new(RwLock::new(NetworkStatus::default()));
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
@@ -117,12 +117,11 @@ impl Service for LiveNetworkStatusServer {
         let mut pub_sub_connection = redis_client.get_connection()?;
         let mut pub_sub = pub_sub_connection.as_pubsub();
         pub_sub.subscribe(format!(
-            "subvt:{}:live_network_status:publish:best_block_number",
+            "subvt:{}:network_status:publish:best_block_number",
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
-        let server_stop_handle =
-            LiveNetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
+        let server_stop_handle = NetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
         let error: anyhow::Error = loop {
             let message = pub_sub.get_message();
@@ -142,7 +141,7 @@ impl Service for LiveNetworkStatusServer {
                 }
             }
             debug!("New best block #{}.", best_block_number);
-            match LiveNetworkStatusServer::read_current_network_status(&mut data_connection).await {
+            match NetworkStatusServer::read_current_network_status(&mut data_connection).await {
                 Ok(new_status) => {
                     {
                         let current_status = current_status.read().unwrap();

@@ -644,9 +644,9 @@ definitions:
         type: "integer"
         format: "int64"
         description: "Network's SS58 prefix as defined in the SS58 [registry](https://github.com/paritytech/ss58-registry/blob/main/ss58-registry.json)."
-      live_network_status_service_url:
+      network_status_service_url:
         type: "string"
-        description: "URL for the SubVT live network status WS RPC service for the network."
+        description: "URL for the SubVT network status WS RPC service for the network."
       report_service_url:
         type: "string"
         description: "URL for the SubVT report REST service for the network."

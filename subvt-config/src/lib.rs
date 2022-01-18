@@ -83,8 +83,8 @@ pub struct LogConfig {
 pub struct RPCConfig {
     /// Host IP address.
     pub host: String,
-    /// Live network status WS RPC server TCP port.
-    pub live_network_status_port: String,
+    /// Network status WS RPC server TCP port.
+    pub network_status_port: String,
     /// Active validator list WS RPC server TCP port.
     pub active_validator_list_port: u16,
     /// Inactive validator list WS RPC server TCP port.

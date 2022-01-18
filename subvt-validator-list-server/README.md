@@ -6,8 +6,8 @@ Pub/sub WS RPC server for the validator list data. Serves the active validator l
 Expects the `config` folder to be in the same folder as the executable.
 Copy the `config` folder from inside the [subvt-config](../subvt-config) crate and edit the configuration.
 
-Subscribe to the validator list using the `subscribe_validator_list` RPC method with no parameter.
-`unsubscribe_validator_list` RPC method with the subscription id as the only parameter unsubscribes the client from
+Subscribe to the validator list using the `subscribe_validatorList` RPC method with no parameter.
+`unsubscribe_validatorList` RPC method with the subscription id as the only parameter unsubscribes the client from
 the update stream.
 
 Sample subscription request:
@@ -15,7 +15,7 @@ Sample subscription request:
 {
     "id": 1,
     "jsonrpc": "2.0",
-    "method": "subscribe_validator_list",
+    "method": "subscribe_validatorList",
     "params": []
 }
 ```
@@ -54,7 +54,7 @@ After the initial subscription, the server is going to publish to the client a l
 ```
 {
     "jsonrpc": "2.0",
-    "method": "subscribe_validator_details",
+    "method": "subscribe_validatorList",
     "params": {
         "subscription": 1478707943113707,
         "result": {

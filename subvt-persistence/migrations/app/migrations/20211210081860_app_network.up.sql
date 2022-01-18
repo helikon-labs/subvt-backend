@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS app_network
     hash                                VARCHAR(66) NOT NULL,
     name                                VARCHAR(50) NOT NULL,
     ss58_prefix                         integer NOT NULL,
-    live_network_status_service_url     VARCHAR(150),
+    network_status_service_url          VARCHAR(150),
     report_service_url                  VARCHAR(150),
     validator_details_service_url       VARCHAR(150),
     active_validator_list_service_url   VARCHAR(150),

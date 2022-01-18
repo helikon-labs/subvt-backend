@@ -2,7 +2,7 @@
 //! list if the `--inactive` command-line flag is provided at startup, otherwise serves the active
 //! validator list.
 //!
-//! Supports two RPC methods: `subscribe_validator_list` and `unsubscribe_validator_list`.
+//! Supports two RPC methods: `subscribe_validatorList` and `unsubscribe_validatorList`.
 //! Gives the complete list at first connection, then publishes only the changed validators' fields
 //! after each update from `subvt-validator-list-updater`.
 use anyhow::Context;
@@ -51,9 +51,9 @@ impl ValidatorListServer {
         let validator_map = validator_map.clone();
         let bus = bus.clone();
         rpc_module.register_subscription(
-            "subscribe_validator_list",
-            "subscribe_validator_list",
-            "unsubscribe_validator_list",
+            "subscribe_validatorList",
+            "subscribe_validatorList",
+            "unsubscribe_validatorList",
             move |_params, mut sink, _| {
                 debug!("New subscription.");
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
@@ -99,7 +99,7 @@ impl Service for ValidatorListServer {
         let matches = App::new("SubVT Validator List Server")
             .version("0.1.0")
             .author("Kutsal Kaan Bilgin <kutsal@helikon.io>")
-            .about("Serves the live active or inactive validator list for the SubVT app.")
+            .about("Serves the active or inactive validator list for the SubVT app.")
             .arg(Arg::new("inactive").long("inactive").short('i').help(
                 "Active list is served by default. Use this flag to serve the inactive list.",
             ))

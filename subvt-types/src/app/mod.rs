@@ -31,7 +31,7 @@ pub struct Network {
     pub hash: String,
     pub name: String,
     pub ss58_prefix: u32,
-    pub live_network_status_service_url: Option<String>,
+    pub network_status_service_url: Option<String>,
     pub report_service_url: Option<String>,
     pub validator_details_service_url: Option<String>,
     pub active_validator_list_service_url: Option<String>,

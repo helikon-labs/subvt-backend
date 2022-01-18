@@ -1,17 +1,17 @@
-# SubVT Live Network Status Server
+# SubVT Network Status Server
 
 Pub/sub WS RPC server for the live network status of the configured chain.
 
 Expects the `config` folder to be in the same folder as the executable.
 Copy the `config` folder from inside the [subvt-config](../subvt-config) crate and edit the configuration.
 
-Subscribe to the network status with the  `subscribe_live_network_status` RPC method:
+Subscribe to the network status with the  `subscribe_networkStatus` RPC method:
 
 ```
 {
     "id": 1,
     "jsonrpc": "2.0",
-    "method": "subscribe_live_network_status",
+    "method": "subscribe_networkStatus",
     "params": []
 }
 ```
@@ -25,14 +25,14 @@ Sample subscription response with the subscription id in the `result` field:
 }
 ```
 
-`unsubscribe_live_network_status` RPC method with the subscription id as the only parameter unsubscribes the client from
+`unsubscribe_networkStatus` RPC method with the subscription id as the only parameter unsubscribes the client from
 the update stream:
 
 ```
 {
     "id":1,
     "jsonrpc":"2.0",
-    "method": "unsubscribe_live_network_status",
+    "method": "unsubscribe_networkStatus",
     "params": [2248230140339139]
 }
 ```
@@ -44,7 +44,7 @@ Initial response comes with the full network status:
 ```
 {
     "jsonrpc": "2.0",
-    "method": "subscribe_live_network_status",
+    "method": "subscribe_networkStatus",
     "params": {
         "subscription": 2248230140339139,
         "result": {
@@ -90,7 +90,7 @@ the best block number and hash, and the era reward points so far:
 ```
 {
     "jsonrpc": "2.0",
-    "method": "subscribe_live_network_status",
+    "method": "subscribe_networkStatus",
     "params": {
         "subscription": 2248230140339139,
         "result": {

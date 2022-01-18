@@ -13,7 +13,7 @@ validator account id as the only parameter:
 {
     "id": 1,
     "jsonrpc": "2.0",
-    "method": "subscribe_validator_details",
+    "method": "subscribe_validatorDetails",
     "params": [
         "0x00BA7F0D55312D16758EAC1F9D9285FD62CDEFED9FEE1C0312A87A401AFCEF25"
     ]
@@ -29,14 +29,14 @@ Sample subscription response with the subscription id in the `result` field:
 }
 ```
 
-`unsubscribe_validator_details` RPC method with the subscription id as the only parameter unsubscribes the client from
+`unsubscribe_validatorDetails` RPC method with the subscription id as the only parameter unsubscribes the client from
 the update stream:
 
 ```
 {
     "id": 1,
     "jsonrpc": "2.0",
-    "method": "unsubscribe_validator_details",
+    "method": "unsubscribe_validatorDetails",
     "params": [1672621751564676]
 }
 ```
@@ -48,7 +48,7 @@ Initial response comes with the full validator details:
 ```
 {
     "jsonrpc": "2.0",
-    "method": "subscribe_validator_details",
+    "method": "subscribe_validatorDetails",
     "params": {
         "subscription": 1478707943113707,
         "result": {
@@ -141,7 +141,7 @@ only contain the last processed finalized block number:
 ```
 {
     "jsonrpc": "2.0",
-    "method": "subscribe_validator_details",
+    "method": "subscribe_validatorDetails",
     "params": {
         "subscription": 1478707943113707,
         "result": {

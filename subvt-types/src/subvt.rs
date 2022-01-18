@@ -14,7 +14,7 @@ use subvt_proc_macro::Diff;
 
 /// Represents the network's status that changes with every block.
 #[derive(Clone, Debug, Diff, Default, Deserialize, Serialize)]
-pub struct LiveNetworkStatus {
+pub struct NetworkStatus {
     pub finalized_block_number: u64,
     pub finalized_block_hash: String,
     pub best_block_number: u64,
@@ -34,14 +34,14 @@ pub struct LiveNetworkStatus {
 }
 
 #[derive(Clone, Debug, Default, Serialize)]
-pub struct LiveNetworkStatusUpdate {
+pub struct NetworkStatusUpdate {
     pub network: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<LiveNetworkStatus>,
+    pub status: Option<NetworkStatus>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub diff_base_block_number: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub diff: Option<LiveNetworkStatusDiff>,
+    pub diff: Option<NetworkStatusDiff>,
 }
 
 /// Represents an inactive validator, waiting to be in the active set.

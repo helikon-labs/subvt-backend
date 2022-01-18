@@ -26,7 +26,7 @@ impl From<PostgresNetwork> for Network {
             hash: db_network.1.clone(),
             name: db_network.2.clone(),
             ss58_prefix: db_network.3 as u32,
-            live_network_status_service_url: db_network.4.clone(),
+            network_status_service_url: db_network.4.clone(),
             report_service_url: db_network.5.clone(),
             validator_details_service_url: db_network.6.clone(),
             active_validator_list_service_url: db_network.7.clone(),

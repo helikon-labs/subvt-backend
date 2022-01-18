@@ -1,4 +1,4 @@
-//! Updates the Redis database after every block with live network status data.
+//! Updates the Redis database after every block with network status data.
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
 
 use anyhow::Context;
@@ -11,20 +11,20 @@ use std::sync::{Arc, Mutex};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::{substrate::BlockHeader, subvt::LiveNetworkStatus};
+use subvt_types::{substrate::BlockHeader, subvt::NetworkStatus};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
 #[derive(Default)]
-pub struct LiveNetworkStatusUpdater {
-    last_network_status: Mutex<LiveNetworkStatus>,
+pub struct NetworkStatusUpdater {
+    last_network_status: Mutex<NetworkStatus>,
 }
 
-impl LiveNetworkStatusUpdater {
-    /// Updates the Redis database with the given live network status data.
-    fn update_redis(status: &LiveNetworkStatus) -> anyhow::Result<()> {
+impl NetworkStatusUpdater {
+    /// Updates the Redis database with the given network status data.
+    fn update_redis(status: &NetworkStatus) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
         let mut redis_connection = redis_client.get_connection().context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -34,14 +34,11 @@ impl LiveNetworkStatusUpdater {
         let mut redis_cmd_pipeline = Pipeline::new();
         redis_cmd_pipeline
             .cmd("SET")
-            .arg(format!(
-                "subvt:{}:live_network_status",
-                CONFIG.substrate.chain
-            ))
+            .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
             .arg(status_json_string)
             .cmd("PUBLISH")
             .arg(format!(
-                "subvt:{}:live_network_status:publish:best_block_number",
+                "subvt:{}:network_status:publish:best_block_number",
                 CONFIG.substrate.chain
             ))
             .arg(status.best_block_number)
@@ -50,11 +47,11 @@ impl LiveNetworkStatusUpdater {
         Ok(())
     }
 
-    async fn fetch_and_update_live_network_status(
+    async fn fetch_and_update_network_status(
         &self,
         client: &SubstrateClient,
         best_block_header: &BlockHeader,
-    ) -> anyhow::Result<LiveNetworkStatus> {
+    ) -> anyhow::Result<NetworkStatus> {
         let last_status = {
             let guard = self.last_network_status.lock().unwrap();
             guard.clone()
@@ -207,7 +204,7 @@ impl LiveNetworkStatusUpdater {
             .total;
         debug!("{} total reward points so far.", era_reward_points);
         // prepare data
-        let live_network_status = LiveNetworkStatus {
+        let network_status = NetworkStatus {
             finalized_block_number,
             finalized_block_hash,
             best_block_number,
@@ -226,22 +223,22 @@ impl LiveNetworkStatusUpdater {
             era_reward_points,
         };
         // write to redis
-        LiveNetworkStatusUpdater::update_redis(&live_network_status)?;
+        NetworkStatusUpdater::update_redis(&network_status)?;
         debug!("Redis updated.");
-        Ok(live_network_status)
+        Ok(network_status)
     }
 }
 
 /// Service implementation.
 #[async_trait(?Send)]
-impl Service for LiveNetworkStatusUpdater {
+impl Service for NetworkStatusUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             substrate_client.subscribe_to_new_blocks(|best_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
                 tokio::spawn(async move {
-                    let update_result = self.fetch_and_update_live_network_status(
+                    let update_result = self.fetch_and_update_network_status(
                         &substrate_client,
                         &best_block_header,
                     ).await;
@@ -253,7 +250,7 @@ impl Service for LiveNetworkStatusUpdater {
                         Err(error) => {
                             error!("{:?}", error);
                             error!(
-                                "Live network status update failed for block #{}. Will try again with the next block.",
+                                "Network status update failed for block #{}. Will try again with the next block.",
                                 best_block_header.get_number().unwrap_or(0),
                             );
                         }

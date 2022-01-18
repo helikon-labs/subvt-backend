@@ -20,7 +20,7 @@ other_level = "warn"
 
 [rpc]
 host = "127.0.0.1"
-live_network_status_port = 7888
+network_status_port = 7888
 active_validator_list_port = 7889
 inactive_validator_list_port = 7890
 validator_details_port = 7891
