@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::crypto::AccountId;
+use subvt_types::substrate::Account;
 use subvt_types::subvt::{ValidatorDetails, ValidatorDetailsDiff};
 
 lazy_static! {
@@ -206,7 +207,14 @@ impl ValidatorDetailsServer {
                                         ValidatorDetailsUpdate {
                                             finalized_block_number: Some(finalized_block_number),
                                             validator_details: None,
-                                            validator_details_update: None
+                                            validator_details_update: Some(ValidatorDetailsDiff {
+                                                account: Account {
+                                                    id: account_id.clone(),
+                                                    identity: None,
+                                                    ..Default::default()
+                                                },
+                                                ..Default::default()
+                                            }),
                                         }
                                     };
                                     let send_result = sink.send(&update);
