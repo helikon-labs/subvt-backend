@@ -135,7 +135,7 @@ impl ValidatorDetailsServer {
                                         account_id,
                                     );
                                     let inactive_validator_storage_key_prefix =  format!(
-                                        "subvt:{}:validators:{}:active:validator:{}",
+                                        "subvt:{}:validators:{}:inactive:validator:{}",
                                         CONFIG.substrate.chain,
                                         finalized_block_number,
                                         account_id,
