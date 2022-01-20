@@ -20,7 +20,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::Account;
 use subvt_types::subvt::{ValidatorDetails, ValidatorDetailsDiff};
 
 lazy_static! {
