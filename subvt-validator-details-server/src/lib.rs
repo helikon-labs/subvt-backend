@@ -207,14 +207,7 @@ impl ValidatorDetailsServer {
                                         ValidatorDetailsUpdate {
                                             finalized_block_number: Some(finalized_block_number),
                                             validator_details: None,
-                                            validator_details_update: Some(ValidatorDetailsDiff {
-                                                account: Account {
-                                                    id: account_id.clone(),
-                                                    identity: None,
-                                                    ..Default::default()
-                                                },
-                                                ..Default::default()
-                                            }),
+                                            validator_details_update: None,
                                         }
                                     };
                                     let send_result = sink.send(&update);
