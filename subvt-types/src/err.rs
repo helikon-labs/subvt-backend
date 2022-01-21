@@ -7,7 +7,9 @@ pub struct ServiceError {
 }
 
 impl ServiceError {
-    pub fn from(description: String) -> ServiceError {
-        ServiceError { description }
+    pub fn from(description: &str) -> ServiceError {
+        ServiceError {
+            description: description.to_string(),
+        }
     }
 }

@@ -48,15 +48,18 @@ async fn era_validator_report_service(
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
             return Ok(HttpResponse::BadRequest().json(ServiceError::from(
-                "End era index cannot be less than start era index.".to_string(),
+                "End era index cannot be less than start era index.",
             )));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
-                "Report cannot span {} eras. Maximum allowed is {}.",
-                era_count, CONFIG.report.max_era_index_range
-            ))));
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(
+                format!(
+                    "Report cannot span {} eras. Maximum allowed is {}.",
+                    era_count, CONFIG.report.max_era_index_range
+                )
+                .as_ref(),
+            )));
         }
     }
     if let Ok(account_id) = AccountId::from_str(&path.account_id_hex_string) {
@@ -70,7 +73,7 @@ async fn era_validator_report_service(
                 .await?,
         ))
     } else {
-        Ok(HttpResponse::BadRequest().json(ServiceError::from("Invalid account id.".to_string())))
+        Ok(HttpResponse::BadRequest().json(ServiceError::from("Invalid account id.")))
     }
 }
 
@@ -84,15 +87,18 @@ async fn era_report_service(
     if let Some(end_era_index) = query.maybe_end_era_index {
         if end_era_index < query.start_era_index {
             return Ok(HttpResponse::BadRequest().json(ServiceError::from(
-                "End era index cannot be less than start era index.".to_string(),
+                "End era index cannot be less than start era index.",
             )));
         }
         let era_count = end_era_index - query.start_era_index;
         if era_count > CONFIG.report.max_era_index_range {
-            return Ok(HttpResponse::BadRequest().json(ServiceError::from(format!(
-                "Report cannot span {} eras. Maximum allowed is {}.",
-                era_count, CONFIG.report.max_era_index_range
-            ))));
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from(
+                format!(
+                    "Report cannot span {} eras. Maximum allowed is {}.",
+                    era_count, CONFIG.report.max_era_index_range
+                )
+                .as_ref(),
+            )));
         }
     }
     Ok(HttpResponse::Ok().json(

@@ -5,20 +5,24 @@ edition = "2021"
 rust-version = "1.56.0"
 
 [dependencies]
+actix-service = "2.0.2"
 actix-web = "4.0.0-beta.20"
 anyhow = "1.0.52"
 async-trait = "0.1.52"
 config = "0.11.0"
+ecdsa = "0.13.4"
+futures = "0.3.19"
 hex = "0.4"
+k256 = { version = "0.10.2", features = ["ecdsa-core"] }
 lazy_static = "1.4.0"
 log = "0.4.14"
 serde = { version = "1.0.133", features = ["derive"] }
 serde_json = "1.0.75"
 subvt-config = { path = "../subvt-config" }
+subvt-logging = { path = "../subvt-logging" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-subvt-logging = { path = "../subvt-logging" }
 tokio = { version = "1.15.0", features = ["full"] }
 
 [dev-dependencies]

@@ -11,7 +11,7 @@ pub struct InternalServerError {
 impl Display for InternalServerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         error!("{:?}", self.err);
-        let err = ServiceError::from("Internal server error.".to_string());
+        let err = ServiceError::from("Internal server error.");
         write!(f, "{}", serde_json::to_string(&err).unwrap())
     }
 }
