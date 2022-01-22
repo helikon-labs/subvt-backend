@@ -10,8 +10,6 @@ pub mod db;
 pub mod event;
 pub mod extrinsic;
 
-pub const PUBLIC_KEY_HEX_LENGTH: usize = 64;
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Block {
     pub hash: String,

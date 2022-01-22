@@ -3,13 +3,14 @@ use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
-    Error,
+    Error, HttpMessage,
 };
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::FutureExt;
 use k256::ecdsa::signature::Verifier;
 use std::fmt::{Debug, Display, Formatter};
 use std::rc::Rc;
+use subvt_types::app::User;
 use subvt_types::err::ServiceError;
 
 enum AuthError {
@@ -19,6 +20,7 @@ enum AuthError {
     InvalidSignature,
     NonceMissing,
     InvalidNonce,
+    InternalError,
 }
 
 impl AuthError {
@@ -69,6 +71,13 @@ impl AuthError {
                     serde_json::to_string(&ServiceError::from("Invalid nonce.")).unwrap()
                 )
             }
+            Self::InternalError => {
+                write!(
+                    f,
+                    "{}",
+                    serde_json::to_string(&ServiceError::from("Internal error.")).unwrap()
+                )
+            }
         }
     }
 }
@@ -87,7 +96,10 @@ impl Display for AuthError {
 
 impl actix_web::error::ResponseError for AuthError {
     fn status_code(&self) -> StatusCode {
-        StatusCode::FORBIDDEN
+        match self {
+            Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            _ => StatusCode::FORBIDDEN,
+        }
     }
 }
 
@@ -97,10 +109,15 @@ pub struct AuthService<S> {
 
 // test with https://paulmillr.com/noble/
 impl<S> AuthService<S> {
-    fn authenticate(request: &ServiceRequest) -> Result<(), Error> {
-        if !request.path().starts_with("/user") {
+    async fn authenticate(request: &ServiceRequest) -> Result<(), Error> {
+        if !request.path().starts_with("/secure") {
             return Ok(());
         }
+        let postgres = if let Some(state) = request.app_data::<Data<ServiceState>>() {
+            state.postgres.clone()
+        } else {
+            return Err(AuthError::InternalError.into());
+        };
         let public_key_header = request.headers().get("SubVT-Public-Key");
         let signature_header = request.headers().get("SubVT-Signature");
         let nonce_header = request.headers().get("SubVT-Nonce");
@@ -113,12 +130,15 @@ impl<S> AuthService<S> {
         if nonce_header.is_none() {
             return Err(AuthError::NonceMissing.into());
         }
-        let verify_key = if let Some(public_key) = public_key_header
-            .unwrap()
-            .to_str()
-            .ok()
-            .and_then(|hex| hex::decode(&hex.trim_start_matches("0x")).ok())
-            .and_then(|bytes| k256::ecdsa::VerifyingKey::from_sec1_bytes(&bytes).ok())
+        let public_key_hex = if let Ok(public_key_hex) = public_key_header.unwrap().to_str() {
+            public_key_hex
+        } else {
+            return Err(AuthError::InvalidPublicKey.into());
+        };
+        let verify_key = if let Some(public_key) =
+            hex::decode(public_key_hex.trim_start_matches("0x"))
+                .ok()
+                .and_then(|bytes| k256::ecdsa::VerifyingKey::from_sec1_bytes(&bytes).ok())
         {
             public_key
         } else {
@@ -150,6 +170,13 @@ impl<S> AuthService<S> {
             return Err(AuthError::InvalidSignature.into());
         }
         // find user and insert into context (if exists)
+        if let Ok(maybe_user) = postgres.get_user_by_public_key(public_key_hex).await {
+            request
+                .extensions_mut()
+                .insert::<Rc<Option<User>>>(Rc::new(maybe_user))
+        } else {
+            return Err(AuthError::InternalError.into());
+        };
         Ok(())
     }
 }
@@ -165,18 +192,9 @@ where
     actix_service::forward_ready!(service);
 
     fn call(&self, request: ServiceRequest) -> Self::Future {
-        let _postgres = request
-            .app_data::<Data<ServiceState>>()
-            .unwrap()
-            .postgres
-            .clone();
         let service = self.service.clone();
         async move {
-            Self::authenticate(&request)?;
-            // check if it's a secure path
-            // check public key header
-            // get user by public key
-            // check signature
+            Self::authenticate(&request).await?;
             let result = service.call(request).await?;
             Ok(result)
         }

@@ -3,7 +3,7 @@
 //! and deletion, etc.
 use crate::auth::AuthServiceFactory;
 use actix_web::web::Data;
-use actix_web::{delete, get, post, web, App, HttpResponse, HttpServer};
+use actix_web::{delete, get, post, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
@@ -15,7 +15,7 @@ use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
     NotificationPeriodType, User, UserNotificationChannel, UserNotificationRuleParameter,
-    UserValidator, PUBLIC_KEY_HEX_LENGTH,
+    UserValidator,
 };
 use subvt_types::err::ServiceError;
 
@@ -63,36 +63,33 @@ async fn get_notification_types(state: web::Data<ServiceState>) -> ResultRespons
 }
 
 /// Validates and creates a new user.
-#[post("/user")]
-async fn create_user(state: web::Data<ServiceState>, mut user: web::Json<User>) -> ResultResponse {
-    let public_key_hex = user.public_key_hex.trim_start_matches("0x").to_uppercase();
-    // validate public key hex length
-    if public_key_hex.len() != PUBLIC_KEY_HEX_LENGTH {
-        return Ok(HttpResponse::BadRequest().json(ServiceError::from(
-            format!(
-                "Public key should be {} characters long hexadecimal string.",
-                PUBLIC_KEY_HEX_LENGTH
-            )
-            .as_ref(),
-        )));
-    }
-    // validate hex format
-    if hex::decode(&public_key_hex).is_err() {
-        return Ok(HttpResponse::BadRequest().json(ServiceError::from(
-            "Public key should be valid hexadecimal string.",
-        )));
-    }
-    user.public_key_hex = format!("0x{}", public_key_hex);
+#[post("/secure/user")]
+async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> ResultResponse {
+    let public_key_hex = request
+        .headers()
+        .get("SubVT-Public-Key")
+        .unwrap()
+        .to_str()
+        .unwrap();
+    let public_key_hex = if !public_key_hex.starts_with("0x") {
+        format!("0x{}", public_key_hex)
+    } else {
+        public_key_hex.to_string()
+    };
     // check duplicate public key
     if state
         .postgres
-        .user_exists_with_public_key(&user.public_key_hex)
+        .user_exists_by_public_key(&public_key_hex)
         .await?
     {
         return Ok(HttpResponse::Conflict().json(ServiceError::from(
             "A user exists with the given public key.",
         )));
     }
+    let mut user = User {
+        id: 0,
+        public_key_hex,
+    };
     user.id = state.postgres.save_user(&user).await?;
     Ok(HttpResponse::Created().json(user))
 }

@@ -26,7 +26,7 @@ impl PostgreSQLAppStorage {
         Ok(result.0 as u32)
     }
 
-    pub async fn user_exists_with_public_key(&self, public_key_hex: &str) -> anyhow::Result<bool> {
+    pub async fn user_exists_by_public_key(&self, public_key_hex: &str) -> anyhow::Result<bool> {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user
@@ -37,6 +37,30 @@ impl PostgreSQLAppStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
+    }
+
+    pub async fn get_user_by_public_key(
+        &self,
+        public_key_hex: &str,
+    ) -> anyhow::Result<Option<User>> {
+        let maybe_db_user: Option<(i32, String)> = sqlx::query_as(
+            r#"
+            SELECT id, public_key_hex
+            FROM app_user
+            WHERE public_key_hex = $1
+            "#,
+        )
+        .bind(public_key_hex)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(db_user) = maybe_db_user {
+            Ok(Some(User {
+                id: db_user.0 as u32,
+                public_key_hex: db_user.1,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn user_exists_by_id(&self, id: u32) -> anyhow::Result<bool> {
