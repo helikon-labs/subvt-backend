@@ -1,7 +1,7 @@
 //! Application REST interface. Contains services such as user registration, network list,
 //! notification channels, user validator registration, user notification rules persistence
 //! and deletion, etc.
-use crate::auth::AuthServiceFactory;
+use crate::auth::{data::AuthenticatedUser, service::AuthServiceFactory};
 use actix_web::web::Data;
 use actix_web::{delete, get, post, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_trait::async_trait;
@@ -32,18 +32,6 @@ pub struct ServiceState {
     pub postgres: Arc<PostgreSQLAppStorage>,
 }
 
-async fn check_user_exists_by_id(
-    state: &web::Data<ServiceState>,
-    user_id: u32,
-) -> anyhow::Result<Option<HttpResponse>> {
-    if !state.postgres.user_exists_by_id(user_id).await? {
-        return Ok(Some(
-            HttpResponse::NotFound().json(ServiceError::from("User not found.")),
-        ));
-    }
-    Ok(None)
-}
-
 /// `GET`s the list of networks supported by SubVT.
 #[get("/network")]
 pub async fn get_networks(state: web::Data<ServiceState>) -> ResultResponse {
@@ -72,9 +60,9 @@ async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> Re
         .to_str()
         .unwrap();
     let public_key_hex = if !public_key_hex.starts_with("0x") {
-        format!("0x{}", public_key_hex)
+        format!("0x{}", public_key_hex.to_uppercase())
     } else {
-        public_key_hex.to_string()
+        public_key_hex.to_uppercase()
     };
     // check duplicate public key
     if state
@@ -94,39 +82,28 @@ async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> Re
     Ok(HttpResponse::Created().json(user))
 }
 
-#[derive(Deserialize)]
-struct UserIdPathParameter {
-    pub user_id: u32,
-}
-
 /// `GET`s the list of notification channels that the user has created for herself so far.
-#[get("/user/{user_id}/notification/channel")]
+#[get("/secure/user/notification/channel")]
 async fn get_user_notification_channels(
-    path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
-        return Ok(error_response);
-    }
     Ok(HttpResponse::Ok().json(
         state
             .postgres
-            .get_user_notification_channels(path_params.user_id)
+            .get_user_notification_channels(auth.id)
             .await?,
     ))
 }
 
 /// Creates a new notification channel for the user.
-#[post("/user/{user_id}/notification/channel")]
+#[post("/secure/user/notification/channel")]
 async fn add_user_notification_channel(
-    path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<UserNotificationChannel>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    input.user_id = path_params.user_id as u32;
-    if let Some(error_response) = check_user_exists_by_id(&state, input.user_id).await? {
-        return Ok(error_response);
-    }
+    input.user_id = auth.id;
     // check notification channel exists
     if !state
         .postgres
@@ -160,21 +137,21 @@ async fn add_user_notification_channel(
 }
 
 #[derive(Deserialize)]
-struct UserNotificationChannelIdPathParameter {
-    pub user_id: u32,
-    pub channel_id: u32,
+struct IdPathParameter {
+    pub id: u32,
 }
 
 /// `DELETE`s the notification channel from the user's list of notification channels.
 /// A soft delete, but the user will no longer receive notifications on this channel.
-#[delete("/user/{user_id}/notification/channel/{channel_id}")]
+#[delete("/secure/user/notification/channel/{id}")]
 async fn delete_user_notification_channel(
-    path_params: web::Path<UserNotificationChannelIdPathParameter>,
+    path_params: web::Path<IdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
     let channel_exists = state
         .postgres
-        .user_notification_channel_exists(path_params.user_id, path_params.channel_id)
+        .user_notification_channel_exists(auth.id, path_params.id)
         .await?;
     if !channel_exists {
         return Ok(HttpResponse::NotFound()
@@ -182,7 +159,7 @@ async fn delete_user_notification_channel(
     }
     match state
         .postgres
-        .delete_user_notification_channel(path_params.channel_id)
+        .delete_user_notification_channel(path_params.id)
         .await?
     {
         true => Ok(HttpResponse::NoContent().finish()),
@@ -193,33 +170,22 @@ async fn delete_user_notification_channel(
 }
 
 /// `GET`s the list of all validators registered to the user.
-#[get("/user/{user_id}/validator")]
+#[get("/secure/user/validator")]
 async fn get_user_validators(
-    path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
-        return Ok(error_response);
-    }
-    Ok(HttpResponse::Ok().json(
-        state
-            .postgres
-            .get_user_validators(path_params.user_id)
-            .await?,
-    ))
+    Ok(HttpResponse::Ok().json(state.postgres.get_user_validators(auth.id).await?))
 }
 
 /// Adds a new validator to the user's list of validators.
-#[post("/user/{user_id}/validator")]
+#[post("/secure/user/validator")]
 async fn add_user_validator(
-    path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<UserValidator>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    input.user_id = path_params.user_id;
-    if let Some(error_response) = check_user_exists_by_id(&state, input.user_id).await? {
-        return Ok(error_response);
-    }
+    input.user_id = auth.id;
     // check network exists
     if !state
         .postgres
@@ -236,32 +202,23 @@ async fn add_user_validator(
     Ok(HttpResponse::Created().json(input))
 }
 
-#[derive(Deserialize)]
-struct UserValidatorIdPathParameter {
-    pub user_id: u32,
-    pub user_validator_id: u32,
-}
-
 /// `DELETE`s a validator from the user's list of validators.
 /// A soft delete, i.e. only marks the validator as deleted.
-#[delete("/user/{user_id}/validator/{user_validator_id}")]
+#[delete("/secure/user/validator/{id}")]
 async fn delete_user_validator(
-    path_params: web::Path<UserValidatorIdPathParameter>,
+    path_params: web::Path<IdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
     // check validator exists
     if !state
         .postgres
-        .user_validator_exists_by_id(path_params.user_id, path_params.user_validator_id)
+        .user_validator_exists_by_id(auth.id, path_params.id)
         .await?
     {
         return Ok(HttpResponse::NotFound().json(ServiceError::from("User validator not found.")));
     }
-    match state
-        .postgres
-        .delete_user_validator(path_params.user_validator_id)
-        .await?
-    {
+    match state.postgres.delete_user_validator(path_params.id).await? {
         true => Ok(HttpResponse::NoContent().finish()),
         false => Ok(HttpResponse::InternalServerError().json(ServiceError::from(
             "There was an error deleting the user's validator.",
@@ -284,33 +241,22 @@ struct CreateUserNotificationRuleRequest {
 }
 
 /// `GET`s the list of the user's non-deleted notification rules.
-#[get("/user/{user_id}/notification/rule")]
+#[get("/secure/user/notification/rule")]
 async fn get_user_notification_rules(
-    path_params: web::Path<UserIdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
-        return Ok(error_response);
-    }
-    Ok(HttpResponse::Ok().json(
-        state
-            .postgres
-            .get_user_notification_rules(path_params.user_id)
-            .await?,
-    ))
+    Ok(HttpResponse::Ok().json(state.postgres.get_user_notification_rules(auth.id).await?))
 }
 
 /// Creates a new notification rule for the user. The new rule starts getting evaluated for possible
 /// notifications as soon as it gets created.
-#[post("/user/{user_id}/notification/rule")]
+#[post("/secure/user/notification/rule")]
 async fn create_user_notification_rule(
-    path_params: web::Path<UserIdPathParameter>,
     mut input: web::Json<CreateUserNotificationRuleRequest>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
-    if let Some(error_response) = check_user_exists_by_id(&state, path_params.user_id).await? {
-        return Ok(error_response);
-    }
     // check notification type exists
     if !state
         .postgres
@@ -338,7 +284,7 @@ async fn create_user_notification_rule(
     for user_validator_id in &input.user_validator_ids {
         if !state
             .postgres
-            .user_validator_exists_by_id(path_params.user_id, *user_validator_id)
+            .user_validator_exists_by_id(auth.id, *user_validator_id)
             .await?
         {
             return Ok(
@@ -356,7 +302,7 @@ async fn create_user_notification_rule(
     for user_notification_channel_id in &input.user_notification_channel_ids {
         if !state
             .postgres
-            .user_notification_channel_exists(path_params.user_id, *user_notification_channel_id)
+            .user_notification_channel_exists(auth.id, *user_notification_channel_id)
             .await?
         {
             return Ok(HttpResponse::NotFound()
@@ -427,7 +373,7 @@ async fn create_user_notification_rule(
     let rule_id = state
         .postgres
         .save_user_notification_rule(
-            path_params.user_id,
+            auth.id,
             &input.notification_type_code,
             (input.name.as_deref(), input.notes.as_deref()),
             (input.network_id, input.is_for_all_validators),
@@ -448,27 +394,19 @@ async fn create_user_notification_rule(
     ))
 }
 
-#[derive(Deserialize)]
-struct UserNotificationRuleIdPathParameter {
-    pub user_id: u32,
-    pub user_notification_rule_id: u32,
-}
-
 /// `DELETE` a rule from the list of the user's notification rules.
 /// A soft delete, the rule will not be able to generate new notifications as soon as
 /// it gets deleted.
-#[delete("/user/{user_id}/notification/rule/{user_notification_rule_id}")]
+#[delete("/secure/user/notification/rule/{id}")]
 async fn delete_user_notification_rule(
-    path_params: web::Path<UserNotificationRuleIdPathParameter>,
+    path_params: web::Path<IdPathParameter>,
     state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
 ) -> ResultResponse {
     // check rule exists
     if !state
         .postgres
-        .user_notification_rule_exists_by_id(
-            path_params.user_id,
-            path_params.user_notification_rule_id,
-        )
+        .user_notification_rule_exists_by_id(auth.id, path_params.id)
         .await?
     {
         return Ok(
@@ -477,7 +415,7 @@ async fn delete_user_notification_rule(
     }
     match state
         .postgres
-        .delete_user_notification_rule(path_params.user_notification_rule_id)
+        .delete_user_notification_rule(path_params.id)
         .await?
     {
         true => Ok(HttpResponse::NoContent().finish()),

@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS app_user_notification_channel
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     deleted_at                  TIMESTAMP WITHOUT TIME ZONE,
     CONSTRAINT app_user_notification_channel_u_user_channel_target
-        UNIQUE (user_id, notification_channel_code, target),
+        UNIQUE (user_id, notification_channel_code, target, deleted_at),
     CONSTRAINT app_user_notification_channel_fk_user
         FOREIGN KEY (user_id)
             REFERENCES app_user (id)

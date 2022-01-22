@@ -7,7 +7,7 @@ impl PostgreSQLAppStorage {
     pub async fn get_network_by_id(&self, id: u32) -> anyhow::Result<Network> {
         Ok(sqlx::query_as(
             r#"
-            SELECT id, hash, name, ss58_prefix, network_status_service_url, report_service_url, validator_details_service_url, validator_list_service_url
+            SELECT id, hash, name, ss58_prefix, network_status_service_url, report_service_url, validator_details_service_url, active_validator_list_service_url, inactive_validator_list_service_url
             FROM app_network
             WHERE id = $1
             "#
