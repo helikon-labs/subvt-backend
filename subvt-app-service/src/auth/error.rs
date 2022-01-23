@@ -12,6 +12,7 @@ pub enum AuthError {
     InvalidNonce,
     InternalError,
     UserNotFound,
+    InvalidBody,
 }
 
 impl AuthError {
@@ -74,6 +75,14 @@ impl AuthError {
                     f,
                     "{}",
                     serde_json::to_string(&ServiceError::from("User not found.")).unwrap()
+                )
+            }
+            Self::InvalidBody => {
+                write!(
+                    f,
+                    "{}",
+                    serde_json::to_string(&ServiceError::from("Invalid body: UTF-8 error."))
+                        .unwrap()
                 )
             }
         }

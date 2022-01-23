@@ -1,13 +1,14 @@
 //! Authentication service and factory (`Transform`).
 use crate::auth::error::AuthError;
 use crate::ServiceState;
-use actix_web::web::Data;
+use actix_http::h1::Payload;
+use actix_web::web::{BytesMut, Data};
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     Error, HttpMessage,
 };
 use futures::future::{ready, LocalBoxFuture, Ready};
-use futures::FutureExt;
+use futures::{FutureExt, StreamExt};
 use k256::ecdsa::signature::Verifier;
 use std::rc::Rc;
 use subvt_types::app::User;
@@ -18,7 +19,7 @@ pub struct AuthService<S> {
 
 /// Test with https://paulmillr.com/noble/.
 impl<S> AuthService<S> {
-    async fn authenticate(request: &ServiceRequest) -> Result<(), Error> {
+    async fn authenticate(request: &mut ServiceRequest) -> Result<(), Error> {
         if !request.path().starts_with("/secure") {
             return Ok(());
         }
@@ -77,7 +78,25 @@ impl<S> AuthService<S> {
         } else {
             return Err(AuthError::InvalidNonce.into());
         };
-        let message = format!("{}{}", request.path(), nonce);
+        let mut request_body = BytesMut::new();
+        while let Some(chunk) = request.take_payload().next().await {
+            request_body.extend_from_slice(&chunk?);
+        }
+        let body = if let Ok(body) = String::from_utf8(request_body.to_vec()) {
+            body
+        } else {
+            return Err(AuthError::InvalidBody.into());
+        };
+        let mut orig_payload = Payload::create(true).1;
+        orig_payload.unread_data(request_body.freeze());
+        request.set_payload(actix_http::Payload::from(orig_payload));
+        let message = format!(
+            "{}{}{}{}",
+            request.method().as_str(),
+            request.path(),
+            body,
+            nonce
+        );
         if verify_key.verify(message.as_bytes(), &signature).is_err() {
             return Err(AuthError::InvalidSignature.into());
         }
@@ -105,10 +124,10 @@ where
 
     actix_service::forward_ready!(service);
 
-    fn call(&self, request: ServiceRequest) -> Self::Future {
+    fn call(&self, mut request: ServiceRequest) -> Self::Future {
         let service = self.service.clone();
         async move {
-            Self::authenticate(&request).await?;
+            Self::authenticate(&mut request).await?;
             let result = service.call(request).await?;
             Ok(result)
         }
