@@ -10,3 +10,4 @@ INSERT INTO app_notification_channel(code) VALUES('fcm');
 INSERT INTO app_notification_channel(code) VALUES('telegram');
 INSERT INTO app_notification_channel(code) VALUES('email');
 INSERT INTO app_notification_channel(code) VALUES('gsm');
+INSERT INTO app_notification_channel(code) VALUES('sms');
