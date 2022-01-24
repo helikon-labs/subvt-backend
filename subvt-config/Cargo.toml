@@ -6,4 +6,4 @@ rust-version = "1.56.0"
 
 [dependencies]
 config = "0.11.0"
-serde = { version = "1.0.134", features = ["derive"] }
+serde = { version = "1.0.135", features = ["derive"] }
