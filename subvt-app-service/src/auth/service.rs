@@ -9,7 +9,8 @@ use actix_web::{
 };
 use futures::future::{ready, LocalBoxFuture, Ready};
 use futures::{FutureExt, StreamExt};
-use k256::ecdsa::signature::Verifier;
+use libsecp256k1::{verify, Message, PublicKey, PublicKeyFormat, Signature};
+use sha2::{Digest, Sha256};
 use std::rc::Rc;
 use subvt_types::app::User;
 
@@ -17,7 +18,6 @@ pub struct AuthService<S> {
     service: Rc<S>,
 }
 
-/// Test with https://paulmillr.com/noble/.
 impl<S> AuthService<S> {
     async fn authenticate(request: &mut ServiceRequest) -> Result<(), Error> {
         if !request.path().starts_with("/secure") {
@@ -28,19 +28,23 @@ impl<S> AuthService<S> {
         } else {
             return Err(AuthError::InternalError.into());
         };
-        let public_key_header = request.headers().get("SubVT-Public-Key");
-        let signature_header = request.headers().get("SubVT-Signature");
-        let nonce_header = request.headers().get("SubVT-Nonce");
-        if public_key_header.is_none() {
+        let public_key_header = if let Some(header) = request.headers().get("SubVT-Public-Key") {
+            header
+        } else {
             return Err(AuthError::PublicKeyMissing.into());
-        }
-        if signature_header.is_none() {
+        };
+        let signature_header = if let Some(header) = request.headers().get("SubVT-Signature") {
+            header
+        } else {
             return Err(AuthError::SignatureMissing.into());
-        }
-        if nonce_header.is_none() {
+        };
+        let nonce_header = if let Some(header) = request.headers().get("SubVT-Nonce") {
+            header
+        } else {
             return Err(AuthError::NonceMissing.into());
-        }
-        let public_key_hex = if let Ok(public_key_hex) = public_key_header.unwrap().to_str() {
+        };
+        // extract public key
+        let public_key_hex = if let Ok(public_key_hex) = public_key_header.to_str() {
             format!(
                 "0x{}",
                 public_key_hex.trim_start_matches("0x").to_uppercase()
@@ -48,28 +52,29 @@ impl<S> AuthService<S> {
         } else {
             return Err(AuthError::InvalidPublicKey.into());
         };
-        let verify_key = if let Some(public_key) =
+        let public_key = if let Some(public_key) =
             hex::decode(public_key_hex.trim_start_matches("0x"))
                 .ok()
-                .and_then(|bytes| k256::ecdsa::VerifyingKey::from_sec1_bytes(&bytes).ok())
-        {
+                .and_then(|bytes| {
+                    PublicKey::parse_slice(&bytes, Some(PublicKeyFormat::Compressed)).ok()
+                }) {
             public_key
         } else {
             return Err(AuthError::InvalidPublicKey.into());
         };
+        // extract signature
         let signature = if let Some(signature) = signature_header
-            .unwrap()
             .to_str()
             .ok()
             .and_then(|hex| hex::decode(&hex.trim_start_matches("0x")).ok())
-            .and_then(|bytes| ecdsa::Signature::from_der(&bytes).ok())
+            .and_then(|bytes| Signature::parse_der(&bytes).ok())
         {
             signature
         } else {
             return Err(AuthError::InvalidSignature.into());
         };
+        // extract nonce
         let nonce = if let Some(nonce) = nonce_header
-            .unwrap()
             .to_str()
             .ok()
             .and_then(|number_str| number_str.parse::<u64>().ok())
@@ -78,6 +83,7 @@ impl<S> AuthService<S> {
         } else {
             return Err(AuthError::InvalidNonce.into());
         };
+        // extract body
         let mut request_body = BytesMut::new();
         while let Some(chunk) = request.take_payload().next().await {
             request_body.extend_from_slice(&chunk?);
@@ -87,17 +93,22 @@ impl<S> AuthService<S> {
         } else {
             return Err(AuthError::InvalidBody.into());
         };
-        let mut orig_payload = Payload::create(true).1;
-        orig_payload.unread_data(request_body.freeze());
-        request.set_payload(actix_http::Payload::from(orig_payload));
-        let message = format!(
+        let mut original_payload = Payload::create(true).1;
+        original_payload.unread_data(request_body.freeze());
+        request.set_payload(actix_http::Payload::from(original_payload));
+        // verify signature
+        let message_to_sign = format!(
             "{}{}{}{}",
             request.method().as_str(),
             request.path(),
             body,
             nonce
         );
-        if verify_key.verify(message.as_bytes(), &signature).is_err() {
+        let mut hasher = Sha256::new();
+        hasher.update(message_to_sign.as_bytes());
+        let hash = hasher.finalize();
+        let message = Message::parse_slice(&hash).unwrap();
+        if !verify(&message, &signature, &public_key) {
             return Err(AuthError::InvalidSignature.into());
         }
         // find user and insert into context (if exists)
