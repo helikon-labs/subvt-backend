@@ -2,6 +2,10 @@
 	<img width="400" src="https://raw.githubusercontent.com/helikon-labs/subvt/main/assets/design/logo/subvt_logo_blue.png">
 </p>
 
+![](https://github.com/helikon-labs/subvt-backend/actions/workflows/rust_checks.yml/badge.svg)
+
+# SubVT Backend
+
 SubVT (Substrate Validator Toolkit) backend system implementation.
 
 SubVT is proudly supported by the [Kusama](https://kusama.network/) Treasury. Please refer to the top-level project [repository](https://github.com/helikon-labs/subvt) for more information.

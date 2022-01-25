@@ -1,4 +1,4 @@
-name: Rust Format, Clippy and Tests
+name: Format, Clippy and Tests
 
 on:
   push:
