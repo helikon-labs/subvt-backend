@@ -200,7 +200,7 @@ impl BlockHeader {
 
     fn authority_index_from_log_bytes(
         consensus_engine: &str,
-        bytes: &mut Vec<u8>,
+        bytes: &mut [u8],
     ) -> Option<usize> {
         match consensus_engine {
             "BABE" => {

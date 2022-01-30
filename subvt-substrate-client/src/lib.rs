@@ -203,7 +203,8 @@ impl SubstrateClient {
                 get_rpc_storage_plain_params("Babe", "EpochIndex", Some(block_hash)),
             )
             .await?;
-        Ok(decode_hex_string(hex_string.as_str())?)
+        let index = decode_hex_string(hex_string.as_str())?;
+        Ok(index)
     }
 
     /// Get current epoch at the given block.
@@ -407,7 +408,8 @@ impl SubstrateClient {
                 get_rpc_storage_plain_params("Session", "Validators", Some(block_hash)),
             )
             .await?;
-        Ok(decode_hex_string(hex_string.as_str())?)
+        let account_ids = decode_hex_string(hex_string.as_str())?;
+        Ok(account_ids)
     }
 
     /// Maps the given accounts ids to tuples that contain the parent account id and child display.
@@ -1053,7 +1055,8 @@ impl SubstrateClient {
             Some(block_hash),
         );
         let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
-        Ok(decode_hex_string(hex_string.as_str())?)
+        let reward_points = decode_hex_string(hex_string.as_str())?;
+        Ok(reward_points)
     }
 
     /// Get the session index at the given block.
@@ -1105,9 +1108,10 @@ impl SubstrateClient {
                 get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(block_hash)),
             )
             .await?;
-        Ok(LastRuntimeUpgradeInfo::from_substrate_hex_string(
+        let upgrade_info = LastRuntimeUpgradeInfo::from_substrate_hex_string(
             hex_string,
-        )?)
+        )?;
+        Ok(upgrade_info)
     }
 
     /// Figure the account id of the owner of an imonline key at a given block.
@@ -1127,7 +1131,8 @@ impl SubstrateClient {
         );
         let account_id_hex_string: String =
             self.ws_client.request("state_getStorage", params).await?;
-        Ok(decode_hex_string(&account_id_hex_string)?)
+        let account_id = decode_hex_string(&account_id_hex_string)?;
+        Ok(account_id)
     }
 
     /// Get the indices of the paravalidators at the given block.
@@ -1139,7 +1144,8 @@ impl SubstrateClient {
             get_rpc_storage_plain_params("ParasShared", "ActiveValidatorIndices", Some(block_hash));
         let indices_vector_hex_string: String =
             self.ws_client.request("state_getStorage", params).await?;
-        Ok(decode_hex_string(&indices_vector_hex_string)?)
+        let indices = decode_hex_string(&indices_vector_hex_string)?;
+        Ok(indices)
     }
 
     /// Get parachain validator groups. Indices here are the indices of the result of the
@@ -1152,7 +1158,8 @@ impl SubstrateClient {
             get_rpc_storage_plain_params("ParaScheduler", "ValidatorGroups", Some(block_hash));
         let group_double_vector_hex_string: String =
             self.ws_client.request("state_getStorage", params).await?;
-        Ok(decode_hex_string(&group_double_vector_hex_string)?)
+        let groups = decode_hex_string(&group_double_vector_hex_string)?;
+        Ok(groups)
     }
 
     pub async fn get_para_core_assignments(
@@ -1162,9 +1169,10 @@ impl SubstrateClient {
         let params = get_rpc_storage_plain_params("ParaScheduler", "Scheduled", Some(block_hash));
         let availability_core_vector_hex_string: String =
             self.ws_client.request("state_getStorage", params).await?;
-        Ok(ParaCoreAssignment::from_core_assignment_vector_hex_string(
+        let assignments = ParaCoreAssignment::from_core_assignment_vector_hex_string(
             &availability_core_vector_hex_string,
-        )?)
+        )?;
+        Ok(assignments)
     }
 
     /// Validator preferences map at a given block.
