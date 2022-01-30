@@ -1108,9 +1108,7 @@ impl SubstrateClient {
                 get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(block_hash)),
             )
             .await?;
-        let upgrade_info = LastRuntimeUpgradeInfo::from_substrate_hex_string(
-            hex_string,
-        )?;
+        let upgrade_info = LastRuntimeUpgradeInfo::from_substrate_hex_string(hex_string)?;
         Ok(upgrade_info)
     }
 
