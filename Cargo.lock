@@ -5953,6 +5953,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-notification-generator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-lock",
+ "async-trait",
+ "chrono",
+ "config",
+ "lazy_static",
+ "log",
+ "redis",
+ "serde 1.0.136",
+ "serde_json",
+ "subvt-config",
+ "subvt-logging",
+ "subvt-persistence",
+ "subvt-service-common",
+ "subvt-substrate-client",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-notification-sender"
 version = "0.1.0"
 dependencies = [
@@ -5977,29 +6000,6 @@ dependencies = [
  "subvt-service-common",
  "subvt-types",
  "tera",
- "tokio",
-]
-
-[[package]]
-name = "subvt-notification_generator"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-lock",
- "async-trait",
- "chrono",
- "config",
- "lazy_static",
- "log",
- "redis",
- "serde 1.0.136",
- "serde_json",
- "subvt-config",
- "subvt-logging",
- "subvt-persistence",
- "subvt-service-common",
- "subvt-substrate-client",
- "subvt-types",
  "tokio",
 ]
 
