@@ -15,9 +15,10 @@ use crate::{
 };
 use log::{debug, error};
 use pallet_multisig::Timepoint;
-use pallet_staking::EraIndex;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::BlockNumber;
+
+type EraIndex = u32;
 
 #[derive(Clone, Debug)]
 pub enum MultisigExtrinsic {

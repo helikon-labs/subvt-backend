@@ -30,7 +30,7 @@ use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
 use pallet_scheduler::TaskAddress;
-use pallet_staking::{EraIndex, Exposure, ValidatorPrefs};
+use pallet_staking::{Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
@@ -54,6 +54,8 @@ use sp_session::MembershipProof;
 use sp_staking::{offence::Kind, SessionIndex};
 
 pub type IdentificationTuple = (AccountId, Exposure<AccountId, Balance>);
+
+type EraIndex = u32;
 
 #[derive(Clone, Debug)]
 pub enum Argument {

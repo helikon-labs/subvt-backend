@@ -15,11 +15,12 @@ use crate::{
 use frame_support::dispatch::{DispatchError, DispatchInfo};
 use log::{debug, error};
 use pallet_identity::RegistrarIndex;
-use pallet_staking::EraIndex;
 use parity_scale_codec::{Compact, Decode};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
+
+type EraIndex = u32;
 
 #[derive(Debug)]
 pub enum BalancesEvent {

@@ -18,7 +18,7 @@ log = "0.4.14"
 parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.78"
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.15" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.16" }
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
