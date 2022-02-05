@@ -759,15 +759,15 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_processed_block_height(&self) -> anyhow::Result<i64> {
+    pub async fn get_processed_block_height(&self) -> anyhow::Result<u64> {
         let processed_block_height: (i64,) = sqlx::query_as(
             r#"
-            SELECT COALESCE(MAX(number), -1) from sub_block
+            SELECT COALESCE(MAX(number), 0) from sub_block
             "#,
         )
         .fetch_one(&self.connection_pool)
         .await?;
-        Ok(processed_block_height.0)
+        Ok(processed_block_height.0 as u64)
     }
 
     pub async fn save_batch_item_completed_event(

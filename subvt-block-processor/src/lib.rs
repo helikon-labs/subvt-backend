@@ -997,10 +997,10 @@ impl Service for BlockProcessor {
                             return;
                         }
                     };
-                    if ((processed_block_height + 1) as u64) < finalized_block_number {
+                    if processed_block_height < finalized_block_number {
                         is_indexing_past_blocks.store(true, Ordering::SeqCst);
                         let mut block_number = std::cmp::max(
-                            (processed_block_height + 1) as u64,
+                            processed_block_height,
                             CONFIG.block_processor.start_block_number
                         );
                         while block_number <= finalized_block_number {
