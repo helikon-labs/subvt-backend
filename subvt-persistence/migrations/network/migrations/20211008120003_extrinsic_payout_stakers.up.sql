@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_payout_stakers
             ON UPDATE CASCADE
 );
 
+CREATE INDEX sub_extrinsic_payout_stakers_idx_block_hash
+    ON sub_extrinsic_payout_stakers (block_hash);
+
 CREATE INDEX sub_extrinsic_payout_stakers_idx_caller_account_id
     ON sub_extrinsic_payout_stakers (caller_account_id);
 

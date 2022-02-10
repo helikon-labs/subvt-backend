@@ -18,3 +18,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_nominate
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE INDEX sub_extrinsic_nominate_idx_block_hash
+    ON sub_extrinsic_nominate (block_hash);

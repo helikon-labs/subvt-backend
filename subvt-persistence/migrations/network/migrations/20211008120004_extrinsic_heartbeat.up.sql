@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_heartbeat
             ON UPDATE CASCADE
 );
 
+CREATE INDEX sub_extrinsic_heartbeat_idx_block_hash
+    ON sub_extrinsic_heartbeat (block_hash);
+
 CREATE INDEX sub_extrinsic_heartbeat_idx_block_number
     ON sub_extrinsic_heartbeat (block_number);
 
