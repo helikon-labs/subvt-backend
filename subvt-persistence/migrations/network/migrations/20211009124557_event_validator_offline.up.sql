@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
             ON UPDATE CASCADE
 );
 
-CREATE INDEX sub_event_validator_offline_idx_validator_account_id
-    ON sub_event_validator_offline (validator_account_id);
-
 CREATE INDEX sub_event_validator_offline_idx_block_hash
     ON sub_event_validator_offline (block_hash);
+
+CREATE INDEX sub_event_validator_offline_idx_validator_account_id
+    ON sub_event_validator_offline (validator_account_id);
