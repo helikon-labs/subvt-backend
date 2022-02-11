@@ -1,0 +1,1 @@
+DROP TABLE sub_epoch CASCADE;

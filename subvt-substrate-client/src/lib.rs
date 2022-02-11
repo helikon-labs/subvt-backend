@@ -221,7 +221,7 @@ impl SubstrateClient {
             decode_hex_string::<(u32, u32)>(hex_string.as_str())?.1
         };
         let start_block_hash = self.get_block_hash(start_block_number as u64).await?;
-        let start_timestamp_millis: u64 = {
+        let start_timestamp: u64 = {
             let hex_string: String = self
                 .ws_client
                 .request(
@@ -235,10 +235,7 @@ impl SubstrateClient {
                 .await?;
             decode_hex_string(hex_string.as_str())?
         };
-        let start_timestamp = start_timestamp_millis / 1000;
-        let end_timestamp_millis =
-            start_timestamp_millis + self.metadata.constants.epoch_duration_millis;
-        let end_timestamp = end_timestamp_millis / 1000;
+        let end_timestamp = start_timestamp + self.metadata.constants.epoch_duration_millis;
         Ok(Epoch {
             index,
             start_block_number,
@@ -599,12 +596,12 @@ impl SubstrateClient {
             let active_validator_account_ids =
                 self.get_active_validator_account_ids(block_hash).await?;
             debug!("Get para validators and core assignments.");
-            let para_core_assignment_map = {
-                let mut assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
-                    HashMap::new();
+            let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
+                HashMap::new();
+            if let Some(para_validator_indices) =
+                self.get_paras_active_validator_indices(block_hash).await?
+            {
                 let para_validator_index_map = {
-                    let para_validator_indices =
-                        self.get_paras_active_validator_indices(block_hash).await?;
                     let mut map: HashMap<u32, AccountId> = HashMap::new();
                     for (para_validator_index, validator_index) in
                         para_validator_indices.iter().enumerate()
@@ -612,7 +609,7 @@ impl SubstrateClient {
                         if let Some(account_id) =
                             active_validator_account_ids.get(*validator_index as usize)
                         {
-                            assignment_map.insert(account_id.clone(), None);
+                            para_core_assignment_map.insert(account_id.clone(), None);
                             map.insert(para_validator_index as u32, account_id.clone());
                         }
                     }
@@ -637,11 +634,11 @@ impl SubstrateClient {
                 for assignment in &para_core_assignments {
                     if let Some(group) = para_validator_group_map.get(&assignment.group_index) {
                         for account_id in group {
-                            assignment_map.insert(account_id.clone(), Some(assignment.clone()));
+                            para_core_assignment_map
+                                .insert(account_id.clone(), Some(assignment.clone()));
                         }
                     }
                 }
-                assignment_map
             };
             debug!("Get accounts.");
             let account_ids: Vec<AccountId> = all_keys
@@ -1137,13 +1134,16 @@ impl SubstrateClient {
     pub async fn get_paras_active_validator_indices(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<u32>> {
+    ) -> anyhow::Result<Option<Vec<u32>>> {
         let params =
             get_rpc_storage_plain_params("ParasShared", "ActiveValidatorIndices", Some(block_hash));
-        let indices_vector_hex_string: String =
+        let maybe_indices_vector_hex_string: Option<String> =
             self.ws_client.request("state_getStorage", params).await?;
-        let indices = decode_hex_string(&indices_vector_hex_string)?;
-        Ok(indices)
+        if let Some(indices_vector_hex_string) = maybe_indices_vector_hex_string {
+            Ok(Some(decode_hex_string(&indices_vector_hex_string)?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Get parachain validator groups. Indices here are the indices of the result of the

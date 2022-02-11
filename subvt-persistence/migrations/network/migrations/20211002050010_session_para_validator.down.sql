@@ -1,0 +1,1 @@
+DROP TABLE sub_session_para_validator CASCADE;

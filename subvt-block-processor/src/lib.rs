@@ -821,19 +821,44 @@ impl BlockProcessor {
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(&block_hash)
             .await?;
-
         if last_epoch_index != current_epoch_index || last_era_index != active_era.index {
             let era_stakers = substrate_client
                 .get_era_stakers(&active_era, true, &block_hash)
                 .await?;
             if last_epoch_index != current_epoch_index {
-                debug!("New epoch. Persist era if it doesn't exist.");
+                debug!("New epoch. Persist epoch. Persist era if it doesn't exist.");
                 let total_stake = substrate_client
                     .get_era_total_stake(active_era.index, &block_hash)
                     .await?;
                 postgres
                     .save_era(&active_era, total_stake, &era_stakers)
                     .await?;
+                postgres
+                    .save_epoch(current_epoch_index, active_era.index)
+                    .await?;
+                // save session para validators
+                if let Some(para_validator_indices) = substrate_client
+                    .get_paras_active_validator_indices(&block_hash)
+                    .await?
+                {
+                    let para_validator_account_ids: Vec<&AccountId> = para_validator_indices
+                        .iter()
+                        .filter_map(|index| active_validator_account_ids.get(*index as usize))
+                        .collect();
+                    debug!(
+                        "Persist {} session para validators.",
+                        para_validator_account_ids.len()
+                    );
+                    postgres
+                        .save_session_para_validators(
+                            active_era.index,
+                            current_epoch_index,
+                            &para_validator_account_ids,
+                        )
+                        .await?;
+                } else {
+                    debug!("Parachains not active.");
+                }
             }
             if last_era_index != active_era.index {
                 let era_stakers = substrate_client
