@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS sub_event_heartbeat_received
     CONSTRAINT sub_event_heartbeat_received_fk_validator_account_id
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

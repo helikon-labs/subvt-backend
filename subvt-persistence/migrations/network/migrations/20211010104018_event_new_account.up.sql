@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS sub_event_new_account
     CONSTRAINT event_new_account_fk_account
         FOREIGN KEY (account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

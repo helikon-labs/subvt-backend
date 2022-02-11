@@ -17,17 +17,17 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_payout_stakers
     CONSTRAINT sub_extrinsic_payout_stakers_fk_caller_account_id
         FOREIGN KEY (caller_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_extrinsic_payout_stakers_fk_validator_account_id
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_extrinsic_payout_stakers_fk_era
         FOREIGN KEY (era_index)
             REFERENCES sub_era (index)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

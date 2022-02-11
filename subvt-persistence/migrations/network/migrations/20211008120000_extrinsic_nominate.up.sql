@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_nominate
     CONSTRAINT sub_extrinsic_nominate_fk_controller
         FOREIGN KEY (controller_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

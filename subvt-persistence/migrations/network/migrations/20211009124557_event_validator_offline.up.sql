@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
     CONSTRAINT im_online_some_offline_fk_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

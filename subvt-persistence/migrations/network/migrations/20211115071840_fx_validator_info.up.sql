@@ -58,17 +58,15 @@ BEGIN
         AND is_successful = true
     );
 
-    SELECT sub_block.timestamp
+    SELECT A.discovered_at
     INTO result_record.discovered_at
-    FROM sub_block, sub_account
-    WHERE sub_account.discovered_at_block_hash = sub_block.hash
-    AND sub_account.id = account_id_param;
+    FROM sub_account A
+    WHERE sub_account.id = account_id_param;
 	
-    SELECT sub_block.timestamp
+    SELECT A.killed_at
     INTO result_record.killed_at
-    FROM sub_block, sub_account
-    WHERE sub_account.killed_at_block_hash = sub_block.hash
-    AND sub_account.id = account_id_param;
+    FROM sub_account A
+    WHERE sub_account.id = account_id_param;
 
     if is_active_param then
         SELECT COUNT(DISTINCT number)

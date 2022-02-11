@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS sub_event_era_paid
     CONSTRAINT sub_event_era_paid_fk_era
         FOREIGN KEY (era_index)
             REFERENCES sub_era (index)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

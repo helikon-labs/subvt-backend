@@ -646,6 +646,8 @@ impl PostgreSQLNetworkStorage {
     pub async fn save_new_account_event(
         &self,
         block_hash: &str,
+        block_number: u64,
+        block_timestamp: Option<u64>,
         extrinsic_index: Option<i32>,
         event_index: i32,
         account_id: &AccountId,
@@ -670,12 +672,14 @@ impl PostgreSQLNetworkStorage {
         // update account
         let maybe_result: Option<(String,)> = sqlx::query_as(
             r#"
-            UPDATE sub_account SET discovered_at_block_hash = $1, updated_at = now()
-            WHERE id = $2
+            UPDATE sub_account SET discovered_at_block_hash = $1, discovered_at_block_number = $2, discovered_at = $3, updated_at = now()
+            WHERE id = $4
             RETURNING id
             "#,
         )
         .bind(block_hash)
+        .bind(block_number as i64)
+        .bind(block_timestamp.map(|timestamp| timestamp as i64))
         .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -689,6 +693,8 @@ impl PostgreSQLNetworkStorage {
     pub async fn save_killed_account_event(
         &self,
         block_hash: &str,
+        block_number: u64,
+        block_timestamp: Option<u64>,
         extrinsic_index: Option<i32>,
         event_index: i32,
         account_id: &AccountId,
@@ -713,12 +719,14 @@ impl PostgreSQLNetworkStorage {
         // update account
         let maybe_result: Option<(String,)> = sqlx::query_as(
             r#"
-            UPDATE sub_account SET killed_at_block_hash = $1, updated_at = now()
-            WHERE id = $2
+            UPDATE sub_account SET killed_at_block_hash = $1, discovered_at_block_number = $2, discovered_at = $3, updated_at = now()
+            WHERE id = $4
             RETURNING id
             "#,
         )
         .bind(block_hash)
+        .bind(block_number as i64)
+        .bind(block_timestamp.map(|timestamp| timestamp as i64))
         .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;

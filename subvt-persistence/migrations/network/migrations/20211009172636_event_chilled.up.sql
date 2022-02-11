@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS sub_event_chilled
     CONSTRAINT sub_event_chilled_fk_account
         FOREIGN KEY (stash_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

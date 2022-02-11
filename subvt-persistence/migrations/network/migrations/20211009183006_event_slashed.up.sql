@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS sub_event_slashed
     CONSTRAINT sub_event_slashed_fk_validator_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

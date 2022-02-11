@@ -23,12 +23,12 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
     CONSTRAINT sub_era_validator_fk_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_era_validator_fk_controller_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

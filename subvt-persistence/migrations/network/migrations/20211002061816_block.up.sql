@@ -16,27 +16,27 @@ CREATE TABLE IF NOT EXISTS sub_block
     CONSTRAINT sub_block_fk_account
         FOREIGN KEY (author_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
+            ON DELETE RESTRICT
+            ON UPDATE RESTRICT,
     CONSTRAINT sub_block_fk_era
         FOREIGN KEY (era_index)
             REFERENCES sub_era (index)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE
+            ON DELETE RESTRICT
+            ON UPDATE RESTRICT
 );
 
 ALTER TABLE sub_account
     ADD CONSTRAINT sub_account_fk_discovered_block
         FOREIGN KEY (discovered_at_block_hash)
             REFERENCES sub_block (hash)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON DELETE SET NULL
+            ON UPDATE RESTRICT;
 ALTER TABLE sub_account
     ADD CONSTRAINT sub_account_fk_killed_block
         FOREIGN KEY (killed_at_block_hash)
             REFERENCES sub_block (hash)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE;
+            ON DELETE SET NULL
+            ON UPDATE RESTRICT;
 
 CREATE INDEX sub_block_idx_epoch_index
     ON sub_block (epoch_index);

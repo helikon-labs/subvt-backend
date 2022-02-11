@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_fault_event
     CONSTRAINT sub_onekv_candidate_fault_event_fk_validator_account_id
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

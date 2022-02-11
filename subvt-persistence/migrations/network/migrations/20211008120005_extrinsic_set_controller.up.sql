@@ -16,12 +16,12 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
     CONSTRAINT sub_extrinsic_set_controller_fk_caller_account
         FOREIGN KEY (caller_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_extrinsic_set_controller_fk_controller_account
         FOREIGN KEY (controller_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

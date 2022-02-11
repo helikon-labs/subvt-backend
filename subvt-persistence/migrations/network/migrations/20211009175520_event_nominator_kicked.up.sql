@@ -15,12 +15,12 @@ CREATE TABLE IF NOT EXISTS sub_event_nominator_kicked
     CONSTRAINT sub_event_nominator_kicked_fk_validator
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_event_nominator_kicked_fk_nominator
         FOREIGN KEY (nominator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 

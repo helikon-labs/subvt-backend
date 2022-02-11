@@ -119,16 +119,17 @@ impl BlockProcessor {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn process_event(
         &self,
         substrate_client: &SubstrateClient,
         postgres: &PostgreSQLNetworkStorage,
-        block_hash_epoch_index: (&str, u64),
+        (block_hash, block_number, block_timestamp): (&str, u64, Option<u64>),
+        epoch_index: u64,
         successful_extrinsic_indices: &mut Vec<u32>,
         failed_extrinsic_indices: &mut Vec<u32>,
         (event_index, event): (usize, &SubstrateEvent),
     ) -> anyhow::Result<()> {
-        let (block_hash, epoch_index) = block_hash_epoch_index;
         match event {
             SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
                 ImOnlineEvent::HeartbeatReceived {
@@ -275,9 +276,12 @@ impl BlockProcessor {
                 } => {
                     let extrinsic_index =
                         extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+
                     postgres
                         .save_new_account_event(
                             block_hash,
+                            block_number,
+                            block_timestamp,
                             extrinsic_index,
                             event_index as i32,
                             account_id,
@@ -293,6 +297,8 @@ impl BlockProcessor {
                     postgres
                         .save_killed_account_event(
                             block_hash,
+                            block_number,
+                            block_timestamp,
                             extrinsic_index,
                             event_index as i32,
                             account_id,
@@ -931,7 +937,8 @@ impl BlockProcessor {
             self.process_event(
                 substrate_client,
                 postgres,
-                (&block_hash, current_epoch_index),
+                (&block_hash, block_number, block_timestamp),
+                current_epoch_index,
                 &mut successful_extrinsic_indices,
                 &mut failed_extrinsic_indices,
                 (index, event),

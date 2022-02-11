@@ -16,13 +16,13 @@ CREATE TABLE IF NOT EXISTS sub_era_staker
     CONSTRAINT sub_era_staker_fk_validator
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE,
     CONSTRAINT sub_era_staker_fk_nominator
-            FOREIGN KEY (nominator_account_id)
-                REFERENCES sub_account (id)
-                ON DELETE CASCADE
-                ON UPDATE CASCADE
+        FOREIGN KEY (nominator_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE
 );
 
 CREATE INDEX sub_era_staker_idx_era_index

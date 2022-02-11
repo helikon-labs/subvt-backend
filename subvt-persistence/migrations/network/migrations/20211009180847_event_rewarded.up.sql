@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS sub_event_rewarded
     CONSTRAINT sub_event_rewarded_fk_rewardee
         FOREIGN KEY (rewardee_account_id)
             REFERENCES sub_account (id)
-            ON DELETE CASCADE
+            ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
 
