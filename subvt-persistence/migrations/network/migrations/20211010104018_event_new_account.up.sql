@@ -5,18 +5,18 @@ CREATE TABLE IF NOT EXISTS sub_event_new_account
     extrinsic_index integer,
     event_index     integer NOT NULL,
     account_id      VARCHAR(66) NOT NULL,
-    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT event_new_account_fk_block
-        FOREIGN KEY (block_hash)
-            REFERENCES sub_block (hash)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    CONSTRAINT event_new_account_fk_account
-        FOREIGN KEY (account_id)
-            REFERENCES sub_account (id)
-            ON DELETE RESTRICT
-            ON UPDATE CASCADE
+    created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE INDEX sub_event_new_account_idx_block_hash
-    ON sub_event_new_account (block_hash);
+ALTER TABLE sub_event_new_account
+    ADD CONSTRAINT event_new_account_fk_block
+    FOREIGN KEY (block_hash)
+        REFERENCES sub_block (hash)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE;
+ALTER TABLE sub_event_new_account
+    ADD CONSTRAINT event_new_account_fk_account
+    FOREIGN KEY (account_id)
+        REFERENCES sub_account (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;

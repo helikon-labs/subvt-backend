@@ -12,40 +12,24 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
     total_stake             VARCHAR(128),
     reward_points           bigint NOT NULL DEFAULT 0,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_era_validator_u_era_index_validator_account_id
-        UNIQUE (era_index, validator_account_id),
-    CONSTRAINT sub_era_validator_fk_era
-        FOREIGN KEY (era_index)
-            REFERENCES sub_era (index)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    CONSTRAINT sub_era_validator_fk_account
-        FOREIGN KEY (validator_account_id)
-            REFERENCES sub_account (id)
-            ON DELETE RESTRICT
-            ON UPDATE CASCADE,
-    CONSTRAINT sub_era_validator_fk_controller_account
-        FOREIGN KEY (validator_account_id)
-            REFERENCES sub_account (id)
-            ON DELETE RESTRICT
-            ON UPDATE CASCADE
+    updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE INDEX sub_era_validator_idx_era_index
-    ON sub_era_validator (era_index);
-
-CREATE INDEX sub_era_validator_idx_validator_account_id
-    ON sub_era_validator (validator_account_id);
-
-CREATE INDEX sub_era_validator_idx_era_index_validator_account_id
-    ON sub_era_validator (era_index, validator_account_id);
-
-CREATE INDEX sub_era_validator_idx_is_active
-    ON sub_era_validator (is_active);
-
-CREATE INDEX sub_era_validator_idx_active_validator_index
-    ON sub_era_validator (active_validator_index);
-
-CREATE INDEX sub_era_validator_idx_validator_account_id_is_active
-    ON sub_era_validator (validator_account_id, is_active);
+ALTER TABLE sub_era_validator
+    ADD CONSTRAINT sub_era_validator_fk_era
+    FOREIGN KEY (era_index)
+        REFERENCES sub_era (index)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE;
+ALTER TABLE sub_era_validator
+    ADD CONSTRAINT sub_era_validator_fk_account
+    FOREIGN KEY (validator_account_id)
+        REFERENCES sub_account (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;
+ALTER TABLE sub_era_validator
+    ADD CONSTRAINT sub_era_validator_fk_controller_account
+    FOREIGN KEY (validator_account_id)
+        REFERENCES sub_account (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;

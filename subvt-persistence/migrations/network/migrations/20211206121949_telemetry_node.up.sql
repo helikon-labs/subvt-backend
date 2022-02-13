@@ -15,9 +15,3 @@ CREATE TABLE IF NOT EXISTS sub_telemetry_node (
    created_at               TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
    updated_at               TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
-
-CREATE INDEX sub_telemetry_node_idx_controller_account_id
-    ON sub_telemetry_node (controller_account_id);
-
-CREATE INDEX sub_telemetry_node_idx_name
-    ON sub_telemetry_node (name);

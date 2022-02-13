@@ -5,13 +5,12 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_rank_event
     active_era              integer                     NOT NULL,
     start_era               integer                     NOT NULL,
     happened_at             bigint                      NOT NULL,
-    created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_onekv_candidate_rank_event_fk_validator_account_id
-        FOREIGN KEY (validator_account_id)
-            REFERENCES sub_account (id)
-            ON DELETE RESTRICT
-            ON UPDATE CASCADE
+    created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE INDEX sub_onekv_candidate_rank_event_idx_validator_account_id
-    ON sub_onekv_candidate_rank_event (validator_account_id);
+ALTER TABLE sub_onekv_candidate_rank_event
+    ADD CONSTRAINT sub_onekv_candidate_rank_event_fk_validator_account_id
+    FOREIGN KEY (validator_account_id)
+        REFERENCES sub_account (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;

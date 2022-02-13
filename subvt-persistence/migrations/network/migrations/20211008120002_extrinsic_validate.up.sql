@@ -9,23 +9,24 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_validate
     commission_per_billion  bigint NOT NULL,
     blocks_nominations      boolean NOT NULL,
     is_successful           boolean NOT NULL,
-    created_at              TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_validate_fk_block
-        FOREIGN KEY (block_hash)
-            REFERENCES sub_block (hash)
-            ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    CONSTRAINT sub_extrinsic_validate_fk_stash
-            FOREIGN KEY (stash_account_id)
-                REFERENCES sub_account (id)
-                ON DELETE RESTRICT
-                ON UPDATE CASCADE,
-    CONSTRAINT sub_extrinsic_validate_fk_controller
-        FOREIGN KEY (controller_account_id)
-            REFERENCES sub_account (id)
-            ON DELETE RESTRICT
-            ON UPDATE CASCADE
+    created_at              TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT now()
 );
 
-CREATE INDEX sub_extrinsic_validate_idx_block_hash
-    ON sub_extrinsic_validate (block_hash);
+ALTER TABLE sub_extrinsic_validate
+    ADD CONSTRAINT sub_extrinsic_validate_fk_block
+    FOREIGN KEY (block_hash)
+        REFERENCES sub_block (hash)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE;
+ALTER TABLE sub_extrinsic_validate
+    ADD CONSTRAINT sub_extrinsic_validate_fk_stash
+    FOREIGN KEY (stash_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE;
+ALTER TABLE sub_extrinsic_validate
+    ADD CONSTRAINT sub_extrinsic_validate_fk_controller
+    FOREIGN KEY (controller_account_id)
+        REFERENCES sub_account (id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE;
