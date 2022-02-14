@@ -216,6 +216,7 @@ impl Metadata {
 
 #[derive(Debug)]
 pub enum SignedExtra {
+    CheckNonZeroSender,
     CheckSpecVersion,
     CheckTxVersion,
     CheckGenesis,
@@ -229,6 +230,7 @@ pub enum SignedExtra {
 impl SignedExtra {
     fn from(string: &str) -> Result<Self, MetadataError> {
         match string {
+            "CheckNonZeroSender" => Ok(Self::CheckNonZeroSender),
             "CheckSpecVersion" => Ok(Self::CheckSpecVersion),
             "CheckTxVersion" => Ok(Self::CheckTxVersion),
             "CheckGenesis" => Ok(Self::CheckGenesis),
@@ -896,7 +898,10 @@ mod v14 {
                 let ty = meta.types.resolve(array.type_param().id()).unwrap();
                 format!("[{}; {}]", convert_type(meta, ty), array.len())
             }
-            _ => panic!("Unsupported type: {:?}", ty),
+            TypeDef::Variant(variant) => {
+                format!("{:?}", variant)
+            }
+            _ => panic!("Unsupported type: {:?}", ty.type_def()),
         };
         ty
     }
