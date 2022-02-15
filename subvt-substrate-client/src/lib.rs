@@ -762,14 +762,19 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Got {} nominations. Get nominator accounts.", nomination_map.len());
+            debug!(
+                "Got {} nominations. Get nominator accounts.",
+                nomination_map.len()
+            );
             // get nominator account details
             {
-                let nominator_account_ids: Vec<AccountId> = nomination_map.keys().cloned().collect();
+                let nominator_account_ids: Vec<AccountId> =
+                    nomination_map.keys().cloned().collect();
                 for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
                     let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
                     for account in accounts {
-                        nomination_map.get_mut(&account.id).unwrap().stash_account = account.clone();
+                        nomination_map.get_mut(&account.id).unwrap().stash_account =
+                            account.clone();
                     }
                 }
             }
