@@ -108,13 +108,13 @@ impl NotificationGenerator {
         let current_nominator_ids: HashSet<AccountId> = current
             .nominations
             .iter()
-            .map(|nomination| &nomination.stash_account_id)
+            .map(|nomination| &nomination.stash_account.id)
             .cloned()
             .collect();
         let last_nominator_ids: HashSet<AccountId> = last
             .nominations
             .iter()
-            .map(|nomination| &nomination.stash_account_id)
+            .map(|nomination| &nomination.stash_account.id)
             .cloned()
             .collect();
         let new_nominator_ids = &current_nominator_ids - &last_nominator_ids;
@@ -122,11 +122,11 @@ impl NotificationGenerator {
         let renominator_ids = &current_nominator_ids - &new_nominator_ids;
         let mut current_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
         for nomination in &current.nominations {
-            current_nomination_map.insert(&nomination.stash_account_id, nomination);
+            current_nomination_map.insert(&nomination.stash_account.id, nomination);
         }
         let mut last_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
         for nomination in &last.nominations {
-            last_nomination_map.insert(&nomination.stash_account_id, nomination);
+            last_nomination_map.insert(&nomination.stash_account.id, nomination);
         }
         // new nominations
         for new_nominator_id in new_nominator_ids {
@@ -147,7 +147,7 @@ impl NotificationGenerator {
             let event = app_event::NewNomination {
                 validator_account_id: current.account.id.clone(),
                 discovered_block_number: finalized_block_number,
-                nominator_stash_account_id: new_nomination.stash_account_id.clone(),
+                nominator_stash_account_id: new_nomination.stash_account.id.clone(),
                 active_amount: new_nomination.stake.active_amount,
                 total_amount: new_nomination.stake.total_amount,
                 nominee_count: new_nomination.target_account_ids.len() as u64,
@@ -193,7 +193,7 @@ impl NotificationGenerator {
             let event = app_event::LostNomination {
                 validator_account_id: current.account.id.clone(),
                 discovered_block_number: finalized_block_number,
-                nominator_stash_account_id: lost_nomination.stash_account_id.clone(),
+                nominator_stash_account_id: lost_nomination.stash_account.id.clone(),
                 active_amount: lost_nomination.stake.active_amount,
                 total_amount: lost_nomination.stake.total_amount,
                 nominee_count: lost_nomination.target_account_ids.len() as u64,
@@ -242,7 +242,7 @@ impl NotificationGenerator {
                 let event = app_event::NominationAmountChange {
                     validator_account_id: current.account.id.clone(),
                     discovered_block_number: finalized_block_number,
-                    nominator_stash_account_id: current_nomination.stash_account_id.clone(),
+                    nominator_stash_account_id: current_nomination.stash_account.id.clone(),
                     prev_active_amount: prev_nomination.stake.active_amount,
                     prev_total_amount: prev_nomination.stake.total_amount,
                     prev_nominee_count: prev_nomination.target_account_ids.len() as u64,

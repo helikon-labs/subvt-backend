@@ -158,7 +158,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             .nominations
             .iter()
             .cloned()
-            .filter(|nomination| !active_staker_account_ids.contains(&nomination.stash_account_id))
+            .filter(|nomination| !active_staker_account_ids.contains(&nomination.stash_account.id))
             .collect();
 
         ValidatorSummary {

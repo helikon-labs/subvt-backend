@@ -61,12 +61,12 @@ BEGIN
     SELECT A.discovered_at
     INTO result_record.discovered_at
     FROM sub_account A
-    WHERE sub_account.id = account_id_param;
+    WHERE A.id = account_id_param;
 	
     SELECT A.killed_at
     INTO result_record.killed_at
     FROM sub_account A
-    WHERE sub_account.id = account_id_param;
+    WHERE A.id = account_id_param;
 
     if is_active_param then
         SELECT COUNT(DISTINCT number)

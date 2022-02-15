@@ -316,36 +316,6 @@ impl SubstrateClient {
         }
     }
 
-    /// Get the nomination details for a nominator stash account id at the given block.
-    pub async fn get_nomination(
-        &self,
-        nominator_stash_account_id: &AccountId,
-        block_hash: &str,
-    ) -> anyhow::Result<Option<Nomination>> {
-        let storage_key = get_storage_map_key(
-            &self.metadata,
-            "Staking",
-            "Nominators",
-            nominator_stash_account_id,
-        );
-        let chunk_values: Vec<StorageChangeSet<String>> = self
-            .ws_client
-            .request(
-                "state_queryStorageAt",
-                rpc_params!(vec![storage_key], block_hash),
-            )
-            .await?;
-        if let Some(value) = chunk_values.get(0) {
-            if let Some((_, Some(data))) = value.changes.get(0) {
-                return Ok(Some(Nomination::from_bytes(
-                    &data.0 as &[u8],
-                    nominator_stash_account_id.clone(),
-                )?));
-            }
-        }
-        Ok(None)
-    }
-
     /// Get the list of the account ids of all validators (active and inactive) at the given block.
     pub async fn get_all_validator_account_ids(
         &self,
@@ -788,11 +758,21 @@ impl SubstrateClient {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let bytes: &[u8] = &data.0;
                         let nomination = Nomination::from_bytes(bytes, account_id).unwrap();
-                        nomination_map.insert(nomination.stash_account_id.clone(), nomination);
+                        nomination_map.insert(nomination.stash_account.id.clone(), nomination);
                     }
                 }
             }
-            debug!("Got {} nominations.", nomination_map.len());
+            debug!("Got {} nominations. Get nominator accounts.", nomination_map.len());
+            // get nominator account details
+            {
+                let nominator_account_ids: Vec<AccountId> = nomination_map.keys().cloned().collect();
+                for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
+                    let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
+                    for account in accounts {
+                        nomination_map.get_mut(&account.id).unwrap().stash_account = account.clone();
+                    }
+                }
+            }
 
             debug!("Get validator controller account ids.");
             let mut controller_storage_keys: Vec<String> = validator_map
@@ -867,7 +847,7 @@ impl SubstrateClient {
             for validator in validator_map.values_mut() {
                 validator.nominations.sort_by_key(|nomination| {
                     let mut hasher = DefaultHasher::new();
-                    nomination.stash_account_id.hash(&mut hasher);
+                    nomination.stash_account.id.hash(&mut hasher);
                     hasher.finish()
                 });
             }

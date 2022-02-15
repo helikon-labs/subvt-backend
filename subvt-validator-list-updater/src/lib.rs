@@ -94,6 +94,7 @@ impl ValidatorListUpdater {
                 }
             })
             .collect();
+        debug!("Prepare Redis command pipeline.");
         redis_cmd_pipeline
             .cmd("SADD")
             .arg(format!("{}:active:{}", prefix, "account_id_set"))
@@ -149,6 +150,7 @@ impl ValidatorListUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(finalized_block_number);
+        debug!("Write to Redis.");
         redis_cmd_pipeline
             .query(&mut redis_connection)
             .context("Error while setting Redis validators.")?;

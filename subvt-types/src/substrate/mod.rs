@@ -4,7 +4,7 @@
 use crate::crypto::AccountId;
 use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
-use log::error;
+use log::{error, warn};
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, Nominations, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
@@ -260,8 +260,18 @@ impl BlockHeader {
                         );
                     }
                 }
-                _ => error!("Unknown log type."),
+                DigestItem::RuntimeEnvironmentUpdated => {
+                    warn!(
+                        "Log type: RuntimeEnvironmentUpdated. Cannot get author validator index."
+                    );
+                }
+                DigestItem::Other(_) => {
+                    warn!("Unknown log type. Cannot get author validator index.");
+                }
             }
+        }
+        if validator_index.is_none() {
+            error!("Author validator index not found.");
         }
         validator_index
     }
@@ -530,7 +540,7 @@ pub type SuperAccountId = (AccountId, Data);
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
-    pub stash_account_id: AccountId,
+    pub stash_account: Account,
     pub submission_era_index: u32,
     pub target_account_ids: Vec<AccountId>,
     pub stake: Stake,
@@ -541,7 +551,10 @@ impl Nomination {
         let nomination: Nominations<AccountId> = Decode::decode(&mut bytes)?;
         let submission_era_index: u32 = nomination.submitted_in;
         Ok(Nomination {
-            stash_account_id: account_id,
+            stash_account: Account {
+                id: account_id,
+                ..Default::default()
+            },
             submission_era_index,
             target_account_ids: nomination.targets,
             ..Default::default()
