@@ -78,7 +78,7 @@ DROP INDEX sub_extrinsic_heartbeat_idx_block_hash;
 DROP INDEX sub_extrinsic_heartbeat_idx_block_number;
 DROP INDEX sub_extrinsic_heartbeat_idx_session_index;
 DROP INDEX sub_extrinsic_heartbeat_idx_validator_account_id;
-DROP INDEX sub_extrinsic_heartbeat_idx_validator_account_id_session_index_is_successful;
+DROP INDEX sub_extrinsic_heartbeat_idx_validator_session_successful;
 -- extrinsic: payout stakers
 DROP INDEX sub_extrinsic_payout_stakers_idx_block_hash;
 DROP INDEX sub_extrinsic_payout_stakers_idx_caller_account_id;
@@ -86,7 +86,7 @@ DROP INDEX sub_extrinsic_payout_stakers_idx_validator_account_id;
 DROP INDEX sub_extrinsic_payout_stakers_idx_era_index;
 DROP INDEX sub_extrinsic_payout_stakers_idx_is_successful;
 DROP INDEX sub_extrinsic_payout_stakers_idx_validator_era_successful;
-DROP INDEX sub_extrinsic_payout_stakers_idx_index_era_index_block_hash_success;
+DROP INDEX sub_extrinsic_payout_stakers_idx_era_block_success;
 -- extrinsic: validate
 DROP INDEX sub_extrinsic_validate_idx_block_hash;
 -- extrinsic: nominate->validator
@@ -109,7 +109,7 @@ DROP INDEX sub_block_idx_era_index_author_account_id;
 DROP INDEX sub_session_para_validator_idx_era_index;
 DROP INDEX sub_session_para_validator_idx_session_index;
 DROP INDEX sub_session_para_validator_idx_validator_account_id;
-DROP INDEX sub_session_para_validator_idx_session_index_validator_account_id;
+DROP INDEX sub_session_para_validator_idx_session_index_validator;
 -- epoch
 DROP INDEX sub_epoch_idx_era;
 -- era validator

@@ -47,7 +47,7 @@ host = "127.0.0.1"
 port = 5432
 username = "subvt"
 password = "subvt"
-database_name = "subvt_kusama"
+database_name = "subvt_network"
 pool_max_connections = 20
 connection_timeout_seconds = 3
 
@@ -63,6 +63,7 @@ start_block_number = 6_015_486
 candidate_history_record_count = 5
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
+nominator_list_endpoint = "https://kusama.w3f.community/nominators"
 refresh_seconds = 300
 request_timeout_seconds = 60
 

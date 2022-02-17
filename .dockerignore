@@ -1,0 +1,9 @@
+target/
+.idea
+.env
+certificate/
+.vscode
+.git
+.github
+.gitignore
+.gitmodules

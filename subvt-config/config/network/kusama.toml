@@ -1,0 +1,20 @@
+[substrate]
+chain = "kusama"
+chain_display = "Kusama"
+chain_genesis_hash = "0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE"
+rpc_url = "wss://kusama-rpc.polkadot.io:443"
+timeout_seconds = 30
+connection_timeout_seconds = 30
+request_timeout_seconds = 30
+network_id = 1
+
+[block_processor]
+start_block_number = 6_015_486
+
+[onekv]
+candidate_history_record_count = 5
+candidate_list_endpoint = "https://kusama.w3f.community/candidates"
+candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
+nominator_list_endpoint = "https://kusama.w3f.community/nominators"
+refresh_seconds = 300
+request_timeout_seconds = 60

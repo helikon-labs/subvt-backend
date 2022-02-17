@@ -1,0 +1,17 @@
+[redis]
+url = "redis://redis:6379/"
+
+[network_postgres]
+host = "postgres"
+port = 5432
+username = "subvt"
+password = "subvt"
+database_name = "subvt_network"
+pool_max_connections = 20
+connection_timeout_seconds = 3
+
+[onekv]
+refresh_seconds = 300
+
+[notification_sender]
+apns_is_production = true

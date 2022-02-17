@@ -5931,7 +5931,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "subvt-app-service"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -5958,7 +5958,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-block-processor"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -5978,7 +5978,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-config"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "config",
  "serde 1.0.136",
@@ -5986,7 +5986,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-logging"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "env_logger",
  "log",
@@ -5995,7 +5995,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-server"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6018,7 +6018,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-updater"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6038,7 +6038,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-generator"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6061,7 +6061,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-sender"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "a2",
  "anyhow",
@@ -6089,7 +6089,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-onekv-updater"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6108,7 +6108,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-persistence"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6124,7 +6124,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-proc-macro"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6133,7 +6133,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-report-service"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -6153,7 +6153,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-service-common"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -6168,7 +6168,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-substrate-client"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "blake2-rfc",
@@ -6194,7 +6194,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telemetry-processor"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6215,7 +6215,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-types"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6263,7 +6263,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-utility"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "hex",
@@ -6272,7 +6272,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-details-server"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6294,7 +6294,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-server"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6318,7 +6318,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-updater"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "async-lock",

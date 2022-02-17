@@ -33,7 +33,7 @@ CREATE INDEX sub_session_para_validator_idx_session_index
     ON sub_session_para_validator (session_index);
 CREATE INDEX sub_session_para_validator_idx_validator_account_id
     ON sub_session_para_validator (validator_account_id);
-CREATE INDEX sub_session_para_validator_idx_session_index_validator_account_id
+CREATE INDEX sub_session_para_validator_idx_session_index_validator
     ON sub_session_para_validator (session_index, validator_account_id);
 -- block
 CREATE INDEX sub_block_idx_epoch_index
@@ -79,7 +79,7 @@ CREATE INDEX sub_extrinsic_payout_stakers_idx_is_successful
     ON sub_extrinsic_payout_stakers (is_successful);
 CREATE INDEX sub_extrinsic_payout_stakers_idx_validator_era_successful
     ON sub_extrinsic_payout_stakers (validator_account_id, era_index, is_successful);
-CREATE INDEX sub_extrinsic_payout_stakers_idx_index_era_index_block_hash_success
+CREATE INDEX sub_extrinsic_payout_stakers_idx_era_block_success
     ON sub_extrinsic_payout_stakers (era_index, extrinsic_index, block_hash, is_successful);
 -- extrinsic: hearbeat
 CREATE INDEX sub_extrinsic_heartbeat_idx_block_hash
@@ -90,7 +90,7 @@ CREATE INDEX sub_extrinsic_heartbeat_idx_session_index
     ON sub_extrinsic_heartbeat (session_index);
 CREATE INDEX sub_extrinsic_heartbeat_idx_validator_account_id
     ON sub_extrinsic_heartbeat (validator_account_id);
-CREATE INDEX sub_extrinsic_heartbeat_idx_validator_account_id_session_index_is_successful
+CREATE INDEX sub_extrinsic_heartbeat_idx_validator_session_successful
     ON sub_extrinsic_heartbeat (validator_account_id, session_index, is_successful);
 -- extrinsic: set controller
 CREATE INDEX sub_extrinsic_set_controller_idx_block_hash

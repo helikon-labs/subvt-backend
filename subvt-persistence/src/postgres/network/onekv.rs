@@ -1,7 +1,7 @@
 //! 1KV-related storage - for Polkadot and Kusama.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
-use subvt_types::onekv::{OneKVCandidateDetails, OneKVValidity};
+use subvt_types::onekv::{OneKVCandidateDetails, OneKVNominator, OneKVValidity};
 
 impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_candidate(
@@ -169,5 +169,89 @@ impl PostgreSQLNetworkStorage {
                 updated_at: db_validity.4 as u64,
             })
             .collect())
+    }
+}
+
+impl PostgreSQLNetworkStorage {
+    pub async fn save_onekv_nominator(
+        &self,
+        nominator: &OneKVNominator,
+        history_record_count: i64,
+    ) -> anyhow::Result<i32> {
+        let account_id = AccountId::from_ss58_check(&nominator.address)?;
+        let stash_account_id = AccountId::from_ss58_check(&nominator.stash_address)?;
+        let proxy_account_id = AccountId::from_ss58_check(&nominator.proxy_address)?;
+        self.save_account(&account_id).await?;
+        self.save_account(&stash_account_id).await?;
+        self.save_account(&proxy_account_id).await?;
+        let nominator_save_result: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO sub_onekv_nominator (onekv_id, account_id, stash_account_id, proxy_account_id, bonded_amount, proxy_delay, last_nomination_at, nominator_created_at, average_stake, new_bonded_amount, reward_destination)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id
+            "#,
+        )
+            .bind(&nominator.id)
+            .bind(account_id.to_string())
+            .bind(stash_account_id.to_string())
+            .bind(proxy_account_id.to_string())
+            .bind(nominator.bonded_amount.to_string())
+            .bind(nominator.proxy_delay as i32)
+            .bind(nominator.last_nomination_at as i64)
+            .bind(nominator.created_at as i64)
+            .bind(nominator.average_stake)
+            .bind(nominator.new_bonded_amount)
+            .bind(&nominator.reward_destination)
+            .fetch_one(&self.connection_pool)
+            .await?;
+        // persist nominees
+        let mut transaction = self.connection_pool.begin().await?;
+        for nominee in &nominator.nominees {
+            let stash_account_id = AccountId::from_ss58_check(&nominee.stash_address)?;
+            self.save_account(&stash_account_id).await?;
+            sqlx::query(
+                r#"
+                INSERT INTO sub_onekv_nominee (onekv_nominator_id, stash_account_id, name)
+                VALUES ($1, $2, $3)
+                "#,
+            )
+            .bind(nominator_save_result.0)
+            .bind(stash_account_id.to_string())
+            .bind(&nominee.name)
+            .execute(&mut transaction)
+            .await?;
+        }
+        transaction.commit().await?;
+
+        // only keep the relevant number of nominator records
+        let nominator_record_count: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT id) FROM sub_onekv_nominator
+            WHERE account_id = $1
+            "#,
+        )
+        .bind(account_id.to_string())
+        .fetch_one(&self.connection_pool)
+        .await?;
+        if nominator_record_count.0 > history_record_count {
+            sqlx::query(
+                r#"
+                DELETE FROM sub_onekv_nominator
+                WHERE id IN
+                (
+                    SELECT id FROM sub_onekv_nominator
+                    WHERE account_id = $1
+                    ORDER BY id ASC
+                    LIMIT $2
+                )
+                "#,
+            )
+            .bind(account_id.to_string())
+            .bind(nominator_record_count.0 - history_record_count)
+            .execute(&self.connection_pool)
+            .await?;
+        }
+        // return persisted record id
+        Ok(nominator_save_result.0)
     }
 }

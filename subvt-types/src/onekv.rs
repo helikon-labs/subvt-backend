@@ -1,5 +1,6 @@
 //! Types for the Thousand Validators Programme on Kusama and Polkadot.
 
+use crate::substrate::Balance;
 use serde::{Deserialize, Serialize};
 use subvt_proc_macro::Diff;
 
@@ -123,4 +124,37 @@ pub struct OneKVValidity {
     pub ty: String,
     #[serde(rename(deserialize = "updated"))]
     pub updated_at: u64,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVNominator {
+    #[serde(rename(deserialize = "_id"))]
+    pub id: String,
+    pub address: String,
+    #[serde(rename(deserialize = "stash"))]
+    pub stash_address: String,
+    #[serde(rename(deserialize = "proxy"))]
+    pub proxy_address: String,
+    #[serde(rename(deserialize = "bonded"))]
+    pub bonded_amount: Balance,
+    pub proxy_delay: u32,
+    #[serde(rename(deserialize = "current"))]
+    pub nominees: Vec<OneKVNominee>,
+    #[serde(rename(deserialize = "lastNomination"))]
+    pub last_nomination_at: u64,
+    pub created_at: u64,
+    #[serde(rename(deserialize = "avgStake"))]
+    pub average_stake: f64,
+    pub new_bonded_amount: f64,
+    pub reward_destination: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVNominee {
+    pub name: String,
+    #[serde(rename(deserialize = "stash"))]
+    pub stash_address: String,
+    pub identity: OneKVIdentity,
 }

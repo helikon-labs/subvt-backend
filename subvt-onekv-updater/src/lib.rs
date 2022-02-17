@@ -6,7 +6,7 @@ use log::{debug, error, info};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
-use subvt_types::onekv::{OneKVCandidate, OneKVCandidateDetails};
+use subvt_types::onekv::{OneKVCandidate, OneKVCandidateDetails, OneKVNominator};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -31,8 +31,7 @@ impl Default for OneKVUpdater {
 }
 
 impl OneKVUpdater {
-    async fn update(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
-        info!("Update 1KV.");
+    async fn update_candidates(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         info!("Fetch candidate list.");
         let response = self
             .http_client
@@ -90,7 +89,7 @@ impl OneKVUpdater {
                         "Fetched and persisted candidate {} of {} :: {}.",
                         index + 1,
                         candidates.len(),
-                        candidate.stash_address
+                        candidate.stash_address,
                     );
                 }
                 Err(error) => {
@@ -106,6 +105,44 @@ impl OneKVUpdater {
     }
 }
 
+impl OneKVUpdater {
+    async fn update_nominators(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
+        info!("Fetch nominator list.");
+        let response = self
+            .http_client
+            .get(&CONFIG.onekv.nominator_list_endpoint)
+            .send()
+            .await?;
+        let nominators: Vec<OneKVNominator> = response.json().await?;
+        info!("Fetched {} nominators.", nominators.len());
+        for (index, nominator) in nominators.iter().enumerate() {
+            let save_result = postgres
+                .save_onekv_nominator(
+                    nominator,
+                    CONFIG.onekv.candidate_history_record_count as i64,
+                )
+                .await;
+            match save_result {
+                Ok(_) => {
+                    debug!(
+                        "Persisted nominator {} of {} :: {}.",
+                        index + 1,
+                        nominators.len(),
+                        nominator.address,
+                    );
+                }
+                Err(error) => {
+                    error!(
+                        "Error while persisting nominator {}:{:?}",
+                        nominator.address, error
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 #[async_trait(?Send)]
 impl Service for OneKVUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
@@ -116,10 +153,15 @@ impl Service for OneKVUpdater {
         let postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         loop {
-            if let Err(error) = self.update(&postgres).await {
-                error!("1KV update has failed: {:?}", error);
-                error!("Will retry in {} seconds.", CONFIG.onekv.refresh_seconds);
+            info!("Update 1KV candidates.");
+            if let Err(error) = self.update_candidates(&postgres).await {
+                error!("1KV candidates update has failed: {:?}", error);
             }
+            info!("Update 1KV nominators.");
+            if let Err(error) = self.update_nominators(&postgres).await {
+                error!("1KV nominators update has failed: {:?}", error);
+            }
+            info!("Sleep for {} seconds.", CONFIG.onekv.refresh_seconds);
             std::thread::sleep(std::time::Duration::from_secs(CONFIG.onekv.refresh_seconds));
         }
     }

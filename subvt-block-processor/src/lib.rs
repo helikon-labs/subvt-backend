@@ -768,6 +768,7 @@ impl BlockProcessor {
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
+        notify: bool,
     ) -> anyhow::Result<()> {
         debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
@@ -985,9 +986,11 @@ impl BlockProcessor {
             .await?
         }
         // notify
-        postgres
-            .notify_block_processed(block_number, block_hash)
-            .await?;
+        if notify {
+            postgres
+                .notify_block_processed(block_number, block_hash)
+                .await?;
+        }
         Ok(())
     }
 }
@@ -1041,6 +1044,7 @@ impl Service for BlockProcessor {
                                 &runtime_information,
                                 &postgres,
                                 block_number,
+                                false,
                             ).await;
                             match update_result {
                                 Ok(_) => block_number += 1,
@@ -1062,6 +1066,7 @@ impl Service for BlockProcessor {
                             &runtime_information,
                             &postgres,
                             finalized_block_number,
+                            true,
                         ).await;
                         match update_result {
                             Ok(_) => (),

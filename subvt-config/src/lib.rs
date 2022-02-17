@@ -3,16 +3,9 @@
 use serde::Deserialize;
 use std::fmt;
 
-/// Default development configuration file relative path for other SubVT crates/modules.
-const DEV_CONFIG_FILE_PATH: &str = "../subvt-config/config/Default.toml";
-/// Development configuration folder relative path for other SubVT crates/modules.
-const DEV_CONFIG_FILE_PREFIX: &str = "../subvt-config/config/";
-/// Production default configuration file should reside in the folder `config` in the same
-/// folder as the final executable.
-const CONFIG_FILE_PATH: &str = "./config/Default.toml";
-/// Production configuration folder should reside in the folder `config` in the same
-/// folder as the final executable.
-const CONFIG_FILE_PREFIX: &str = "./config/";
+const DEFAULT_CONFIG_DIR: &str = "./config";
+const DEV_CONFIG_DIR: &str = "../subvt-config/config";
+const DEFAULT_NETWORK: &str = "kusama";
 
 /// Runtime environment.
 #[derive(Clone, Debug, Deserialize)]
@@ -135,6 +128,7 @@ pub struct OneKVConfig {
     pub candidate_history_record_count: u64,
     pub candidate_list_endpoint: String,
     pub candidate_details_endpoint: String,
+    pub nominator_list_endpoint: String,
     pub refresh_seconds: u64,
     pub request_timeout_seconds: u64,
 }
@@ -202,10 +196,15 @@ impl Config {
         let env = Environment::Test;
         let mut c = config::Config::new();
         c.set("env", env.to_string())?;
-        c.merge(config::File::with_name(DEV_CONFIG_FILE_PATH))?;
+        c.merge(config::File::with_name(&format!("{}/base", DEV_CONFIG_DIR)))?;
         c.merge(config::File::with_name(&format!(
-            "{}{}",
-            DEV_CONFIG_FILE_PREFIX, env
+            "{}/network/{}",
+            DEV_CONFIG_DIR, DEFAULT_NETWORK
+        )))?;
+        c.merge(config::File::with_name(&format!(
+            "{}/env/{}",
+            DEV_CONFIG_DIR,
+            env.to_string().to_lowercase()
         )))?;
         // this makes it so SUBVT_REDIS__URL overrides redis.url
         c.merge(config::Environment::with_prefix("subvt").separator("__"))?;
@@ -218,19 +217,34 @@ impl Config {
                 .unwrap_or_else(|_| "Production".into())
                 .as_str(),
         );
+        let network = std::env::var("SUBVT_NETWORK").unwrap_or_else(|_| DEFAULT_NETWORK.into());
         let mut c = config::Config::new();
         c.set("env", env.to_string())?;
         if cfg!(debug_assertions) {
-            c.merge(config::File::with_name(DEV_CONFIG_FILE_PATH))?;
+            let config_dir =
+                std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEV_CONFIG_DIR.into());
+            c.merge(config::File::with_name(&format!("{}/base", config_dir)))?;
             c.merge(config::File::with_name(&format!(
-                "{}{}",
-                DEV_CONFIG_FILE_PREFIX, env
+                "{}/network/{}",
+                config_dir, network
+            )))?;
+            c.merge(config::File::with_name(&format!(
+                "{}/env/{}",
+                config_dir,
+                env.to_string().to_lowercase()
             )))?;
         } else {
-            c.merge(config::File::with_name(CONFIG_FILE_PATH))?;
+            let config_dir =
+                std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEFAULT_CONFIG_DIR.into());
+            c.merge(config::File::with_name(&format!("{}/base", config_dir)))?;
             c.merge(config::File::with_name(&format!(
-                "{}{}",
-                CONFIG_FILE_PREFIX, env
+                "{}/network/{}",
+                config_dir, network
+            )))?;
+            c.merge(config::File::with_name(&format!(
+                "{}/env/{}",
+                config_dir,
+                env.to_string().to_lowercase()
             )))?;
         }
         // this makes it so SUBVT_REDIS__URL overrides redis.url
