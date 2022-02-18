@@ -1,7 +1,7 @@
 FROM rust:1.58 as builder
-RUN mkdir -p /subvt-backend/bin \
-  && mkdir -p /subvt-backend/src
-WORKDIR /subvt-backend/src
+RUN mkdir -p /subvt/bin \
+    && mkdir -p /subvt/src
+WORKDIR /subvt/src
 COPY ./.. ./
 # add required nightly WASM target
 RUN rustup default nightly \
@@ -10,24 +10,21 @@ RUN rustup default nightly \
 # build SubVT backend
 RUN cargo build --release
 # copy executables
-RUN cp target/release/subvt-app-service /subvt-backend/bin/ \
-  && cp target/release/subvt-block-processor /subvt-backend/bin/ \
-  && cp target/release/subvt-network-status-server /subvt-backend/bin/ \
-  && cp target/release/subvt-network-status-updater /subvt-backend/bin/ \
-  && cp target/release/subvt-notification-generator /subvt-backend/bin/ \
-  && cp target/release/subvt-notification-sender /subvt-backend/bin/ \
-  && cp target/release/subvt-onekv-updater /subvt-backend/bin/ \
-  && cp target/release/subvt-report-service /subvt-backend/bin/ \
-  && cp target/release/subvt-telemetry-processor /subvt-backend/bin/ \
-  && cp target/release/subvt-validator-details-server /subvt-backend/bin/ \
-  && cp target/release/subvt-validator-list-server /subvt-backend/bin/ \
-  && cp target/release/subvt-validator-list-updater /subvt-backend/bin/
+RUN cp target/release/subvt-app-service /subvt/bin/ \
+  && cp target/release/subvt-block-processor /subvt/bin/ \
+  && cp target/release/subvt-network-status-server /subvt/bin/ \
+  && cp target/release/subvt-network-status-updater /subvt/bin/ \
+  && cp target/release/subvt-notification-generator /subvt/bin/ \
+  && cp target/release/subvt-notification-sender /subvt/bin/ \
+  && cp target/release/subvt-onekv-updater /subvt/bin/ \
+  && cp target/release/subvt-report-service /subvt/bin/ \
+  && cp target/release/subvt-telemetry-processor /subvt/bin/ \
+  && cp target/release/subvt-validator-details-server /subvt/bin/ \
+  && cp target/release/subvt-validator-list-server /subvt/bin/ \
+  && cp target/release/subvt-validator-list-updater /subvt/bin/
 
 FROM debian:buster-slim
-# make config and executable directories
-RUN mkdir -p /subvt-backend/config \
-  && mkdir -p /subvt-backend/bin
-# copy config
-COPY --from=builder /subvt-backend/src/subvt-config/config/ /subvt-backend/config/
+# make bin directory
+RUN mkdir -p /subvt/bin
 # copy executables
-COPY --from=builder /subvt-backend/bin/ /subvt-backend/bin/
+COPY --from=builder /subvt/bin/ /subvt/bin/

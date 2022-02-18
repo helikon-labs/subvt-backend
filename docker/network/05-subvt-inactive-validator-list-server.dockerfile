@@ -6,9 +6,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && update-ca-certificates \
-    && mkdir -p /subvt-backend/config
+    && mkdir -p /subvt/config
 # copy config files
-COPY --from=builder /subvt-backend/config/ /subvt-backend/config/
+COPY ./subvt-config/config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt-backend/bin/subvt-validator-list-server /usr/local/bin/
+COPY --from=builder /subvt/bin/subvt-validator-list-server /usr/local/bin/
 CMD ["subvt-validator-list-server", "--inactive"]

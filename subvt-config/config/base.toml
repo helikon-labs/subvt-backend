@@ -19,7 +19,7 @@ subvt_level = "debug"
 other_level = "warn"
 
 [rpc]
-host = "127.0.0.1"
+host = "0.0.0.0"
 network_status_port = 7888
 active_validator_list_port = 7889
 inactive_validator_list_port = 7890
@@ -64,7 +64,7 @@ candidate_history_record_count = 5
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
 nominator_list_endpoint = "https://kusama.w3f.community/nominators"
-refresh_seconds = 300
+refresh_seconds = 60
 request_timeout_seconds = 60
 
 [report]

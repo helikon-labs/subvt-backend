@@ -1,17 +1,5 @@
 [app_postgres]
-host = "127.0.0.1"
-port = 5432
-username = "subvt"
-password = "subvt"
 database_name = "subvt_app_test"
-pool_max_connections = 20
-connection_timeout_seconds = 3
 
 [network_postgres]
-host = "127.0.0.1"
-port = 5432
-username = "subvt"
-password = "subvt"
 database_name = "subvt_network_test"
-pool_max_connections = 20
-connection_timeout_seconds = 3
