@@ -8,7 +8,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use log::{debug, error, warn};
@@ -96,7 +96,7 @@ impl ValidatorListServer {
 #[async_trait(?Send)]
 impl Service for ValidatorListServer {
     async fn run(&'static self) -> anyhow::Result<()> {
-        let matches = App::new("SubVT Validator List Server")
+        let matches = Command::new("SubVT Validator List Server")
             .version("0.1.0")
             .author("Kutsal Kaan Bilgin <kutsal@helikon.io>")
             .about("Serves the active or inactive validator list for the SubVT app.")

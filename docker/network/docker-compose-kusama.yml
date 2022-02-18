@@ -1,0 +1,75 @@
+services:
+  subvt_network_postgres:
+    container_name: subvt_network_postgres
+    restart: always
+    image: "helikon/subvt-backend-network-db:0.1.2"
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - subvt_network_postgres_data:/var/lib/postgresql/data
+  subvt_redis:
+    container_name: subvt_redis
+    restart: always
+    image: "redis:6.2.6"
+    command: redis-server --save "" --appendonly no
+    #ports:
+      #- "127.0.0.1:6379:6379"
+    volumes:
+      - subvt_redis_data:/data
+  subvt_block_processor:
+    container_name: subvt_block_processor
+    restart: always
+    image: "helikon/subvt-block-processor:0.1.2"
+    depends_on:
+      - subvt_network_postgres
+      - subvt_redis
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt-backend/config
+      - SUBVT_NETWORK_POSTGRES__HOST=subvt_network_postgres
+  subvt_validator_list_updater:
+    container_name: subvt_validator_list_updater
+    restart: always
+    image: "helikon/subvt-validator-list-updater:0.1.2"
+    depends_on:
+      - subvt_block_processor
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt-backend/config
+      - SUBVT_NETWORK_POSTGRES__HOST=subvt_network_postgres
+      - SUBVT_REDIS__URL=redis://subvt_redis:6379/
+  subvt_active_validator_list_server:
+    container_name: subvt_active_validator_list_server
+    restart: always
+    image: "helikon/subvt-active-validator-list-server:0.1.2"
+    depends_on:
+      - subvt_validator_list_updater
+    ports:
+      - "10.76.242.70:7889:7889"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt-backend/config
+      - SUBVT_NETWORK_POSTGRES__HOST=subvt_network_postgres
+      - SUBVT_REDIS__URL=redis://subvt_redis:6379/
+  subvt_inactive_validator_list_server:
+    container_name: subvt_inactive_validator_list_server
+    restart: always
+    image: "helikon/subvt-inactive-validator-list-server:0.1.2"
+    depends_on:
+      - subvt_validator_list_updater
+    ports:
+      - "127.0.0.1:7890:7890"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt-backend/config
+      - SUBVT_NETWORK_POSTGRES__HOST=subvt_network_postgres
+      - SUBVT_REDIS__URL=redis://subvt_redis:6379/
+volumes:
+  subvt_network_postgres_data:
+    name: subvt_network_postgres_data
+  subvt_redis_data:
+    name: subvt_redis_data

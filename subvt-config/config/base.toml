@@ -31,7 +31,7 @@ report_service_port = 7900
 app_service_port = 7901
 
 [redis]
-url = "redis://127.0.0.1:5432/"
+url = "redis://127.0.0.1:6379/"
 
 [app_postgres]
 host = "127.0.0.1"
