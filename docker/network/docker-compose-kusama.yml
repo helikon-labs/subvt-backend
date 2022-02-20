@@ -68,7 +68,7 @@ services:
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       - SUBVT_BLOCK_PROCESSOR__START_BLOCK_NUMBER=6015486
-      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_validator_list_updater:
     container_name: subvt_validator_list_updater
     restart: unless-stopped
@@ -81,7 +81,7 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_active_validator_list_server:
     container_name: subvt_active_validator_list_server
     restart: unless-stopped
@@ -110,6 +110,20 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_validator_details_server:
+    container_name: subvt_validator_details_server
+    restart: unless-stopped
+    image: "helikon/subvt-validator-details-server:0.1.2"
+    depends_on:
+      - subvt_validator_list_updater
+    networks:
+      - kusama_network_deployment
+    ports:
+      - 127.0.0.1:7891:7891
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
   subvt_network_status_updater:
     container_name: subvt_network_status_updater
     restart: unless-stopped
@@ -122,7 +136,7 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_network_status_server:
     container_name: subvt_network_status_server
     restart: unless-stopped
@@ -159,6 +173,8 @@ services:
       - subvt_network_postgres
     networks:
       - kusama_network_deployment
+    ports:
+      - 127.0.0.1:7900:7900
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama

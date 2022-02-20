@@ -1,5 +1,5 @@
 [redis]
-url = "redis://subvt_redis:6379/"
+url = "redis://subvt_network_redis:6379/"
 
 [network_postgres]
 host = "subvt_network_postgres"
