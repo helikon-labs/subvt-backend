@@ -35,7 +35,7 @@ services:
       - "max_parallel_workers=6"
       - "-c"
       - "max_parallel_maintenance_workers=3"
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-network-postgres:0.1.2"
     networks:
       - kusama_network_deployment
@@ -43,9 +43,9 @@ services:
       - "127.0.0.1:5432:5432"
     volumes:
       - subvt_network_postgres_data:/var/lib/postgresql/data
-  subvt_redis:
-    container_name: subvt_redis
-    restart: always
+  subvt_network_redis:
+    container_name: subvt_network_redis
+    restart: unless-stopped
     image: "redis:6.2.6"
     command: redis-server --save "" --appendonly no
     networks:
@@ -53,23 +53,25 @@ services:
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - subvt_redis_data:/data
+      - subvt_network_redis_data:/data
   subvt_block_processor:
     container_name: subvt_block_processor
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-block-processor:0.1.2"
     depends_on:
       - subvt_network_postgres
-      - subvt_redis
+      - subvt_network_redis
     networks:
       - kusama_network_deployment
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT_BLOCK_PROCESSOR__START_BLOCK_NUMBER=6015486
+      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_validator_list_updater:
     container_name: subvt_validator_list_updater
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-validator-list-updater:0.1.2"
     depends_on:
       - subvt_block_processor
@@ -79,9 +81,10 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_active_validator_list_server:
     container_name: subvt_active_validator_list_server
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-active-validator-list-server:0.1.2"
     depends_on:
       - subvt_validator_list_updater
@@ -95,7 +98,7 @@ services:
       - SUBVT_CONFIG_DIR=/subvt/config
   subvt_inactive_validator_list_server:
     container_name: subvt_inactive_validator_list_server
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-inactive-validator-list-server:0.1.2"
     depends_on:
       - subvt_validator_list_updater
@@ -109,19 +112,20 @@ services:
       - SUBVT_CONFIG_DIR=/subvt/config
   subvt_network_status_updater:
     container_name: subvt_network_status_updater
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-network-status-updater:0.1.2"
     depends_on:
-      - subvt_redis
+      - subvt_network_redis
     networks:
       - kusama_network_deployment
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_network_status_server:
     container_name: subvt_network_status_server
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-network-status-server:0.1.2"
     depends_on:
       - subvt_network_status_updater
@@ -135,7 +139,7 @@ services:
       - SUBVT_CONFIG_DIR=/subvt/config
   subvt_onekv_updater:
     container_name: subvt_onekv_updater
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-onekv-updater:0.1.2"
     depends_on:
       - subvt_network_postgres
@@ -149,7 +153,7 @@ services:
   # TODO :: add notification generator :: needs app postgres
   subvt_report_service:
     container_name: subvt_report_service
-    restart: always
+    restart: unless-stopped
     image: "helikon/subvt-report-service:0.1.2"
     depends_on:
       - subvt_network_postgres
@@ -162,7 +166,7 @@ services:
 volumes:
   subvt_network_postgres_data:
     name: subvt_network_postgres_data
-  subvt_redis_data:
-    name: subvt_redis_data
+  subvt_network_redis_data:
+    name: subvt_network_redis_data
 networks:
   kusama_network_deployment:

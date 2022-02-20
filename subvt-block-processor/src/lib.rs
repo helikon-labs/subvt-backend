@@ -768,6 +768,7 @@ impl BlockProcessor {
         runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
+        persist_era_reward_points: bool,
         notify: bool,
     ) -> anyhow::Result<()> {
         debug!("Process block #{}.", block_number);
@@ -893,13 +894,7 @@ impl BlockProcessor {
                 .await?;
             }
         }
-        // update current era reward points every 10 minutes
-        let blocks_per_10_minutes = 10 * 60 * 1000
-            / substrate_client
-                .metadata
-                .constants
-                .expected_block_time_millis;
-        if block_number % blocks_per_10_minutes == 0 {
+        if persist_era_reward_points {
             self.persist_era_reward_points(
                 substrate_client,
                 postgres,
@@ -1045,6 +1040,7 @@ impl Service for BlockProcessor {
                                 &postgres,
                                 block_number,
                                 false,
+                                false,
                             ).await;
                             match update_result {
                                 Ok(_) => block_number += 1,
@@ -1061,11 +1057,18 @@ impl Service for BlockProcessor {
                         }
                         is_indexing_past_blocks.store(false, Ordering::SeqCst);
                     } else {
+                        // update current era reward points every 3 minutes
+                        let blocks_per_3_minutes = 3 * 60 * 1000
+                            / block_processor_substrate_client
+                            .metadata
+                            .constants
+                            .expected_block_time_millis;
                         let update_result = self.process_block(
                             &mut block_processor_substrate_client,
                             &runtime_information,
                             &postgres,
                             finalized_block_number,
+                            finalized_block_number % blocks_per_3_minutes == 0,
                             true,
                         ).await;
                         match update_result {
