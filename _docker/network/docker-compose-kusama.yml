@@ -67,8 +67,8 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-      - SUBVT_BLOCK_PROCESSOR__START_BLOCK_NUMBER=6015486
-      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=6015486
+      #- SUBVT__SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_validator_list_updater:
     container_name: subvt_validator_list_updater
     restart: unless-stopped
@@ -81,7 +81,7 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      #- SUBVT__SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_active_validator_list_server:
     container_name: subvt_active_validator_list_server
     restart: unless-stopped
@@ -136,7 +136,7 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-      #- SUBVT_SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
+      #- SUBVT__SUBSTRATE__RPC_URL=ws://192.168.0.101:9944
   subvt_network_status_server:
     container_name: subvt_network_status_server
     restart: unless-stopped

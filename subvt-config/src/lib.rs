@@ -198,21 +198,21 @@ pub struct Config {
 impl Config {
     pub fn test() -> Result<Self, config::ConfigError> {
         let env = Environment::Test;
-        let mut c = config::Config::new();
-        c.set("env", env.to_string())?;
-        c.merge(config::File::with_name(&format!("{}/base", DEV_CONFIG_DIR)))?;
-        c.merge(config::File::with_name(&format!(
-            "{}/network/{}",
-            DEV_CONFIG_DIR, DEFAULT_NETWORK
-        )))?;
-        c.merge(config::File::with_name(&format!(
-            "{}/env/{}",
-            DEV_CONFIG_DIR,
-            env.to_string().to_lowercase()
-        )))?;
-        // this makes it so SUBVT_REDIS__URL overrides redis.url
-        c.merge(config::Environment::with_prefix("subvt").separator("__"))?;
-        c.try_into()
+        let config = config::Config::builder()
+            .set_default("env", env.to_string())?
+            .add_source(config::File::with_name(&format!("{}/base", DEV_CONFIG_DIR)))
+            .add_source(config::File::with_name(&format!(
+                "{}/network/{}",
+                DEV_CONFIG_DIR, DEFAULT_NETWORK
+            )))
+            .add_source(config::File::with_name(&format!(
+                "{}/env/{}",
+                DEV_CONFIG_DIR,
+                env.to_string().to_lowercase()
+            )))
+            .add_source(config::Environment::with_prefix("subvt").separator("__"))
+            .build()?;
+        config.try_deserialize()
     }
 
     fn new() -> Result<Self, config::ConfigError> {
@@ -222,38 +222,45 @@ impl Config {
                 .as_str(),
         );
         let network = std::env::var("SUBVT_NETWORK").unwrap_or_else(|_| DEFAULT_NETWORK.into());
-        let mut c = config::Config::new();
-        c.set("env", env.to_string())?;
         if cfg!(debug_assertions) {
             let config_dir =
                 std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEV_CONFIG_DIR.into());
-            c.merge(config::File::with_name(&format!("{}/base", config_dir)))?;
-            c.merge(config::File::with_name(&format!(
-                "{}/network/{}",
-                config_dir, network
-            )))?;
-            c.merge(config::File::with_name(&format!(
-                "{}/env/{}",
-                config_dir,
-                env.to_string().to_lowercase()
-            )))?;
+            let config = config::Config::builder()
+                .set_default("env", env.to_string())?
+                .add_source(config::File::with_name(&format!("{}/base", config_dir)))
+                .add_source(config::File::with_name(&format!(
+                    "{}/network/{}",
+                    config_dir, network
+                )))
+                .add_source(config::File::with_name(&format!(
+                    "{}/env/{}",
+                    config_dir,
+                    env.to_string().to_lowercase()
+                )))
+                .add_source(
+                    config::Environment::with_prefix("subvt").separator("__")
+                ).build()?;
+            config.try_deserialize()
         } else {
             let config_dir =
                 std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEFAULT_CONFIG_DIR.into());
-            c.merge(config::File::with_name(&format!("{}/base", config_dir)))?;
-            c.merge(config::File::with_name(&format!(
-                "{}/network/{}",
-                config_dir, network
-            )))?;
-            c.merge(config::File::with_name(&format!(
-                "{}/env/{}",
-                config_dir,
-                env.to_string().to_lowercase()
-            )))?;
+            let config = config::Config::builder()
+                .set_default("env", env.to_string())?
+                .add_source(config::File::with_name(&format!("{}/base", config_dir)))
+                .add_source(config::File::with_name(&format!(
+                    "{}/network/{}",
+                    config_dir, network
+                )))
+                .add_source(config::File::with_name(&format!(
+                    "{}/env/{}",
+                    config_dir,
+                    env.to_string().to_lowercase()
+                )))
+                .add_source(
+                    config::Environment::with_prefix("subvt").separator("__")
+                ).build()?;
+            config.try_deserialize()
         }
-        // this makes it so SUBVT_REDIS__URL overrides redis.url
-        c.merge(config::Environment::with_prefix("subvt").separator("__"))?;
-        c.try_into()
     }
 
     pub fn get_app_postgres_url(&self) -> String {
