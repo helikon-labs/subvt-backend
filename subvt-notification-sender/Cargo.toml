@@ -8,10 +8,10 @@ rust-version = "1.56.0"
 
 [dependencies]
 a2 = "0.6.2"
-anyhow = "1.0.53"
+anyhow = "1.0.54"
 async-trait = "0.1.52"
 chrono = "0.4.19"
-config = "0.11.0"
+config = "0.12.0"
 fcm = "0.9.1"
 futures = "0.3.21"
 job_scheduler = "1.2.1"

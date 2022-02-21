@@ -7,10 +7,10 @@ rust-version = "1.56.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.53"
+anyhow = "1.0.54"
 async-trait = "0.1.52"
 bus = "2.2.3"
-config = "0.11.0"
+config = "0.12.0"
 jsonrpsee = { version = "0.9.0", features = ["full"] }
 jsonrpsee-core = "0.9.0"
 lazy_static = "1.4.0"
