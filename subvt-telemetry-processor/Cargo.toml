@@ -5,8 +5,8 @@ edition = "2021"
 rust-version = "1.56.0"
 
 [dependencies]
-anyhow = "1.0.53"
-async-lock = "2.4.0"
+anyhow = "1.0.54"
+async-lock = "2.5.0"
 # async-recursion = "0.3.2"
 async-trait = "0.1.52"
 async-tungstenite = { version = "0.17.0", features = ["tokio-runtime", "tokio-native-tls"] }
