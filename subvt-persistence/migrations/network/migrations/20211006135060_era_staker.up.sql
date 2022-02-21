@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS sub_era_staker
 );
 
 ALTER TABLE sub_era_staker
+    ADD CONSTRAINT sub_era_staker_u_era_index_validator_nominator
+    UNIQUE (era_index, validator_account_id, nominator_account_id);
+
+ALTER TABLE sub_era_staker
     ADD CONSTRAINT sub_era_staker_fk_era
     FOREIGN KEY (era_index)
         REFERENCES sub_era (index)

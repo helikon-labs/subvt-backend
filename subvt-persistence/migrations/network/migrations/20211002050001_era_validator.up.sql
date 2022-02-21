@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
 );
 
 ALTER TABLE sub_era_validator
+    ADD CONSTRAINT sub_era_validator_u_era_index_validator
+    UNIQUE (era_index, validator_account_id);
+
+ALTER TABLE sub_era_validator
     ADD CONSTRAINT sub_era_validator_fk_era
     FOREIGN KEY (era_index)
         REFERENCES sub_era (index)

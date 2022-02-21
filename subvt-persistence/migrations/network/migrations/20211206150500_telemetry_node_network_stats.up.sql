@@ -6,6 +6,10 @@ CREATE TABLE IF NOT EXISTS sub_telemetry_node_network_stats (
 );
 
 ALTER TABLE sub_telemetry_node_network_stats
+    ADD CONSTRAINT sub_telemetry_node_network_stats_u_time_node_id
+    UNIQUE (time, node_id);
+
+ALTER TABLE sub_telemetry_node_network_stats
     ADD CONSTRAINT sub_telemetry_node_network_stats_fk_telemetry_node
     FOREIGN KEY (node_id)
         REFERENCES sub_telemetry_node (id)

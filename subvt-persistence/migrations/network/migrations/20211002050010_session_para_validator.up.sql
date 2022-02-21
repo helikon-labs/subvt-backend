@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS sub_session_para_validator
 );
 
 ALTER TABLE sub_session_para_validator
+    ADD CONSTRAINT sub_session_para_validator_u_session_index_validator
+    UNIQUE (session_index, validator_account_id);
+
+ALTER TABLE sub_session_para_validator
     ADD CONSTRAINT sub_session_para_validator_fk_era
     FOREIGN KEY (era_index)
         REFERENCES sub_era (index)

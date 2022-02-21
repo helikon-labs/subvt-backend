@@ -6,6 +6,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_nominate_validator
 );
 
 ALTER TABLE sub_extrinsic_nominate_validator
+    ADD CONSTRAINT sub_extrinsic_nominate_validator_u_validator
+    UNIQUE (extrinsic_nominate_id, validator_account_id);
+
+ALTER TABLE sub_extrinsic_nominate_validator
     ADD CONSTRAINT sub_extrinsic_nominate_validator_fk_extrinsic_nominate
     FOREIGN KEY (extrinsic_nominate_id)
         REFERENCES sub_extrinsic_nominate (id)

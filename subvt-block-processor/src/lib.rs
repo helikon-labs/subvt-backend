@@ -771,7 +771,6 @@ impl BlockProcessor {
         persist_era_reward_points: bool,
         notify: bool,
     ) -> anyhow::Result<()> {
-        debug!("Process block #{}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
         let maybe_validator_index = block_header.get_validator_index();
@@ -1027,13 +1026,18 @@ impl Service for BlockProcessor {
                             return;
                         }
                     };
-                    if processed_block_height < finalized_block_number {
+                    if processed_block_height < (finalized_block_number - 1) {
                         is_indexing_past_blocks.store(true, Ordering::SeqCst);
                         let mut block_number = std::cmp::max(
                             processed_block_height,
                             CONFIG.block_processor.start_block_number
                         );
                         while block_number <= finalized_block_number {
+                            debug!(
+                                "Process block #{}. Target #{}.",
+                                block_number,
+                                finalized_block_number
+                            );
                             let update_result = self.process_block(
                                 &mut block_processor_substrate_client,
                                 &runtime_information,
@@ -1063,6 +1067,7 @@ impl Service for BlockProcessor {
                             .metadata
                             .constants
                             .expected_block_time_millis;
+                        debug!("Process block #{}.", finalized_block_number);
                         let update_result = self.process_block(
                             &mut block_processor_substrate_client,
                             &runtime_information,
