@@ -14,4 +14,4 @@ serde = { version = "1.0.136" }
 serde_json = "1.0.79"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
-sqlx = { version = "0.5.10", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+sqlx = { version = "0.5.11", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
