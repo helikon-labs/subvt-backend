@@ -30,8 +30,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Install TimescaleDB
         run: |
-          chmod +x ./scripts/timescaledb.deb.sh
-          sudo ./scripts/timescaledb.deb.sh
+          chmod +x ./_scripts/timescaledb.deb.sh
+          sudo ./_scripts/timescaledb.deb.sh
           sudo apt install --yes postgresql-common
           echo -ne '\n' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
           sudo apt update
@@ -57,7 +57,7 @@ jobs:
           sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE subvt_app_test TO subvt;"
           sudo -u postgres psql -c "CREATE DATABASE subvt_kusama_test;"
           sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE subvt_kusama_test TO subvt;"
-          cd ./subvt-persistence/migrations/app
+          cd ./_migrations/app
           DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_app_test sqlx migrate run
           cd ../network
           DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_kusama_test sqlx migrate run
