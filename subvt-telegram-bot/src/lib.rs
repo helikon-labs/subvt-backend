@@ -19,7 +19,10 @@ pub struct TelegramBot;
 #[async_trait(?Send)]
 impl Service for TelegramBot {
     async fn run(&'static self) -> anyhow::Result<()> {
-        info!("Telegram bot has started {}.", CONFIG.notification_sender.telegram_token);
+        info!(
+            "Telegram bot has started {}.",
+            CONFIG.notification_sender.telegram_token
+        );
         let api = Api::new(&CONFIG.notification_sender.telegram_token);
         let mut stream = api.stream();
         let renderer = Tera::new(&format!(

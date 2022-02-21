@@ -237,9 +237,8 @@ impl Config {
                     config_dir,
                     env.to_string().to_lowercase()
                 )))
-                .add_source(
-                    config::Environment::with_prefix("subvt").separator("__")
-                ).build()?;
+                .add_source(config::Environment::with_prefix("subvt").separator("__"))
+                .build()?;
             config.try_deserialize()
         } else {
             let config_dir =
@@ -256,9 +255,8 @@ impl Config {
                     config_dir,
                     env.to_string().to_lowercase()
                 )))
-                .add_source(
-                    config::Environment::with_prefix("subvt").separator("__")
-                ).build()?;
+                .add_source(config::Environment::with_prefix("subvt").separator("__"))
+                .build()?;
             config.try_deserialize()
         }
     }
