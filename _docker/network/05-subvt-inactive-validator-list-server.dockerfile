@@ -8,7 +8,7 @@ RUN apt-get update \
     && update-ca-certificates \
     && mkdir -p /subvt/config
 # copy config files
-COPY ./subvt-config/config/ /subvt/config/
+COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-block-processor /usr/local/bin/
-CMD ["subvt-block-processor"]
+COPY --from=builder /subvt/bin/subvt-validator-list-server /usr/local/bin/
+CMD ["subvt-validator-list-server", "--inactive"]

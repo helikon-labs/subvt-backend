@@ -8,7 +8,7 @@ RUN apt-get update \
     && update-ca-certificates \
     && mkdir -p /subvt/config
 # copy config files
-COPY ./subvt-config/config/ /subvt/config/
+COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-validator-list-updater /usr/local/bin/
-CMD ["subvt-validator-list-updater"]
+COPY --from=builder /subvt/bin/subvt-onekv-updater /usr/local/bin/
+CMD ["subvt-onekv-updater"]

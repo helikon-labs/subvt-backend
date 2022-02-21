@@ -280,7 +280,9 @@ impl Service for NotificationSender {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
         let mailer = Arc::new(email::new_mailer(&CONFIG)?);
-        let content_provider = Arc::new(ContentProvider::new()?);
+        let content_provider = Arc::new(ContentProvider::new(
+            &CONFIG.notification_sender.template_dir_path,
+        )?);
         let mut apns_key = std::fs::File::open(&CONFIG.notification_sender.apns_key_location)?;
         let apns_client = Arc::new(a2::Client::token(
             &mut apns_key,

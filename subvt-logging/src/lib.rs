@@ -24,6 +24,7 @@ pub fn init(config: &subvt_config::Config) {
     builder.filter(Some("subvt_persistence"), log_level);
     builder.filter(Some("subvt_report_service"), log_level);
     builder.filter(Some("subvt_substrate_client"), log_level);
+    builder.filter(Some("subvt_telegram_bot"), log_level);
     builder.filter(Some("subvt_telemetry_processor"), log_level);
     builder.filter(Some("subvt_thousand_validators_updater"), log_level);
     builder.filter(Some("subvt_types"), log_level);

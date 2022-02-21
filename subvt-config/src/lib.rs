@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::fmt;
 
 const DEFAULT_CONFIG_DIR: &str = "./config";
-const DEV_CONFIG_DIR: &str = "../subvt-config/config";
+const DEV_CONFIG_DIR: &str = "../_config";
 const DEFAULT_NETWORK: &str = "kusama";
 
 /// Runtime environment.
@@ -169,6 +169,10 @@ pub struct NotificationSenderConfig {
     pub apns_is_production: bool,
     // Firebase Cloud Messaging
     pub fcm_api_key: String,
+    // Telegram bot API token
+    pub telegram_token: String,
+    // where the template files reside
+    pub template_dir_path: String,
 }
 
 /// Whole configuration.

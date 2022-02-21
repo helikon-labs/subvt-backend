@@ -1,5 +1,5 @@
 [package]
-name = "subvt-network-status-updater"
+name = "subvt-telegram-bot"
 version = "0.1.2"
 edition = "2021"
 rust-version = "1.56.0"
@@ -7,15 +7,15 @@ rust-version = "1.56.0"
 [dependencies]
 anyhow = "1.0.53"
 async-trait = "0.1.52"
-chrono = "0.4.19"
+futures = "0.3.21"
 lazy_static = "1.4.0"
 log = "0.4.14"
-redis = "0.21.5"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.79"
+pretty_env_logger = "0.4.0"
 subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
+subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
-subvt-substrate-client = { path = "../subvt-substrate-client" }
 subvt-types = { path = "../subvt-types" }
+telegram-bot = { git = "https://github.com/telegram-rs/telegram-bot.git", branch = "main" }
+tera = "1.15.0"
 tokio = { version = "1.17.0", features = ["full"] }

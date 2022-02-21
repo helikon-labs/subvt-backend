@@ -4,22 +4,50 @@ use subvt_config::Config;
 use subvt_types::app::{Block, Notification, NotificationTypeCode, NotificationTypeCode::*};
 use tera::{Context, Tera};
 
-/// Provider struct. Hash separate renderers for separate text notification channels.
+/// Provider struct. Has separate renderers for separate text notification channels.
 /// Expects the `template` folder in this crate to be in the same folder as the executable.
 pub struct ContentProvider {
     email_renderer: Tera,
     push_notification_renderer: Tera,
     _sms_renderer: Tera,
-    _instant_message_renderer: Tera,
+    _telegram_renderer: Tera,
 }
 
 impl ContentProvider {
-    pub fn new() -> anyhow::Result<ContentProvider> {
+    pub fn new(template_dir_path: &str) -> anyhow::Result<ContentProvider> {
         Ok(ContentProvider {
-            email_renderer: { Tera::new("template/email/*.txt")? },
-            _instant_message_renderer: { Tera::new("template/instant_message/*.txt")? },
-            push_notification_renderer: { Tera::new("template/push_notification/*.txt")? },
-            _sms_renderer: { Tera::new("template/sms/*.txt")? },
+            email_renderer: {
+                Tera::new(&format!(
+                    "{}{}email{}*.txt",
+                    template_dir_path,
+                    std::path::MAIN_SEPARATOR,
+                    std::path::MAIN_SEPARATOR,
+                ))?
+            },
+            _telegram_renderer: {
+                Tera::new(&format!(
+                    "{}{}telegram{}*.txt",
+                    template_dir_path,
+                    std::path::MAIN_SEPARATOR,
+                    std::path::MAIN_SEPARATOR,
+                ))?
+            },
+            push_notification_renderer: {
+                Tera::new(&format!(
+                    "{}{}push_notification{}*.txt",
+                    template_dir_path,
+                    std::path::MAIN_SEPARATOR,
+                    std::path::MAIN_SEPARATOR,
+                ))?
+            },
+            _sms_renderer: {
+                Tera::new(&format!(
+                    "{}{}sms{}*.txt",
+                    template_dir_path,
+                    std::path::MAIN_SEPARATOR,
+                    std::path::MAIN_SEPARATOR,
+                ))?
+            },
         })
     }
 }

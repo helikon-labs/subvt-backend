@@ -28,4 +28,4 @@ twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
 hex = "0.4"
 lazy_static = "1.4.0"
 subvt-config = { path = "../subvt-config" }
-tokio = { version = "1.16.1", features = ["full"] }
+tokio = { version = "1.17.0", features = ["full"] }

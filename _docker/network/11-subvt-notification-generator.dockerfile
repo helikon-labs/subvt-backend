@@ -8,7 +8,7 @@ RUN apt-get update \
     && update-ca-certificates \
     && mkdir -p /subvt/config
 # copy config files
-COPY ./subvt-config/config/ /subvt/config/
+COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-telemetry-processor /usr/local/bin/
-CMD ["subvt-telemetry-processor"]
+COPY --from=builder /subvt/bin/subvt-notification-generator /usr/local/bin/
+CMD ["subvt-notification-generator"]

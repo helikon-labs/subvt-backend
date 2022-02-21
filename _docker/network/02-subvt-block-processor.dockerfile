@@ -8,7 +8,7 @@ RUN apt-get update \
     && update-ca-certificates \
     && mkdir -p /subvt/config
 # copy config files
-COPY ./subvt-config/config/ /subvt/config/
+COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-network-status-updater /usr/local/bin/
-CMD ["subvt-network-status-updater"]
+COPY --from=builder /subvt/bin/subvt-block-processor /usr/local/bin/
+CMD ["subvt-block-processor"]
