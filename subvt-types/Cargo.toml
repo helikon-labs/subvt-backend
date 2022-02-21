@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.56.0"
 
 [dependencies]
-anyhow = "1.0.53"
+anyhow = "1.0.54"
 chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
 frame-metadata = { version = "14.2.0", features = ["std", "v12", "v13", "v14"] }
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.16" }
