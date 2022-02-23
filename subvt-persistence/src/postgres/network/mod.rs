@@ -24,6 +24,7 @@ pub mod app_event;
 pub mod notify;
 pub mod onekv;
 pub mod report;
+pub mod telegram;
 pub mod telemetry;
 
 type PostgresValidatorInfo = (

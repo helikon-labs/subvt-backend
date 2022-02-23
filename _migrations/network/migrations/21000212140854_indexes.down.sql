@@ -1,3 +1,5 @@
+-- telegram chat
+DROP INDEX sub_telegram_chat_idx_version_deleted_at;
 -- app event onekv validity change
 DROP INDEX sub_app_event_onekv_validity_change_idx_validator;
 -- app event onekv rank change

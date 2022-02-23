@@ -142,6 +142,13 @@ impl ValidatorListUpdater {
                 .arg(validator_prefix)
                 .arg(validator_json_string);
         }
+        // set finalized block number
+        redis_cmd_pipeline
+            .arg(format!(
+                "subvt:{}:finalized_block_number",
+                CONFIG.substrate.chain
+            ))
+            .arg(finalized_block_number);
         // publish event
         redis_cmd_pipeline
             .cmd("PUBLISH")

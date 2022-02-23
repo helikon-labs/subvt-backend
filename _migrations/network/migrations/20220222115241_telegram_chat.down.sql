@@ -1,0 +1,1 @@
+DROP TABLE sub_telegram_chat CASCADE;

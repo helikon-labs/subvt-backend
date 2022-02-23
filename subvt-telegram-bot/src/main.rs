@@ -1,14 +1,13 @@
 //! See `./lib.rs` for details.
 
-use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use subvt_service_common::Service;
 use subvt_telegram_bot::TelegramBot;
 
-lazy_static! {
-    static ref SERVICE: TelegramBot = TelegramBot::default();
-}
+static SERVICE: OnceCell<TelegramBot> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
-    SERVICE.start().await;
+    let _ = SERVICE.set(TelegramBot::new().await.unwrap());
+    SERVICE.get().unwrap().start().await;
 }
