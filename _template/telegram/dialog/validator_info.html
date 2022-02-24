@@ -1,0 +1,14 @@
+{% if has_display %}<strong>{{ display }}</strong>{% endif %}
+📍 Stash <a href="https://{{ network }}.subscan.io/account/{{ address }}">{{ condensed_address }}</a>
+⚓️ Controller <a href="https://{{ network }}.subscan.io/account/{{ controller_address }}">{{ condensed_controller_address }}</a>
+🔑️ Session keys <pre>{{ condensed_session_keys }}</pre>{% if is_active %}
+🚀 Active validator{% if is_para_validator %}
+⭐️ Paravalidator{% endif %}{% if is_active_next_session %}
+▶️ Active next session{% else %}⏸ Not active next session{% endif %}{% else %}
+⏸ Not active{% if is_active_next_session %}▶️ Active next session{% endif %}{% endif %}
+💷 {{ commission }} commission{% if blocks_nominations %}
+⛔️ Blocks nominations{% endif %}{% if oversubscribed %}
+⚖️ Oversubscribed{% endif %}{% if heartbeat_received %}
+🟢 Sent session heartbeat{% endif %}{% if slash_count == 1 %}
+☠️ Slashed once in the last 12 months{% endif %}{% if slash_count > 1 %}
+☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}

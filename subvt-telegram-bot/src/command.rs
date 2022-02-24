@@ -1,16 +1,43 @@
+use crate::query::QueryType;
 use crate::{MessageType, TelegramBot};
 use log::info;
-use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 impl TelegramBot {
-    async fn process_add(
-        &self,
-        config: &Config,
-        chat_id: i64,
-        args: &[String],
-    ) -> anyhow::Result<()> {
+    async fn process_validator_info_command(&self, chat_id: i64) -> anyhow::Result<()> {
+        let validator_account_ids = self
+            .postgres
+            .get_chat_validator_account_ids(chat_id)
+            .await?;
+        if validator_account_ids.is_empty() {
+            println!("no validators");
+            return Ok(());
+        }
+        if validator_account_ids.len() == 1 {
+            let validator_details = self
+                .redis
+                .fetch_validator_details(validator_account_ids.get(0).unwrap())?;
+            self.messenger
+                .send_message(
+                    chat_id,
+                    MessageType::ValidatorInfo(Box::new(validator_details)),
+                )
+                .await?;
+        } else {
+            // multiple validators
+            let mut validators = Vec::new();
+            for account_id in &validator_account_ids {
+                validators.push(self.redis.fetch_validator_details(account_id)?);
+            }
+            self.messenger
+                .send_validator_list(chat_id, QueryType::ValidatorInfo, &validators)
+                .await?;
+        }
+        Ok(())
+    }
+
+    async fn process_add_command(&self, chat_id: i64, args: &[String]) -> anyhow::Result<()> {
         if args.is_empty() {
             self.postgres
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)
@@ -51,12 +78,11 @@ impl TelegramBot {
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::ValidatorAdded {
-                                        network: config.substrate.chain.clone(),
-                                        address: address.clone(),
-                                        validator_details: Box::new(validator_details),
-                                    },
+                                    MessageType::ValidatorInfo(Box::new(validator_details)),
                                 )
+                                .await?;
+                            self.messenger
+                                .send_message(chat_id, MessageType::ValidatorAdded)
                                 .await?;
                         }
                     } else {
@@ -72,14 +98,11 @@ impl TelegramBot {
                 }
             }
         }
-        // check address (only 1st param) :: check redis, check postgres (era validator)
-        // save if exists & send message
         Ok(())
     }
 
     pub async fn process_command(
         &self,
-        config: &Config,
         chat_id: i64,
         command: &str,
         args: &[String],
@@ -90,7 +113,8 @@ impl TelegramBot {
                     .send_message(chat_id, MessageType::Intro)
                     .await?;
             }
-            "/add" => self.process_add(config, chat_id, args).await?,
+            "/add" => self.process_add_command(chat_id, args).await?,
+            "/validator_info" => self.process_validator_info_command(chat_id).await?,
             _ => {
                 self.messenger
                     .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))

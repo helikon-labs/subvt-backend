@@ -143,12 +143,14 @@ impl ValidatorDetails {
 
     pub fn get_full_display(&self) -> Option<String> {
         if let Some(identity) = &self.account.identity {
-            return identity.display.clone();
+            if let Some(display) = &identity.display {
+                return Some(display.clone());
+            }
         } else if let Some(parent) = &*self.account.parent {
             if let Some(identity) = &parent.identity {
                 if let Some(parent_display) = &identity.display {
                     if let Some(child_display) = &self.account.child_display {
-                        return Some(format!("{} / {}", parent_display, child_display,));
+                        return Some(format!("{} / {}", parent_display, child_display));
                     }
                 }
             }

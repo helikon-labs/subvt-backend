@@ -1,6 +1,7 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
 use crate::messenger::{MessageType, Messenger};
+use crate::query::{Query, QueryType};
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
@@ -15,6 +16,7 @@ use subvt_types::telegram::TelegramChatState;
 
 mod command;
 mod messenger;
+mod query;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -96,7 +98,7 @@ impl TelegramBot {
                             .collect(),
                     )
                 };
-                self.process_command(&CONFIG, message.chat.id, &command, &arguments)
+                self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
                 let maybe_state = self.postgres.get_chat_state(message.chat.id).await?;
@@ -105,13 +107,8 @@ impl TelegramBot {
                         TelegramChatState::AddValidator => {
                             if AccountId::from_ss58_check(text).is_ok() {
                                 self.reset_chat_state(message.chat.id).await?;
-                                self.process_command(
-                                    &CONFIG,
-                                    message.chat.id,
-                                    "/add",
-                                    &[text.to_string()],
-                                )
-                                .await?;
+                                self.process_command(message.chat.id, "/add", &[text.to_string()])
+                                    .await?;
                             } else {
                                 self.messenger
                                     .send_message(
@@ -140,6 +137,25 @@ impl TelegramBot {
         }
         Ok(())
     }
+
+    async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
+        match query.query_type {
+            QueryType::ValidatorInfo => {
+                if let Some(validator_address) = &query.parameter {
+                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
+                        let validator_details = self.redis.fetch_validator_details(&account_id)?;
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorInfo(Box::new(validator_details)),
+                            )
+                            .await?;
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 #[async_trait(?Send)]
@@ -150,7 +166,7 @@ impl Service for TelegramBot {
             offset: None,
             limit: None,
             timeout: None,
-            allowed_updates: Some(vec!["message".to_string()]),
+            allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
         };
         loop {
             let result = self.api.get_updates(&update_params).await;
@@ -168,6 +184,23 @@ impl Service for TelegramBot {
                                     // TODO send error message
                                 }
                             });
+                        } else if let Some(callback_query) = update.callback_query {
+                            update_params.offset = Some(update.update_id + 1);
+                            if let Some(callback_data) = callback_query.data {
+                                if let Some(message) = callback_query.message {
+                                    let query: Query = serde_json::from_str(&callback_data)?;
+                                    let (r1, r2, r3) = tokio::join!(
+                                        self.messenger
+                                            .answer_callback_query(&callback_query.id, None),
+                                        self.messenger
+                                            .delete_message(message.chat.id, message.message_id),
+                                        self.process_query(message.chat.id, &query),
+                                    );
+                                    r1?;
+                                    r2?;
+                                    r3?;
+                                }
+                            }
                         }
                     }
                 }

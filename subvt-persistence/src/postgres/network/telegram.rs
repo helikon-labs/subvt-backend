@@ -5,6 +5,27 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 impl PostgreSQLNetworkStorage {
+    pub async fn get_chat_validator_account_ids(
+        &self,
+        telegram_chat_id: i64,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let chat_validators: Vec<(String,)> = sqlx::query_as(
+            r#"
+            SELECT validator_account_id
+            FROM sub_telegram_chat_validator
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut account_ids = Vec::new();
+        for chat_validator in &chat_validators {
+            account_ids.push(AccountId::from_str(&chat_validator.0)?);
+        }
+        Ok(account_ids)
+    }
+
     pub async fn chat_exists_by_id(&self, telegram_chat_id: i64) -> anyhow::Result<bool> {
         let record_count: (i64,) = sqlx::query_as(
             r#"

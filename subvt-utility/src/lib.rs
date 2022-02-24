@@ -2,6 +2,9 @@
 
 use parity_scale_codec::Decode;
 
+pub mod numeric;
+pub mod text;
+
 pub fn decode_hex_string<T>(hex_string: &str) -> anyhow::Result<T>
 where
     T: Decode,
