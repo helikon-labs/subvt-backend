@@ -6,12 +6,13 @@ use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
 use log::{error, warn};
 use pallet_identity::{Data, Judgement, Registration};
-use pallet_staking::{Exposure, Nominations, StakingLedger, ValidatorPrefs};
+use pallet_staking::{Exposure, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
+use sp_staking::EraIndex;
 use std::collections::BTreeMap;
 use std::convert::From;
 use std::fmt::{Display, Formatter};
@@ -538,6 +539,13 @@ impl From<&IdentityRegistration> for IdentityRegistrationSummary {
 
 pub type SuperAccountId = (AccountId, Data);
 
+#[derive(Clone, Debug, Decode, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+struct Nominations {
+    pub targets: Vec<AccountId>,
+    pub submitted_in: EraIndex,
+    pub supressed: bool,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
     pub stash_account: Account,
@@ -548,7 +556,7 @@ pub struct Nomination {
 
 impl Nomination {
     pub fn from_bytes(mut bytes: &[u8], account_id: AccountId) -> anyhow::Result<Self> {
-        let nomination: Nominations<AccountId> = Decode::decode(&mut bytes)?;
+        let nomination: Nominations = Decode::decode(&mut bytes)?;
         let submission_era_index: u32 = nomination.submitted_in;
         Ok(Nomination {
             stash_account: Account {
