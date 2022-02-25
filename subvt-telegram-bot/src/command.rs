@@ -39,9 +39,7 @@ impl TelegramBot {
                 } else if maybe_v2_display.is_some() {
                     Ordering::Greater
                 } else {
-                    v1.account
-                        .address
-                        .cmp(&v2.account.address)
+                    v1.account.address.cmp(&v2.account.address)
                 }
             });
             self.messenger

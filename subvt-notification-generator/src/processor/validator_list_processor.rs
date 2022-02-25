@@ -268,10 +268,7 @@ impl NotificationGenerator {
         // check (in)active next session
         if current.active_next_session != last.active_next_session {
             if current.active_next_session {
-                debug!(
-                    "Active next session: {}",
-                    current.account.address,
-                );
+                debug!("Active next session: {}", current.account.address,);
                 let rules = app_postgres
                     .get_notification_rules_for_validator(
                         &NotificationTypeCode::ChainValidatorActiveNextSession.to_string(),
@@ -293,10 +290,7 @@ impl NotificationGenerator {
                     .save_active_next_session_event(&current.account.id, finalized_block_number)
                     .await?;
             } else {
-                debug!(
-                    "Inactive next session: {}",
-                    current.account.address,
-                );
+                debug!("Inactive next session: {}", current.account.address,);
                 let rules = app_postgres
                     .get_notification_rules_for_validator(
                         &NotificationTypeCode::ChainValidatorInactiveNextSession.to_string(),
