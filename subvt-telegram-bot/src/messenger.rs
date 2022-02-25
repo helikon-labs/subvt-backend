@@ -64,9 +64,9 @@ impl MessageType {
                     context.insert("has_display", &false);
                 }
                 context.insert("network", &CONFIG.substrate.chain);
-                let address = validator_details.account.id.to_ss58_check();
-                context.insert("address", &address);
-                context.insert("condensed_address", &get_condensed_address(&address));
+                let address = &validator_details.account.address;
+                context.insert("address", address);
+                context.insert("condensed_address", &get_condensed_address(address));
                 let controller_address = validator_details.controller_account_id.to_ss58_check();
                 context.insert("controller_address", &controller_address);
                 context.insert(
@@ -264,10 +264,9 @@ impl Messenger {
     ) -> anyhow::Result<MethodResponse<Message>> {
         let mut rows = vec![];
         for validator in validators {
-            let address = validator.account.id.to_ss58_check();
             let query = Query {
                 query_type: query_type.clone(),
-                parameter: Some(address.clone()),
+                parameter: Some(validator.account.address.clone()),
             };
             rows.push(vec![InlineKeyboardButton {
                 text: validator.get_display_or_condensed_address(),

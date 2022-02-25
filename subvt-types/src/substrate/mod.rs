@@ -119,6 +119,7 @@ impl MultiAddress {
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Account {
     pub id: AccountId,
+    pub address: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub identity: Option<IdentityRegistration>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -153,16 +154,16 @@ impl Display for Account {
             if let Some(child_display) = &self.child_display {
                 format!("{} / {}", parent, child_display,)
             } else {
-                self.id.to_ss58_check()
+                self.address.clone()
             }
         } else if let Some(identity) = &self.identity {
             if let Some(display) = &identity.display {
                 display.clone()
             } else {
-                self.id.to_ss58_check()
+                self.address.clone()
             }
         } else {
-            self.id.to_ss58_check()
+            self.address.clone()
         };
         write!(f, "{}", display)
     }

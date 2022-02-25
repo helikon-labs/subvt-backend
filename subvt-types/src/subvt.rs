@@ -146,7 +146,7 @@ impl ValidatorDetails {
         if let Some(display) = self.get_full_display() {
             display
         } else {
-            get_condensed_address(&self.account.id.to_ss58_check())
+            get_condensed_address(&self.account.address)
         }
     }
 

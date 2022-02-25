@@ -40,9 +40,8 @@ impl TelegramBot {
                     Ordering::Greater
                 } else {
                     v1.account
-                        .id
-                        .to_ss58_check()
-                        .cmp(&v2.account.id.to_ss58_check())
+                        .address
+                        .cmp(&v2.account.address)
                 }
             });
             self.messenger

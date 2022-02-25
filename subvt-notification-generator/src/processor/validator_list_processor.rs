@@ -81,7 +81,7 @@ impl NotificationGenerator {
         finalized_block_number: u64,
         last: &ValidatorDetails,
     ) -> anyhow::Result<Option<ValidatorDetails>> {
-        let account_id = &last.account.id;
+        let address = &last.account.address;
         // last hash
         let hash = {
             let mut hasher = DefaultHasher::new();
@@ -133,7 +133,7 @@ impl NotificationGenerator {
             let new_nomination = *current_nomination_map.get(&new_nominator_id).unwrap();
             debug!(
                 "New nomination for {} :: {} :: {}",
-                account_id.to_ss58_check(),
+                address,
                 new_nominator_id.to_ss58_check(),
                 new_nomination.stake.active_amount,
             );
@@ -179,7 +179,7 @@ impl NotificationGenerator {
             // create app event
             debug!(
                 "Lost nomination for {} :: {} :: {}",
-                account_id.to_ss58_check(),
+                address,
                 lost_nominator_id.to_ss58_check(),
                 lost_nomination.stake.active_amount,
             );
@@ -227,7 +227,7 @@ impl NotificationGenerator {
                 // create app event
                 debug!(
                     "Changed nomination for {} :: {} :: {} -> {}",
-                    account_id.to_ss58_check(),
+                    address,
                     renominator_id.to_ss58_check(),
                     prev_nomination.stake.active_amount,
                     current_nomination.stake.active_amount,
@@ -270,7 +270,7 @@ impl NotificationGenerator {
             if current.active_next_session {
                 debug!(
                     "Active next session: {}",
-                    current.account.id.to_ss58_check()
+                    current.account.address,
                 );
                 let rules = app_postgres
                     .get_notification_rules_for_validator(
@@ -295,7 +295,7 @@ impl NotificationGenerator {
             } else {
                 debug!(
                     "Inactive next session: {}",
-                    current.account.id.to_ss58_check()
+                    current.account.address,
                 );
                 let rules = app_postgres
                     .get_notification_rules_for_validator(
@@ -322,7 +322,7 @@ impl NotificationGenerator {
         // check (in)active now
         if current.is_active != last.is_active {
             if current.is_active {
-                debug!("Now active: {}", current.account.id.to_ss58_check());
+                debug!("Now active: {}", current.account.address);
                 let rules = app_postgres
                     .get_notification_rules_for_validator(
                         &NotificationTypeCode::ChainValidatorActive.to_string(),
@@ -374,7 +374,7 @@ impl NotificationGenerator {
             if current.onekv_rank != last.onekv_rank {
                 debug!(
                     "1KV rank of {} changed from {} to {}.",
-                    current.account.id.to_ss58_check(),
+                    current.account.address,
                     last.onekv_rank.unwrap(),
                     current.onekv_rank.unwrap(),
                 );
@@ -411,7 +411,7 @@ impl NotificationGenerator {
             if current.onekv_is_valid != last.onekv_is_valid {
                 debug!(
                     "1KV validity of {} changed from {} to {}.",
-                    current.account.id.to_ss58_check(),
+                    current.account.address,
                     last.onekv_is_valid.unwrap(),
                     current.onekv_is_valid.unwrap(),
                 );

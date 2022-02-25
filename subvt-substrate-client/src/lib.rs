@@ -480,6 +480,7 @@ impl SubstrateClient {
             .map(|account_id| {
                 let mut account = Account {
                     id: account_id.clone(),
+                    address: account_id.to_ss58_check(),
                     ..Default::default()
                 };
                 if let Some(identity) = identity_map.get(&account_id) {
@@ -488,6 +489,7 @@ impl SubstrateClient {
                 if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
                     let mut parent_account = Account {
                         id: parent_account_id.0.clone(),
+                        address: parent_account_id.0.to_ss58_check(),
                         ..Default::default()
                     };
                     if let Some(parent_account_identity) =
