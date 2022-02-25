@@ -539,13 +539,6 @@ impl From<&IdentityRegistration> for IdentityRegistrationSummary {
 
 pub type SuperAccountId = (AccountId, Data);
 
-#[derive(Clone, Debug, Decode, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-struct Nominations {
-    pub targets: Vec<AccountId>,
-    pub submitted_in: EraIndex,
-    pub supressed: bool,
-}
-
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
     pub stash_account: Account,
@@ -556,15 +549,14 @@ pub struct Nomination {
 
 impl Nomination {
     pub fn from_bytes(mut bytes: &[u8], account_id: AccountId) -> anyhow::Result<Self> {
-        let nomination: Nominations = Decode::decode(&mut bytes)?;
-        let submission_era_index: u32 = nomination.submitted_in;
+        let nomination: (Vec<AccountId>, EraIndex, bool) = Decode::decode(&mut bytes)?;
         Ok(Nomination {
             stash_account: Account {
                 id: account_id,
                 ..Default::default()
             },
-            submission_era_index,
-            target_account_ids: nomination.targets,
+            submission_era_index: nomination.1,
+            target_account_ids: nomination.0,
             ..Default::default()
         })
     }

@@ -8,7 +8,7 @@ psql -U postgres -c "CREATE DATABASE subvt_app;"
 psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE subvt_app TO subvt;"
 psql -U postgres -c "CREATE DATABASE subvt_network;"
 psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE subvt_network TO subvt;"
-cd ../subvt-persistence/migrations/app || exit
+cd ../_migrations/app || exit
 DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_app sqlx migrate run
 cd ../network || exit
 DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_network sqlx migrate run

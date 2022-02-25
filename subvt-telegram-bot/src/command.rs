@@ -1,6 +1,7 @@
 use crate::query::QueryType;
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, Query, TelegramBot};
 use log::info;
+use std::cmp::Ordering;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
@@ -11,25 +12,39 @@ impl TelegramBot {
             .get_chat_validator_account_ids(chat_id)
             .await?;
         if validator_account_ids.is_empty() {
-            println!("no validators");
-            return Ok(());
-        }
-        if validator_account_ids.len() == 1 {
-            let validator_details = self
-                .redis
-                .fetch_validator_details(validator_account_ids.get(0).unwrap())?;
             self.messenger
-                .send_message(
-                    chat_id,
-                    MessageType::ValidatorInfo(Box::new(validator_details)),
-                )
+                .send_message(chat_id, MessageType::NoValidatorsOnChat)
                 .await?;
+        } else if validator_account_ids.len() == 1 {
+            let query = Query {
+                query_type: QueryType::ValidatorInfo,
+                parameter: Some(validator_account_ids.get(0).unwrap().to_ss58_check()),
+            };
+            self.process_query(chat_id, &query).await?;
         } else {
             // multiple validators
             let mut validators = Vec::new();
             for account_id in &validator_account_ids {
                 validators.push(self.redis.fetch_validator_details(account_id)?);
             }
+            validators.sort_by(|v1, v2| {
+                let maybe_v1_display = v1.get_display();
+                let maybe_v2_display = v2.get_display();
+                if let Some(v1_display) = maybe_v1_display {
+                    if let Some(v2_display) = maybe_v2_display {
+                        v1_display.cmp(&v2_display)
+                    } else {
+                        Ordering::Less
+                    }
+                } else if maybe_v2_display.is_some() {
+                    Ordering::Greater
+                } else {
+                    v1.account
+                        .id
+                        .to_ss58_check()
+                        .cmp(&v2.account.id.to_ss58_check())
+                }
+            });
             self.messenger
                 .send_validator_list(chat_id, QueryType::ValidatorInfo, &validators)
                 .await?;
@@ -73,14 +88,11 @@ impl TelegramBot {
                                 chat_id,
                                 id
                             );
-                            let validator_details =
-                                self.redis.fetch_validator_details(&account_id)?;
-                            self.messenger
-                                .send_message(
-                                    chat_id,
-                                    MessageType::ValidatorInfo(Box::new(validator_details)),
-                                )
-                                .await?;
+                            let query = Query {
+                                query_type: QueryType::ValidatorInfo,
+                                parameter: Some(account_id.to_ss58_check()),
+                            };
+                            self.process_query(chat_id, &query).await?;
                             self.messenger
                                 .send_message(chat_id, MessageType::ValidatorAdded)
                                 .await?;

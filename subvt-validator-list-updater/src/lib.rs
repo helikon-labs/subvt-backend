@@ -145,7 +145,7 @@ impl ValidatorListUpdater {
         // set finalized block number
         redis_cmd_pipeline
             .arg(format!(
-                "subvt:{}:finalized_block_number",
+                "subvt:{}:validators:finalized_block_number",
                 CONFIG.substrate.chain
             ))
             .arg(finalized_block_number);

@@ -7,6 +7,7 @@ rust-version = "1.56.0"
 [dependencies]
 anyhow = "1.0.55"
 async-trait = "0.1.52"
+chrono = "0.4.19"
 frankenstein = { version = "0.10", default-features = false, features = ["async-http-client"] }
 lazy_static = "1.4.0"
 log = "0.4.14"

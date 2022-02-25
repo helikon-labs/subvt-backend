@@ -1,11 +1,13 @@
 use crate::query::{Query, QueryType};
 use crate::{TelegramBotError, CONFIG};
+use chrono::{TimeZone, Utc};
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
     InlineKeyboardButton, InlineKeyboardMarkup, Message, MethodResponse, ReplyMarkup,
     SendMessageParams,
 };
 use subvt_config::Config;
+use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
@@ -19,9 +21,10 @@ pub enum MessageType {
     InvalidAddressTryAgain(String),
     ValidatorNotFound(String),
     ValidatorExistsOnChat(String),
+    NoValidatorsOnChat,
     ValidatorAdded,
     AddValidator,
-    ValidatorInfo(Box<ValidatorDetails>),
+    ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
 }
 
 impl MessageType {
@@ -50,9 +53,10 @@ impl MessageType {
                 context.insert("condensed_address", &get_condensed_address(address));
                 "validator_exists_on_chat.html"
             }
+            Self::NoValidatorsOnChat => "no_validators_on_chat.html",
             Self::ValidatorAdded => "validator_added.html",
             Self::AddValidator => "add_validator.html",
-            Self::ValidatorInfo(validator_details) => {
+            Self::ValidatorInfo(validator_details, maybe_onekv_summary) => {
                 if let Some(display) = validator_details.get_full_display() {
                     context.insert("has_display", &true);
                     context.insert("display", &display);
@@ -98,6 +102,78 @@ impl MessageType {
                     context.insert("heartbeat_received", &heartbeat_received);
                 }
                 context.insert("slash_count", &validator_details.slash_count);
+                if let Some(onekv_summary) = &**maybe_onekv_summary {
+                    context.insert("is_onekv", &true);
+                    context.insert("onekv_name", &onekv_summary.name);
+                    if let Some(location) = &onekv_summary.location {
+                        context.insert("onekv_location", location);
+                    }
+                    let date_time_format = "%b %d, %Y %H:%M UTC";
+                    let discovered_at =
+                        Utc::timestamp(&Utc, onekv_summary.discovered_at as i64 / 1000, 0);
+                    context.insert(
+                        "onekv_discovered_at",
+                        &discovered_at.format(date_time_format).to_string(),
+                    );
+                    if let Some(version) = &onekv_summary.version {
+                        context.insert("onekv_version", version);
+                    }
+                    if let Some(nominated_at) = onekv_summary.nominated_at {
+                        let nominated_at = Utc::timestamp(&Utc, nominated_at as i64 / 1000, 0);
+                        context.insert(
+                            "onekv_nominated_at",
+                            &nominated_at.format(date_time_format).to_string(),
+                        );
+                    }
+                    if onekv_summary.online_since > 0 {
+                        let online_since =
+                            Utc::timestamp(&Utc, onekv_summary.online_since as i64 / 1000, 0);
+                        context.insert(
+                            "onekv_online_since",
+                            &online_since.format(date_time_format).to_string(),
+                        );
+                    } else if onekv_summary.offline_since > 0 {
+                        let offline_since =
+                            Utc::timestamp(&Utc, onekv_summary.offline_since as i64 / 1000, 0);
+                        context.insert(
+                            "onekv_offline_since",
+                            &offline_since.format(date_time_format).to_string(),
+                        );
+                    }
+                    if let Some(rank) = onekv_summary.rank {
+                        context.insert("onekv_rank", &rank);
+                    }
+                    if let Some(score) = onekv_summary.total_score {
+                        context.insert("onekv_score", &(score as u64));
+                    }
+                    let is_valid = onekv_summary.is_valid();
+                    context.insert("onekv_is_valid", &is_valid);
+                    if !is_valid {
+                        let invalidity_reasons: Vec<String> = onekv_summary
+                            .validity
+                            .iter()
+                            .filter(|v| !v.is_valid)
+                            .map(|v| v.details.clone())
+                            .collect();
+                        context.insert("onekv_invalidity_reasons", &invalidity_reasons);
+                    }
+                    context.insert(
+                        "onekv_democracy_vote_count",
+                        &onekv_summary.democracy_vote_count,
+                    );
+                    context.insert(
+                        "onekv_council_vote_count",
+                        &onekv_summary.council_votes.len(),
+                    );
+                    let last_updated =
+                        Utc::timestamp(&Utc, onekv_summary.record_created_at as i64 / 1000, 0);
+                    context.insert(
+                        "onekv_last_updated",
+                        &last_updated.format(date_time_format).to_string(),
+                    );
+                } else {
+                    context.insert("is_onekv", &false);
+                }
                 "validator_info.html"
             }
         };
@@ -184,7 +260,7 @@ impl Messenger {
         &self,
         chat_id: i64,
         query_type: QueryType,
-        validators: &Vec<ValidatorDetails>,
+        validators: &[ValidatorDetails],
     ) -> anyhow::Result<MethodResponse<Message>> {
         let mut rows = vec![];
         for validator in validators {
@@ -194,11 +270,7 @@ impl Messenger {
                 parameter: Some(address.clone()),
             };
             rows.push(vec![InlineKeyboardButton {
-                text: if let Some(display) = validator.get_full_display() {
-                    display
-                } else {
-                    get_condensed_address(&address)
-                },
+                text: validator.get_display_or_condensed_address(),
                 url: None,
                 login_url: None,
                 callback_data: Some(serde_json::to_string(&query)?),

@@ -9,6 +9,28 @@
 💷 {{ commission }} commission{% if blocks_nominations %}
 ⛔️ Blocks nominations{% endif %}{% if oversubscribed %}
 ⚖️ Oversubscribed{% endif %}{% if heartbeat_received %}
-🟢 Sent session heartbeat{% endif %}{% if slash_count == 1 %}
+💌 Sent session heartbeat{% endif %}{% if slash_count == 1 %}
 ☠️ Slashed once in the last 12 months{% endif %}{% if slash_count > 1 %}
-☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}
+☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}{% if is_onekv %}
+
+<strong>Thousand Validators Info</strong>
+🏷 {{ onekv_name }}{% if onekv_online_since %}
+🟢️ Online since {{ onekv_online_since }}{% endif %}{% if onekv_offline_since %}
+🔴️ Offline since {{ onekv_offline_since }}{% endif %}
+{% if onekv_is_valid %}✅ Valid 1KV validator{% else %}❌ Invalid 1KV validator:{% for onekv_invalidity_reason in onekv_invalidity_reasons %}
+- {{ onekv_invalidity_reason }}{% endfor %}{% endif %}{% if onekv_rank %}
+📈 Rank {{ onekv_rank }}{% endif %}{% if onekv_score %}
+📊 Score {{ onekv_score }}{% endif %}{% if onekv_nominated_at %}
+💎 Last 1KV nomination {{ onekv_nominated_at }}{% endif %}{% if onekv_location %}
+🌍 {{ onekv_location }}{% endif %}{% if onekv_version %}
+🧬 Running {{ onekv_version }}{% endif %}
+📡 Discovered {{ onekv_discovered_at }}
+🗳 {{ onekv_democracy_vote_count }} democracy vote{% if onekv_democracy_vote_count != 1 %}s{% endif %}{% if onekv_democracy_vote_count == 0 %} 😕{% endif %}
+👥 Backs {{ onekv_council_vote_count }} councillor{% if onekv_council_vote_count != 1 %}s{% endif %}{% if onekv_council_vote_count == 0 %} 😕{% endif %}
+<i>1KV data last updated {{ onekv_last_updated }}</i>{% if onekv_democracy_vote_count == 0 and onekv_council_vote_count == 0 %}
+
+💡 Consider voting on referanda and council elections to receive <strong>more 1KV nominations</strong>.{% else %}{% if onekv_democracy_vote_count == 0 %}
+
+💡 Consider voting on referanda to receive <strong>more 1KV nominations</strong>.{% else %}{% if onekv_council_vote_count == 0 %}
+
+💡 Consider voting on council elections to receive <strong>more 1KV nominations</strong>.{% endif %}{% endif %}{% endif %}{% endif %}

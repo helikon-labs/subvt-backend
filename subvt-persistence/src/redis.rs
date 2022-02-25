@@ -21,7 +21,10 @@ impl Redis {
 
 impl Redis {
     pub fn get_finalized_block_number(&self) -> anyhow::Result<u64> {
-        let key = format!("subvt:{}:finalized_block_number", CONFIG.substrate.chain);
+        let key = format!(
+            "subvt:{}:validators:finalized_block_number",
+            CONFIG.substrate.chain
+        );
         let mut connection = self.client.get_connection()?;
         let finalized_block_number: u64 = redis::cmd("GET").arg(key).query(&mut connection)?;
         Ok(finalized_block_number)

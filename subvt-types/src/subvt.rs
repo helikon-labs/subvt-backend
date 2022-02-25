@@ -11,6 +11,7 @@ use crate::substrate::{
 use serde::{Deserialize, Serialize};
 use std::convert::From;
 use subvt_proc_macro::Diff;
+use subvt_utility::text::get_condensed_address;
 
 /// Represents the network's status that changes with every block.
 #[derive(Clone, Debug, Diff, Default, Deserialize, Serialize)]
@@ -138,6 +139,14 @@ impl ValidatorDetails {
             }
         } else {
             None
+        }
+    }
+
+    pub fn get_display_or_condensed_address(&self) -> String {
+        if let Some(display) = self.get_full_display() {
+            display
+        } else {
+            get_condensed_address(&self.account.id.to_ss58_check())
         }
     }
 

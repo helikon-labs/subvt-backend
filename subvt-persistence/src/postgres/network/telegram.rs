@@ -83,6 +83,7 @@ impl PostgreSQLNetworkStorage {
         telegram_chat_id: i64,
         validator_account_id: &AccountId,
     ) -> anyhow::Result<u64> {
+        self.save_account(validator_account_id).await?;
         let id: (i32,) = sqlx::query_as(
             r#"
             INSERT INTO sub_telegram_chat_validator (telegram_chat_id, validator_account_id)

@@ -1,7 +1,29 @@
 //! 1KV-related storage - for Polkadot and Kusama.
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use chrono::NaiveDateTime;
 use subvt_types::crypto::AccountId;
-use subvt_types::onekv::{OneKVCandidateDetails, OneKVNominator, OneKVValidity};
+use subvt_types::onekv::{
+    OneKVCandidateDetails, OneKVCandidateSummary, OneKVNominator, OneKVValidity,
+};
+
+type PostgresCandidateSummary = (
+    i32,
+    String,
+    i64,
+    String,
+    Option<i64>,
+    i64,
+    i64,
+    Option<i64>,
+    Option<f64>,
+    Option<f64>,
+    Option<i64>,
+    Option<String>,
+    Option<String>,
+    i64,
+    Vec<String>,
+    NaiveDateTime,
+);
 
 impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_candidate(
@@ -20,8 +42,8 @@ impl PostgreSQLNetworkStorage {
         self.save_account(&validator_account_id).await?;
         let candidate_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, location, rank, version, is_valid, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_council_stake, score_democracy)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+            INSERT INTO sub_onekv_candidate (onekv_id, validator_account_id, kusama_account_id, discovered_at, inclusion, span_inclusion, bonded, commission, is_active, reward_destination, telemetry_id, node_refs, unclaimed_eras, last_valid, nominated_at, offline_accumulated, offline_since, online_since, name, location, rank, version, is_valid, democracy_vote_count, democracy_votes, council_stake, council_votes, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_council_stake, score_democracy)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43)
             RETURNING id
             "#,
         )
@@ -30,6 +52,14 @@ impl PostgreSQLNetworkStorage {
             .bind(kusama_account_id.map(|account_id| account_id.to_string()))
             .bind(candidate_details.discovered_at as i64)
             .bind(candidate_details.inclusion)
+            .bind(candidate_details.span_inclusion)
+            .bind(candidate_details.bonded.map(|bonded| bonded.to_string()))
+            .bind(candidate_details.commission)
+            .bind(candidate_details.is_active)
+            .bind(&candidate_details.reward_destination)
+            .bind(candidate_details.telemetry_id)
+            .bind(candidate_details.node_refs)
+            .bind(&candidate_details.unclaimed_eras)
             .bind(candidate_details.last_valid.map(|last_valid| last_valid as i64))
             .bind(candidate_details.nominated_at.map(|last_valid| last_valid as i64))
             .bind(candidate_details.offline_accumulated as i64)
@@ -40,6 +70,10 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate_details.rank)
             .bind(candidate_details.version.as_ref())
             .bind(candidate_details.is_valid())
+            .bind(candidate_details.democracy_vote_count)
+            .bind(&candidate_details.democracy_votes)
+            .bind(&candidate_details.council_stake)
+            .bind(&candidate_details.council_votes)
             .bind(candidate_details.score.as_ref().map(|score| score.updated_at as i64))
             .bind(candidate_details.score.as_ref().map(|score| score.total))
             .bind(candidate_details.score.as_ref().map(|score| score.aggregate))
@@ -169,6 +203,51 @@ impl PostgreSQLNetworkStorage {
                 updated_at: db_validity.4 as u64,
             })
             .collect())
+    }
+}
+
+impl PostgreSQLNetworkStorage {
+    pub async fn get_onekv_candidate_summary_by_id(
+        &self,
+        id: u32,
+    ) -> anyhow::Result<Option<OneKVCandidateSummary>> {
+        let maybe_candidate_summary: Option<PostgresCandidateSummary> = sqlx::query_as(
+            r#"
+            SELECT id, onekv_id, discovered_at, name, nominated_at, online_since, offline_since, rank, score_total, score_aggregate, telemetry_id, version, location, democracy_vote_count, council_votes, created_at
+            FROM sub_onekv_candidate
+            WHERE id = $1
+            ORDER BY id DESC
+            LIMIT 1
+            "#,
+        )
+        .bind(id as i32)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(summary) = maybe_candidate_summary {
+            Ok(Some(OneKVCandidateSummary {
+                record_id: summary.0 as u32,
+                onekv_id: summary.1,
+                discovered_at: summary.2 as u64,
+                name: summary.3,
+                nominated_at: summary.4.map(|t| t as u64),
+                online_since: summary.5 as u64,
+                offline_since: summary.6 as u64,
+                rank: summary.7.map(|rank| rank as u64),
+                total_score: summary.8,
+                aggregate_score: summary.9,
+                telemetry_id: summary.10.map(|id| id as u32),
+                validity: self
+                    .get_onekv_candidate_validity_items(summary.0 as u32)
+                    .await?,
+                version: summary.11,
+                location: summary.12,
+                democracy_vote_count: summary.13 as u32,
+                council_votes: summary.14,
+                record_created_at: summary.15.timestamp_millis() as u64,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
