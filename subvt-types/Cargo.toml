@@ -30,7 +30,7 @@ polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag 
 polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.17" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.17" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.17" }
-scale-info = "1.0.0"
+scale-info = "2.0.1"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 sp-authority-discovery = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.17" }
