@@ -20,25 +20,12 @@ jobs:
     name: Format, Clippy and Tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Start PostgreSQL
-        run: |
-          sudo systemctl start postgresql.service
-          pg_isready
-      - name: Display PostgreSQL version
-        run: sudo -u postgres psql -c "SELECT version();"
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Install TimescaleDB
-        run: |
-          chmod +x ./_scripts/timescaledb.deb.sh
-          sudo ./_scripts/timescaledb.deb.sh
-          sudo apt install --yes postgresql-common
-          echo -ne '\n' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-          sudo apt update
-          sudo apt install --yes timescaledb-2-postgresql-14
-          sudo timescaledb-tune --quiet --yes
-          sudo systemctl restart postgresql.service
-          pg_isready
+      - name: Run Docker network PostgreSQL
+        run: docker run -d -t -p 15432:5432 helikon/subvt-backend-network-postgres:0.1.2
+      - name: Run app PostgreSQL Docker image
+        run: docker run -d -t -p 25432:5432 helikon/subvt-backend-app-postgres:0.1.2
       - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -49,18 +36,7 @@ jobs:
       - run: rustup update nightly
       - run: rustup default nightly
       - run: rustup target add wasm32-unknown-unknown --toolchain nightly
-      - run: cargo install sqlx-cli
-      - name: Prepare test databases
-        run: |
-          sudo -u postgres psql -c "CREATE USER subvt WITH ENCRYPTED PASSWORD 'subvt';"
-          sudo -u postgres psql -c "CREATE DATABASE subvt_app_test;"
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE subvt_app_test TO subvt;"
-          sudo -u postgres psql -c "CREATE DATABASE subvt_kusama_test;"
-          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE subvt_kusama_test TO subvt;"
-          cd ./_migrations/app
-          DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_app_test sqlx migrate run
-          cd ../network
-          DATABASE_URL=postgres://subvt:subvt@127.0.0.1/subvt_kusama_test sqlx migrate run
+      - run: rustup default stable
       - name: Format
         uses: actions-rs/cargo@v1
         with:

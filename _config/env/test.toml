@@ -1,5 +1,5 @@
-[app_postgres]
-database_name = "subvt_app_test"
-
 [network_postgres]
-database_name = "subvt_network_test"
+port = 15432
+
+[app_postgres]
+port = 25432
