@@ -1,0 +1,4 @@
+<strong>Staking Summary</strong>
+👤 Self: <strong>{{ self_stake }} {{ token_ticker }}</strong>
+▶️ Active: <strong>{{ active_nomination_total }} {{ token_ticker }}</strong>{% if active_nominator_count > 0 %} from <strong>{{ active_nominator_count }}</strong> {% if active_nominator_count == 1 %}nominator{% else %}nominators{% endif %} and self stake{% endif %}
+⏸ Inactive: <strong>{{ inactive_nomination_total }} {{ token_ticker }}</strong>{% if inactive_nominator_count > 0 %} from <strong>{{ inactive_nominator_count }}</strong> {% if inactive_nominator_count == 1 %}nominator{% else %}nominators{% endif %}{% endif %}

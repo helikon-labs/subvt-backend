@@ -8,6 +8,7 @@ use frankenstein::{
 };
 use subvt_config::Config;
 use subvt_types::onekv::OneKVCandidateSummary;
+use subvt_types::substrate::Balance;
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
@@ -24,7 +25,15 @@ pub enum MessageType {
     NoValidatorsOnChat,
     ValidatorAdded,
     AddValidator,
+    ValidatorList(Vec<ValidatorDetails>, QueryType),
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
+    NominationSummary {
+        self_stake: Balance,
+        active_nominator_count: usize,
+        active_nomination_total: Balance,
+        inactive_nominator_count: usize,
+        inactive_nomination_total: Balance,
+    },
 }
 
 impl MessageType {
@@ -56,6 +65,7 @@ impl MessageType {
             Self::NoValidatorsOnChat => "no_validators_on_chat.html",
             Self::ValidatorAdded => "validator_added.html",
             Self::AddValidator => "add_validator.html",
+            Self::ValidatorList(_, _) => "select_validator.html",
             Self::ValidatorInfo(validator_details, maybe_onekv_summary) => {
                 if let Some(display) = validator_details.get_full_display() {
                     context.insert("has_display", &true);
@@ -176,6 +186,39 @@ impl MessageType {
                 }
                 "validator_info.html"
             }
+            Self::NominationSummary {
+                self_stake,
+                active_nominator_count,
+                active_nomination_total,
+                inactive_nominator_count,
+                inactive_nomination_total,
+            } => {
+                let self_stake_formatted = format_decimal(
+                    *self_stake,
+                    CONFIG.substrate.token_decimals,
+                    CONFIG.substrate.token_format_decimal_points,
+                    "",
+                );
+                let active_nomination_formatted = format_decimal(
+                    *active_nomination_total,
+                    CONFIG.substrate.token_decimals,
+                    CONFIG.substrate.token_format_decimal_points,
+                    "",
+                );
+                let inactive_nomination_formatted = format_decimal(
+                    *inactive_nomination_total,
+                    CONFIG.substrate.token_decimals,
+                    CONFIG.substrate.token_format_decimal_points,
+                    "",
+                );
+                context.insert("token_ticker", &CONFIG.substrate.token_ticker);
+                context.insert("self_stake", &self_stake_formatted);
+                context.insert("active_nomination_total", &active_nomination_formatted);
+                context.insert("active_nominator_count", active_nominator_count);
+                context.insert("inactive_nomination_total", &inactive_nomination_formatted);
+                context.insert("inactive_nominator_count", inactive_nominator_count);
+                "nomination_summary.html"
+            }
         };
         renderer.render(template_name, &context).unwrap()
     }
@@ -238,6 +281,31 @@ impl Messenger {
         chat_id: i64,
         message_type: MessageType,
     ) -> anyhow::Result<MethodResponse<Message>> {
+        let inline_keyboard = match &message_type {
+            MessageType::ValidatorList(validators, query_type) => {
+                let mut rows = vec![];
+                for validator in validators {
+                    let query = Query {
+                        query_type: query_type.clone(),
+                        parameter: Some(validator.account.address.clone()),
+                    };
+                    rows.push(vec![InlineKeyboardButton {
+                        text: validator.get_display_or_condensed_address(),
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&query)?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    }]);
+                }
+                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                    inline_keyboard: rows,
+                }))
+            }
+            _ => None,
+        };
         let params = SendMessageParams {
             chat_id: ChatId::Integer(chat_id),
             text: message_type.get_content(&self.renderer),
@@ -248,53 +316,7 @@ impl Messenger {
             protect_content: None,
             reply_to_message_id: None,
             allow_sending_without_reply: None,
-            reply_markup: None,
-        };
-        match self.api.send_message(&params).await {
-            Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
-        }
-    }
-
-    pub async fn send_validator_list(
-        &self,
-        chat_id: i64,
-        query_type: QueryType,
-        validators: &[ValidatorDetails],
-    ) -> anyhow::Result<MethodResponse<Message>> {
-        let mut rows = vec![];
-        for validator in validators {
-            let query = Query {
-                query_type: query_type.clone(),
-                parameter: Some(validator.account.address.clone()),
-            };
-            rows.push(vec![InlineKeyboardButton {
-                text: validator.get_display_or_condensed_address(),
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&query)?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }]);
-        }
-        let params = SendMessageParams {
-            chat_id: ChatId::Integer(chat_id),
-            text: self
-                .renderer
-                .render("select_validator.html", &Context::new())
-                .unwrap(),
-            parse_mode: Some("html".to_string()),
-            entities: None,
-            disable_web_page_preview: Some(true),
-            disable_notification: None,
-            protect_content: None,
-            reply_to_message_id: None,
-            allow_sending_without_reply: None,
-            reply_markup: Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                inline_keyboard: rows,
-            })),
+            reply_markup: inline_keyboard,
         };
         match self.api.send_message(&params).await {
             Ok(response) => Ok(response),

@@ -1,7 +1,7 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
 use crate::messenger::{MessageType, Messenger};
-use crate::query::{Query, QueryType};
+use crate::query::Query;
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
@@ -134,34 +134,6 @@ impl TelegramBot {
             self.messenger
                 .send_message(message.chat.id, MessageType::BadRequest)
                 .await?;
-        }
-        Ok(())
-    }
-
-    async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
-        match query.query_type {
-            QueryType::ValidatorInfo => {
-                if let Some(validator_address) = &query.parameter {
-                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        let validator_details = self.redis.fetch_validator_details(&account_id)?;
-                        let onekv_summary =
-                            if let Some(id) = validator_details.onekv_candidate_record_id {
-                                self.postgres.get_onekv_candidate_summary_by_id(id).await?
-                            } else {
-                                None
-                            };
-                        self.messenger
-                            .send_message(
-                                chat_id,
-                                MessageType::ValidatorInfo(
-                                    Box::new(validator_details),
-                                    Box::new(onekv_summary),
-                                ),
-                            )
-                            .await?;
-                    }
-                }
-            }
         }
         Ok(())
     }

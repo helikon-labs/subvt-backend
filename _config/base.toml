@@ -13,6 +13,9 @@ connection_timeout_seconds = 30
 request_timeout_seconds = 30
 # for internal use, 1 for Kusama, 2 for Polkadot
 network_id = 1
+token_ticker = "KSM"
+token_decimals = 12
+token_format_decimal_points = 4
 
 [log]
 subvt_level = "debug"

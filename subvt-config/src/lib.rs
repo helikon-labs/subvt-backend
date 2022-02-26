@@ -60,6 +60,12 @@ pub struct SubstrateConfig {
     pub request_timeout_seconds: u64,
     /// Substrate network id for internal use.
     pub network_id: u32,
+    /// Ticker for the network utility token (KSM, DOT, etc.).
+    pub token_ticker: String,
+    /// Number of decimals for the network utility token.
+    pub token_decimals: usize,
+    /// Number of decimal points in the formatted amount (e.g. 4 in 14.7983 KSM).
+    pub token_format_decimal_points: usize,
 }
 
 /// Log configuration.

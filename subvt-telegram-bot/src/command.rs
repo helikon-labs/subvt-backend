@@ -6,7 +6,11 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 impl TelegramBot {
-    async fn process_validator_info_command(&self, chat_id: i64) -> anyhow::Result<()> {
+    async fn process_validators_command(
+        &self,
+        chat_id: i64,
+        query_type: QueryType,
+    ) -> anyhow::Result<()> {
         let validator_account_ids = self
             .postgres
             .get_chat_validator_account_ids(chat_id)
@@ -17,7 +21,7 @@ impl TelegramBot {
                 .await?;
         } else if validator_account_ids.len() == 1 {
             let query = Query {
-                query_type: QueryType::ValidatorInfo,
+                query_type,
                 parameter: Some(validator_account_ids.get(0).unwrap().to_ss58_check()),
             };
             self.process_query(chat_id, &query).await?;
@@ -43,7 +47,7 @@ impl TelegramBot {
                 }
             });
             self.messenger
-                .send_validator_list(chat_id, QueryType::ValidatorInfo, &validators)
+                .send_message(chat_id, MessageType::ValidatorList(validators, query_type))
                 .await?;
         }
         Ok(())
@@ -123,7 +127,14 @@ impl TelegramBot {
                     .await?;
             }
             "/add" => self.process_add_command(chat_id, args).await?,
-            "/validator_info" => self.process_validator_info_command(chat_id).await?,
+            "/validator_info" => {
+                self.process_validators_command(chat_id, QueryType::ValidatorInfo)
+                    .await?
+            }
+            "/nominations" => {
+                self.process_validators_command(chat_id, QueryType::Nominations)
+                    .await?
+            }
             _ => {
                 self.messenger
                     .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
