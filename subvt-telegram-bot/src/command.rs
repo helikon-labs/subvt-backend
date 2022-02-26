@@ -32,8 +32,8 @@ impl TelegramBot {
                 validators.push(self.redis.fetch_validator_details(account_id)?);
             }
             validators.sort_by(|v1, v2| {
-                let maybe_v1_display = v1.get_display();
-                let maybe_v2_display = v2.get_display();
+                let maybe_v1_display = v1.account.get_display();
+                let maybe_v2_display = v2.account.get_display();
                 if let Some(v1_display) = maybe_v1_display {
                     if let Some(v2_display) = maybe_v2_display {
                         v1_display.cmp(&v2_display)

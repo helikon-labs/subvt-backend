@@ -56,7 +56,7 @@ impl TelegramBot {
                             active_nomination_total,
                             inactive_nominator_count,
                             inactive_nomination_total,
-                        ) = if let Some(validator_stake) = validator_details.validator_stake {
+                        ) = if let Some(validator_stake) = &validator_details.validator_stake {
                             let active_nominator_account_ids: Vec<AccountId> = validator_stake
                                 .nominators
                                 .iter()
@@ -95,6 +95,10 @@ impl TelegramBot {
                             .send_message(
                                 chat_id,
                                 MessageType::NominationSummary {
+                                    validator_display: validator_details
+                                        .account
+                                        .get_display_or_condensed_address()
+                                        .clone(),
                                     self_stake,
                                     active_nominator_count,
                                     active_nomination_total,

@@ -11,7 +11,6 @@ use crate::substrate::{
 use serde::{Deserialize, Serialize};
 use std::convert::From;
 use subvt_proc_macro::Diff;
-use subvt_utility::text::get_condensed_address;
 
 /// Represents the network's status that changes with every block.
 #[derive(Clone, Debug, Diff, Default, Deserialize, Serialize)]
@@ -121,53 +120,6 @@ pub struct ValidatorSummary {
     pub validator_stake: Option<ValidatorStakeSummary>,
 }
 
-impl ValidatorDetails {
-    pub fn get_display(&self) -> Option<String> {
-        if let Some(identity) = &self.account.identity {
-            identity.display.clone()
-        } else {
-            None
-        }
-    }
-
-    pub fn get_parent_display(&self) -> Option<String> {
-        if let Some(parent) = &*self.account.parent {
-            if let Some(identity) = &parent.identity {
-                identity.display.clone()
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
-    pub fn get_display_or_condensed_address(&self) -> String {
-        if let Some(display) = self.get_full_display() {
-            display
-        } else {
-            get_condensed_address(&self.account.address)
-        }
-    }
-
-    pub fn get_full_display(&self) -> Option<String> {
-        if let Some(identity) = &self.account.identity {
-            if let Some(display) = &identity.display {
-                return Some(display.clone());
-            }
-        } else if let Some(parent) = &*self.account.parent {
-            if let Some(identity) = &parent.identity {
-                if let Some(parent_display) = &identity.display {
-                    if let Some(child_display) = &self.account.child_display {
-                        return Some(format!("{} / {}", parent_display, child_display));
-                    }
-                }
-            }
-        }
-        None
-    }
-}
-
 impl From<&ValidatorDetails> for ValidatorSummary {
     fn from(validator: &ValidatorDetails) -> ValidatorSummary {
         let active_staker_account_ids: Vec<AccountId> =
@@ -190,8 +142,8 @@ impl From<&ValidatorDetails> for ValidatorSummary {
         ValidatorSummary {
             account_id: validator.account.id.clone(),
             controller_account_id: validator.controller_account_id.clone(),
-            display: validator.get_display(),
-            parent_display: validator.get_parent_display(),
+            display: validator.account.get_display(),
+            parent_display: validator.account.get_parent_display(),
             child_display: validator.account.child_display.clone(),
             confirmed: validator.account.get_confirmed(),
             preferences: validator.preferences.clone(),

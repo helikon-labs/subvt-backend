@@ -28,6 +28,7 @@ pub enum MessageType {
     ValidatorList(Vec<ValidatorDetails>, QueryType),
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
     NominationSummary {
+        validator_display: String,
         self_stake: Balance,
         active_nominator_count: usize,
         active_nomination_total: Balance,
@@ -67,7 +68,7 @@ impl MessageType {
             Self::AddValidator => "add_validator.html",
             Self::ValidatorList(_, _) => "select_validator.html",
             Self::ValidatorInfo(validator_details, maybe_onekv_summary) => {
-                if let Some(display) = validator_details.get_full_display() {
+                if let Some(display) = validator_details.account.get_full_display() {
                     context.insert("has_display", &true);
                     context.insert("display", &display);
                 } else {
@@ -187,6 +188,7 @@ impl MessageType {
                 "validator_info.html"
             }
             Self::NominationSummary {
+                validator_display,
                 self_stake,
                 active_nominator_count,
                 active_nomination_total,
@@ -211,6 +213,7 @@ impl MessageType {
                     CONFIG.substrate.token_format_decimal_points,
                     "",
                 );
+                context.insert("validator_display", &validator_display);
                 context.insert("token_ticker", &CONFIG.substrate.token_ticker);
                 context.insert("self_stake", &self_stake_formatted);
                 context.insert("active_nomination_total", &active_nomination_formatted);
@@ -290,7 +293,7 @@ impl Messenger {
                         parameter: Some(validator.account.address.clone()),
                     };
                     rows.push(vec![InlineKeyboardButton {
-                        text: validator.get_display_or_condensed_address(),
+                        text: validator.account.get_display_or_condensed_address(),
                         url: None,
                         login_url: None,
                         callback_data: Some(serde_json::to_string(&query)?),

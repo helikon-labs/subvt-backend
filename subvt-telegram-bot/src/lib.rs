@@ -167,18 +167,39 @@ impl Service for TelegramBot {
                             });
                         } else if let Some(callback_query) = update.callback_query {
                             update_params.offset = Some(update.update_id + 1);
-                            if let Some(callback_data) = callback_query.data {
-                                if let Some(message) = callback_query.message {
-                                    let query: Query = serde_json::from_str(&callback_data)?;
-                                    tokio::try_join!(
-                                        self.messenger
-                                            .answer_callback_query(&callback_query.id, None),
-                                        self.messenger
-                                            .delete_message(message.chat.id, message.message_id),
-                                        self.process_query(message.chat.id, &query),
-                                    )?;
+                            tokio::spawn(async move {
+                                if let Some(callback_data) = callback_query.data {
+                                    if let Some(message) = callback_query.message {
+                                        let query: Query = if let Ok(query) =
+                                            serde_json::from_str(&callback_data)
+                                        {
+                                            query
+                                        } else {
+                                            // log and ignore unknown query
+                                            return error!("Unknown query: {}", callback_data);
+                                        };
+                                        // ignorable: delete message gives error
+                                        let _ = self
+                                            .messenger
+                                            .delete_message(message.chat.id, message.message_id)
+                                            .await;
+                                        // ignorable: callback answer fails
+                                        let _ = self
+                                            .messenger
+                                            .answer_callback_query(&callback_query.id, None)
+                                            .await;
+                                        if let Err(error) =
+                                            self.process_query(message.chat.id, &query).await
+                                        {
+                                            error!(
+                                                "Error while processing message #{}: {:?}",
+                                                message.message_id, error
+                                            );
+                                            // TODO send error message
+                                        }
+                                    }
                                 }
-                            }
+                            });
                         }
                     }
                 }

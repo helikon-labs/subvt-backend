@@ -18,6 +18,7 @@ use std::convert::From;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use subvt_utility::decode_hex_string;
+use subvt_utility::text::get_condensed_address;
 
 pub type CallHash = [u8; 32];
 pub type OpaqueTimeSlot = Vec<u8>;
@@ -166,6 +167,53 @@ impl Display for Account {
             self.address.clone()
         };
         write!(f, "{}", display)
+    }
+}
+
+impl Account {
+    pub fn get_display(&self) -> Option<String> {
+        if let Some(identity) = &self.identity {
+            identity.display.clone()
+        } else {
+            None
+        }
+    }
+
+    pub fn get_parent_display(&self) -> Option<String> {
+        if let Some(parent) = &*self.parent {
+            if let Some(identity) = &parent.identity {
+                identity.display.clone()
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    pub fn get_full_display(&self) -> Option<String> {
+        if let Some(identity) = &self.identity {
+            if let Some(display) = &identity.display {
+                return Some(display.clone());
+            }
+        } else if let Some(parent) = &*self.parent {
+            if let Some(identity) = &parent.identity {
+                if let Some(parent_display) = &identity.display {
+                    if let Some(child_display) = &self.child_display {
+                        return Some(format!("{} / {}", parent_display, child_display));
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    pub fn get_display_or_condensed_address(&self) -> String {
+        if let Some(display) = self.get_full_display() {
+            display
+        } else {
+            get_condensed_address(&self.address)
+        }
     }
 }
 
