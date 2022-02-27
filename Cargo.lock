@@ -6304,6 +6304,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "frankenstein",
+ "itertools",
  "lazy_static",
  "log",
  "once_cell",

@@ -1,0 +1,9 @@
+<strong>{{ validator_display }}</strong>
+👤 Self Stake: <strong>{{ self_stake }} {{ token_ticker }}</strong>
+{% if active_nominations %}
+<strong>▶️ ACTIVE</strong>{% for active_nomination in active_nominations %}
+<pre>{{ active_nomination.1 }} {{ token_ticker }}</pre> • <pre>{{ active_nomination.0 | truncate(length=13) }}</pre>{% endfor %}
+{% else %}▶️ No active nominations.{% endif %}
+{% if inactive_nominations %}
+<strong>⏸ INACTIVE</strong>{% for inactive_nomination in inactive_nominations %}
+<pre>{{ inactive_nomination.1 }} {{ token_ticker }}</pre> • <pre>{{ inactive_nomination.0 | truncate(length=13) }}</pre>{% endfor %}{% else %}⏸ No inactive nominations.{% endif %}

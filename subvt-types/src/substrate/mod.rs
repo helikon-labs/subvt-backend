@@ -415,14 +415,16 @@ impl ValidatorStake {
         for other in exposure.others {
             let stake = other.value;
             let account = Account {
-                id: other.who,
+                id: other.who.clone(),
+                address: other.who.to_ss58_check(),
                 ..Default::default()
             };
             nominators.push(NominatorStake { account, stake });
         }
         let validator_stake = Self {
             account: Account {
-                id: validator_account_id,
+                id: validator_account_id.clone(),
+                address: validator_account_id.to_ss58_check(),
                 ..Default::default()
             },
             self_stake: exposure.own,
@@ -601,7 +603,8 @@ impl Nomination {
         let nomination: (Vec<AccountId>, EraIndex, bool) = Decode::decode(&mut bytes)?;
         Ok(Nomination {
             stash_account: Account {
-                id: account_id,
+                id: account_id.clone(),
+                address: account_id.to_ss58_check(),
                 ..Default::default()
             },
             submission_era_index: nomination.1,

@@ -1,5 +1,5 @@
 pub fn get_condensed_address(address: &str) -> String {
-    format!("{}...{}", &address[..6], &address[(address.len() - 6)..],)
+    format!("{}...{}", &address[..5], &address[(address.len() - 5)..],)
 }
 
 pub fn get_condensed_session_keys(session_keys: &str) -> String {

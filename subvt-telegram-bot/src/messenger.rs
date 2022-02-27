@@ -6,7 +6,9 @@ use frankenstein::{
     InlineKeyboardButton, InlineKeyboardMarkup, Message, MethodResponse, ReplyMarkup,
     SendMessageParams,
 };
+use itertools::Itertools;
 use subvt_config::Config;
+use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::substrate::Balance;
 use subvt_types::subvt::ValidatorDetails;
@@ -27,14 +29,8 @@ pub enum MessageType {
     AddValidator,
     ValidatorList(Vec<ValidatorDetails>, QueryType),
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
-    NominationSummary {
-        validator_display: String,
-        self_stake: Balance,
-        active_nominator_count: usize,
-        active_nomination_total: Balance,
-        inactive_nominator_count: usize,
-        inactive_nomination_total: Balance,
-    },
+    NominationSummary(ValidatorDetails),
+    NominationDetails(ValidatorDetails),
 }
 
 impl MessageType {
@@ -187,40 +183,164 @@ impl MessageType {
                 }
                 "validator_info.html"
             }
-            Self::NominationSummary {
-                validator_display,
-                self_stake,
-                active_nominator_count,
-                active_nomination_total,
-                inactive_nominator_count,
-                inactive_nomination_total,
-            } => {
+            Self::NominationSummary(validator_details) => {
+                let self_stake = validator_details.self_stake.total_amount;
+                let (
+                    active_nominator_count,
+                    active_nomination_total,
+                    inactive_nominator_count,
+                    inactive_nomination_total,
+                ) = if let Some(validator_stake) = &validator_details.validator_stake {
+                    let active_nominator_account_ids: Vec<AccountId> = validator_stake
+                        .nominators
+                        .iter()
+                        .map(|n| n.account.id.clone())
+                        .collect();
+                    let mut inactive_nominator_count: usize = 0;
+                    let mut inactive_nomination_total: Balance = 0;
+                    for nomination in &validator_details.nominations {
+                        if !active_nominator_account_ids.contains(&nomination.stash_account.id) {
+                            inactive_nominator_count += 1;
+                            inactive_nomination_total += nomination.stake.active_amount;
+                        }
+                    }
+                    (
+                        active_nominator_account_ids.len(),
+                        validator_stake.total_stake,
+                        inactive_nominator_count,
+                        inactive_nomination_total,
+                    )
+                } else {
+                    let inactive_nomination_total: Balance = validator_details
+                        .nominations
+                        .iter()
+                        .map(|n| n.stake.total_amount)
+                        .sum();
+                    (
+                        0,
+                        0,
+                        validator_details.nominations.len(),
+                        inactive_nomination_total,
+                    )
+                };
+
                 let self_stake_formatted = format_decimal(
-                    *self_stake,
+                    self_stake,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
                     "",
                 );
                 let active_nomination_formatted = format_decimal(
-                    *active_nomination_total,
+                    active_nomination_total,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
                     "",
                 );
                 let inactive_nomination_formatted = format_decimal(
-                    *inactive_nomination_total,
+                    inactive_nomination_total,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
                     "",
                 );
+                let validator_display =
+                    validator_details.account.get_display_or_condensed_address();
                 context.insert("validator_display", &validator_display);
                 context.insert("token_ticker", &CONFIG.substrate.token_ticker);
                 context.insert("self_stake", &self_stake_formatted);
                 context.insert("active_nomination_total", &active_nomination_formatted);
-                context.insert("active_nominator_count", active_nominator_count);
+                context.insert("active_nominator_count", &active_nominator_count);
                 context.insert("inactive_nomination_total", &inactive_nomination_formatted);
-                context.insert("inactive_nominator_count", inactive_nominator_count);
+                context.insert("inactive_nominator_count", &inactive_nominator_count);
                 "nomination_summary.html"
+            }
+            Self::NominationDetails(validator_details) => {
+                let self_stake = validator_details.self_stake.total_amount;
+                let self_stake_formatted = format_decimal(
+                    self_stake,
+                    CONFIG.substrate.token_decimals,
+                    CONFIG.substrate.token_format_decimal_points,
+                    "",
+                );
+                let validator_display =
+                    validator_details.account.get_display_or_condensed_address();
+                context.insert("validator_display", &validator_display);
+                context.insert("token_ticker", &CONFIG.substrate.token_ticker);
+                context.insert("self_stake", &self_stake_formatted);
+                let mut active_nominator_account_ids = Vec::new();
+                if let Some(active_stake) = &validator_details.validator_stake {
+                    let active_nominations: Vec<(String, String)> = active_stake
+                        .nominators
+                        .iter()
+                        .map(|n| {
+                            active_nominator_account_ids.push(n.account.id.clone());
+                            (n.account.get_display_or_condensed_address(), n.stake)
+                        })
+                        .sorted_by(|n1, n2| n2.1.cmp(&n1.1))
+                        .map(|n| {
+                            (
+                                n.0,
+                                format_decimal(
+                                    n.1,
+                                    CONFIG.substrate.token_decimals,
+                                    CONFIG.substrate.token_format_decimal_points,
+                                    "",
+                                ),
+                            )
+                        })
+                        .collect();
+                    let max_len = active_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+                    context.insert(
+                        "active_nominations",
+                        &active_nominations
+                            .iter()
+                            .map(|n| {
+                                (
+                                    n.0.clone(),
+                                    format!("{}{}", " ".repeat(max_len - n.1.len()), n.1),
+                                )
+                            })
+                            .collect::<Vec<(String, String)>>(),
+                    );
+                }
+                let inactive_nominations: Vec<(String, String)> = validator_details
+                    .nominations
+                    .iter()
+                    .filter(|n| !active_nominator_account_ids.contains(&n.stash_account.id))
+                    .map(|n| {
+                        (
+                            n.stash_account.get_display_or_condensed_address(),
+                            n.stake.active_amount,
+                        )
+                    })
+                    .sorted_by(|n1, n2| n2.1.cmp(&n1.1))
+                    .map(|n| {
+                        (
+                            n.0,
+                            format_decimal(
+                                n.1,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                                "",
+                            ),
+                        )
+                    })
+                    .collect();
+                if !inactive_nominations.is_empty() {
+                    let max_len = inactive_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+                    context.insert(
+                        "inactive_nominations",
+                        &inactive_nominations
+                            .iter()
+                            .map(|n| {
+                                (
+                                    n.0.clone(),
+                                    format!("{}{}", " ".repeat(max_len - n.1.len()), n.1),
+                                )
+                            })
+                            .collect::<Vec<(String, String)>>(),
+                    );
+                }
+                "nomination_details.html"
             }
         };
         renderer.render(template_name, &context).unwrap()
@@ -306,6 +426,31 @@ impl Messenger {
                 Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
                     inline_keyboard: rows,
                 }))
+            }
+            MessageType::NominationSummary(validator_details) => {
+                if validator_details.nominations.is_empty() {
+                    None
+                } else {
+                    let query = Query {
+                        query_type: QueryType::NominationDetails,
+                        parameter: Some(validator_details.account.address.clone()),
+                    };
+                    let rows = vec![vec![InlineKeyboardButton {
+                        text: self
+                            .renderer
+                            .render("view_nomination_details.html", &Context::new())?,
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&query)?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    }]];
+                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                        inline_keyboard: rows,
+                    }))
+                }
             }
             _ => None,
         };

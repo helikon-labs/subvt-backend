@@ -132,7 +132,7 @@ impl TelegramBot {
                     .await?
             }
             "/nominations" => {
-                self.process_validators_command(chat_id, QueryType::Nominations)
+                self.process_validators_command(chat_id, QueryType::NominationSummary)
                     .await?
             }
             _ => {
