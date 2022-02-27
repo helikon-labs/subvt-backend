@@ -248,11 +248,10 @@ impl BlockHeader {
         Ok(number)
     }
 
-    fn authority_index_from_log_bytes(consensus_engine: &str, bytes: &mut [u8]) -> Option<usize> {
+    fn authority_index_from_log_bytes(consensus_engine: &str, mut bytes: &[u8]) -> Option<usize> {
         match consensus_engine {
             "BABE" => {
-                let mut data_vec_bytes: &[u8] = &bytes[..];
-                let digest: PreDigest = Decode::decode(&mut data_vec_bytes).unwrap();
+                let digest: PreDigest = Decode::decode(&mut bytes).unwrap();
                 let authority_index = match digest {
                     PreDigest::Primary(digest) => digest.authority_index,
                     PreDigest::SecondaryPlain(digest) => digest.authority_index,
@@ -287,27 +286,23 @@ impl BlockHeader {
             let mut log_bytes: &[u8] = &hex::decode(&log_hex_string).unwrap();
             let digest_item: DigestItem = Decode::decode(&mut log_bytes).unwrap();
             match digest_item {
-                DigestItem::PreRuntime(consensus_engine_id, mut bytes) => {
+                DigestItem::PreRuntime(consensus_engine_id, bytes) => {
                     let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
                     validator_index =
-                        BlockHeader::authority_index_from_log_bytes(consensus_engine, &mut bytes);
+                        BlockHeader::authority_index_from_log_bytes(consensus_engine, &bytes);
                 }
-                DigestItem::Consensus(consensus_engine_id, mut bytes) => {
+                DigestItem::Consensus(consensus_engine_id, bytes) => {
                     if validator_index.is_none() {
                         let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
-                        validator_index = BlockHeader::authority_index_from_log_bytes(
-                            consensus_engine,
-                            &mut bytes,
-                        );
+                        validator_index =
+                            BlockHeader::authority_index_from_log_bytes(consensus_engine, &bytes);
                     }
                 }
-                DigestItem::Seal(consensus_engine_id, mut bytes) => {
+                DigestItem::Seal(consensus_engine_id, bytes) => {
                     if validator_index.is_none() {
                         let consensus_engine = std::str::from_utf8(&consensus_engine_id).unwrap();
-                        validator_index = BlockHeader::authority_index_from_log_bytes(
-                            consensus_engine,
-                            &mut bytes,
-                        );
+                        validator_index =
+                            BlockHeader::authority_index_from_log_bytes(consensus_engine, &bytes);
                     }
                 }
                 DigestItem::RuntimeEnvironmentUpdated => {

@@ -178,19 +178,15 @@ impl Service for TelegramBot {
                                             // log and ignore unknown query
                                             return error!("Unknown query: {}", callback_data);
                                         };
-                                        // ignorable: delete message gives error
-                                        let _ = self
-                                            .messenger
-                                            .delete_message(message.chat.id, message.message_id)
-                                            .await;
-                                        // ignorable: callback answer fails
-                                        let _ = self
-                                            .messenger
-                                            .answer_callback_query(&callback_query.id, None)
-                                            .await;
-                                        if let Err(error) =
-                                            self.process_query(message.chat.id, &query).await
-                                        {
+                                        if let Err(error) = tokio::try_join!(
+                                            self.messenger.delete_message(
+                                                message.chat.id,
+                                                message.message_id
+                                            ),
+                                            self.messenger
+                                                .answer_callback_query(&callback_query.id, None),
+                                            self.process_query(message.chat.id, &query),
+                                        ) {
                                             error!(
                                                 "Error while processing message #{}: {:?}",
                                                 message.message_id, error
