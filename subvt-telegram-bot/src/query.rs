@@ -64,10 +64,14 @@ impl TelegramBot {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         let validator_details = self.redis.fetch_validator_details(&account_id)?;
+                        let onekv_nominator_account_ids = self.postgres.get_onekv_nominator_account_ids().await?;
                         self.messenger
                             .send_message(
                                 chat_id,
-                                MessageType::NominationDetails(validator_details),
+                                MessageType::NominationDetails {
+                                    validator_details,
+                                    onekv_nominator_account_ids
+                                },
                             )
                             .await?;
                     }

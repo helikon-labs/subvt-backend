@@ -1,6 +1,7 @@
 //! 1KV-related storage - for Polkadot and Kusama.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use chrono::NaiveDateTime;
+use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::{
     OneKVCandidateDetails, OneKVCandidateSummary, OneKVNominator, OneKVValidity,
@@ -332,5 +333,20 @@ impl PostgreSQLNetworkStorage {
         }
         // return persisted record id
         Ok(nominator_save_result.0)
+    }
+
+    pub async fn get_onekv_nominator_account_ids(&self) -> anyhow::Result<Vec<AccountId>> {
+        let db_account_ids: Vec<(String,)> = sqlx::query_as(
+            r#"
+            SELECT DISTINCT stash_account_id
+            FROM sub_onekv_nominator
+            "#,
+        )
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(db_account_ids
+            .iter()
+            .filter_map(|db_account_id| AccountId::from_str(&db_account_id.0).ok())
+            .collect())
     }
 }

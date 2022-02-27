@@ -31,7 +31,10 @@ pub enum MessageType {
     ValidatorList(Vec<ValidatorDetails>, QueryType),
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
     NominationSummary(ValidatorDetails),
-    NominationDetails(ValidatorDetails),
+    NominationDetails {
+        validator_details: ValidatorDetails,
+        onekv_nominator_account_ids: Vec<AccountId>,
+    },
     RemoveValidatorNotFound(String),
     ValidatorRemoved(ValidatorDetails),
 }
@@ -257,7 +260,7 @@ impl MessageType {
                 context.insert("inactive_nominator_count", &inactive_nominator_count);
                 "nomination_summary.html"
             }
-            Self::NominationDetails(validator_details) => {
+            Self::NominationDetails{ validator_details, onekv_nominator_account_ids } => {
                 let self_stake = validator_details.self_stake.total_amount;
                 let self_stake_formatted = format_decimal(
                     self_stake,
@@ -272,12 +275,16 @@ impl MessageType {
                 context.insert("self_stake", &self_stake_formatted);
                 let mut active_nominator_account_ids = Vec::new();
                 if let Some(active_stake) = &validator_details.validator_stake {
-                    let active_nominations: Vec<(String, String)> = active_stake
+                    let active_nominations: Vec<(String, String, bool)> = active_stake
                         .nominators
                         .iter()
                         .map(|n| {
                             active_nominator_account_ids.push(n.account.id.clone());
-                            (n.account.get_display_or_condensed_address(), n.stake)
+                            (
+                                n.account.get_display_or_condensed_address(),
+                                n.stake,
+                                onekv_nominator_account_ids.contains(&n.account.id),
+                            )
                         })
                         .sorted_by(|n1, n2| n2.1.cmp(&n1.1))
                         .map(|n| {
@@ -286,9 +293,10 @@ impl MessageType {
                                 format_decimal(
                                     n.1,
                                     CONFIG.substrate.token_decimals,
-                                    CONFIG.substrate.token_format_decimal_points,
+                                    2,
                                     "",
                                 ),
+                                n.2
                             )
                         })
                         .collect();
@@ -301,12 +309,13 @@ impl MessageType {
                                 (
                                     n.0.clone(),
                                     format!("{}{}", " ".repeat(max_len - n.1.len()), n.1),
+                                    n.2,
                                 )
                             })
-                            .collect::<Vec<(String, String)>>(),
+                            .collect::<Vec<(String, String, bool)>>(),
                     );
                 }
-                let inactive_nominations: Vec<(String, String)> = validator_details
+                let inactive_nominations: Vec<(String, String, bool)> = validator_details
                     .nominations
                     .iter()
                     .filter(|n| !active_nominator_account_ids.contains(&n.stash_account.id))
@@ -314,6 +323,7 @@ impl MessageType {
                         (
                             n.stash_account.get_display_or_condensed_address(),
                             n.stake.active_amount,
+                            onekv_nominator_account_ids.contains(&n.stash_account.id),
                         )
                     })
                     .sorted_by(|n1, n2| n2.1.cmp(&n1.1))
@@ -323,9 +333,10 @@ impl MessageType {
                             format_decimal(
                                 n.1,
                                 CONFIG.substrate.token_decimals,
-                                CONFIG.substrate.token_format_decimal_points,
+                                2,
                                 "",
                             ),
+                            n.2
                         )
                     })
                     .collect();
@@ -339,9 +350,10 @@ impl MessageType {
                                 (
                                     n.0.clone(),
                                     format!("{}{}", " ".repeat(max_len - n.1.len()), n.1),
+                                    n.2,
                                 )
                             })
-                            .collect::<Vec<(String, String)>>(),
+                            .collect::<Vec<(String, String, bool)>>(),
                     );
                 }
                 "nomination_details.html"
