@@ -76,9 +76,37 @@ impl TelegramBot {
             QueryType::RemoveValidator => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        // call postgres
-                        // validator exists :: delete & return
-                        // not exists :: message
+                        if self
+                            .postgres
+                            .chat_has_validator(chat_id, &account_id)
+                            .await?
+                        {
+                            if self
+                                .postgres
+                                .remove_validator_from_chat(chat_id, &account_id)
+                                .await?
+                            {
+                                let validator_details =
+                                    self.redis.fetch_validator_details(&account_id)?;
+                                self.messenger
+                                    .send_message(
+                                        chat_id,
+                                        MessageType::ValidatorRemoved(validator_details),
+                                    )
+                                    .await?;
+                            } else {
+                                self.messenger
+                                    .send_message(chat_id, MessageType::GenericError)
+                                    .await?;
+                            }
+                        } else {
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::RemoveValidatorNotFound(validator_address.clone()),
+                                )
+                                .await?;
+                        }
                     }
                 }
             }

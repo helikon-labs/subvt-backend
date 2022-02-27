@@ -19,10 +19,11 @@ use tera::{Context, Tera};
 pub enum MessageType {
     Intro,
     BadRequest,
+    GenericError,
     UnknownCommand(String),
     InvalidAddress(String),
     InvalidAddressTryAgain(String),
-    ValidatorNotFound(String),
+    AddValidatorNotFound(String),
     ValidatorExistsOnChat(String),
     NoValidatorsOnChat,
     ValidatorAdded,
@@ -31,6 +32,8 @@ pub enum MessageType {
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
     NominationSummary(ValidatorDetails),
     NominationDetails(ValidatorDetails),
+    RemoveValidatorNotFound(String),
+    ValidatorRemoved(ValidatorDetails),
 }
 
 impl MessageType {
@@ -39,6 +42,7 @@ impl MessageType {
         let template_name = match self {
             Self::Intro => "introduction.html",
             Self::BadRequest => "bad_request.html",
+            Self::GenericError => "generic_error.html",
             Self::UnknownCommand(command) => {
                 context.insert("command", command);
                 "unknown_command.html"
@@ -51,9 +55,9 @@ impl MessageType {
                 context.insert("address", address);
                 "invalid_address_try_again.html"
             }
-            Self::ValidatorNotFound(address) => {
+            Self::AddValidatorNotFound(address) => {
                 context.insert("condensed_address", &get_condensed_address(address));
-                "validator_not_found.html"
+                "add_validator_not_found.html"
             }
             Self::ValidatorExistsOnChat(address) => {
                 context.insert("condensed_address", &get_condensed_address(address));
@@ -341,6 +345,17 @@ impl MessageType {
                     );
                 }
                 "nomination_details.html"
+            }
+            Self::RemoveValidatorNotFound(address) => {
+                context.insert("condensed_address", &get_condensed_address(address));
+                "remove_validator_not_found.html"
+            }
+            Self::ValidatorRemoved(validator_details) => {
+                context.insert(
+                    "display",
+                    &validator_details.account.get_display_or_condensed_address(),
+                );
+                "validator_removed.html"
             }
         };
         renderer.render(template_name, &context).unwrap()

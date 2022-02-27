@@ -162,7 +162,10 @@ impl Service for TelegramBot {
                                         "Error while processing message #{}: {:?}",
                                         message.message_id, error
                                     );
-                                    // TODO send error message
+                                    let _ = self
+                                        .messenger
+                                        .send_message(message.chat.id, MessageType::GenericError)
+                                        .await;
                                 }
                             });
                         } else if let Some(callback_query) = update.callback_query {
@@ -191,7 +194,13 @@ impl Service for TelegramBot {
                                                 "Error while processing message #{}: {:?}",
                                                 message.message_id, error
                                             );
-                                            // TODO send error message
+                                            let _ = self
+                                                .messenger
+                                                .send_message(
+                                                    message.chat.id,
+                                                    MessageType::GenericError,
+                                                )
+                                                .await;
                                         }
                                     }
                                 }

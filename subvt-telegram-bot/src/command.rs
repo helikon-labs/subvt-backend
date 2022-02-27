@@ -100,7 +100,10 @@ impl TelegramBot {
                         }
                     } else {
                         self.messenger
-                            .send_message(chat_id, MessageType::ValidatorNotFound(address.clone()))
+                            .send_message(
+                                chat_id,
+                                MessageType::AddValidatorNotFound(address.clone()),
+                            )
                             .await?;
                     }
                 }
@@ -129,16 +132,18 @@ impl TelegramBot {
             "/add" => self.process_add_command(chat_id, args).await?,
             "/remove" => {
                 if let Some(validator_address) = args.get(0) {
-                    if let Ok(_) = AccountId::from_ss58_check(validator_address) {
+                    if AccountId::from_ss58_check(validator_address).is_ok() {
                         self.process_query(
                             chat_id,
                             &Query {
                                 query_type: QueryType::RemoveValidator,
                                 parameter: Some(validator_address.clone()),
-                            }
-                        ).await?;
+                            },
+                        )
+                        .await?;
                     } else {
-                        // TODO send :: unknown address
+                        self.process_validators_command(chat_id, QueryType::RemoveValidator)
+                            .await?
                     }
                 } else {
                     self.process_validators_command(chat_id, QueryType::RemoveValidator)

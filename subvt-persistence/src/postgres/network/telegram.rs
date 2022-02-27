@@ -14,6 +14,7 @@ impl PostgreSQLNetworkStorage {
             SELECT validator_account_id
             FROM sub_telegram_chat_validator
             WHERE telegram_chat_id = $1
+            AND deleted_at IS NULL
             "#,
         )
         .bind(telegram_chat_id)
@@ -97,6 +98,27 @@ impl PostgreSQLNetworkStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(id.0 as u64)
+    }
+
+    pub async fn remove_validator_from_chat(
+        &self,
+        telegram_chat_id: i64,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<bool> {
+        let maybe_id: Option<(i32,)> = sqlx::query_as(
+            r#"
+            UPDATE sub_telegram_chat_validator
+            SET deleted_at = now()
+            WHERE telegram_chat_id = $1
+            AND validator_account_id = $2
+            RETURNING id
+            "#,
+        )
+        .bind(telegram_chat_id as i64)
+        .bind(validator_account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_id.is_some())
     }
 
     pub async fn set_chat_state(
