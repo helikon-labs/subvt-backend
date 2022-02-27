@@ -127,6 +127,24 @@ impl TelegramBot {
                     .await?;
             }
             "/add" => self.process_add_command(chat_id, args).await?,
+            "/remove" => {
+                if let Some(validator_address) = args.get(0) {
+                    if let Ok(_) = AccountId::from_ss58_check(validator_address) {
+                        self.process_query(
+                            chat_id,
+                            &Query {
+                                query_type: QueryType::RemoveValidator,
+                                parameter: Some(validator_address.clone()),
+                            }
+                        ).await?;
+                    } else {
+                        // TODO send :: unknown address
+                    }
+                } else {
+                    self.process_validators_command(chat_id, QueryType::RemoveValidator)
+                        .await?
+                }
+            }
             "/validator_info" => {
                 self.process_validators_command(chat_id, QueryType::ValidatorInfo)
                     .await?

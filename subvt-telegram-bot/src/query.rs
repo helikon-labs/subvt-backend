@@ -10,6 +10,8 @@ pub enum QueryType {
     NominationSummary,
     #[serde(rename = "ND")]
     NominationDetails,
+    #[serde(rename = "RV")]
+    RemoveValidator,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -68,6 +70,15 @@ impl TelegramBot {
                                 MessageType::NominationDetails(validator_details),
                             )
                             .await?;
+                    }
+                }
+            }
+            QueryType::RemoveValidator => {
+                if let Some(validator_address) = &query.parameter {
+                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
+                        // call postgres
+                        // validator exists :: delete & return
+                        // not exists :: message
                     }
                 }
             }
