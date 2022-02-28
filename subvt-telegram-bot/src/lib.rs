@@ -66,11 +66,7 @@ impl TelegramBot {
         if !self.postgres.chat_exists_by_id(message.chat.id).await? {
             debug!("Save new chat {}.", message.chat.id);
             self.postgres
-                .save_chat(
-                    message.chat.id,
-                    &TelegramChatState::Default,
-                    env!("CARGO_PKG_VERSION"),
-                )
+                .save_chat(message.chat.id, &TelegramChatState::Default)
                 .await?;
         }
         // group chat started - send intro

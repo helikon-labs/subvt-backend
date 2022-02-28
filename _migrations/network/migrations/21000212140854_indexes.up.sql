@@ -212,9 +212,6 @@ CREATE INDEX sub_app_event_onekv_rank_change_idx_validator
 -- app event onekv validity change
 CREATE INDEX sub_app_event_onekv_validity_change_idx_validator
     ON sub_app_event_onekv_validity_change (validator_account_id);
--- telegram chat
-CREATE INDEX sub_telegram_chat_idx_version_deleted_at
-    ON sub_telegram_chat (version, deleted_at);
 -- telegram chat validator
 CREATE INDEX sub_telegram_chat_validator_idx_chat_deleted_at
     ON sub_telegram_chat_validator (telegram_chat_id, deleted_at);

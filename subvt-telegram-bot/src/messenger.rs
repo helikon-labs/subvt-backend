@@ -59,11 +59,11 @@ impl MessageType {
                 "invalid_address_try_again.html"
             }
             Self::AddValidatorNotFound(address) => {
-                context.insert("condensed_address", &get_condensed_address(address));
+                context.insert("condensed_address", &get_condensed_address(address, None));
                 "add_validator_not_found.html"
             }
             Self::ValidatorExistsOnChat(address) => {
-                context.insert("condensed_address", &get_condensed_address(address));
+                context.insert("condensed_address", &get_condensed_address(address, None));
                 "validator_exists_on_chat.html"
             }
             Self::NoValidatorsOnChat => "no_validators_on_chat.html",
@@ -80,12 +80,12 @@ impl MessageType {
                 context.insert("network", &CONFIG.substrate.chain);
                 let address = &validator_details.account.address;
                 context.insert("address", address);
-                context.insert("condensed_address", &get_condensed_address(address));
+                context.insert("condensed_address", &get_condensed_address(address, None));
                 let controller_address = validator_details.controller_account_id.to_ss58_check();
                 context.insert("controller_address", &controller_address);
                 context.insert(
                     "condensed_controller_address",
-                    &get_condensed_address(&controller_address),
+                    &get_condensed_address(&controller_address, None),
                 );
                 context.insert(
                     "condensed_session_keys",
@@ -100,11 +100,13 @@ impl MessageType {
                 );
                 context.insert(
                     "commission",
-                    &format_decimal(
-                        validator_details.preferences.commission_per_billion as u128,
-                        7,
-                        2,
-                        "%",
+                    &format!(
+                        "{}%",
+                        format_decimal(
+                            validator_details.preferences.commission_per_billion as u128,
+                            7,
+                            2,
+                        )
                     ),
                 );
                 context.insert(
@@ -235,22 +237,20 @@ impl MessageType {
                     self_stake,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
-                    "",
                 );
                 let active_nomination_formatted = format_decimal(
                     active_nomination_total,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
-                    "",
                 );
                 let inactive_nomination_formatted = format_decimal(
                     inactive_nomination_total,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
-                    "",
                 );
-                let validator_display =
-                    validator_details.account.get_display_or_condensed_address();
+                let validator_display = validator_details
+                    .account
+                    .get_display_or_condensed_address(None);
                 context.insert("validator_display", &validator_display);
                 context.insert("token_ticker", &CONFIG.substrate.token_ticker);
                 context.insert("self_stake", &self_stake_formatted);
@@ -269,22 +269,24 @@ impl MessageType {
                     self_stake,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
-                    "",
                 );
-                let validator_display =
-                    validator_details.account.get_display_or_condensed_address();
+                let validator_display = validator_details
+                    .account
+                    .get_display_or_condensed_address(Some(3));
                 context.insert("validator_display", &validator_display);
                 context.insert("token_ticker", &CONFIG.substrate.token_ticker);
                 context.insert("self_stake", &self_stake_formatted);
                 let mut active_nominator_account_ids = Vec::new();
                 if let Some(active_stake) = &validator_details.validator_stake {
+                    let mut active_nomination_total = 0;
                     let active_nominations: Vec<(String, String, bool)> = active_stake
                         .nominators
                         .iter()
                         .map(|n| {
+                            active_nomination_total += n.stake;
                             active_nominator_account_ids.push(n.account.id.clone());
                             (
-                                n.account.get_display_or_condensed_address(),
+                                n.account.get_display_or_condensed_address(Some(3)),
                                 n.stake,
                                 onekv_nominator_account_ids.contains(&n.account.id),
                             )
@@ -293,12 +295,24 @@ impl MessageType {
                         .map(|n| {
                             (
                                 n.0,
-                                format_decimal(n.1, CONFIG.substrate.token_decimals, 2, ""),
+                                format_decimal(
+                                    n.1,
+                                    CONFIG.substrate.token_decimals,
+                                    CONFIG.substrate.token_format_decimal_points,
+                                ),
                                 n.2,
                             )
                         })
                         .collect();
                     let max_len = active_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+                    context.insert(
+                        "active_nomination_total",
+                        &format_decimal(
+                            active_nomination_total,
+                            CONFIG.substrate.token_decimals,
+                            CONFIG.substrate.token_format_decimal_points,
+                        ),
+                    );
                     context.insert(
                         "active_nominations",
                         &active_nominations
@@ -313,13 +327,15 @@ impl MessageType {
                             .collect::<Vec<(String, String, bool)>>(),
                     );
                 }
+                let mut inactive_nomination_total = 0;
                 let inactive_nominations: Vec<(String, String, bool)> = validator_details
                     .nominations
                     .iter()
                     .filter(|n| !active_nominator_account_ids.contains(&n.stash_account.id))
                     .map(|n| {
+                        inactive_nomination_total += n.stake.active_amount;
                         (
-                            n.stash_account.get_display_or_condensed_address(),
+                            n.stash_account.get_display_or_condensed_address(Some(3)),
                             n.stake.active_amount,
                             onekv_nominator_account_ids.contains(&n.stash_account.id),
                         )
@@ -328,13 +344,25 @@ impl MessageType {
                     .map(|n| {
                         (
                             n.0,
-                            format_decimal(n.1, CONFIG.substrate.token_decimals, 2, ""),
+                            format_decimal(
+                                n.1,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            ),
                             n.2,
                         )
                     })
                     .collect();
                 if !inactive_nominations.is_empty() {
                     let max_len = inactive_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+                    context.insert(
+                        "inactive_nomination_total",
+                        &format_decimal(
+                            inactive_nomination_total,
+                            CONFIG.substrate.token_decimals,
+                            CONFIG.substrate.token_format_decimal_points,
+                        ),
+                    );
                     context.insert(
                         "inactive_nominations",
                         &inactive_nominations
@@ -352,13 +380,15 @@ impl MessageType {
                 "nomination_details.html"
             }
             Self::RemoveValidatorNotFound(address) => {
-                context.insert("condensed_address", &get_condensed_address(address));
+                context.insert("condensed_address", &get_condensed_address(address, None));
                 "remove_validator_not_found.html"
             }
             Self::ValidatorRemoved(validator_details) => {
                 context.insert(
                     "display",
-                    &validator_details.account.get_display_or_condensed_address(),
+                    &validator_details
+                        .account
+                        .get_display_or_condensed_address(None),
                 );
                 "validator_removed.html"
             }
@@ -433,7 +463,7 @@ impl Messenger {
                         parameter: Some(validator.account.address.clone()),
                     };
                     rows.push(vec![InlineKeyboardButton {
-                        text: validator.account.get_display_or_condensed_address(),
+                        text: validator.account.get_display_or_condensed_address(None),
                         url: None,
                         login_url: None,
                         callback_data: Some(serde_json::to_string(&query)?),
@@ -443,6 +473,16 @@ impl Messenger {
                         pay: None,
                     }]);
                 }
+                rows.push(vec![InlineKeyboardButton {
+                    text: self.renderer.render("cancel.html", &Context::new())?,
+                    url: None,
+                    login_url: None,
+                    callback_data: Some(serde_json::to_string(&Query::get_cancel_query())?),
+                    switch_inline_query: None,
+                    switch_inline_query_current_chat: None,
+                    callback_game: None,
+                    pay: None,
+                }]);
                 Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
                     inline_keyboard: rows,
                 }))

@@ -44,18 +44,16 @@ impl PostgreSQLNetworkStorage {
         &self,
         telegram_chat_id: i64,
         state: &TelegramChatState,
-        version: &str,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_telegram_chat (telegram_chat_id, state, version)
-            VALUES ($1, $2, $3)
+            INSERT INTO sub_telegram_chat (telegram_chat_id, state)
+            VALUES ($1, $2)
             ON CONFLICT(telegram_chat_id) DO UPDATE SET deleted_at = NULL
             "#,
         )
         .bind(telegram_chat_id as i64)
         .bind(&state.to_string())
-        .bind(version)
         .execute(&self.connection_pool)
         .await?;
         Ok(())

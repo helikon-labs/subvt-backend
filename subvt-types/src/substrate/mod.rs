@@ -208,11 +208,11 @@ impl Account {
         None
     }
 
-    pub fn get_display_or_condensed_address(&self) -> String {
+    pub fn get_display_or_condensed_address(&self, address_side_limit: Option<usize>) -> String {
         if let Some(display) = self.get_full_display() {
             display
         } else {
-            get_condensed_address(&self.address)
+            get_condensed_address(&self.address, address_side_limit)
         }
     }
 }

@@ -12,6 +12,8 @@ pub enum QueryType {
     NominationDetails,
     #[serde(rename = "RV")]
     RemoveValidator,
+    #[serde(rename = "C")]
+    Cancel,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -20,6 +22,15 @@ pub struct Query {
     pub query_type: QueryType,
     #[serde(rename = "p")]
     pub parameter: Option<String>,
+}
+
+impl Query {
+    pub fn get_cancel_query() -> Query {
+        Query {
+            query_type: QueryType::Cancel,
+            parameter: None,
+        }
+    }
 }
 
 impl TelegramBot {
@@ -115,6 +126,7 @@ impl TelegramBot {
                     }
                 }
             }
+            QueryType::Cancel => (),
         }
         Ok(())
     }
