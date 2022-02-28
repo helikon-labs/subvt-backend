@@ -260,7 +260,10 @@ impl MessageType {
                 context.insert("inactive_nominator_count", &inactive_nominator_count);
                 "nomination_summary.html"
             }
-            Self::NominationDetails{ validator_details, onekv_nominator_account_ids } => {
+            Self::NominationDetails {
+                validator_details,
+                onekv_nominator_account_ids,
+            } => {
                 let self_stake = validator_details.self_stake.total_amount;
                 let self_stake_formatted = format_decimal(
                     self_stake,
@@ -290,13 +293,8 @@ impl MessageType {
                         .map(|n| {
                             (
                                 n.0,
-                                format_decimal(
-                                    n.1,
-                                    CONFIG.substrate.token_decimals,
-                                    2,
-                                    "",
-                                ),
-                                n.2
+                                format_decimal(n.1, CONFIG.substrate.token_decimals, 2, ""),
+                                n.2,
                             )
                         })
                         .collect();
@@ -330,13 +328,8 @@ impl MessageType {
                     .map(|n| {
                         (
                             n.0,
-                            format_decimal(
-                                n.1,
-                                CONFIG.substrate.token_decimals,
-                                2,
-                                "",
-                            ),
-                            n.2
+                            format_decimal(n.1, CONFIG.substrate.token_decimals, 2, ""),
+                            n.2,
                         )
                     })
                     .collect();
