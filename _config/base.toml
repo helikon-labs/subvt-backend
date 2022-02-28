@@ -74,9 +74,9 @@ request_timeout_seconds = 60
 max_era_index_range = 100
 
 [telemetry]
-# W3F       wss://telemetry.w3f.community/feed
-# Polkadot  wss://feed.telemetry.polkadot.io/feed/
-websocket_url = "wss://telemetry.w3f.community/feed"
+# W3F       wss://telemetry-backend.w3f.community/feed
+# Polkadot  wss://feed.telemetry.polkadot.io/feed
+websocket_url = "wss://telemetry-backend.w3f.community/feed"
 
 [notification_generator]
 unclaimed_payout_check_delay_hours = 1
