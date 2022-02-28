@@ -3,7 +3,7 @@
 use crate::messenger::{MessageType, Messenger};
 use crate::query::Query;
 use async_trait::async_trait;
-use frankenstein::{AsyncApi, AsyncTelegramApi, GetUpdatesParams, Message};
+use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use log::{debug, error, info};
 use regex::Regex;
@@ -115,12 +115,14 @@ impl TelegramBot {
                             }
                         }
                         _ => {
-                            self.messenger
-                                .send_message(message.chat.id, MessageType::BadRequest)
-                                .await?;
+                            if message.chat.type_field == ChatType::Private {
+                                self.messenger
+                                    .send_message(message.chat.id, MessageType::BadRequest)
+                                    .await?;
+                            }
                         }
                     }
-                } else {
+                } else if message.chat.type_field == ChatType::Private {
                     self.messenger
                         .send_message(message.chat.id, MessageType::BadRequest)
                         .await?;
@@ -143,15 +145,19 @@ impl Service for TelegramBot {
             offset: None,
             limit: None,
             timeout: None,
-            allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
+            allowed_updates: Some(vec![
+                "message".to_string(),
+                "callback_query".to_string(),
+                // "channel_post".to_string()
+            ]),
         };
         loop {
             let result = self.api.get_updates(&update_params).await;
             match result {
                 Ok(response) => {
                     for update in response.result {
+                        update_params.offset = Some(update.update_id + 1);
                         if let Some(message) = update.message {
-                            update_params.offset = Some(update.update_id + 1);
                             tokio::spawn(async move {
                                 if let Err(error) = self.process_message(&message).await {
                                     error!(
@@ -165,7 +171,6 @@ impl Service for TelegramBot {
                                 }
                             });
                         } else if let Some(callback_query) = update.callback_query {
-                            update_params.offset = Some(update.update_id + 1);
                             tokio::spawn(async move {
                                 if let Some(callback_data) = callback_query.data {
                                     if let Some(message) = callback_query.message {

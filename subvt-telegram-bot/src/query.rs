@@ -1,4 +1,5 @@
 use crate::{MessageType, TelegramBot};
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use subvt_types::crypto::AccountId;
 
@@ -12,6 +13,8 @@ pub enum QueryType {
     NominationDetails,
     #[serde(rename = "RV")]
     RemoveValidator,
+    #[serde(rename = "CB")]
+    ConfirmBroadcast,
     #[serde(rename = "C")]
     Cancel,
 }
@@ -36,10 +39,27 @@ impl Query {
 impl TelegramBot {
     pub async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
         match query.query_type {
+            QueryType::ConfirmBroadcast => {
+                info!("Broadcast confirmed, sending.");
+                for chat_id in self.postgres.get_chat_ids().await? {
+                    match self
+                        .messenger
+                        .send_message(chat_id, MessageType::Broadcast)
+                        .await
+                    {
+                        Ok(_) => info!("Broadcast sent to chat {}.", chat_id),
+                        Err(error) => error!(
+                            "Error while sending broadcast to chat {}: {:?}",
+                            chat_id, error
+                        ),
+                    }
+                }
+            }
             QueryType::ValidatorInfo => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         let validator_details = self.redis.fetch_validator_details(&account_id)?;
+                        info!("Validator selected for validator info in chat {}.", chat_id);
                         let onekv_summary =
                             if let Some(id) = validator_details.onekv_candidate_record_id {
                                 self.postgres.get_onekv_candidate_summary_by_id(id).await?
@@ -61,6 +81,10 @@ impl TelegramBot {
             QueryType::NominationSummary => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
+                        info!(
+                            "Validator selected for nomination summary in chat {}.",
+                            chat_id
+                        );
                         let validator_details = self.redis.fetch_validator_details(&account_id)?;
                         self.messenger
                             .send_message(
@@ -74,6 +98,10 @@ impl TelegramBot {
             QueryType::NominationDetails => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
+                        info!(
+                            "Validator selected for nomination details in chat {}.",
+                            chat_id
+                        );
                         let validator_details = self.redis.fetch_validator_details(&account_id)?;
                         let onekv_nominator_account_ids =
                             self.postgres.get_onekv_nominator_account_ids().await?;
@@ -92,6 +120,7 @@ impl TelegramBot {
             QueryType::RemoveValidator => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
+                        info!("Validator selected for removal in chat {}.", chat_id);
                         if self
                             .postgres
                             .chat_has_validator(chat_id, &account_id)

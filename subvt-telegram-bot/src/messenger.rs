@@ -18,8 +18,11 @@ use tera::{Context, Tera};
 
 pub enum MessageType {
     Intro,
+    Ok,
     BadRequest,
     GenericError,
+    Broadcast,
+    BroadcastConfirm,
     UnknownCommand(String),
     InvalidAddress(String),
     InvalidAddressTryAgain(String),
@@ -44,8 +47,11 @@ impl MessageType {
         let mut context = Context::new();
         let template_name = match self {
             Self::Intro => "introduction.html",
+            Self::Ok => "ok.html",
             Self::BadRequest => "bad_request.html",
             Self::GenericError => "generic_error.html",
+            Self::Broadcast => "broadcast.html",
+            Self::BroadcastConfirm => "broadcast_confirm.html",
             Self::UnknownCommand(command) => {
                 context.insert("command", command);
                 "unknown_command.html"
@@ -455,6 +461,39 @@ impl Messenger {
         message_type: MessageType,
     ) -> anyhow::Result<MethodResponse<Message>> {
         let inline_keyboard = match &message_type {
+            MessageType::BroadcastConfirm => {
+                let rows = vec![
+                    vec![InlineKeyboardButton {
+                        text: "Yes".to_string(),
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::ConfirmBroadcast,
+                            parameter: None,
+                        })?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    }],
+                    vec![InlineKeyboardButton {
+                        text: "No".to_string(),
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::Cancel,
+                            parameter: None,
+                        })?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    }],
+                ];
+                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                    inline_keyboard: rows,
+                }))
+            }
             MessageType::ValidatorList(validators, query_type) => {
                 let mut rows = vec![];
                 for validator in validators {

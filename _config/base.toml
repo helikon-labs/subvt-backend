@@ -95,9 +95,12 @@ apns_team_id = "APNS_TEAM_ID"
 apns_topic = "APP_BUNDLE"
 apns_is_production = false
 fcm_api_key = "FCM_API_KEY"
-# can be set with the SUBVT_NOTIFICATION_SENDER__TELEGRAM_TOKEN
+# can be set with the SUBVT__NOTIFICATION_SENDER__TELEGRAM_TOKEN
 # environment variable
 telegram_token = "TELEGRAM_TOKEN"
-# can be set with the SUBVT_NOTIFICATION_SENDER__TEMPLATE_DIR_PATH
+# can be set with the SUBVT__NOTIFICATION_SENDER__TEMPLATE_DIR_PATH
 # environment variable
 template_dir_path = "/path/to/the/template/dir"
+
+[telegram_bot]
+admin_chat_id = 123

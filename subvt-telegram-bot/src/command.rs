@@ -1,5 +1,5 @@
 use crate::query::QueryType;
-use crate::{MessageType, Query, TelegramBot};
+use crate::{MessageType, Query, TelegramBot, CONFIG};
 use log::info;
 use std::cmp::Ordering;
 use subvt_types::crypto::AccountId;
@@ -130,6 +130,12 @@ impl TelegramBot {
                     .await?;
             }
             "/add" => self.process_add_command(chat_id, args).await?,
+            "/cancel" => {
+                self.reset_chat_state(chat_id).await?;
+                self.messenger
+                    .send_message(chat_id, MessageType::Ok)
+                    .await?;
+            }
             "/remove" => {
                 if let Some(validator_address) = args.get(0) {
                     if AccountId::from_ss58_check(validator_address).is_ok() {
@@ -150,13 +156,35 @@ impl TelegramBot {
                         .await?
                 }
             }
-            "/validator_info" => {
+            "/validatorinfo" => {
                 self.process_validators_command(chat_id, QueryType::ValidatorInfo)
                     .await?
             }
             "/nominations" => {
                 self.process_validators_command(chat_id, QueryType::NominationSummary)
                     .await?
+            }
+            "/broadcasttest" => {
+                if CONFIG.telegram_bot.admin_chat_id == chat_id {
+                    self.messenger
+                        .send_message(chat_id, MessageType::Broadcast)
+                        .await?;
+                } else {
+                    self.messenger
+                        .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
+                        .await?;
+                }
+            }
+            "/broadcast" => {
+                if CONFIG.telegram_bot.admin_chat_id == chat_id {
+                    self.messenger
+                        .send_message(chat_id, MessageType::BroadcastConfirm)
+                        .await?;
+                } else {
+                    self.messenger
+                        .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
+                        .await?;
+                }
             }
             _ => {
                 self.messenger

@@ -181,6 +181,12 @@ pub struct NotificationSenderConfig {
     pub template_dir_path: String,
 }
 
+/// Telegram bot config.
+#[derive(Clone, Debug, Deserialize)]
+pub struct TelegramBotConfig {
+    pub admin_chat_id: i64,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -199,6 +205,7 @@ pub struct Config {
     pub telemetry: TelemetryConfig,
     pub notification_generator: NotificationGeneratorConfig,
     pub notification_sender: NotificationSenderConfig,
+    pub telegram_bot: TelegramBotConfig,
 }
 
 impl Config {
