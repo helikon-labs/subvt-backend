@@ -36,7 +36,7 @@ services:
       - "-c"
       - "max_parallel_maintenance_workers=3"
     restart: unless-stopped
-    image: "helikon/subvt-network-postgres:0.1.2"
+    image: "helikon/subvt-backend-network-postgres:0.1.2"
     networks:
       - kusama_network_deployment
     ports:
@@ -163,7 +163,18 @@ services:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
-  # TODO :: add telemetry processor :: gives 404
+  subvt_telemetry_processor:
+    container_name: subvt_telemetry_processor
+    restart: unless-stopped
+    image: "helikon/subvt-telemetry-processor:0.1.2"
+    depends_on:
+      - subvt_network_postgres
+    networks:
+      - kusama_network_deployment
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
   # TODO :: add notification generator :: needs app postgres
   subvt_report_service:
     container_name: subvt_report_service
