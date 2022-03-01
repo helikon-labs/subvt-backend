@@ -76,7 +76,7 @@ async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> Re
     }
     let mut user = User {
         id: 0,
-        public_key_hex,
+        public_key_hex: Some(public_key_hex),
     };
     user.id = state.postgres.save_user(&user).await?;
     Ok(HttpResponse::Created().json(user))

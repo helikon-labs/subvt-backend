@@ -1,4 +1,4 @@
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, TelegramBot, CONFIG};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use subvt_types::crypto::AccountId;
@@ -41,7 +41,7 @@ impl TelegramBot {
         match query.query_type {
             QueryType::ConfirmBroadcast => {
                 info!("Broadcast confirmed, sending.");
-                for chat_id in self.postgres.get_chat_ids().await? {
+                for chat_id in self.network_postgres.get_chat_ids().await? {
                     match self
                         .messenger
                         .send_message(chat_id, MessageType::Broadcast)
@@ -62,7 +62,9 @@ impl TelegramBot {
                         info!("Validator selected for validator info in chat {}.", chat_id);
                         let onekv_summary =
                             if let Some(id) = validator_details.onekv_candidate_record_id {
-                                self.postgres.get_onekv_candidate_summary_by_id(id).await?
+                                self.network_postgres
+                                    .get_onekv_candidate_summary_by_id(id)
+                                    .await?
                             } else {
                                 None
                             };
@@ -103,8 +105,10 @@ impl TelegramBot {
                             chat_id
                         );
                         let validator_details = self.redis.fetch_validator_details(&account_id)?;
-                        let onekv_nominator_account_ids =
-                            self.postgres.get_onekv_nominator_account_ids().await?;
+                        let onekv_nominator_account_ids = self
+                            .network_postgres
+                            .get_onekv_nominator_account_ids()
+                            .await?;
                         self.messenger
                             .send_message(
                                 chat_id,
@@ -122,15 +126,26 @@ impl TelegramBot {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         info!("Validator selected for removal in chat {}.", chat_id);
                         if self
-                            .postgres
+                            .network_postgres
                             .chat_has_validator(chat_id, &account_id)
                             .await?
                         {
                             if self
-                                .postgres
+                                .network_postgres
                                 .remove_validator_from_chat(chat_id, &account_id)
                                 .await?
                             {
+                                let app_user_id =
+                                    self.network_postgres.get_chat_app_user_id(chat_id).await?;
+                                // remove from app, so it doesn't receive notifications
+                                let _ = self
+                                    .app_postgres
+                                    .delete_user_validator_by_account_id(
+                                        app_user_id,
+                                        CONFIG.substrate.network_id,
+                                        &account_id,
+                                    )
+                                    .await?;
                                 let validator_details =
                                     self.redis.fetch_validator_details(&account_id)?;
                                 self.messenger

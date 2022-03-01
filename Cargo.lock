@@ -6173,7 +6173,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "fcm",
- "futures",
+ "frankenstein",
  "job_scheduler",
  "lazy_static",
  "lettre 0.10.0-rc.4",

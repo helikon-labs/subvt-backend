@@ -1,5 +1,7 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
+use std::collections::HashSet;
+
 use crate::messenger::{MessageType, Messenger};
 use crate::query::Query;
 use async_trait::async_trait;
@@ -8,9 +10,13 @@ use lazy_static::lazy_static;
 use log::{debug, error, info};
 use regex::Regex;
 use subvt_config::Config;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::Service;
+use subvt_types::app::{
+    NotificationPeriodType, NotificationTypeCode, User, UserNotificationChannel,
+};
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
@@ -32,7 +38,8 @@ pub enum TelegramBotError {
 }
 
 pub struct TelegramBot {
-    postgres: PostgreSQLNetworkStorage,
+    app_postgres: PostgreSQLAppStorage,
+    network_postgres: PostgreSQLNetworkStorage,
     redis: Redis,
     api: AsyncApi,
     messenger: Messenger,
@@ -40,13 +47,16 @@ pub struct TelegramBot {
 
 impl TelegramBot {
     pub async fn new() -> anyhow::Result<Self> {
-        let postgres =
+        let app_postgres =
+            PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
+        let network_postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
         let api = AsyncApi::new(&CONFIG.notification_sender.telegram_token);
         let messenger = Messenger::new(&CONFIG, api.clone())?;
         Ok(TelegramBot {
-            postgres,
+            app_postgres,
+            network_postgres,
             redis,
             api,
             messenger,
@@ -56,17 +66,57 @@ impl TelegramBot {
 
 impl TelegramBot {
     async fn reset_chat_state(&self, telegram_chat_id: i64) -> anyhow::Result<()> {
-        self.postgres
+        self.network_postgres
             .set_chat_state(telegram_chat_id, TelegramChatState::Default)
             .await?;
         Ok(())
     }
 
+    async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
+        // save app user
+        let app_user_id = self.app_postgres.save_user(&User::default()).await?;
+        // save notification channel
+        let channel_id = self
+            .app_postgres
+            .save_user_notification_channel(&UserNotificationChannel {
+                user_id: app_user_id,
+                channel_code: "telegram".to_string(),
+                target: chat_id.to_string(),
+                ..Default::default()
+            })
+            .await?;
+        let mut channel_id_set = HashSet::new();
+        channel_id_set.insert(channel_id);
+        // save default notification rules
+        self.app_postgres
+            .save_user_notification_rule(
+                app_user_id,
+                &NotificationTypeCode::ChainValidatorBlockAuthorship.to_string(),
+                (
+                    Some("Telegram block authorship notification"),
+                    Some("Created by the SubVT Telegram Bot."),
+                ),
+                (Some(CONFIG.substrate.network_id), true),
+                (&NotificationPeriodType::Immediate, 0),
+                (&HashSet::new(), &channel_id_set, &vec![]),
+            )
+            .await?;
+        Ok(app_user_id)
+    }
+
     async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
-        if !self.postgres.chat_exists_by_id(message.chat.id).await? {
-            debug!("Save new chat {}.", message.chat.id);
-            self.postgres
-                .save_chat(message.chat.id, &TelegramChatState::Default)
+        if !self
+            .network_postgres
+            .chat_exists_by_id(message.chat.id)
+            .await?
+        {
+            let app_user_id = self.create_app_user(message.chat.id).await?;
+            debug!(
+                "Save new chat {} with app user id {}.",
+                message.chat.id, app_user_id
+            );
+            self.network_postgres
+                .save_chat(app_user_id, message.chat.id, &TelegramChatState::Default)
                 .await?;
         }
         // group chat started - send intro
@@ -97,7 +147,10 @@ impl TelegramBot {
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
-                let maybe_state = self.postgres.get_chat_state(message.chat.id).await?;
+                let maybe_state = self
+                    .network_postgres
+                    .get_chat_state(message.chat.id)
+                    .await?;
                 if let Some(state) = maybe_state {
                     match state {
                         TelegramChatState::AddValidator => {

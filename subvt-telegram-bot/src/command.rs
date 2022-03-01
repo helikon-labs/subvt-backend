@@ -2,6 +2,7 @@ use crate::query::QueryType;
 use crate::{MessageType, Query, TelegramBot, CONFIG};
 use log::info;
 use std::cmp::Ordering;
+use subvt_types::app::UserValidator;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
@@ -12,7 +13,7 @@ impl TelegramBot {
         query_type: QueryType,
     ) -> anyhow::Result<()> {
         let validator_account_ids = self
-            .postgres
+            .network_postgres
             .get_chat_validator_account_ids(chat_id)
             .await?;
         if validator_account_ids.is_empty() {
@@ -55,7 +56,7 @@ impl TelegramBot {
 
     async fn process_add_command(&self, chat_id: i64, args: &[String]) -> anyhow::Result<()> {
         if args.is_empty() {
-            self.postgres
+            self.network_postgres
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)
                 .await?;
             self.messenger
@@ -68,7 +69,7 @@ impl TelegramBot {
                 Ok(account_id) => {
                     if self.redis.validator_exists_by_account_id(&account_id)? {
                         if self
-                            .postgres
+                            .network_postgres
                             .chat_has_validator(chat_id, &account_id)
                             .await?
                         {
@@ -80,7 +81,7 @@ impl TelegramBot {
                                 .await?;
                         } else {
                             let id = self
-                                .postgres
+                                .network_postgres
                                 .add_validator_to_chat(chat_id, &account_id)
                                 .await?;
                             info!(
@@ -89,6 +90,17 @@ impl TelegramBot {
                                 chat_id,
                                 id
                             );
+                            let app_user_id =
+                                self.network_postgres.get_chat_app_user_id(chat_id).await?;
+                            // add validator to the app user for notifications
+                            self.app_postgres
+                                .save_user_validator(&UserValidator {
+                                    id: 0,
+                                    user_id: app_user_id,
+                                    network_id: CONFIG.substrate.network_id,
+                                    validator_account_id: account_id.clone(),
+                                })
+                                .await?;
                             let query = Query {
                                 query_type: QueryType::ValidatorInfo,
                                 parameter: Some(account_id.to_ss58_check()),

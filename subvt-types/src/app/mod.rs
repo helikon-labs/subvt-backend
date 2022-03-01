@@ -44,7 +44,7 @@ fn default_id() -> u32 {
 pub struct User {
     #[serde(default = "default_id")]
     pub id: u32,
-    pub public_key_hex: String,
+    pub public_key_hex: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

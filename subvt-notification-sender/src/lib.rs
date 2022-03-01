@@ -6,6 +6,7 @@ use crate::content::ContentProvider;
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::{Datelike, Timelike, Utc};
+use frankenstein::AsyncApi;
 use lazy_static::lazy_static;
 use log::{debug, error};
 use std::sync::Arc;
@@ -32,6 +33,7 @@ impl NotificationSender {
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
         fcm_client: Arc<fcm::Client>,
+        telegram_api: Arc<AsyncApi>,
         content_provider: Arc<ContentProvider>,
         notification: Notification,
     ) -> anyhow::Result<()> {
@@ -60,7 +62,7 @@ impl NotificationSender {
                     &content_provider,
                     &notification,
                 )
-                .await?
+                .await?;
             }
             "fcm" => {
                 channel::fcm::send_fcm_message(
@@ -70,7 +72,20 @@ impl NotificationSender {
                     &content_provider,
                     &notification,
                 )
-                .await?
+                .await?;
+            }
+            "telegram" => {
+                if let Err(error) = channel::telegram::send_telegram_message(
+                    &CONFIG,
+                    &postgres,
+                    &telegram_api,
+                    &content_provider,
+                    &notification,
+                )
+                .await
+                {
+                    error!("ERRRRR :: {:?}", error);
+                }
             }
             _ => todo!(
                 "Notification channel not implemented yet: {}",
@@ -86,6 +101,7 @@ impl NotificationSender {
         mailer: &Arc<Mailer>,
         apns_client: &Arc<a2::Client>,
         fcm_client: &Arc<fcm::Client>,
+        telegram_api: &Arc<AsyncApi>,
         content_provider: &Arc<ContentProvider>,
     ) {
         loop {
@@ -95,6 +111,7 @@ impl NotificationSender {
                 mailer,
                 apns_client,
                 fcm_client,
+                telegram_api,
                 content_provider,
                 NotificationPeriodType::Immediate,
                 0,
@@ -113,6 +130,7 @@ impl NotificationSender {
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
         fcm_client: Arc<fcm::Client>,
+        telegram_api: Arc<AsyncApi>,
         content_provider: Arc<ContentProvider>,
     ) -> anyhow::Result<()> {
         let tokio_rt = Builder::new_current_thread().enable_all().build()?;
@@ -127,6 +145,7 @@ impl NotificationSender {
                         &mailer,
                         &apns_client,
                         &fcm_client,
+                        &telegram_api,
                         &content_provider,
                         NotificationPeriodType::Hour,
                         Utc::now().hour(),
@@ -143,6 +162,7 @@ impl NotificationSender {
                         &mailer,
                         &apns_client,
                         &fcm_client,
+                        &telegram_api,
                         &content_provider,
                         NotificationPeriodType::Day,
                         Utc::now().day(),
@@ -165,6 +185,7 @@ impl NotificationSender {
         mailer: Arc<Mailer>,
         apns_client: Arc<a2::Client>,
         fcm_client: Arc<fcm::Client>,
+        telegram_api: Arc<AsyncApi>,
         content_provider: Arc<ContentProvider>,
     ) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
@@ -199,6 +220,7 @@ impl NotificationSender {
                         &mailer,
                         &apns_client,
                         &fcm_client,
+                        &telegram_api,
                         &content_provider,
                         NotificationPeriodType::Epoch,
                         current_epoch_index as u32,
@@ -212,6 +234,7 @@ impl NotificationSender {
                         &mailer,
                         &apns_client,
                         &fcm_client,
+                        &telegram_api,
                         &content_provider,
                         NotificationPeriodType::Era,
                         active_era_index,
@@ -228,6 +251,7 @@ impl NotificationSender {
         mailer: &Arc<Mailer>,
         apns_client: &Arc<a2::Client>,
         fcm_client: &Arc<fcm::Client>,
+        telegram_api: &Arc<AsyncApi>,
         content_provider: &Arc<ContentProvider>,
         period_type: NotificationPeriodType,
         period: u32,
@@ -246,24 +270,32 @@ impl NotificationSender {
                     notifications.len(),
                     period_type
                 );
-                let mut futures = Vec::new();
                 for notification in notifications {
-                    futures.push(NotificationSender::send_notification(
-                        postgres.clone(),
-                        mailer.clone(),
-                        apns_client.clone(),
-                        fcm_client.clone(),
-                        content_provider.clone(),
-                        notification,
-                    ));
-                }
-                if let Err(error) =
-                    futures::future::try_join_all(futures.into_iter().map(tokio::spawn)).await
-                {
-                    error!(
-                        "Error while processing pending {}-{} notifications: {:?}",
-                        period, period_type, error,
-                    );
+                    let postgres = postgres.clone();
+                    let mailer = mailer.clone();
+                    let apns_client = apns_client.clone();
+                    let fcm_client = fcm_client.clone();
+                    let telegram_api = telegram_api.clone();
+                    let content_provider = content_provider.clone();
+                    let period_type = period_type.clone();
+                    tokio::spawn(async move {
+                        if let Err(error) = NotificationSender::send_notification(
+                            postgres.clone(),
+                            mailer.clone(),
+                            apns_client.clone(),
+                            fcm_client.clone(),
+                            telegram_api.clone(),
+                            content_provider.clone(),
+                            notification,
+                        )
+                        .await
+                        {
+                            error!(
+                                "Error while processing pending {}-{} notifications: {:?}",
+                                period, period_type, error,
+                            );
+                        }
+                    });
                 }
             }
             Err(error) => error!(
@@ -295,6 +327,7 @@ impl Service for NotificationSender {
             },
         )?);
         let fcm_client = Arc::new(fcm::Client::new());
+        let telegram_api = Arc::new(AsyncApi::new(&CONFIG.notification_sender.telegram_token));
         debug!("Reset pending and failed notifications.");
         postgres.reset_pending_and_failed_notifications().await?;
         NotificationSender::start_era_and_epoch_notification_processor(
@@ -302,6 +335,7 @@ impl Service for NotificationSender {
             mailer.clone(),
             apns_client.clone(),
             fcm_client.clone(),
+            telegram_api.clone(),
             content_provider.clone(),
         )?;
         NotificationSender::start_hourly_and_daily_notification_processor(
@@ -309,6 +343,7 @@ impl Service for NotificationSender {
             mailer.clone(),
             apns_client.clone(),
             fcm_client.clone(),
+            telegram_api.clone(),
             content_provider.clone(),
         )?;
         tokio::join!(NotificationSender::start_immediate_notification_processor(
@@ -316,6 +351,7 @@ impl Service for NotificationSender {
             &mailer,
             &apns_client,
             &fcm_client,
+            &telegram_api,
             &content_provider
         ),);
         Ok(())

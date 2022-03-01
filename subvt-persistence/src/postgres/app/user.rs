@@ -43,7 +43,7 @@ impl PostgreSQLAppStorage {
         &self,
         public_key_hex: &str,
     ) -> anyhow::Result<Option<User>> {
-        let maybe_db_user: Option<(i32, String)> = sqlx::query_as(
+        let maybe_db_user: Option<(i32, Option<String>)> = sqlx::query_as(
             r#"
             SELECT id, public_key_hex
             FROM app_user
@@ -264,6 +264,28 @@ impl PostgreSQLAppStorage {
         .fetch_optional(&self.connection_pool)
         .await?;
         Ok(maybe_id.is_some() && maybe_id.unwrap().0 == id as i32)
+    }
+
+    pub async fn delete_user_validator_by_account_id(
+        &self,
+        user_id: u32,
+        network_id: u32,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<bool> {
+        let maybe_id: Option<(i32,)> = sqlx::query_as(
+            r#"
+            UPDATE app_user_validator
+            SET deleted_at = now()
+            WHERE user_id = $1 AND network_id = $2 AND validator_account_id = $3
+            RETURNING id
+            "#,
+        )
+        .bind(user_id as i32)
+        .bind(network_id as i32)
+        .bind(validator_account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_id.is_some())
     }
 
     pub async fn get_user_notification_rule_validators(

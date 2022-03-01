@@ -55,21 +55,37 @@ impl PostgreSQLNetworkStorage {
 
     pub async fn save_chat(
         &self,
+        app_user_id: u32,
         telegram_chat_id: i64,
         state: &TelegramChatState,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO sub_telegram_chat (telegram_chat_id, state)
-            VALUES ($1, $2)
-            ON CONFLICT(telegram_chat_id) DO UPDATE SET deleted_at = NULL
+            INSERT INTO sub_telegram_chat (app_user_id, telegram_chat_id, state)
+            VALUES ($1, $2, $3)
+            ON CONFLICT(telegram_chat_id) DO UPDATE
+            SET app_user_id = $1, deleted_at = NULL
             "#,
         )
-        .bind(telegram_chat_id as i64)
+        .bind(app_user_id as i32)
+        .bind(telegram_chat_id)
         .bind(&state.to_string())
         .execute(&self.connection_pool)
         .await?;
         Ok(())
+    }
+
+    pub async fn get_chat_app_user_id(&self, telegram_chat_id: i64) -> anyhow::Result<u32> {
+        let app_user_id: (i32,) = sqlx::query_as(
+            r#"
+            SELECT app_user_id FROM sub_telegram_chat
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(app_user_id.0 as u32)
     }
 
     pub async fn chat_has_validator(

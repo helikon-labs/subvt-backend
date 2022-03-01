@@ -4,13 +4,15 @@ use subvt_config::Config;
 use subvt_types::app::{Block, Notification, NotificationTypeCode, NotificationTypeCode::*};
 use tera::{Context, Tera};
 
+use crate::CONFIG;
+
 /// Provider struct. Has separate renderers for separate text notification channels.
 /// Expects the `template` folder in this crate to be in the same folder as the executable.
 pub struct ContentProvider {
     email_renderer: Tera,
     push_notification_renderer: Tera,
     _sms_renderer: Tera,
-    _telegram_renderer: Tera,
+    telegram_renderer: Tera,
 }
 
 impl ContentProvider {
@@ -24,17 +26,17 @@ impl ContentProvider {
                     std::path::MAIN_SEPARATOR,
                 ))?
             },
-            _telegram_renderer: {
+            push_notification_renderer: {
                 Tera::new(&format!(
-                    "{}{}telegram{}*.txt",
+                    "{}{}push_notification{}*.txt",
                     template_dir_path,
                     std::path::MAIN_SEPARATOR,
                     std::path::MAIN_SEPARATOR,
                 ))?
             },
-            push_notification_renderer: {
+            telegram_renderer: {
                 Tera::new(&format!(
-                    "{}{}push_notification{}*.txt",
+                    "{}{}telegram{}*.html",
                     template_dir_path,
                     std::path::MAIN_SEPARATOR,
                     std::path::MAIN_SEPARATOR,
@@ -70,7 +72,7 @@ impl ContentProvider {
                     context.insert(
                         "validator_display",
                         &if let Some(account) = &notification.get_account()? {
-                            account.to_string()
+                            account.get_display_or_condensed_address(None)
                         } else {
                             notification.validator_account_id.to_ss58_check()
                         },
@@ -112,7 +114,7 @@ impl ContentProvider {
                 context.insert(
                     "validator_display",
                     &if let Some(account) = &notification.get_account()? {
-                        account.to_string()
+                        account.get_display_or_condensed_address(None)
                     } else {
                         notification.validator_account_id.to_ss58_check()
                     },
@@ -121,6 +123,38 @@ impl ContentProvider {
                 context.insert("block_number", &block.number);
                 self.push_notification_renderer.render(
                     &format!("{}_subject.txt", notification.notification_type_code),
+                    &context,
+                )?
+            }
+            _ => todo!(
+                "Push notification content not yet ready for {}.",
+                notification.notification_type_code
+            ),
+        };
+        Ok(message)
+    }
+
+    pub(crate) fn get_telegram_content_for_notification(
+        &self,
+        notification: &Notification,
+    ) -> anyhow::Result<String> {
+        let message = match NotificationTypeCode::from(notification.notification_type_code.as_ref())
+        {
+            ChainValidatorBlockAuthorship => {
+                let mut context = Context::new();
+                context.insert(
+                    "validator_display",
+                    &if let Some(account) = &notification.get_account()? {
+                        account.get_display_or_condensed_address(None)
+                    } else {
+                        notification.validator_account_id.to_ss58_check()
+                    },
+                );
+                context.insert("network", &CONFIG.substrate.chain);
+                let block: Block = serde_json::from_str(notification.data_json.as_ref().unwrap())?;
+                context.insert("block_number", &block.number);
+                self.telegram_renderer.render(
+                    &format!("{}.html", notification.notification_type_code),
                     &context,
                 )?
             }

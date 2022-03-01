@@ -5,3 +5,4 @@ pub mod email;
 pub mod fcm;
 pub mod gsm;
 pub mod sms;
+pub mod telegram;
