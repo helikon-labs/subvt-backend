@@ -7,6 +7,7 @@ use frankenstein::{
     SendMessageParams,
 };
 use itertools::Itertools;
+use log::info;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
@@ -565,6 +566,11 @@ impl Messenger {
             allow_sending_without_reply: None,
             reply_markup: inline_keyboard,
         };
+        info!(
+            "Message to chat {}: {}",
+            chat_id,
+            params.text.replace('\n', ""),
+        );
         match self.api.send_message(&params).await {
             Ok(response) => Ok(response),
             Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),

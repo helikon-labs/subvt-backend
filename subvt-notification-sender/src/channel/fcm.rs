@@ -1,10 +1,9 @@
 //! Firebase Cloud Messaging (FCM) notification sending logic for Android.
 
-use crate::ContentProvider;
+use crate::{ContentProvider, CONFIG};
 use log::{debug, error};
 use serde::Serialize;
 use std::sync::Arc;
-use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::Notification;
 
@@ -14,18 +13,16 @@ struct FCMMessage {
 }
 
 pub(crate) async fn send_fcm_message(
-    config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
     fcm_client: &Arc<fcm::Client>,
     content_provider: &Arc<ContentProvider>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
     let message = FCMMessage {
-        message: content_provider
-            .get_push_notification_content_for_notification(config, notification)?,
+        message: content_provider.get_push_notification_content(notification)?,
     };
     let mut builder = fcm::MessageBuilder::new(
-        &config.notification_sender.fcm_api_key,
+        &CONFIG.notification_sender.fcm_api_key,
         &notification.notification_target,
     );
     builder.data(&message)?;

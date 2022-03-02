@@ -2,18 +2,16 @@ use crate::ContentProvider;
 use frankenstein::{AsyncApi, AsyncTelegramApi, ChatId, SendMessageParams};
 use log::{error, info};
 use std::sync::Arc;
-use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::Notification;
 
 pub(crate) async fn send_telegram_message(
-    _config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
     telegram_api: &Arc<AsyncApi>,
     content_provider: &Arc<ContentProvider>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
-    let content = content_provider.get_telegram_content_for_notification(notification)?;
+    let content = content_provider.get_telegram_content(notification)?;
     postgres
         .mark_notification_processing(notification.id)
         .await?;

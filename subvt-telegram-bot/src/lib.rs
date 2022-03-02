@@ -7,7 +7,7 @@ use crate::query::Query;
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
-use log::{debug, error, info};
+use log::{error, info};
 use regex::Regex;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -73,6 +73,10 @@ impl TelegramBot {
     }
 
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
+        info!(
+            "Create new app user, notification channel and rules for chat {}.",
+            chat_id
+        );
         // save app user
         let app_user_id = self.app_postgres.save_user(&User::default()).await?;
         // save notification channel
@@ -92,10 +96,7 @@ impl TelegramBot {
             .save_user_notification_rule(
                 app_user_id,
                 &NotificationTypeCode::ChainValidatorBlockAuthorship.to_string(),
-                (
-                    Some("Telegram block authorship notification"),
-                    Some("Created by the SubVT Telegram Bot."),
-                ),
+                (None, None),
                 (Some(CONFIG.substrate.network_id), true),
                 (&NotificationPeriodType::Immediate, 0),
                 (&HashSet::new(), &channel_id_set, &[]),
@@ -111,8 +112,8 @@ impl TelegramBot {
             .await?
         {
             let app_user_id = self.create_app_user(message.chat.id).await?;
-            debug!(
-                "Save new chat {} with app user id {}.",
+            info!(
+                "Save new chat {}. App user id {}.",
                 message.chat.id, app_user_id
             );
             self.network_postgres
@@ -132,6 +133,7 @@ impl TelegramBot {
         if let Some(text) = message.text.clone() {
             let text = text.trim();
             if CMD_REGEX.is_match(text) {
+                info!("New command: {}", text);
                 self.reset_chat_state(message.chat.id).await?;
                 let (command, arguments): (String, Vec<String>) = {
                     let parts: Vec<String> = SPLITTER_REGEX.split(text).map(String::from).collect();
@@ -147,6 +149,7 @@ impl TelegramBot {
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
+                info!("New text message: {}", text);
                 let maybe_state = self
                     .network_postgres
                     .get_chat_state(message.chat.id)
@@ -198,11 +201,7 @@ impl Service for TelegramBot {
             offset: None,
             limit: None,
             timeout: None,
-            allowed_updates: Some(vec![
-                "message".to_string(),
-                "callback_query".to_string(),
-                // "channel_post".to_string()
-            ]),
+            allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
         };
         loop {
             let result = self.api.get_updates(&update_params).await;

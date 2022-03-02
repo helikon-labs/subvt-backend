@@ -1,23 +1,22 @@
 //! Email sending logic.
 
-use crate::ContentProvider;
+use crate::{ContentProvider, CONFIG};
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
 use log::{debug, error};
 use std::sync::Arc;
-use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::Notification;
 
 pub(crate) type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 
-pub(crate) fn new_mailer(config: &Config) -> anyhow::Result<Mailer> {
+pub(crate) fn new_mailer() -> anyhow::Result<Mailer> {
     Ok(
-        Mailer::relay(&config.notification_sender.email_smtp_server_url)?
+        Mailer::relay(&CONFIG.notification_sender.email_smtp_server_url)?
             .credentials(Credentials::new(
-                config.notification_sender.email_account.clone(),
-                config.notification_sender.email_password.clone(),
+                CONFIG.notification_sender.email_account.clone(),
+                CONFIG.notification_sender.email_password.clone(),
             ))
             // .port(config.notification_sender.email_smtp_server_tls_port)
             .build(),
@@ -25,17 +24,15 @@ pub(crate) fn new_mailer(config: &Config) -> anyhow::Result<Mailer> {
 }
 
 pub(crate) async fn send_email(
-    config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
     mailer: &Arc<Mailer>,
     content_provider: &Arc<ContentProvider>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
-    let (subject, text_body, html_body) =
-        content_provider.get_email_content_for_notification(config, notification)?;
+    let (subject, text_body, html_body) = content_provider.get_email_content(notification)?;
     let message = lettre::Message::builder()
-        .from(config.notification_sender.email_from.parse()?)
-        .reply_to(config.notification_sender.email_reply_to.parse()?)
+        .from(CONFIG.notification_sender.email_from.parse()?)
+        .reply_to(CONFIG.notification_sender.email_reply_to.parse()?)
         .to("kutsalbilgin@gmail.com".parse()?)
         .subject(subject)
         .multipart(

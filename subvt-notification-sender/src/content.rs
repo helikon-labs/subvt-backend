@@ -1,6 +1,5 @@
 //! Templated notification content provider.
 
-use subvt_config::Config;
 use subvt_types::app::{Block, Notification, NotificationTypeCode, NotificationTypeCode::*};
 use tera::{Context, Tera};
 
@@ -55,16 +54,15 @@ impl ContentProvider {
 }
 
 impl ContentProvider {
-    pub(crate) fn get_email_content_for_notification(
+    pub(crate) fn get_email_content(
         &self,
-        config: &Config,
         notification: &Notification,
     ) -> anyhow::Result<(String, String, String)> {
         let (subject, text_body, html_body) =
             match NotificationTypeCode::from(notification.notification_type_code.as_ref()) {
                 ChainValidatorBlockAuthorship => {
                     let mut context = Context::new();
-                    context.insert("chain", &config.substrate.chain);
+                    context.insert("chain", &CONFIG.substrate.chain);
                     context.insert(
                         "validator_address",
                         &notification.validator_account_id.to_ss58_check(),
@@ -102,9 +100,8 @@ impl ContentProvider {
         Ok((subject, text_body, html_body))
     }
 
-    pub(crate) fn get_push_notification_content_for_notification(
+    pub(crate) fn get_push_notification_content(
         &self,
-        _config: &Config,
         notification: &Notification,
     ) -> anyhow::Result<String> {
         let message = match NotificationTypeCode::from(notification.notification_type_code.as_ref())
@@ -134,7 +131,7 @@ impl ContentProvider {
         Ok(message)
     }
 
-    pub(crate) fn get_telegram_content_for_notification(
+    pub(crate) fn get_telegram_content(
         &self,
         notification: &Notification,
     ) -> anyhow::Result<String> {

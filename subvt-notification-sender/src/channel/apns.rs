@@ -1,29 +1,26 @@
 //! Apple Push Notification Service (APNS) notification sending logic.
 
-use crate::ContentProvider;
+use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;
 use log::{debug, error};
 use std::sync::Arc;
-use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::Notification;
 
 pub(crate) async fn send_apple_push_notification(
-    config: &Config,
     postgres: &Arc<PostgreSQLAppStorage>,
     apns_client: &Arc<a2::Client>,
     content_provider: &Arc<ContentProvider>,
     notification: &Notification,
 ) -> anyhow::Result<()> {
-    let message =
-        content_provider.get_push_notification_content_for_notification(config, notification)?;
+    let message = content_provider.get_push_notification_content(notification)?;
     let mut builder = a2::PlainNotificationBuilder::new(&message);
     builder.set_sound("default");
     // builder.set_badge(1u32);
     let payload = builder.build(
         &notification.notification_target,
         a2::NotificationOptions {
-            apns_topic: Some(config.notification_sender.apns_topic.as_ref()),
+            apns_topic: Some(CONFIG.notification_sender.apns_topic.as_ref()),
             ..Default::default()
         },
     );

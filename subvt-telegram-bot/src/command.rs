@@ -27,7 +27,7 @@ impl TelegramBot {
             };
             self.process_query(chat_id, &query).await?;
         } else {
-            // multiple validators
+            info!("Send validator list for query: {}", query_type);
             let mut validators = Vec::new();
             for account_id in &validator_account_ids {
                 validators.push(self.redis.fetch_validator_details(account_id)?);
@@ -135,6 +135,10 @@ impl TelegramBot {
         command: &str,
         args: &[String],
     ) -> anyhow::Result<()> {
+        info!(
+            "Process command {} for chat {} with arguments: {:?}",
+            command, chat_id, args,
+        );
         match command {
             "/start" => {
                 self.messenger

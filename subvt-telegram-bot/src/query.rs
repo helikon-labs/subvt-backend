@@ -1,6 +1,7 @@
 use crate::{MessageType, TelegramBot, CONFIG};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 use subvt_types::crypto::AccountId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -19,12 +20,32 @@ pub enum QueryType {
     Cancel,
 }
 
+impl Display for QueryType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let display = match self {
+            Self::ValidatorInfo => "ValidatorInfo",
+            Self::NominationSummary => "NominationSummary",
+            Self::NominationDetails => "NominationDetails",
+            Self::RemoveValidator => "RemoveValidator",
+            Self::ConfirmBroadcast => "ConfirmBroadcast",
+            Self::Cancel => "Cancel",
+        };
+        write!(f, "{}", display)
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Query {
     #[serde(rename = "q")]
     pub query_type: QueryType,
     #[serde(rename = "p")]
     pub parameter: Option<String>,
+}
+
+impl Display for Query {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}({:?})", self.query_type, self.parameter)
+    }
 }
 
 impl Query {
@@ -38,6 +59,7 @@ impl Query {
 
 impl TelegramBot {
     pub async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
+        info!("Process query: {}", query);
         match query.query_type {
             QueryType::ConfirmBroadcast => {
                 info!("Broadcast confirmed, sending.");

@@ -45,18 +45,11 @@ impl NotificationSender {
         );
         match notification.notification_channel_code.as_ref() {
             "email" => {
-                channel::email::send_email(
-                    &CONFIG,
-                    &postgres,
-                    &mailer,
-                    &content_provider,
-                    &notification,
-                )
-                .await?;
+                channel::email::send_email(&postgres, &mailer, &content_provider, &notification)
+                    .await?;
             }
             "apns" => {
                 channel::apns::send_apple_push_notification(
-                    &CONFIG,
                     &postgres,
                     &apns_client,
                     &content_provider,
@@ -66,7 +59,6 @@ impl NotificationSender {
             }
             "fcm" => {
                 channel::fcm::send_fcm_message(
-                    &CONFIG,
                     &postgres,
                     &fcm_client,
                     &content_provider,
@@ -75,17 +67,13 @@ impl NotificationSender {
                 .await?;
             }
             "telegram" => {
-                if let Err(error) = channel::telegram::send_telegram_message(
-                    &CONFIG,
+                channel::telegram::send_telegram_message(
                     &postgres,
                     &telegram_api,
                     &content_provider,
                     &notification,
                 )
-                .await
-                {
-                    error!("ERRRRR :: {:?}", error);
-                }
+                .await?
             }
             _ => todo!(
                 "Notification channel not implemented yet: {}",
@@ -312,7 +300,7 @@ impl Service for NotificationSender {
     async fn run(&'static self) -> anyhow::Result<()> {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        let mailer = Arc::new(email::new_mailer(&CONFIG)?);
+        let mailer = Arc::new(email::new_mailer()?);
         let content_provider = Arc::new(ContentProvider::new(
             &CONFIG.notification_sender.template_dir_path,
         )?);
