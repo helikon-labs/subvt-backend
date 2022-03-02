@@ -6300,6 +6300,7 @@ dependencies = [
 name = "subvt-telegram-bot"
 version = "0.1.2"
 dependencies = [
+ "actix-web",
  "anyhow",
  "async-trait",
  "chrono",
@@ -6309,6 +6310,7 @@ dependencies = [
  "log",
  "once_cell",
  "pretty_env_logger",
+ "prometheus",
  "regex",
  "serde",
  "serde_json",

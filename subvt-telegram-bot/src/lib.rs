@@ -1,14 +1,16 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
-use std::collections::HashSet;
-
 use crate::messenger::{MessageType, Messenger};
 use crate::query::Query;
+use actix_web::http::header::CONTENT_TYPE;
+use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use log::{error, info};
+use prometheus::{Encoder, IntCounterVec, Opts, Registry, TextEncoder};
 use regex::Regex;
+use std::collections::HashSet;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -29,6 +31,9 @@ lazy_static! {
     static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+)(\s+[a-zA-Z0-9_-]+)*").unwrap();
     static ref CMD_ARG_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
+    pub static ref REGISTRY: Registry = Registry::new();
+    pub static ref COMMAND_COUNTER: IntCounterVec =
+        IntCounterVec::new(Opts::new("commands_total", "Commands"), &["command"]).unwrap();
 }
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -193,16 +198,44 @@ impl TelegramBot {
     }
 }
 
+impl TelegramBot {
+    fn register_metrics(&self) -> anyhow::Result<()> {
+        REGISTRY.register(Box::new(COMMAND_COUNTER.clone()))?;
+        Ok(())
+    }
+}
+
+#[get("/metrics")]
+async fn metrics() -> impl Responder {
+    let encoder = TextEncoder::new();
+    let mut buffer = vec![];
+    encoder
+        .encode(&REGISTRY.gather(), &mut buffer)
+        .expect("Failed to encode metrics");
+    let response = String::from_utf8(buffer.clone()).expect("Failed to convert bytes to string");
+    buffer.clear();
+    HttpResponse::Ok()
+        .insert_header((CONTENT_TYPE, "text/plain"))
+        .body(response)
+}
+
 #[async_trait(?Send)]
 impl Service for TelegramBot {
     async fn run(&'static self) -> anyhow::Result<()> {
         info!("Telegram bot has started.");
+        self.register_metrics()?;
         let mut update_params = GetUpdatesParams {
             offset: None,
             limit: None,
             timeout: None,
             allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
         };
+        tokio::spawn(
+            HttpServer::new(|| App::new().service(metrics))
+                .disable_signals()
+                .bind(("127.0.0.1", 8383))?
+                .run(),
+        );
         loop {
             let result = self.api.get_updates(&update_params).await;
             match result {

@@ -1,5 +1,5 @@
 use crate::query::QueryType;
-use crate::{MessageType, Query, TelegramBot, CONFIG};
+use crate::{MessageType, Query, TelegramBot, COMMAND_COUNTER, CONFIG};
 use log::info;
 use std::cmp::Ordering;
 use subvt_types::app::UserValidator;
@@ -139,6 +139,7 @@ impl TelegramBot {
             "Process command {} for chat {} with arguments: {:?}",
             command, chat_id, args,
         );
+        COMMAND_COUNTER.with_label_values(&[command]).inc();
         match command {
             "/start" => {
                 self.messenger
