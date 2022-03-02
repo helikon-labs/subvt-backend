@@ -98,7 +98,7 @@ impl TelegramBot {
                 ),
                 (Some(CONFIG.substrate.network_id), true),
                 (&NotificationPeriodType::Immediate, 0),
-                (&HashSet::new(), &channel_id_set, &vec![]),
+                (&HashSet::new(), &channel_id_set, &[]),
             )
             .await?;
         Ok(app_user_id)

@@ -246,6 +246,7 @@ impl NotificationSender {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn process_notifications(
         postgres: &Arc<PostgreSQLAppStorage>,
         mailer: &Arc<Mailer>,
