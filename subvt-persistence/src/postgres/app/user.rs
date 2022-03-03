@@ -96,7 +96,7 @@ impl PostgreSQLAppStorage {
             .map(|db_user_notification_channel| UserNotificationChannel {
                 id: db_user_notification_channel.0 as u32,
                 user_id: db_user_notification_channel.1 as u32,
-                channel_code: db_user_notification_channel.2.clone(),
+                channel: db_user_notification_channel.2.as_str().into(),
                 target: db_user_notification_channel.3.clone(),
             })
             .collect())
@@ -131,7 +131,7 @@ impl PostgreSQLAppStorage {
             "#,
         )
             .bind(user_notification_channel.user_id as i32)
-            .bind(&user_notification_channel.channel_code)
+            .bind(&user_notification_channel.channel.to_string())
             .bind(&user_notification_channel.target)
             .fetch_one(&self.connection_pool)
             .await?;
@@ -150,7 +150,7 @@ impl PostgreSQLAppStorage {
             "#,
         )
         .bind(user_notification_channel.user_id as i32)
-        .bind(&user_notification_channel.channel_code)
+        .bind(&user_notification_channel.channel.to_string())
         .bind(&user_notification_channel.target)
         .fetch_one(&self.connection_pool)
         .await?;

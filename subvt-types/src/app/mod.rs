@@ -47,9 +47,48 @@ pub struct User {
     pub public_key_hex: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct NotificationChannel {
-    pub code: String,
+#[derive(Clone, Debug, Deserialize, Hash, Eq, PartialEq, Serialize)]
+pub enum NotificationChannel {
+    #[serde(rename = "apns")]
+    APNS,
+    #[serde(rename = "email")]
+    Email,
+    #[serde(rename = "fcm")]
+    FCM,
+    #[serde(rename = "gsm")]
+    GSM,
+    #[serde(rename = "telegram")]
+    Telegram,
+    #[serde(rename = "sms")]
+    SMS,
+}
+
+impl Display for NotificationChannel {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::APNS => "apns",
+            Self::Email => "email",
+            Self::FCM => "fcm",
+            Self::GSM => "gsm",
+            Self::Telegram => "telegram",
+            Self::SMS => "sms",
+        };
+        write!(f, "{}", str)
+    }
+}
+
+impl From<&str> for NotificationChannel {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "apns" => Self::APNS,
+            "email" => Self::Email,
+            "fcm" => Self::FCM,
+            "gsm" => Self::GSM,
+            "telegram" => Self::Telegram,
+            "sms" => Self::SMS,
+            _ => panic!("Unkown chain: {}", s),
+        }
+    }
 }
 
 pub enum NotificationTypeCode {
@@ -230,13 +269,13 @@ pub struct NotificationParamType {
     pub is_optional: bool,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserNotificationChannel {
     #[serde(default = "default_id")]
     pub id: u32,
     #[serde(default = "default_id")]
     pub user_id: u32,
-    pub channel_code: String,
+    pub channel: NotificationChannel,
     pub target: String,
 }
 
@@ -419,7 +458,7 @@ pub struct Notification {
     pub validator_account_json: Option<String>,
     pub notification_type_code: String,
     pub user_notification_channel_id: u32,
-    pub notification_channel_code: String,
+    pub notification_channel: NotificationChannel,
     pub notification_target: String,
     pub data_json: Option<String>,
     pub log: Option<String>,

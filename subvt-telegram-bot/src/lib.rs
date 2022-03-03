@@ -17,7 +17,8 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::Service;
 use subvt_types::app::{
-    NotificationPeriodType, NotificationTypeCode, User, UserNotificationChannel,
+    NotificationChannel, NotificationPeriodType, NotificationTypeCode, User,
+    UserNotificationChannel,
 };
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
@@ -88,10 +89,10 @@ impl TelegramBot {
         let channel_id = self
             .app_postgres
             .save_user_notification_channel(&UserNotificationChannel {
+                id: 0,
                 user_id: app_user_id,
-                channel_code: "telegram".to_string(),
+                channel: NotificationChannel::Telegram,
                 target: chat_id.to_string(),
-                ..Default::default()
             })
             .await?;
         let mut channel_id_set = HashSet::new();

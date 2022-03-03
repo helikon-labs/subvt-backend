@@ -55,7 +55,7 @@ impl From<PostgresUserNotificationChannel> for UserNotificationChannel {
         UserNotificationChannel {
             id: db_user_notification_channel.0 as u32,
             user_id: db_user_notification_channel.1 as u32,
-            channel_code: db_user_notification_channel.2.clone(),
+            channel: db_user_notification_channel.2.clone().as_str().into(),
             target: db_user_notification_channel.3,
         }
     }
@@ -165,7 +165,7 @@ impl Notification {
             validator_account_json: db_notification.7.clone(),
             notification_type_code: db_notification.8.clone(),
             user_notification_channel_id: db_notification.9 as u32,
-            notification_channel_code: db_notification.10.clone(),
+            notification_channel: db_notification.10.as_str().into(),
             notification_target: db_notification.11.clone(),
             data_json: db_notification.12.clone(),
             log: db_notification.13.clone(),

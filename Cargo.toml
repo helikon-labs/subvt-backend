@@ -7,7 +7,7 @@ members = [
     "subvt-network-status-updater",
     "subvt-logging",
     "subvt-notification-generator",
-    "subvt-notification-sender",
+    "subvt-notification-processor",
     "subvt-onekv-updater",
     "subvt-persistence",
     "subvt-proc-macro",

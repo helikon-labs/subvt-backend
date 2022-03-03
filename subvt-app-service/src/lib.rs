@@ -107,7 +107,7 @@ async fn add_user_notification_channel(
     // check notification channel exists
     if !state
         .postgres
-        .notification_channel_exists(&input.channel_code)
+        .notification_channel_exists(&input.channel)
         .await?
     {
         return Ok(

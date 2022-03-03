@@ -70,7 +70,7 @@ impl NotificationGenerator {
                     validator_account_json: account_json.clone(),
                     notification_type_code: rule.notification_type.code.clone(),
                     user_notification_channel_id: channel.id,
-                    notification_channel_code: channel.channel_code.clone(),
+                    notification_channel: channel.channel.clone(),
                     notification_target: channel.target.clone(),
                     log: None,
                     created_at: None,
