@@ -22,6 +22,8 @@ mod content;
 mod processor;
 mod sender;
 
+type SenderMap = HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>;
+
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
@@ -29,12 +31,11 @@ lazy_static! {
 pub struct NotificationProcessor {
     postgres: Arc<PostgreSQLAppStorage>,
     redis: RedisClient,
-    senders: HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>,
+    senders: SenderMap,
 }
 
 impl NotificationProcessor {
-    fn prepare_senders(
-    ) -> anyhow::Result<HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>> {
+    fn prepare_senders() -> anyhow::Result<SenderMap> {
         let mut senders = HashMap::new();
         senders.insert(
             NotificationChannel::APNS,
