@@ -31,7 +31,7 @@ impl EmailSender {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl NotificationSender for EmailSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
         let (subject, text_body, html_body) =

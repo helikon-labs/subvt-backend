@@ -64,7 +64,7 @@ impl NotificationGenerator {
                     user_id: rule.user_id,
                     user_notification_rule_id: rule.id,
                     network_id: config.substrate.network_id,
-                    period_type: rule.period_type.clone(),
+                    period_type: rule.period_type,
                     period: rule.period,
                     validator_account_id: validator_account_id.clone(),
                     validator_account_json: account_json.clone(),

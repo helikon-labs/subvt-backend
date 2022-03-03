@@ -159,7 +159,7 @@ impl Notification {
             user_id: db_notification.1 as u32,
             user_notification_rule_id: db_notification.2 as u32,
             network_id: db_notification.3 as u32,
-            period_type: db_notification.4.clone(),
+            period_type: db_notification.4,
             period: db_notification.5 as u16,
             validator_account_id: AccountId::from_str(&db_notification.6)?,
             validator_account_json: db_notification.7.clone(),

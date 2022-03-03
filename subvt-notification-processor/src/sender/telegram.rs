@@ -21,7 +21,7 @@ impl TelegramSender {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl NotificationSender for TelegramSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
         let content = self.content_provider.get_telegram_content(notification)?;

@@ -26,7 +26,7 @@ impl FCMSender {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl NotificationSender for FCMSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
         let message = FCMMessage {

@@ -8,20 +8,18 @@ use crate::sender::telegram::TelegramSender;
 use crate::sender::NotificationSender;
 use anyhow::Context;
 use async_trait::async_trait;
-use chrono::{Datelike, Timelike, Utc};
 use lazy_static::lazy_static;
-use log::{debug, error, info};
+use log::info;
 use redis::Client as RedisClient;
 use std::collections::HashMap;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
-use subvt_types::app::{Notification, NotificationChannel, NotificationPeriodType};
-use subvt_types::subvt::NetworkStatus;
-use tokio::runtime::Builder;
+use subvt_types::app::NotificationChannel;
 
 mod content;
+mod processor;
 mod sender;
 
 lazy_static! {
@@ -31,10 +29,32 @@ lazy_static! {
 pub struct NotificationProcessor {
     postgres: Arc<PostgreSQLAppStorage>,
     redis: RedisClient,
-    senders: HashMap<NotificationChannel, Box<dyn NotificationSender>>,
+    senders: HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>,
 }
 
 impl NotificationProcessor {
+    fn prepare_senders(
+    ) -> anyhow::Result<HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>> {
+        let mut senders = HashMap::new();
+        senders.insert(
+            NotificationChannel::APNS,
+            Arc::new(Box::new(APNSSender::new()?) as Box<dyn NotificationSender>),
+        );
+        senders.insert(
+            NotificationChannel::Email,
+            Arc::new(Box::new(EmailSender::new()?) as Box<dyn NotificationSender>),
+        );
+        senders.insert(
+            NotificationChannel::FCM,
+            Arc::new(Box::new(FCMSender::new()?) as Box<dyn NotificationSender>),
+        );
+        senders.insert(
+            NotificationChannel::Telegram,
+            Arc::new(Box::new(TelegramSender::new()?) as Box<dyn NotificationSender>),
+        );
+        Ok(senders)
+    }
+
     pub async fn new() -> anyhow::Result<NotificationProcessor> {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
@@ -42,167 +62,11 @@ impl NotificationProcessor {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        let mut senders = HashMap::new();
-        senders.insert(
-            NotificationChannel::APNS,
-            Box::new(APNSSender::new()?) as Box<dyn NotificationSender>,
-        );
-        senders.insert(
-            NotificationChannel::Email,
-            Box::new(EmailSender::new()?) as Box<dyn NotificationSender>,
-        );
-        senders.insert(
-            NotificationChannel::FCM,
-            Box::new(FCMSender::new()?) as Box<dyn NotificationSender>,
-        );
-        senders.insert(
-            NotificationChannel::Telegram,
-            Box::new(TelegramSender::new()?) as Box<dyn NotificationSender>,
-        );
         Ok(NotificationProcessor {
             postgres,
             redis,
-            senders,
+            senders: NotificationProcessor::prepare_senders()?,
         })
-    }
-}
-
-impl NotificationProcessor {
-    async fn send_notification(&'static self, notification: Notification) -> anyhow::Result<()> {
-        debug!(
-            "Send {} notification #{} for {}.",
-            notification.notification_channel,
-            notification.id,
-            notification.validator_account_id.to_ss58_check()
-        );
-        let channel = &notification.notification_channel;
-        match self.senders.get(channel) {
-            Some(sender) => {
-                let _ = sender.send(&notification).await;
-            }
-            None => error!("Sender not found for notification channel: {}", channel),
-        }
-        Ok(())
-    }
-
-    /// Checks and sends notifications that should be sent immediately.
-    async fn start_immediate_notification_processor(&'static self) -> anyhow::Result<()> {
-        loop {
-            debug!("Check immediate notifications.");
-            self.process_notifications(NotificationPeriodType::Immediate, 0)
-                .await;
-            tokio::time::sleep(tokio::time::Duration::from_millis(
-                CONFIG.notification_sender.sleep_millis,
-            ))
-            .await;
-        }
-    }
-
-    /// Runs two cron-like jobs to process hourly and daily notifications.
-    async fn start_hourly_and_daily_notification_processor(&'static self) -> anyhow::Result<()> {
-        let tokio_rt = Builder::new_current_thread().enable_all().build()?;
-        let mut scheduler = job_scheduler::JobScheduler::new();
-        // hourly jobs
-        scheduler.add(job_scheduler::Job::new(
-            "0 0/1 * * * *".parse().unwrap(),
-            || {
-                tokio_rt.block_on(
-                    self.process_notifications(NotificationPeriodType::Hour, Utc::now().hour()),
-                );
-            },
-        ));
-        // daily jobs - send at midday UTC
-        scheduler.add(job_scheduler::Job::new(
-            "0 12 * * * *".parse().unwrap(),
-            || {
-                println!("Check daily notifications.");
-                tokio_rt.block_on(
-                    self.process_notifications(NotificationPeriodType::Day, Utc::now().day()),
-                );
-            },
-        ));
-        loop {
-            scheduler.tick();
-            std::thread::sleep(std::time::Duration::from_millis(1000));
-        }
-    }
-
-    /// Subscribes to the network status notifications from Redis (which are generated by
-    /// `subvt-network-status-updater`) and processes epoch and era notification at epoch
-    /// and era changes.
-    async fn start_era_and_epoch_notification_processor(&'static self) -> anyhow::Result<()> {
-        let mut data_connection = self.redis.get_connection()?;
-        let mut pub_sub_connection = self.redis.get_connection()?;
-        let mut active_era_index = 0;
-        let mut current_epoch_index = 0;
-        let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub
-            .subscribe(format!(
-                "subvt:{}:network_status:publish:best_block_number",
-                CONFIG.substrate.chain
-            ))
-            .unwrap();
-        loop {
-            let _ = pub_sub.get_message();
-            let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
-            let status_json_string: String = redis::cmd("GET")
-                .arg(key)
-                .query(&mut data_connection)
-                .unwrap();
-            let status: NetworkStatus = serde_json::from_str(&status_json_string).unwrap();
-            // process epoch notifications if epoch has changed
-            if current_epoch_index != status.current_epoch.index {
-                self.process_notifications(
-                    NotificationPeriodType::Epoch,
-                    current_epoch_index as u32,
-                )
-                .await;
-                current_epoch_index = status.current_epoch.index;
-            }
-            // process era notifications if epoch has changed
-            if active_era_index != status.active_era.index {
-                self.process_notifications(NotificationPeriodType::Era, active_era_index)
-                    .await;
-                active_era_index = status.active_era.index;
-            }
-        }
-    }
-
-    async fn process_notifications(
-        &'static self,
-        period_type: NotificationPeriodType,
-        period: u32,
-    ) {
-        info!(
-            "Process {} notifications for period {}.",
-            period_type, period,
-        );
-        match self
-            .postgres
-            .get_pending_notifications_by_period_type(&period_type, period)
-            .await
-        {
-            Ok(notifications) => {
-                debug!(
-                    "Got {} pending {} notifications.",
-                    notifications.len(),
-                    period_type
-                );
-                for notification in notifications {
-                    let period_type = period_type.clone();
-                    if let Err(error) = self.send_notification(notification).await {
-                        error!(
-                            "Error while sending {}-{} notification: {:?}",
-                            period, period_type, error,
-                        );
-                    }
-                }
-            }
-            Err(error) => error!(
-                "Error while getting pending {}-{} notifications: {:?}",
-                period, period_type, error
-            ),
-        }
     }
 }
 
@@ -213,11 +77,12 @@ impl Service for NotificationProcessor {
         self.postgres
             .reset_pending_and_failed_notifications()
             .await?;
-        let _ = tokio::try_join!(
+        info!("Start notification processors.");
+        tokio::try_join!(
             self.start_immediate_notification_processor(),
             self.start_hourly_and_daily_notification_processor(),
             self.start_era_and_epoch_notification_processor(),
-        );
+        )?;
         Ok(())
     }
 }

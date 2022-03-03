@@ -12,7 +12,7 @@ pub(crate) enum NotificationSenderError {
     Error(String),
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 pub(crate) trait NotificationSender: Sync + Send {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String>;
 }

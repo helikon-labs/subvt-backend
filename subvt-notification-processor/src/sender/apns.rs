@@ -31,7 +31,7 @@ impl APNSSender {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl NotificationSender for APNSSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
         let message = self
