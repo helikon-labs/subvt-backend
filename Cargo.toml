@@ -6,6 +6,7 @@ members = [
     "subvt-network-status-server",
     "subvt-network-status-updater",
     "subvt-logging",
+    "subvt-metrics",
     "subvt-notification-generator",
     "subvt-notification-processor",
     "subvt-onekv-updater",

@@ -6101,6 +6101,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-metrics"
+version = "0.1.2"
+dependencies = [
+ "env_logger 0.9.0",
+ "log",
+ "prometheus",
+ "subvt-config",
+]
+
+[[package]]
 name = "subvt-network-status-server"
 version = "0.1.2"
 dependencies = [
