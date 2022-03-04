@@ -187,6 +187,26 @@ pub struct TelegramBotConfig {
     pub admin_chat_id: i64,
 }
 
+/// Prometheus metrics config.
+#[derive(Clone, Debug, Deserialize)]
+pub struct MetricsConfig {
+    pub host: String,
+    pub block_processor_port: u16,
+    pub validator_list_updater_port: u16,
+    pub validator_details_server_port: u16,
+    pub active_validator_list_server_port: u16,
+    pub inactive_validator_list_server_port: u16,
+    pub network_status_updater_port: u16,
+    pub network_status_server_port: u16,
+    pub onekv_updater_port: u16,
+    pub telemetry_processor_port: u16,
+    pub report_service_port: u16,
+    pub notification_generator_port: u16,
+    pub notification_processor_port: u16,
+    pub telegram_bot_port: u16,
+    pub app_service_port: u16,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -206,6 +226,7 @@ pub struct Config {
     pub notification_generator: NotificationGeneratorConfig,
     pub notification_sender: NotificationSenderConfig,
     pub telegram_bot: TelegramBotConfig,
+    pub metrics: MetricsConfig,
 }
 
 impl Config {

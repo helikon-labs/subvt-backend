@@ -106,6 +106,13 @@ impl NetworkStatusServer {
 /// Service implementation.
 #[async_trait(?Send)]
 impl Service for NetworkStatusServer {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.network_status_server_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let current_status = Arc::new(RwLock::new(NetworkStatus::default()));

@@ -145,6 +145,13 @@ impl OneKVUpdater {
 
 #[async_trait(?Send)]
 impl Service for OneKVUpdater {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.onekv_updater_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         info!(
             "1KV updater has started with {} seconds refresh wait period.",

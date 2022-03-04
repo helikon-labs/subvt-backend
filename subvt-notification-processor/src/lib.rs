@@ -73,6 +73,13 @@ impl NotificationProcessor {
 
 #[async_trait(?Send)]
 impl Service for NotificationProcessor {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.notification_processor_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         info!("Reset pending and failed notifications.");
         self.postgres

@@ -92,6 +92,13 @@ impl NotificationGenerator {
 
 #[async_trait(?Send)]
 impl Service for NotificationGenerator {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.notification_generator_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
         // for async in sync context

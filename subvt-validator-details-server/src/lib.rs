@@ -233,6 +233,13 @@ impl ValidatorDetailsServer {
 
 #[async_trait(?Send)]
 impl Service for ValidatorDetailsServer {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.validator_details_server_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         // let last_finalized_block_number = Arc::new(AtomicU64::new(0));
         let bus = Arc::new(Mutex::new(Bus::new(100)));

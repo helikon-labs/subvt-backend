@@ -992,6 +992,13 @@ impl BlockProcessor {
 /// Service implementation.
 #[async_trait(?Send)]
 impl Service for BlockProcessor {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.block_processor_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let block_subscription_substrate_client = SubstrateClient::new(&CONFIG).await?;

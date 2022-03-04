@@ -435,6 +435,13 @@ pub struct AppService;
 /// Service implementation.
 #[async_trait(?Send)]
 impl Service for AppService {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.app_service_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         // persistence instance
         let postgres =

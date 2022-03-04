@@ -2,13 +2,9 @@
 
 use crate::messenger::{MessageType, Messenger};
 use crate::query::Query;
-use actix_web::http::header::CONTENT_TYPE;
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
-use log::{error, info};
-use prometheus::{Encoder, IntCounterVec, Opts, Registry, TextEncoder};
 use regex::Regex;
 use std::collections::HashSet;
 use subvt_config::Config;
@@ -25,6 +21,7 @@ use subvt_types::telegram::TelegramChatState;
 
 mod command;
 mod messenger;
+mod metrics;
 mod query;
 
 lazy_static! {
@@ -32,9 +29,6 @@ lazy_static! {
     static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+)(\s+[a-zA-Z0-9_-]+)*").unwrap();
     static ref CMD_ARG_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
-    pub static ref REGISTRY: Registry = Registry::new();
-    pub static ref COMMAND_COUNTER: IntCounterVec =
-        IntCounterVec::new(Opts::new("commands_total", "Commands"), &["command"]).unwrap();
 }
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -79,7 +73,7 @@ impl TelegramBot {
     }
 
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
-        info!(
+        log::info!(
             "Create new app user, notification channel and rules for chat {}.",
             chat_id
         );
@@ -118,13 +112,15 @@ impl TelegramBot {
             .await?
         {
             let app_user_id = self.create_app_user(message.chat.id).await?;
-            info!(
+            log::info!(
                 "Save new chat {}. App user id {}.",
-                message.chat.id, app_user_id
+                message.chat.id,
+                app_user_id
             );
             self.network_postgres
                 .save_chat(app_user_id, message.chat.id, &TelegramChatState::Default)
                 .await?;
+            self.update_metrics_chat_count().await?;
         }
         // group chat started - send intro
         if let Some(group_chat_created) = message.group_chat_created {
@@ -132,6 +128,7 @@ impl TelegramBot {
                 self.messenger
                     .send_message(message.chat.id, MessageType::Intro)
                     .await?;
+                self.update_metrics_chat_count().await?;
                 return Ok(());
             }
         }
@@ -139,7 +136,7 @@ impl TelegramBot {
         if let Some(text) = message.text.clone() {
             let text = text.trim();
             if CMD_REGEX.is_match(text) {
-                info!("New command: {}", text);
+                log::info!("New command: {}", text);
                 self.reset_chat_state(message.chat.id).await?;
                 let (command, arguments): (String, Vec<String>) = {
                     let parts: Vec<String> = SPLITTER_REGEX.split(text).map(String::from).collect();
@@ -155,7 +152,7 @@ impl TelegramBot {
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
-                info!("New text message: {}", text);
+                log::info!("New text message: {}", text);
                 let maybe_state = self
                     .network_postgres
                     .get_chat_state(message.chat.id)
@@ -199,44 +196,25 @@ impl TelegramBot {
     }
 }
 
-impl TelegramBot {
-    fn register_metrics(&self) -> anyhow::Result<()> {
-        REGISTRY.register(Box::new(COMMAND_COUNTER.clone()))?;
-        Ok(())
-    }
-}
-
-#[get("/metrics")]
-async fn metrics() -> impl Responder {
-    let encoder = TextEncoder::new();
-    let mut buffer = vec![];
-    encoder
-        .encode(&REGISTRY.gather(), &mut buffer)
-        .expect("Failed to encode metrics");
-    let response = String::from_utf8(buffer.clone()).expect("Failed to convert bytes to string");
-    buffer.clear();
-    HttpResponse::Ok()
-        .insert_header((CONTENT_TYPE, "text/plain"))
-        .body(response)
-}
-
 #[async_trait(?Send)]
 impl Service for TelegramBot {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.telegram_bot_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
-        info!("Telegram bot has started.");
-        self.register_metrics()?;
+        log::info!("Telegram bot has started.");
         let mut update_params = GetUpdatesParams {
             offset: None,
             limit: None,
             timeout: None,
             allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
         };
-        tokio::spawn(
-            HttpServer::new(|| App::new().service(metrics))
-                .disable_signals()
-                .bind(("127.0.0.1", 8383))?
-                .run(),
-        );
+        self.update_metrics_chat_count().await?;
+        self.update_metrics_validator_count().await?;
         loop {
             let result = self.api.get_updates(&update_params).await;
             match result {
@@ -246,9 +224,10 @@ impl Service for TelegramBot {
                         if let Some(message) = update.message {
                             tokio::spawn(async move {
                                 if let Err(error) = self.process_message(&message).await {
-                                    error!(
+                                    log::error!(
                                         "Error while processing message #{}: {:?}",
-                                        message.message_id, error
+                                        message.message_id,
+                                        error
                                     );
                                     let _ = self
                                         .messenger
@@ -266,7 +245,7 @@ impl Service for TelegramBot {
                                             query
                                         } else {
                                             // log and ignore unknown query
-                                            return error!("Unknown query: {}", callback_data);
+                                            return log::error!("Unknown query: {}", callback_data);
                                         };
                                         if let Err(error) = tokio::try_join!(
                                             self.messenger.delete_message(
@@ -277,9 +256,10 @@ impl Service for TelegramBot {
                                                 .answer_callback_query(&callback_query.id, None),
                                             self.process_query(message.chat.id, &query),
                                         ) {
-                                            error!(
+                                            log::error!(
                                                 "Error while processing message #{}: {:?}",
-                                                message.message_id, error
+                                                message.message_id,
+                                                error
                                             );
                                             let _ = self
                                                 .messenger
@@ -296,7 +276,7 @@ impl Service for TelegramBot {
                     }
                 }
                 Err(error) => {
-                    error!("Error while receiving updates: {:?}", error);
+                    log::error!("Error while receiving updates: {:?}", error);
                 }
             }
         }

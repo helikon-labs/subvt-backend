@@ -95,6 +95,21 @@ impl ValidatorListServer {
 
 #[async_trait(?Send)]
 impl Service for ValidatorListServer {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            if Command::new("")
+                .arg(Arg::new("inactive"))
+                .get_matches()
+                .is_present("inactive")
+            {
+                CONFIG.metrics.inactive_validator_list_server_port
+            } else {
+                CONFIG.metrics.active_validator_list_server_port
+            },
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         let matches = Command::new("SubVT Validator List Server")
             .version("0.1.0")

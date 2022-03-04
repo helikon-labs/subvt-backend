@@ -120,6 +120,13 @@ pub struct ReportService;
 
 #[async_trait(?Send)]
 impl Service for ReportService {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.report_service_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         let postgres = Arc::new(
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,

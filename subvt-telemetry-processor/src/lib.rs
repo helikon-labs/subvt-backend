@@ -224,6 +224,13 @@ impl TelemetryProcessor {
 
 #[async_trait(?Send)]
 impl Service for TelemetryProcessor {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.telemetry_processor_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         info!("Running the Telemetry processor.");
         let (tx, rx) = mpsc::channel();

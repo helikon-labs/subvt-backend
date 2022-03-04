@@ -229,6 +229,13 @@ impl ValidatorListUpdater {
 
 #[async_trait(?Send)]
 impl Service for ValidatorListUpdater {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.validator_list_updater_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let postgres = Arc::new(

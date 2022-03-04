@@ -60,6 +60,7 @@ impl Query {
 impl TelegramBot {
     pub async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
         info!("Process query: {}", query);
+        crate::metrics::query_call_counter(&query.query_type).inc();
         match query.query_type {
             QueryType::ConfirmBroadcast => {
                 info!("Broadcast confirmed, sending.");
@@ -157,6 +158,7 @@ impl TelegramBot {
                                 .remove_validator_from_chat(chat_id, &account_id)
                                 .await?
                             {
+                                self.update_metrics_validator_count().await?;
                                 let app_user_id =
                                     self.network_postgres.get_chat_app_user_id(chat_id).await?;
                                 // remove from app, so it doesn't receive notifications

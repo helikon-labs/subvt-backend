@@ -1,5 +1,5 @@
 use crate::query::QueryType;
-use crate::{MessageType, Query, TelegramBot, COMMAND_COUNTER, CONFIG};
+use crate::{MessageType, Query, TelegramBot, CONFIG};
 use log::info;
 use std::cmp::Ordering;
 use subvt_types::app::UserValidator;
@@ -84,6 +84,7 @@ impl TelegramBot {
                                 .network_postgres
                                 .add_validator_to_chat(chat_id, &account_id)
                                 .await?;
+                            self.update_metrics_validator_count().await?;
                             info!(
                                 "Validator {} added to chat #{}. Record id: {}.",
                                 account_id.to_string(),
@@ -139,21 +140,26 @@ impl TelegramBot {
             "Process command {} for chat {} with arguments: {:?}",
             command, chat_id, args,
         );
-        COMMAND_COUNTER.with_label_values(&[command]).inc();
         match command {
             "/start" => {
+                crate::metrics::command_call_counter(command).inc();
                 self.messenger
                     .send_message(chat_id, MessageType::Intro)
                     .await?;
             }
-            "/add" => self.process_add_command(chat_id, args).await?,
+            "/add" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.process_add_command(chat_id, args).await?
+            }
             "/cancel" => {
+                crate::metrics::command_call_counter(command).inc();
                 self.reset_chat_state(chat_id).await?;
                 self.messenger
                     .send_message(chat_id, MessageType::Ok)
                     .await?;
             }
             "/remove" => {
+                crate::metrics::command_call_counter(command).inc();
                 if let Some(validator_address) = args.get(0) {
                     if AccountId::from_ss58_check(validator_address).is_ok() {
                         self.process_query(
@@ -174,14 +180,17 @@ impl TelegramBot {
                 }
             }
             "/validatorinfo" => {
+                crate::metrics::command_call_counter(command).inc();
                 self.process_validators_command(chat_id, QueryType::ValidatorInfo)
                     .await?
             }
             "/nominations" => {
+                crate::metrics::command_call_counter(command).inc();
                 self.process_validators_command(chat_id, QueryType::NominationSummary)
                     .await?
             }
             "/broadcasttest" => {
+                crate::metrics::command_call_counter(command).inc();
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
                         .send_message(chat_id, MessageType::Broadcast)
@@ -193,6 +202,7 @@ impl TelegramBot {
                 }
             }
             "/broadcast" => {
+                crate::metrics::command_call_counter(command).inc();
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
                         .send_message(chat_id, MessageType::BroadcastConfirm)
@@ -204,6 +214,7 @@ impl TelegramBot {
                 }
             }
             _ => {
+                crate::metrics::command_call_counter("invalid").inc();
                 self.messenger
                     .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
                     .await?;

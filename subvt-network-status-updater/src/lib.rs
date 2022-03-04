@@ -232,6 +232,13 @@ impl NetworkStatusUpdater {
 /// Service implementation.
 #[async_trait(?Send)]
 impl Service for NetworkStatusUpdater {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.network_status_updater_port,
+        )
+    }
+
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
