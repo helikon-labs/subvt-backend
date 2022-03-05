@@ -18,7 +18,7 @@ pub(crate) struct FCMSender {
 
 impl FCMSender {
     pub fn new() -> anyhow::Result<FCMSender> {
-        let content_provider = ContentProvider::new(&CONFIG.notification_sender.template_dir_path)?;
+        let content_provider = ContentProvider::new()?;
         Ok(FCMSender {
             fcm_client: FCMClient::new(),
             content_provider,
@@ -32,10 +32,17 @@ impl NotificationSender for FCMSender {
         let message = FCMMessage {
             message: self
                 .content_provider
-                .get_push_notification_content(notification)?,
+                .get_notification_content(notification)?
+                .body_text
+                .unwrap_or_else(|| {
+                    panic!(
+                        "Cannot get text content for FCM {} notification.",
+                        notification.notification_type_code
+                    )
+                }),
         };
         let mut builder = fcm::MessageBuilder::new(
-            &CONFIG.notification_sender.fcm_api_key,
+            &CONFIG.notification_processor.fcm_api_key,
             &notification.notification_target,
         );
         builder.data(&message)?;

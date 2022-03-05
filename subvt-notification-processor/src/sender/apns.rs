@@ -12,18 +12,18 @@ pub(crate) struct APNSSender {
 
 impl APNSSender {
     pub fn new() -> anyhow::Result<APNSSender> {
-        let mut apns_key = std::fs::File::open(&CONFIG.notification_sender.apns_key_location)?;
+        let mut apns_key = std::fs::File::open(&CONFIG.notification_processor.apns_key_location)?;
         let apns_client = a2::Client::token(
             &mut apns_key,
-            &CONFIG.notification_sender.apns_key_id,
-            &CONFIG.notification_sender.apns_team_id,
-            if CONFIG.notification_sender.apns_is_production {
+            &CONFIG.notification_processor.apns_key_id,
+            &CONFIG.notification_processor.apns_team_id,
+            if CONFIG.notification_processor.apns_is_production {
                 a2::Endpoint::Production
             } else {
                 a2::Endpoint::Sandbox
             },
         )?;
-        let content_provider = ContentProvider::new(&CONFIG.notification_sender.template_dir_path)?;
+        let content_provider = ContentProvider::new()?;
         Ok(APNSSender {
             apns_client,
             content_provider,
@@ -36,14 +36,21 @@ impl NotificationSender for APNSSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
         let message = self
             .content_provider
-            .get_push_notification_content(notification)?;
+            .get_notification_content(notification)?
+            .body_text
+            .unwrap_or_else(|| {
+                panic!(
+                    "Cannot get text content for APNS {} notification.",
+                    notification.notification_type_code
+                )
+            });
         let mut builder = a2::PlainNotificationBuilder::new(&message);
         builder.set_sound("default");
         // builder.set_badge(1u32);
         let payload = builder.build(
             &notification.notification_target,
             a2::NotificationOptions {
-                apns_topic: Some(CONFIG.notification_sender.apns_topic.as_ref()),
+                apns_topic: Some(CONFIG.notification_processor.apns_topic.as_ref()),
                 ..Default::default()
             },
         );

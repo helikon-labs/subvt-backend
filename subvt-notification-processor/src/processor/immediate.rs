@@ -18,7 +18,7 @@ impl NotificationProcessor {
                 );
             }
             tokio::time::sleep(tokio::time::Duration::from_millis(
-                CONFIG.notification_sender.sleep_millis,
+                CONFIG.notification_processor.sleep_millis,
             ))
             .await;
         }

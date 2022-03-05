@@ -159,7 +159,7 @@ pub struct NotificationGeneratorConfig {
 
 /// Notification sender configuration.
 #[derive(Clone, Debug, Deserialize)]
-pub struct NotificationSenderConfig {
+pub struct NotificationProcessorConfig {
     pub sleep_millis: u64,
     pub email_from: String,
     pub email_reply_to: String,
@@ -224,7 +224,7 @@ pub struct Config {
     pub report: ReportConfig,
     pub telemetry: TelemetryConfig,
     pub notification_generator: NotificationGeneratorConfig,
-    pub notification_sender: NotificationSenderConfig,
+    pub notification_processor: NotificationProcessorConfig,
     pub telegram_bot: TelegramBotConfig,
     pub metrics: MetricsConfig,
 }

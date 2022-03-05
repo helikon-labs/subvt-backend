@@ -12,8 +12,8 @@ pub(crate) struct TelegramSender {
 
 impl TelegramSender {
     pub fn new() -> anyhow::Result<TelegramSender> {
-        let telegram_client = TelegramClient::new(&CONFIG.notification_sender.telegram_token);
-        let content_provider = ContentProvider::new(&CONFIG.notification_sender.template_dir_path)?;
+        let telegram_client = TelegramClient::new(&CONFIG.notification_processor.telegram_token);
+        let content_provider = ContentProvider::new()?;
         Ok(TelegramSender {
             telegram_client,
             content_provider,
@@ -24,10 +24,19 @@ impl TelegramSender {
 #[async_trait]
 impl NotificationSender for TelegramSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
-        let content = self.content_provider.get_telegram_content(notification)?;
+        let message = self
+            .content_provider
+            .get_notification_content(notification)?
+            .body_html
+            .unwrap_or_else(|| {
+                panic!(
+                    "Cannot get HTML content for Telegram {} notification.",
+                    notification.notification_type_code
+                )
+            });
         let params = SendMessageParams {
             chat_id: ChatId::Integer(notification.notification_target.parse()?),
-            text: content,
+            text: message,
             parse_mode: Some("html".to_string()),
             entities: None,
             disable_web_page_preview: Some(true),

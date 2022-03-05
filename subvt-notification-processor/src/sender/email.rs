@@ -16,14 +16,14 @@ pub(crate) struct EmailSender {
 
 impl EmailSender {
     pub fn new() -> anyhow::Result<EmailSender> {
-        let mailer = Mailer::relay(&CONFIG.notification_sender.email_smtp_server_url)?
+        let mailer = Mailer::relay(&CONFIG.notification_processor.email_smtp_server_url)?
             .credentials(Credentials::new(
-                CONFIG.notification_sender.email_account.clone(),
-                CONFIG.notification_sender.email_password.clone(),
+                CONFIG.notification_processor.email_account.clone(),
+                CONFIG.notification_processor.email_password.clone(),
             ))
             // .port(config.notification_sender.email_smtp_server_tls_port)
             .build();
-        let content_provider = ContentProvider::new(&CONFIG.notification_sender.template_dir_path)?;
+        let content_provider = ContentProvider::new()?;
         Ok(EmailSender {
             mailer,
             content_provider,
@@ -34,11 +34,32 @@ impl EmailSender {
 #[async_trait]
 impl NotificationSender for EmailSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
-        let (subject, text_body, html_body) =
-            self.content_provider.get_email_content(notification)?;
+        let content = self
+            .content_provider
+            .get_notification_content(notification)?;
+        let (subject, body_text, body_html) = (
+            content.subject.unwrap_or_else(|| {
+                panic!(
+                    "Cannot get subject for email {} notification.",
+                    notification.notification_type_code
+                )
+            }),
+            content.body_text.unwrap_or_else(|| {
+                panic!(
+                    "Cannot get body text for email {} notification.",
+                    notification.notification_type_code
+                )
+            }),
+            content.body_html.unwrap_or_else(|| {
+                panic!(
+                    "Cannot get body html for email {} notification.",
+                    notification.notification_type_code
+                )
+            }),
+        );
         let message = lettre::Message::builder()
-            .from(CONFIG.notification_sender.email_from.parse()?)
-            .reply_to(CONFIG.notification_sender.email_reply_to.parse()?)
+            .from(CONFIG.notification_processor.email_from.parse()?)
+            .reply_to(CONFIG.notification_processor.email_reply_to.parse()?)
             .to("kutsalbilgin@gmail.com".parse()?)
             .subject(subject)
             .multipart(
@@ -46,12 +67,12 @@ impl NotificationSender for EmailSender {
                     .singlepart(
                         SinglePart::builder()
                             .header(header::ContentType::TEXT_PLAIN)
-                            .body(text_body),
+                            .body(body_text),
                     )
                     .singlepart(
                         SinglePart::builder()
                             .header(header::ContentType::TEXT_HTML)
-                            .body(html_body),
+                            .body(body_html),
                     ),
             )?;
         match self.mailer.send(message).await {

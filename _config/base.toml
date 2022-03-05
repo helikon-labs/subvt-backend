@@ -81,7 +81,7 @@ websocket_url = "wss://telemetry-backend.w3f.community/feed"
 [notification_generator]
 unclaimed_payout_check_delay_hours = 1
 
-[notification_sender]
+[notification_processor]
 sleep_millis = 2000
 email_from = "SubVT Notifications <mail@host.com>"
 email_reply_to = "noreply@host.com"

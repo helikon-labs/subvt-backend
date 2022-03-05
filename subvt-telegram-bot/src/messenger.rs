@@ -413,7 +413,7 @@ impl Messenger {
     pub fn new(config: &Config, api: AsyncApi) -> anyhow::Result<Messenger> {
         let renderer = Tera::new(&format!(
             "{}{}telegram{}dialog{}*.html",
-            config.notification_sender.template_dir_path,
+            config.notification_processor.template_dir_path,
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
