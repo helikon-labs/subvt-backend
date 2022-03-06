@@ -3,8 +3,13 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+  - job_name: subvt_block_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11000' ]
+    metrics_path: "/metrics"
   - job_name: subvt_telegram_bot
     scrape_interval: 5s
     static_configs:
-      - targets: ['host.docker.internal:11012']
+      - targets: [ 'host.docker.internal:11012' ]
     metrics_path: "/metrics"

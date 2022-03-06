@@ -1,0 +1,1 @@
+Be ready! {{ validator_display }} is active next session 🟡

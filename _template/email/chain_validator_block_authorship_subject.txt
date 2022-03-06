@@ -1,1 +1,1 @@
-New block by {{ validator_display }}
+{{ validator_display }} authored new block ⛓

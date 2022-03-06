@@ -107,17 +107,17 @@ admin_chat_id = 123
 
 [metrics]
 host = "127.0.0.1"
-block_processor_port = 11000
-validator_list_updater_port = 11001
-validator_details_server_port = 11002
 active_validator_list_server_port = 11003
+app_service_port = 11013
+block_processor_port = 11000
 inactive_validator_list_server_port = 11004
-network_status_updater_port = 11005
 network_status_server_port = 11006
-onekv_updater_port = 11007
-telemetry_processor_port = 11008
-report_service_port = 11009
+network_status_updater_port = 11005
 notification_generator_port = 11010
 notification_processor_port = 11011
+onekv_updater_port = 11007
+report_service_port = 11009
 telegram_bot_port = 11012
-app_service_port = 11013
+telemetry_processor_port = 11008
+validator_details_server_port = 11002
+validator_list_updater_port = 11001

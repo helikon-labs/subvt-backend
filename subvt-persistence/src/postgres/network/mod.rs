@@ -1105,14 +1105,17 @@ impl PostgreSQLNetworkStorage {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn save_heartbeat_extrinsic(
         &self,
         block_hash: &str,
         extrinsic_index: i32,
         is_nested_call: bool,
         is_successful: bool,
-        (block_number, session_index): (u32, u32),
-        (validator_index, validator_account_id): (u32, &AccountId),
+        block_number: u32,
+        session_index: u32,
+        validator_index: u32,
+        validator_account_id: &AccountId,
     ) -> anyhow::Result<Option<i32>> {
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"

@@ -65,10 +65,15 @@ pub fn register_int_gauge(name: &str, help: &str) -> prometheus::Result<IntGauge
     Ok(gauge)
 }
 
-pub fn register_histogram(name: &str, help: &str) -> prometheus::Result<Histogram> {
-    let gauge = prometheus::Histogram::with_opts(HistogramOpts::new(name, help))?;
-    register(gauge.clone())?;
-    Ok(gauge)
+pub fn register_histogram(
+    name: &str,
+    help: &str,
+    buckets: Vec<f64>,
+) -> prometheus::Result<Histogram> {
+    let histogram =
+        prometheus::Histogram::with_opts(HistogramOpts::new(name, help).buckets(buckets))?;
+    register(histogram.clone())?;
+    Ok(histogram)
 }
 
 pub fn register_histogram_vec(

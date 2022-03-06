@@ -1,10 +1,9 @@
 //! Indexes historical block data into the PostreSQL database instance.
 
+use crate::metrics::{processed_block_number, target_block_number};
 use async_lock::Mutex;
-use async_recursion::async_recursion;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::{debug, error, trace};
 use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -14,18 +13,16 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::substrate::extrinsic::{SubstrateExtrinsic, TimestampExtrinsic};
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
-    substrate::{
-        event::{ImOnlineEvent, StakingEvent, SubstrateEvent, SystemEvent, UtilityEvent},
-        extrinsic::{
-            ImOnlineExtrinsic, MultisigExtrinsic, ProxyExtrinsic, StakingExtrinsic,
-            SubstrateExtrinsic, TimestampExtrinsic, UtilityExtrinsic,
-        },
-        Era, EraStakers, MultiAddress, ValidatorStake,
-    },
+    substrate::{Era, EraStakers, ValidatorStake},
 };
+
+mod event;
+mod extrinsic;
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -50,7 +47,7 @@ impl BlockProcessor {
         active_validator_account_ids: &[AccountId],
         era_stakers: &EraStakers,
     ) -> anyhow::Result<()> {
-        debug!("Persist era #{} validators.", era.index);
+        log::info!("Persist era #{} validators.", era.index);
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
             .await?;
@@ -79,7 +76,7 @@ impl BlockProcessor {
             )
             .await?;
         postgres.save_era_stakers(era_stakers).await?;
-        debug!("Persisted era #{} validators and stakers.", era.index);
+        log::info!("Persisted era #{} validators and stakers.", era.index);
         Ok(())
     }
 
@@ -91,8 +88,8 @@ impl BlockProcessor {
         era_index: u32,
     ) -> anyhow::Result<()> {
         if !postgres.era_exists(era_index).await? {
-            debug!(
-                "Era {} does not exist. Cannot persist reward points.",
+            log::info!(
+                "Era {} does not exist in the database. Cannot persist reward points.",
                 era_index
             );
             return Ok(());
@@ -115,650 +112,7 @@ impl BlockProcessor {
         postgres
             .update_era_validator_reward_points(era_index, era_reward_points_map)
             .await?;
-        debug!("Era {} rewards persisted.", era_index);
-        Ok(())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    async fn process_event(
-        &self,
-        substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLNetworkStorage,
-        (block_hash, block_number, block_timestamp): (&str, u64, Option<u64>),
-        epoch_index: u64,
-        successful_extrinsic_indices: &mut Vec<u32>,
-        failed_extrinsic_indices: &mut Vec<u32>,
-        (event_index, event): (usize, &SubstrateEvent),
-    ) -> anyhow::Result<()> {
-        match event {
-            SubstrateEvent::ImOnline(im_online_event) => match im_online_event {
-                ImOnlineEvent::HeartbeatReceived {
-                    extrinsic_index,
-                    im_online_key_hex_string,
-                } => {
-                    match substrate_client
-                        .get_im_online_key_owner_account_id(block_hash, im_online_key_hex_string)
-                        .await
-                    {
-                        Ok(validator_account_id) => {
-                            let extrinsic_index =
-                                extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                            postgres
-                                .save_validator_heartbeart_event(
-                                    block_hash,
-                                    extrinsic_index,
-                                    event_index as i32,
-                                    epoch_index as i64,
-                                    im_online_key_hex_string,
-                                    &validator_account_id,
-                                )
-                                .await?;
-                        }
-                        Err(error) => {
-                            error!("Cannot persist heartbeat event: {:?}", error);
-                        }
-                    }
-                }
-                ImOnlineEvent::SomeOffline {
-                    identification_tuples,
-                } => {
-                    postgres
-                        .save_validators_offline_event(
-                            block_hash,
-                            event_index as i32,
-                            identification_tuples,
-                        )
-                        .await?;
-                }
-                _ => (),
-            },
-            SubstrateEvent::Staking(staking_event) => match staking_event {
-                StakingEvent::Chilled {
-                    extrinsic_index,
-                    stash_account_id,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_chilled_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            stash_account_id,
-                        )
-                        .await?;
-                }
-                StakingEvent::EraPaid {
-                    extrinsic_index,
-                    era_index,
-                    validator_payout,
-                    remainder,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_era_paid_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            *era_index,
-                            *validator_payout,
-                            *remainder,
-                        )
-                        .await?;
-                }
-                StakingEvent::NominatorKicked {
-                    extrinsic_index,
-                    nominator_account_id,
-                    validator_account_id,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_nominator_kicked_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            validator_account_id,
-                            nominator_account_id,
-                        )
-                        .await?;
-                }
-                StakingEvent::Rewarded {
-                    extrinsic_index,
-                    rewardee_account_id,
-                    amount,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_rewarded_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            rewardee_account_id,
-                            *amount,
-                        )
-                        .await?;
-                }
-                StakingEvent::Slashed {
-                    extrinsic_index,
-                    validator_account_id,
-                    amount,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_slashed_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            validator_account_id,
-                            *amount,
-                        )
-                        .await?;
-                }
-                _ => (),
-            },
-            SubstrateEvent::System(system_event) => match system_event {
-                SystemEvent::ExtrinsicFailed {
-                    extrinsic_index,
-                    dispatch_error: _,
-                    dispatch_info: _,
-                } => failed_extrinsic_indices.push(extrinsic_index.unwrap()),
-                SystemEvent::ExtrinsicSuccess {
-                    extrinsic_index,
-                    dispatch_info: _,
-                } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
-                SystemEvent::NewAccount {
-                    extrinsic_index,
-                    account_id,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-
-                    postgres
-                        .save_new_account_event(
-                            block_hash,
-                            block_number,
-                            block_timestamp,
-                            extrinsic_index,
-                            event_index as i32,
-                            account_id,
-                        )
-                        .await?;
-                }
-                SystemEvent::KilledAccount {
-                    extrinsic_index,
-                    account_id,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_killed_account_event(
-                            block_hash,
-                            block_number,
-                            block_timestamp,
-                            extrinsic_index,
-                            event_index as i32,
-                            account_id,
-                        )
-                        .await?;
-                }
-                _ => (),
-            },
-            SubstrateEvent::Utility(utility_event) => match utility_event {
-                UtilityEvent::ItemCompleted { extrinsic_index } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_batch_item_completed_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                        )
-                        .await?;
-                }
-                UtilityEvent::BatchInterrupted {
-                    extrinsic_index,
-                    item_index,
-                    dispatch_error,
-                } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_batch_interrupted_event(
-                            block_hash,
-                            extrinsic_index,
-                            event_index as i32,
-                            *item_index as i32,
-                            format!("{:?}", dispatch_error),
-                        )
-                        .await?;
-                }
-                UtilityEvent::BatchCompleted { extrinsic_index } => {
-                    let extrinsic_index =
-                        extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-                    postgres
-                        .save_batch_completed_event(block_hash, extrinsic_index, event_index as i32)
-                        .await?;
-                }
-            },
-            _ => (),
-        }
-        Ok(())
-    }
-
-    #[async_recursion]
-    async fn process_extrinsic(
-        &self,
-        substrate_client: &SubstrateClient,
-        postgres: &PostgreSQLNetworkStorage,
-        (block_hash, block_number): (String, u64),
-        active_validator_account_ids: &[AccountId],
-        (index, is_nested_call, maybe_multisig_account_id, maybe_real_account_id, is_successful): (
-            usize,
-            bool,
-            Option<AccountId>,
-            Option<AccountId>,
-            bool,
-        ),
-        extrinsic: &SubstrateExtrinsic,
-    ) -> anyhow::Result<()> {
-        match extrinsic {
-            SubstrateExtrinsic::ImOnline(imonline_extrinsic) => match imonline_extrinsic {
-                ImOnlineExtrinsic::Hearbeat {
-                    maybe_signature: _,
-                    block_number,
-                    session_index,
-                    validator_index,
-                } => {
-                    if let Some(validator_account_id) =
-                        active_validator_account_ids.get(*validator_index as usize)
-                    {
-                        let _ = postgres
-                            .save_heartbeat_extrinsic(
-                                &block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                (*block_number, *session_index),
-                                (*validator_index, validator_account_id),
-                            )
-                            .await?;
-                    } else {
-                        error!(
-                            "Cannot find active validator account id with index {}. Cannot persist heartbeat extrinsic in block {}.",
-                            validator_index,
-                            block_hash
-                        );
-                    }
-                }
-            },
-            SubstrateExtrinsic::Multisig(multisig_extrinsic) => match multisig_extrinsic {
-                MultisigExtrinsic::AsMulti {
-                    maybe_signature: signature,
-                    threshold,
-                    other_signatories,
-                    maybe_timepoint: _,
-                    call,
-                    store_call: _,
-                    max_weight: _,
-                } => {
-                    let signature = if let Some(signature) = signature {
-                        signature
-                    } else {
-                        error!(
-                            "Cannot get signature while processing AsMulti extrinsic {}-{}.",
-                            block_number, index
-                        );
-                        return Ok(());
-                    };
-                    let multisig_account_id = if let Some(signer_account_id) =
-                        signature.get_signer_account_id()
-                    {
-                        AccountId::multisig_account_id(
-                            &signer_account_id,
-                            other_signatories,
-                            *threshold,
-                        )
-                    } else {
-                        error!("Cannot get multisig account id while processing AsMulti extrinsic {}-{}.", block_number, index);
-                        return Ok(());
-                    };
-                    self.process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        (block_hash, block_number),
-                        active_validator_account_ids,
-                        (index, true, Some(multisig_account_id), None, is_successful),
-                        call,
-                    )
-                    .await?;
-                }
-                MultisigExtrinsic::AsMultiThreshold1 {
-                    maybe_signature: signature,
-                    other_signatories,
-                    call,
-                } => {
-                    let signature = if let Some(signature) = signature {
-                        signature
-                    } else {
-                        error!("Cannot get signature while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
-                        return Ok(());
-                    };
-                    let multisig_account_id = if let Some(signer_account_id) =
-                        signature.get_signer_account_id()
-                    {
-                        AccountId::multisig_account_id(&signer_account_id, other_signatories, 1)
-                    } else {
-                        error!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
-                        return Ok(());
-                    };
-                    self.process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        (block_hash, block_number),
-                        active_validator_account_ids,
-                        (index, true, Some(multisig_account_id), None, is_successful),
-                        call,
-                    )
-                    .await?;
-                }
-            },
-            SubstrateExtrinsic::Proxy(proxy_extrinsic) => match proxy_extrinsic {
-                ProxyExtrinsic::Proxy {
-                    maybe_signature: _,
-                    real_account_id,
-                    force_proxy_type: _,
-                    call,
-                } => {
-                    self.process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        (block_hash, block_number),
-                        active_validator_account_ids,
-                        (
-                            index,
-                            true,
-                            maybe_multisig_account_id,
-                            Some(real_account_id.clone()),
-                            is_successful,
-                        ),
-                        call,
-                    )
-                    .await?;
-                }
-                ProxyExtrinsic::ProxyAnnounced {
-                    maybe_signature: _,
-                    delegate_account_id: _,
-                    real_account_id,
-                    force_proxy_type: _,
-                    call,
-                } => {
-                    self.process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        (block_hash, block_number),
-                        active_validator_account_ids,
-                        (
-                            index,
-                            true,
-                            maybe_multisig_account_id,
-                            Some(real_account_id.clone()),
-                            is_successful,
-                        ),
-                        call,
-                    )
-                    .await?;
-                }
-            },
-            SubstrateExtrinsic::Staking(staking_extrinsic) => match staking_extrinsic {
-                StakingExtrinsic::Bond {
-                    maybe_signature: signature,
-                    controller,
-                    amount,
-                    reward_destination,
-                } => {
-                    let maybe_stash_account_id =
-                        if let Some(real_account_id) = maybe_real_account_id {
-                            Some(real_account_id)
-                        } else if let Some(multisig_account_id) = maybe_multisig_account_id {
-                            Some(multisig_account_id)
-                        } else {
-                            match signature {
-                                Some(signature) => signature.get_signer_account_id(),
-                                _ => None,
-                            }
-                        };
-                    let controller_account_id = if let Some(account_id) =
-                        controller.get_account_id()
-                    {
-                        account_id
-                    } else {
-                        error!("Controller address is not raw account id in staking.bond. Cannot persist.");
-                        return Ok(());
-                    };
-                    if let Some(stash_account_id) = maybe_stash_account_id {
-                        postgres
-                            .save_bond_extrinsic(
-                                &block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                (
-                                    &stash_account_id,
-                                    &controller_account_id,
-                                    *amount,
-                                    reward_destination,
-                                ),
-                            )
-                            .await?;
-                    } else {
-                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.bond.", index);
-                    }
-                }
-                StakingExtrinsic::Nominate {
-                    maybe_signature: signature,
-                    targets,
-                } => {
-                    let maybe_controller_account_id =
-                        if let Some(real_account_id) = maybe_real_account_id {
-                            Some(real_account_id)
-                        } else if let Some(multisig_account_id) = maybe_multisig_account_id {
-                            Some(multisig_account_id)
-                        } else {
-                            match signature {
-                                Some(signature) => signature.get_signer_account_id(),
-                                _ => None,
-                            }
-                        };
-                    if let Some(controller_account_id) = maybe_controller_account_id {
-                        let target_account_ids: Vec<AccountId> = targets
-                            .iter()
-                            .filter_map(|target_multi_address| match target_multi_address {
-                                MultiAddress::Id(account_id) => Some(account_id.clone()),
-                                _ => {
-                                    error!("Unsupported multi-address type for nomination target.");
-                                    None
-                                }
-                            })
-                            .collect();
-                        postgres
-                            .save_nomination(
-                                &block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                &controller_account_id,
-                                &target_account_ids,
-                            )
-                            .await?;
-                    } else {
-                        error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
-                    }
-                }
-                StakingExtrinsic::PayoutStakers {
-                    maybe_signature: signature,
-                    validator_account_id,
-                    era_index,
-                } => {
-                    let maybe_caller_account_id =
-                        if let Some(multisig_account_id) = maybe_multisig_account_id {
-                            Some(multisig_account_id)
-                        } else if let Some(real_account_id) = maybe_real_account_id {
-                            Some(real_account_id)
-                        } else {
-                            match signature {
-                                Some(signature) => signature.get_signer_account_id(),
-                                _ => None,
-                            }
-                        };
-                    if let Some(caller_account_id) = maybe_caller_account_id {
-                        // ignore the errors here - may fail due to non-existent era foreign key,
-                        // past eras may not have been saved
-                        let _ = postgres
-                            .save_payout_stakers_extrinsic(
-                                &block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                (&caller_account_id, validator_account_id),
-                                *era_index,
-                            )
-                            .await;
-                    } else {
-                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
-                    }
-                }
-                StakingExtrinsic::SetController {
-                    maybe_signature: signature,
-                    controller,
-                } => {
-                    let maybe_caller_account_id =
-                        if let Some(multisig_account_id) = maybe_multisig_account_id {
-                            Some(multisig_account_id)
-                        } else if let Some(real_account_id) = maybe_real_account_id {
-                            Some(real_account_id)
-                        } else {
-                            match signature {
-                                Some(signature) => signature.get_signer_account_id(),
-                                _ => None,
-                            }
-                        };
-                    let controller_account_id = if let Some(account_id) =
-                        controller.get_account_id()
-                    {
-                        account_id
-                    } else {
-                        error!("Controller address is not raw account id in staking.set_controller. Cannot persist.");
-                        return Ok(());
-                    };
-                    if let Some(caller_account_id) = maybe_caller_account_id {
-                        postgres
-                            .save_set_controller_extrinsic(
-                                &block_hash,
-                                index as i32,
-                                is_nested_call,
-                                is_successful,
-                                &caller_account_id,
-                                &controller_account_id,
-                            )
-                            .await?;
-                    } else {
-                        error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
-                    }
-                }
-                StakingExtrinsic::Validate {
-                    maybe_signature: signature,
-                    preferences,
-                } => {
-                    let maybe_controller_account_id =
-                        if let Some(multisig_account_id) = maybe_multisig_account_id {
-                            Some(multisig_account_id)
-                        } else if let Some(real_account_id) = maybe_real_account_id {
-                            Some(real_account_id)
-                        } else {
-                            match signature {
-                                Some(signature) => signature.get_signer_account_id(),
-                                _ => None,
-                            }
-                        };
-                    if let Some(controller_account_id) = maybe_controller_account_id {
-                        // get stash account id
-                        if let Some(stash_account_id) = substrate_client
-                            .get_stash_account_id(&controller_account_id, &block_hash)
-                            .await?
-                        {
-                            postgres
-                                .save_validate_extrinsic(
-                                    &block_hash,
-                                    index as i32,
-                                    is_nested_call,
-                                    is_successful,
-                                    (&stash_account_id, &controller_account_id),
-                                    preferences,
-                                )
-                                .await?;
-                        } else {
-                            error!(
-                                "Cannot get stash account id for controller {}.",
-                                controller_account_id.to_string()
-                            );
-                        }
-                    } else {
-                        error!("Cannot get controller account id from signature for extrinsic #{} Staking.validate.", index);
-                    }
-                }
-            },
-            SubstrateExtrinsic::Utility(utility_extrinsic) => match utility_extrinsic {
-                UtilityExtrinsic::Batch {
-                    maybe_signature: _,
-                    calls,
-                } => {
-                    for call in calls {
-                        self.process_extrinsic(
-                            substrate_client,
-                            postgres,
-                            (block_hash.clone(), block_number),
-                            active_validator_account_ids,
-                            (
-                                index,
-                                true,
-                                maybe_multisig_account_id.clone(),
-                                None,
-                                is_successful,
-                            ),
-                            call,
-                        )
-                        .await?;
-                    }
-                }
-                UtilityExtrinsic::BatchAll {
-                    maybe_signature: _,
-                    calls,
-                } => {
-                    for call in calls {
-                        self.process_extrinsic(
-                            substrate_client,
-                            postgres,
-                            (block_hash.clone(), block_number),
-                            active_validator_account_ids,
-                            (
-                                index,
-                                true,
-                                maybe_multisig_account_id.clone(),
-                                None,
-                                is_successful,
-                            ),
-                            call,
-                        )
-                        .await?;
-                    }
-                }
-            },
-            _ => (),
-        }
+        log::info!("Era {} rewards persisted.", era_index);
         Ok(())
     }
 
@@ -784,7 +138,7 @@ impl BlockProcessor {
             .spec_version
             != runtime_upgrade_info.spec_version
         {
-            debug!(
+            log::info!(
                 "Different runtime version #{} than client's #{}. Will reset metadata.",
                 runtime_upgrade_info.spec_version,
                 substrate_client
@@ -793,7 +147,7 @@ impl BlockProcessor {
                     .spec_version
             );
             substrate_client.set_metadata_at_block(&block_hash).await?;
-            debug!(
+            log::info!(
                 "Runtime {} metadata fetched.",
                 substrate_client
                     .metadata
@@ -827,7 +181,7 @@ impl BlockProcessor {
                 .get_era_stakers(&active_era, true, &block_hash)
                 .await?;
             if last_epoch_index != current_epoch_index {
-                debug!("New epoch. Persist epoch. Persist era if it doesn't exist.");
+                log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
                 let total_stake = substrate_client
                     .get_era_total_stake(active_era.index, &block_hash)
                     .await?;
@@ -846,7 +200,7 @@ impl BlockProcessor {
                         .iter()
                         .filter_map(|index| active_validator_account_ids.get(*index as usize))
                         .collect();
-                    debug!(
+                    log::info!(
                         "Persist {} session para validators.",
                         para_validator_account_ids.len()
                     );
@@ -858,7 +212,7 @@ impl BlockProcessor {
                         )
                         .await?;
                 } else {
-                    debug!("Parachains not active.");
+                    log::info!("Parachains not active at this block height.");
                 }
             }
             if last_era_index != active_era.index {
@@ -908,10 +262,10 @@ impl BlockProcessor {
             runtime_information.epoch_index = current_epoch_index;
         }
         let events = substrate_client.get_block_events(&block_hash).await?;
-        debug!("Got #{} events for block #{}.", events.len(), block_number);
+        log::info!("Got {} events for block #{}.", events.len(), block_number);
         let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
-        debug!(
-            "Got #{} extrinsics for block #{}.",
+        log::info!(
+            "Got {} extrinsics for block #{}.",
             extrinsics.len(),
             block_number
         );
@@ -957,11 +311,14 @@ impl BlockProcessor {
             self.process_event(
                 substrate_client,
                 postgres,
-                (&block_hash, block_number, block_timestamp),
                 current_epoch_index,
+                &block_hash,
+                block_number,
+                block_timestamp,
                 &mut successful_extrinsic_indices,
                 &mut failed_extrinsic_indices,
-                (index, event),
+                index,
+                event,
             )
             .await?;
         }
@@ -972,9 +329,14 @@ impl BlockProcessor {
             self.process_extrinsic(
                 substrate_client,
                 postgres,
-                (block_hash.clone(), block_number),
+                block_hash.clone(),
+                block_number,
                 &active_validator_account_ids,
-                (index, false, None, None, is_successful),
+                index,
+                false,
+                None,
+                None,
+                is_successful,
                 extrinsic,
             )
             .await?
@@ -1013,13 +375,14 @@ impl Service for BlockProcessor {
             block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
-                    Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
+                    Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
+                target_block_number().set(finalized_block_number as i64);
                 let block_processor_substrate_client = block_processor_substrate_client.clone();
                 let runtime_information = runtime_information.clone();
                 let postgres = postgres.clone();
                 if is_indexing_past_blocks.load(Ordering::SeqCst) {
-                    trace!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
+                    log::debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
                     return;
                 }
                 let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);
@@ -1029,7 +392,7 @@ impl Service for BlockProcessor {
                     let processed_block_height = match postgres.get_processed_block_height().await {
                         Ok(processed_block_height) => processed_block_height,
                         Err(error) => {
-                            error!("Cannot get processed block height from the database: {:?}", error);
+                            log::error!("Cannot get processed block height from the database: {:?}", error);
                             return;
                         }
                     };
@@ -1040,11 +403,12 @@ impl Service for BlockProcessor {
                             CONFIG.block_processor.start_block_number
                         );
                         while block_number <= finalized_block_number {
-                            debug!(
+                            log::info!(
                                 "Process block #{}. Target #{}.",
                                 block_number,
                                 finalized_block_number
                             );
+                            let start = std::time::Instant::now();
                             let update_result = self.process_block(
                                 &mut block_processor_substrate_client,
                                 &runtime_information,
@@ -1053,11 +417,15 @@ impl Service for BlockProcessor {
                                 false,
                                 false,
                             ).await;
+                            metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             match update_result {
-                                Ok(_) => block_number += 1,
+                                Ok(_) => {
+                                    processed_block_number().set(block_number as i64);
+                                    block_number += 1
+                                },
                                 Err(error) => {
-                                    error!("{:?}", error);
-                                    error!(
+                                    log::error!("{:?}", error);
+                                    log::error!(
                                         "History block processing failed for block #{}.",
                                         block_number,
                                     );
@@ -1074,7 +442,7 @@ impl Service for BlockProcessor {
                             .metadata
                             .constants
                             .expected_block_time_millis;
-                        debug!("Process block #{}.", finalized_block_number);
+                        log::info!("Process block #{}.", finalized_block_number);
                         let update_result = self.process_block(
                             &mut block_processor_substrate_client,
                             &runtime_information,
@@ -1086,8 +454,8 @@ impl Service for BlockProcessor {
                         match update_result {
                             Ok(_) => (),
                             Err(error) => {
-                                error!("{:?}", error);
-                                error!(
+                                log::error!("{:?}", error);
+                                log::error!(
                                 "Block processing failed for finalized block #{}. Will try again with the next block.",
                                 finalized_block_header.get_number().unwrap_or(0),
                             );
@@ -1097,7 +465,7 @@ impl Service for BlockProcessor {
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
-            error!(
+            log::error!(
                 "Finalized block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
