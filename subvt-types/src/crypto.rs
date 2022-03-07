@@ -1,7 +1,7 @@
 //! Contains the `AccountId` struct, a 32-byte value that uniquely identifies a Substrate account.
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use sp_core::crypto::Ss58Codec;
+use sp_core::crypto::{Ss58AddressFormat, Ss58Codec};
 use std::convert::{From, TryFrom, TryInto};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -14,6 +14,11 @@ pub struct AccountId([u8; 32]);
 impl AccountId {
     pub fn to_ss58_check(&self) -> String {
         sp_core::crypto::AccountId32::new(self.0).to_ss58check()
+    }
+
+    pub fn to_ss58_check_with_version(&self, prefix: u16) -> String {
+        sp_core::crypto::AccountId32::new(self.0)
+            .to_ss58check_with_version(Ss58AddressFormat::custom(prefix))
     }
 
     pub fn from_ss58_check(address: &str) -> Result<Self, DecodeError> {

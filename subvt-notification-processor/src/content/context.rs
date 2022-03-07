@@ -12,14 +12,18 @@ pub(crate) fn get_renderer_context(
     context.insert("chain", &CONFIG.substrate.chain);
     context.insert(
         "validator_address",
-        &notification.validator_account_id.to_ss58_check(),
+        &notification
+            .validator_account_id
+            .to_ss58_check_with_version(network.ss58_prefix as u16),
     );
     context.insert(
         "validator_display",
         &if let Some(account) = &notification.get_account()? {
             account.get_display_or_condensed_address(None)
         } else {
-            notification.validator_account_id.to_ss58_check()
+            notification
+                .validator_account_id
+                .to_ss58_check_with_version(network.ss58_prefix as u16)
         },
     );
     match NotificationTypeCode::from(notification.notification_type_code.as_ref()) {
