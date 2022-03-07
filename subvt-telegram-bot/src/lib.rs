@@ -29,6 +29,23 @@ lazy_static! {
     static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+)(\s+[a-zA-Z0-9_-]+)*").unwrap();
     static ref CMD_ARG_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
+    static ref DEFAULT_RULES: Vec<(NotificationTypeCode, NotificationPeriodType, u16)> = vec![
+        (
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorActiveNextSession,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorInactiveNextSession,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+    ];
 }
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -72,6 +89,28 @@ impl TelegramBot {
         Ok(())
     }
 
+    async fn create_default_notification_rules(
+        &self,
+        app_user_id: u32,
+        channel_id: u32,
+    ) -> anyhow::Result<()> {
+        let mut channel_id_set = HashSet::new();
+        channel_id_set.insert(channel_id);
+        for rule in DEFAULT_RULES.iter() {
+            self.app_postgres
+                .save_user_notification_rule(
+                    app_user_id,
+                    &rule.0.to_string(),
+                    (None, None),
+                    (Some(CONFIG.substrate.network_id), true),
+                    (&rule.1, rule.2),
+                    (&HashSet::new(), &channel_id_set, &[]),
+                )
+                .await?;
+        }
+        Ok(())
+    }
+
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
         log::info!(
             "Create new app user, notification channel and rules for chat {}.",
@@ -91,17 +130,8 @@ impl TelegramBot {
             .await?;
         let mut channel_id_set = HashSet::new();
         channel_id_set.insert(channel_id);
-        // save default notification rules
-        self.app_postgres
-            .save_user_notification_rule(
-                app_user_id,
-                &NotificationTypeCode::ChainValidatorBlockAuthorship.to_string(),
-                (None, None),
-                (Some(CONFIG.substrate.network_id), true),
-                (&NotificationPeriodType::Immediate, 0),
-                (&HashSet::new(), &channel_id_set, &[]),
-            )
-            .await?;
+        // create notification rules
+        self.create_default_notification_rules(app_user_id, channel_id).await?;
         Ok(app_user_id)
     }
 
