@@ -54,7 +54,10 @@ impl Redis {
     pub fn fetch_validator_details(
         &self,
         account_id: &AccountId,
-    ) -> anyhow::Result<ValidatorDetails> {
+    ) -> anyhow::Result<Option<ValidatorDetails>> {
+        if !self.validator_exists_by_account_id(account_id)? {
+            return Ok(None);
+        }
         let mut connection = self.client.get_connection()?;
         let finalized_block_number = self.get_finalized_block_number()?;
         let active_validator_key = format!(
@@ -76,6 +79,6 @@ impl Redis {
                     .query(&mut connection)?
             }
         };
-        Ok(serde_json::from_str(&validator_json_string)?)
+        Ok(Some(serde_json::from_str(&validator_json_string)?))
     }
 }

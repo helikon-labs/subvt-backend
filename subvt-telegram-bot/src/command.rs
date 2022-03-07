@@ -30,7 +30,9 @@ impl TelegramBot {
             info!("Send validator list for query: {}", query_type);
             let mut validators = Vec::new();
             for account_id in &validator_account_ids {
-                validators.push(self.redis.fetch_validator_details(account_id)?);
+                if let Some(validator_details) = self.redis.fetch_validator_details(account_id)? {
+                    validators.push(validator_details);
+                }
             }
             validators.sort_by(|v1, v2| {
                 let maybe_v1_display = v1.account.get_display();

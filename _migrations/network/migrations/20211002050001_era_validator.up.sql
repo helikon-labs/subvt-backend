@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS sub_era_validator
     blocks_nominations      bool,
     self_stake              VARCHAR(128),
     total_stake             VARCHAR(128),
+    active_nominator_count  integer,
     reward_points           bigint NOT NULL DEFAULT 0,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()

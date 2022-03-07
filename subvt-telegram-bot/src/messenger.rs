@@ -27,6 +27,7 @@ pub enum MessageType {
     UnknownCommand(String),
     InvalidAddress(String),
     InvalidAddressTryAgain(String),
+    ValidatorNotFound(String),
     AddValidatorNotFound(String),
     ValidatorExistsOnChat(String),
     NoValidatorsOnChat,
@@ -40,7 +41,7 @@ pub enum MessageType {
         onekv_nominator_account_ids: Vec<AccountId>,
     },
     RemoveValidatorNotFound(String),
-    ValidatorRemoved(ValidatorDetails),
+    ValidatorRemoved(Option<ValidatorDetails>),
 }
 
 impl MessageType {
@@ -64,6 +65,10 @@ impl MessageType {
             Self::InvalidAddressTryAgain(address) => {
                 context.insert("address", address);
                 "invalid_address_try_again.html"
+            }
+            Self::ValidatorNotFound(address) => {
+                context.insert("address", address);
+                "validator_not_found.html"
             }
             Self::AddValidatorNotFound(address) => {
                 context.insert("condensed_address", &get_condensed_address(address, None));
@@ -390,13 +395,15 @@ impl MessageType {
                 context.insert("condensed_address", &get_condensed_address(address, None));
                 "remove_validator_not_found.html"
             }
-            Self::ValidatorRemoved(validator_details) => {
-                context.insert(
-                    "display",
-                    &validator_details
-                        .account
-                        .get_display_or_condensed_address(None),
-                );
+            Self::ValidatorRemoved(maybe_validator_details) => {
+                if let Some(validator_details) = maybe_validator_details {
+                    context.insert(
+                        "display",
+                        &validator_details
+                            .account
+                            .get_display_or_condensed_address(None),
+                    );
+                }
                 "validator_removed.html"
             }
         };

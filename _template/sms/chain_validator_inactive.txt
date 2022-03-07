@@ -1,1 +1,0 @@
-{{ validator_display }} is not anymore an active validator ⏸

@@ -11,7 +11,7 @@ pub(crate) struct APNSSender {
 }
 
 impl APNSSender {
-    pub fn new() -> anyhow::Result<APNSSender> {
+    pub async fn new() -> anyhow::Result<APNSSender> {
         let mut apns_key = std::fs::File::open(&CONFIG.notification_processor.apns_key_location)?;
         let apns_client = a2::Client::token(
             &mut apns_key,
@@ -23,7 +23,7 @@ impl APNSSender {
                 a2::Endpoint::Sandbox
             },
         )?;
-        let content_provider = ContentProvider::new()?;
+        let content_provider = ContentProvider::new().await?;
         Ok(APNSSender {
             apns_client,
             content_provider,

@@ -6235,6 +6235,7 @@ dependencies = [
  "subvt-persistence",
  "subvt-service-common",
  "subvt-types",
+ "subvt-utility",
  "tera",
  "thiserror",
  "tokio",

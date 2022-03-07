@@ -11,9 +11,9 @@ pub(crate) struct TelegramSender {
 }
 
 impl TelegramSender {
-    pub fn new() -> anyhow::Result<TelegramSender> {
+    pub async fn new() -> anyhow::Result<TelegramSender> {
         let telegram_client = TelegramClient::new(&CONFIG.notification_processor.telegram_token);
-        let content_provider = ContentProvider::new()?;
+        let content_provider = ContentProvider::new().await?;
         Ok(TelegramSender {
             telegram_client,
             content_provider,

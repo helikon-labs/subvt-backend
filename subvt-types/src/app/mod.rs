@@ -29,6 +29,8 @@ pub struct Network {
     pub hash: String,
     pub name: String,
     pub ss58_prefix: u32,
+    pub token_ticker: String,
+    pub token_decimal_count: u8,
     pub network_status_service_url: Option<String>,
     pub report_service_url: Option<String>,
     pub validator_details_service_url: Option<String>,

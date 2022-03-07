@@ -1,1 +1,0 @@
-{{ validator_display }} is now an active validator 🚀

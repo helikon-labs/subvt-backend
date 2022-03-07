@@ -17,8 +17,8 @@ pub(crate) struct FCMSender {
 }
 
 impl FCMSender {
-    pub fn new() -> anyhow::Result<FCMSender> {
-        let content_provider = ContentProvider::new()?;
+    pub async fn new() -> anyhow::Result<FCMSender> {
+        let content_provider = ContentProvider::new().await?;
         Ok(FCMSender {
             fcm_client: FCMClient::new(),
             content_provider,

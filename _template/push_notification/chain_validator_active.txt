@@ -1,1 +1,1 @@
-{{ validator_display }} is now an active validator ⏸
+{{ validator_display }} is now an active validator 🚀{% if total_stake %} Total Active Stake: {{ total_stake }} {{ token_ticker }}{% endif %}

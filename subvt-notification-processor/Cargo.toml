@@ -23,10 +23,11 @@ redis = "0.21.5"
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 subvt-config = { path = "../subvt-config" }
+subvt-logging = { path = "../subvt-logging" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-subvt-logging = { path = "../subvt-logging" }
+subvt-utility = { path = "../subvt-utility" }
 tera = "1.15.0"
 thiserror = "1.0"
 tokio = { version = "1.17.0", features = ["full"] }

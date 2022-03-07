@@ -12,6 +12,8 @@ pub type PostgresNetwork = (
     String,
     String,
     i32,
+    String,
+    i32,
     Option<String>,
     Option<String>,
     Option<String>,
@@ -26,11 +28,13 @@ impl From<PostgresNetwork> for Network {
             hash: db_network.1.clone(),
             name: db_network.2.clone(),
             ss58_prefix: db_network.3 as u32,
-            network_status_service_url: db_network.4.clone(),
-            report_service_url: db_network.5.clone(),
-            validator_details_service_url: db_network.6.clone(),
-            active_validator_list_service_url: db_network.7.clone(),
-            inactive_validator_list_service_url: db_network.8,
+            token_ticker: db_network.4.clone(),
+            token_decimal_count: db_network.5 as u8,
+            network_status_service_url: db_network.6.clone(),
+            report_service_url: db_network.7.clone(),
+            validator_details_service_url: db_network.8.clone(),
+            active_validator_list_service_url: db_network.9.clone(),
+            inactive_validator_list_service_url: db_network.10,
         }
     }
 }

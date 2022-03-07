@@ -3,7 +3,8 @@
 use crate::content::context::get_renderer_context;
 use crate::CONFIG;
 use std::collections::HashMap;
-use subvt_types::app::{Notification, NotificationChannel};
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_types::app::{Network, Notification, NotificationChannel};
 use tera::Tera;
 
 pub(crate) mod context;
@@ -17,7 +18,8 @@ pub struct NotificationContent {
 /// Provider struct. Has separate renderers for separate text notification channels.
 /// Expects the `template` folder in this crate to be in the same folder as the executable.
 pub struct ContentProvider {
-    renderers: HashMap<String, Tera>,
+    network_map: HashMap<u32, Network>,
+    renderer_map: HashMap<String, Tera>,
 }
 
 fn get_tera(folder_name: &str) -> anyhow::Result<Tera> {
@@ -36,9 +38,15 @@ impl ContentProvider {
         notification: &Notification,
     ) -> anyhow::Result<NotificationContent> {
         let channel = notification.notification_channel.to_string();
-        match self.renderers.get(&channel) {
+        match self.renderer_map.get(&channel) {
             Some(renderer) => {
-                let context = get_renderer_context(notification)?;
+                let network = self
+                    .network_map
+                    .get(&notification.network_id)
+                    .unwrap_or_else(|| {
+                        panic!("Cannot find network with id {}.", notification.network_id)
+                    });
+                let context = get_renderer_context(network, notification)?;
                 let notification_content = NotificationContent {
                     subject: renderer
                         .render(
@@ -65,22 +73,38 @@ impl ContentProvider {
         }
     }
 
-    pub fn new() -> anyhow::Result<ContentProvider> {
-        let mut renderers = HashMap::new();
-        renderers.insert(
+    pub async fn new() -> anyhow::Result<ContentProvider> {
+        let network_map = {
+            let postgres =
+                PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
+            let networks = postgres.get_networks().await?;
+            let mut network_map = HashMap::new();
+            for network in networks {
+                network_map.insert(network.id, network.clone());
+            }
+            network_map
+        };
+        let mut renderer_map = HashMap::new();
+        renderer_map.insert(
             NotificationChannel::APNS.to_string(),
             get_tera("push_notification")?,
         );
-        renderers.insert(NotificationChannel::Email.to_string(), get_tera("email")?);
-        renderers.insert(
+        renderer_map.insert(NotificationChannel::Email.to_string(), get_tera("email")?);
+        renderer_map.insert(
             NotificationChannel::FCM.to_string(),
             get_tera("push_notification")?,
         );
-        renderers.insert(
+        renderer_map.insert(
             NotificationChannel::Telegram.to_string(),
             get_tera("telegram")?,
         );
-        renderers.insert(NotificationChannel::SMS.to_string(), get_tera("sms")?);
-        Ok(ContentProvider { renderers })
+        renderer_map.insert(
+            NotificationChannel::SMS.to_string(),
+            get_tera("push_notification")?,
+        );
+        Ok(ContentProvider {
+            network_map,
+            renderer_map,
+        })
     }
 }

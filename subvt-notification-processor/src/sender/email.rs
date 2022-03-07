@@ -15,7 +15,7 @@ pub(crate) struct EmailSender {
 }
 
 impl EmailSender {
-    pub fn new() -> anyhow::Result<EmailSender> {
+    pub async fn new() -> anyhow::Result<EmailSender> {
         let mailer = Mailer::relay(&CONFIG.notification_processor.email_smtp_server_url)?
             .credentials(Credentials::new(
                 CONFIG.notification_processor.email_account.clone(),
@@ -23,7 +23,7 @@ impl EmailSender {
             ))
             // .port(config.notification_sender.email_smtp_server_tls_port)
             .build();
-        let content_provider = ContentProvider::new()?;
+        let content_provider = ContentProvider::new().await?;
         Ok(EmailSender {
             mailer,
             content_provider,

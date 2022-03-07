@@ -35,23 +35,23 @@ pub struct NotificationProcessor {
 }
 
 impl NotificationProcessor {
-    fn prepare_senders() -> anyhow::Result<SenderMap> {
+    async fn prepare_senders() -> anyhow::Result<SenderMap> {
         let mut senders = HashMap::new();
         senders.insert(
             NotificationChannel::APNS,
-            Arc::new(Box::new(APNSSender::new()?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(APNSSender::new().await?) as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::Email,
-            Arc::new(Box::new(EmailSender::new()?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(EmailSender::new().await?) as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::FCM,
-            Arc::new(Box::new(FCMSender::new()?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(FCMSender::new().await?) as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::Telegram,
-            Arc::new(Box::new(TelegramSender::new()?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(TelegramSender::new().await?) as Box<dyn NotificationSender>),
         );
         Ok(senders)
     }
@@ -66,7 +66,7 @@ impl NotificationProcessor {
         Ok(NotificationProcessor {
             postgres,
             redis,
-            senders: NotificationProcessor::prepare_senders()?,
+            senders: NotificationProcessor::prepare_senders().await?,
         })
     }
 }
@@ -86,11 +86,9 @@ impl Service for NotificationProcessor {
             .reset_pending_and_failed_notifications()
             .await?;
         info!("Start notification processors.");
-        tokio::try_join!(
-            self.start_immediate_notification_processor(),
-            self.start_hourly_and_daily_notification_processor(),
-            self.start_era_and_epoch_notification_processor(),
-        )?;
+        self.start_hourly_and_daily_notification_processor()?;
+        self.start_immediate_notification_processor()?;
+        self.start_era_and_epoch_notification_processor().await?;
         Ok(())
     }
 }

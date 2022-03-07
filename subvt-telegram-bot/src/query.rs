@@ -1,5 +1,4 @@
 use crate::{MessageType, TelegramBot, CONFIG};
-use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use subvt_types::crypto::AccountId;
@@ -59,21 +58,22 @@ impl Query {
 
 impl TelegramBot {
     pub async fn process_query(&self, chat_id: i64, query: &Query) -> anyhow::Result<()> {
-        info!("Process query: {}", query);
+        log::info!("Process query: {}", query);
         crate::metrics::query_call_counter(&query.query_type).inc();
         match query.query_type {
             QueryType::ConfirmBroadcast => {
-                info!("Broadcast confirmed, sending.");
+                log::info!("Broadcast confirmed, sending.");
                 for chat_id in self.network_postgres.get_chat_ids().await? {
                     match self
                         .messenger
                         .send_message(chat_id, MessageType::Broadcast)
                         .await
                     {
-                        Ok(_) => info!("Broadcast sent to chat {}.", chat_id),
-                        Err(error) => error!(
+                        Ok(_) => log::info!("Broadcast sent to chat {}.", chat_id),
+                        Err(error) => log::error!(
                             "Error while sending broadcast to chat {}: {:?}",
-                            chat_id, error
+                            chat_id,
+                            error
                         ),
                     }
                 }
@@ -81,73 +81,118 @@ impl TelegramBot {
             QueryType::ValidatorInfo => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        let validator_details = self.redis.fetch_validator_details(&account_id)?;
-                        info!("Validator selected for validator info in chat {}.", chat_id);
-                        let onekv_summary =
-                            if let Some(id) = validator_details.onekv_candidate_record_id {
-                                self.network_postgres
-                                    .get_onekv_candidate_summary_by_id(id)
-                                    .await?
-                            } else {
-                                None
-                            };
-                        self.messenger
-                            .send_message(
-                                chat_id,
-                                MessageType::ValidatorInfo(
-                                    Box::new(validator_details),
-                                    Box::new(onekv_summary),
-                                ),
-                            )
-                            .await?;
+                        if let Some(validator_details) =
+                            self.redis.fetch_validator_details(&account_id)?
+                        {
+                            log::info!(
+                                "Validator selected for validator info in chat {}.",
+                                chat_id
+                            );
+                            let onekv_summary =
+                                if let Some(id) = validator_details.onekv_candidate_record_id {
+                                    self.network_postgres
+                                        .get_onekv_candidate_summary_by_id(id)
+                                        .await?
+                                } else {
+                                    None
+                                };
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::ValidatorInfo(
+                                        Box::new(validator_details),
+                                        Box::new(onekv_summary),
+                                    ),
+                                )
+                                .await?;
+                        } else {
+                            log::warn!(
+                                "Validator not found! Selected for validator info in chat {}.",
+                                chat_id
+                            );
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                                )
+                                .await?;
+                        }
                     }
                 }
             }
             QueryType::NominationSummary => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        info!(
-                            "Validator selected for nomination summary in chat {}.",
-                            chat_id
-                        );
-                        let validator_details = self.redis.fetch_validator_details(&account_id)?;
-                        self.messenger
-                            .send_message(
-                                chat_id,
-                                MessageType::NominationSummary(validator_details),
-                            )
-                            .await?;
+                        if let Some(validator_details) =
+                            self.redis.fetch_validator_details(&account_id)?
+                        {
+                            log::info!(
+                                "Validator selected for nomination summary in chat {}.",
+                                chat_id
+                            );
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::NominationSummary(validator_details),
+                                )
+                                .await?;
+                        } else {
+                            log::warn!(
+                                "Validator not found! Selected for nomination summary in chat {}.",
+                                chat_id
+                            );
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                                )
+                                .await?;
+                        }
                     }
                 }
             }
             QueryType::NominationDetails => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        info!(
-                            "Validator selected for nomination details in chat {}.",
-                            chat_id
-                        );
-                        let validator_details = self.redis.fetch_validator_details(&account_id)?;
-                        let onekv_nominator_account_ids = self
-                            .network_postgres
-                            .get_onekv_nominator_account_ids()
-                            .await?;
-                        self.messenger
-                            .send_message(
-                                chat_id,
-                                MessageType::NominationDetails {
-                                    validator_details,
-                                    onekv_nominator_account_ids,
-                                },
-                            )
-                            .await?;
+                        if let Some(validator_details) =
+                            self.redis.fetch_validator_details(&account_id)?
+                        {
+                            log::info!(
+                                "Validator selected for nomination details in chat {}.",
+                                chat_id
+                            );
+                            let onekv_nominator_account_ids = self
+                                .network_postgres
+                                .get_onekv_nominator_account_ids()
+                                .await?;
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::NominationDetails {
+                                        validator_details,
+                                        onekv_nominator_account_ids,
+                                    },
+                                )
+                                .await?;
+                        } else {
+                            log::warn!(
+                                "Validator not found! Selected for nomination details in chat {}.",
+                                chat_id
+                            );
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                                )
+                                .await?;
+                        }
                     }
                 }
             }
             QueryType::RemoveValidator => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        info!("Validator selected for removal in chat {}.", chat_id);
+                        log::info!("Validator selected for removal in chat {}.", chat_id);
                         if self
                             .network_postgres
                             .chat_has_validator(chat_id, &account_id)

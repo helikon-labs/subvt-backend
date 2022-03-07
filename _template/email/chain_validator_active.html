@@ -1,1 +1,4 @@
-<a href="https://{{ chain }}.subscan.io/account/{{ validator_address }}" target="_blank">{{ validator_display }}</a> is now an active validator 🚀
+<a href="https://{{ chain }}.subscan.io/account/{{ validator_address }}" target="_blank">{{ validator_display }}</a> is now an active validator 🚀{% if self_stake %}
+Self Stake: <strong>{{ self_stake }} {{ token_ticker }}</strong>
+Total Active Stake: <strong>{{ total_stake }} {{ token_ticker }}</strong>
+Active Nominator Count: <strong>{{ active_nominator_count }}</strong>{% endif %}

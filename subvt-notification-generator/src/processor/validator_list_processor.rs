@@ -331,7 +331,11 @@ impl NotificationGenerator {
                     &rules,
                     finalized_block_number,
                     &current.account.id,
-                    None::<&()>,
+                    if let Some(validator_stake) = &current.validator_stake {
+                        Some(validator_stake)
+                    } else {
+                        None
+                    },
                 )
                 .await?;
                 network_postgres

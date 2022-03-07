@@ -195,8 +195,8 @@ impl PostgreSQLNetworkStorage {
             // create record (if not exists)
             sqlx::query(
                 r#"
-                INSERT INTO sub_era_validator (era_index, validator_account_id, controller_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                INSERT INTO sub_era_validator (era_index, validator_account_id, controller_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake, active_nominator_count)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
@@ -209,6 +209,7 @@ impl PostgreSQLNetworkStorage {
                 .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.blocks_nominations))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.total_stake.to_string()))
+                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.nominators.len() as i32))
                 .execute(&mut transaction)
                 .await?;
         }

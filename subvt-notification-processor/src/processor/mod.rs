@@ -1,5 +1,4 @@
 use crate::NotificationProcessor;
-use log::{error, info};
 use subvt_types::app::NotificationPeriodType;
 
 pub(crate) mod era_epoch;
@@ -12,9 +11,10 @@ impl NotificationProcessor {
         period_type: NotificationPeriodType,
         period: u32,
     ) -> anyhow::Result<()> {
-        info!(
+        log::info!(
             "Process {} notifications for period {}.",
-            period_type, period,
+            period_type,
+            period,
         );
         match self
             .postgres
@@ -22,7 +22,7 @@ impl NotificationProcessor {
             .await
         {
             Ok(notifications) => {
-                info!(
+                log::info!(
                     "Got {} pending {} notifications.",
                     notifications.len(),
                     period_type
@@ -39,7 +39,7 @@ impl NotificationProcessor {
                         .await?;
                     tokio::spawn(async move {
                         let nofication_id = notification.id;
-                        info!(
+                        log::info!(
                             "Send {} notification #{} for {}.",
                             notification.notification_channel,
                             notification.id,
@@ -50,9 +50,11 @@ impl NotificationProcessor {
                                 let _ = postgres.mark_notification_sent(nofication_id).await;
                             }
                             Err(error) => {
-                                error!(
+                                log::error!(
                                     "Error while sending {}-{} notification: {:?}",
-                                    period, period_type, error,
+                                    period,
+                                    period_type,
+                                    error,
                                 );
                                 let _ = postgres.mark_notification_failed(nofication_id).await;
                             }
@@ -60,10 +62,14 @@ impl NotificationProcessor {
                     });
                 }
             }
-            Err(error) => error!(
-                "Error while getting pending {}-{} notifications: {:?}",
-                period, period_type, error
-            ),
+            Err(error) => {
+                log::error!(
+                    "Error while getting pending {}-{} notifications: {:?}",
+                    period,
+                    period_type,
+                    error
+                )
+            }
         }
         Ok(())
     }
