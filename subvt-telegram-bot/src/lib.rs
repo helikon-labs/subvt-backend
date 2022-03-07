@@ -131,7 +131,8 @@ impl TelegramBot {
         let mut channel_id_set = HashSet::new();
         channel_id_set.insert(channel_id);
         // create notification rules
-        self.create_default_notification_rules(app_user_id, channel_id).await?;
+        self.create_default_notification_rules(app_user_id, channel_id)
+            .await?;
         Ok(app_user_id)
     }
 
