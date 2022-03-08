@@ -11,7 +11,6 @@ use bus::Bus;
 use clap::{Arg, Command};
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
-use log::{debug, error, warn};
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -22,6 +21,8 @@ use subvt_types::{
     crypto::AccountId,
     subvt::{ValidatorDetails, ValidatorDetailsDiff, ValidatorListUpdate, ValidatorSummary},
 };
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -55,7 +56,8 @@ impl ValidatorListServer {
             "subscribe_validatorList",
             "unsubscribe_validatorList",
             move |_params, mut sink, _| {
-                debug!("New subscription.");
+                log::info!("New subscription.");
+                metrics::subscription_count().inc();
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
                 {
                     let validator_summaries: Vec<ValidatorSummary> = {
@@ -74,10 +76,11 @@ impl ValidatorListServer {
                             BusEvent::Update(update) => {
                                 let send_result = sink.send(&update);
                                 if let Err(error) = send_result {
-                                    debug!("Subscription closed. {:?}", error);
+                                    metrics::subscription_count().dec();
+                                    log::info!("Subscription closed. {:?}", error);
                                     return;
                                 } else {
-                                    debug!("Published diff.");
+                                    log::info!("Published diff.");
                                 }
                             }
                             BusEvent::Error => {
@@ -121,6 +124,7 @@ impl Service for ValidatorListServer {
             .get_matches();
         let is_active_list = !matches.is_present("inactive");
         let mut last_finalized_block_number = 0;
+        metrics::subscription_count().set(0);
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
 
@@ -158,13 +162,14 @@ impl Service for ValidatorListServer {
             }
             let finalized_block_number: u64 = payload.unwrap();
             if last_finalized_block_number == finalized_block_number {
-                warn!(
+                log::warn!(
                     "Skip duplicate finalized block #{}.",
                     finalized_block_number
                 );
                 continue 'outer;
             }
-            debug!("New finalized block #{}.", finalized_block_number);
+            log::info!("New finalized block #{}.", finalized_block_number);
+            metrics::target_block_number().set(finalized_block_number as i64);
             let prefix = format!(
                 "subvt:{}:validators:{}:{}",
                 CONFIG.substrate.chain,
@@ -175,7 +180,7 @@ impl Service for ValidatorListServer {
                 .arg(format!("{}:account_id_set", prefix))
                 .query(&mut data_connection)
                 .context("Can't read validator account ids from Redis.")?;
-            debug!(
+            log::info!(
                 "Got {} validator account ids. Checking for changes...",
                 validator_account_ids.len()
             );
@@ -219,7 +224,7 @@ impl Service for ValidatorListServer {
                             .query(&mut data_connection)
                             .context("Can't read validator summary hash from Redis.")?;
                         if summary_hash != db_summary_hash {
-                            debug!("Summary hash changed for {}.", validator_account_id);
+                            log::info!("Summary hash changed for {}.", validator_account_id);
                             let validator_json_string: String = redis::cmd("GET")
                                 .arg(prefix)
                                 .query(&mut data_connection)
@@ -267,7 +272,7 @@ impl Service for ValidatorListServer {
                     validator_map.insert(validator.account.id.clone(), validator);
                 }
             }
-            debug!(
+            log::info!(
                 "Completed checks. Remove {} validators. {} new validators. {} updated validators.",
                 update.remove_ids.len(),
                 update.insert.len(),
@@ -276,18 +281,19 @@ impl Service for ValidatorListServer {
             {
                 let mut bus = bus.lock().unwrap();
                 bus.broadcast(BusEvent::Update(update));
-                debug!("Update published to the bus.");
+                log::info!("Update published to the bus.");
             }
+            metrics::processed_block_number().set(finalized_block_number as i64);
             last_finalized_block_number = finalized_block_number;
         };
-        error!("{:?}", error);
+        log::error!("{:?}", error);
         {
             let mut bus = bus.lock().unwrap();
             bus.broadcast(BusEvent::Error);
         }
-        debug!("Stopping RPC server...");
+        log::info!("Stopping RPC server...");
         server_stop_handle.stop()?;
-        debug!("RPC server fully stopped.");
+        log::info!("RPC server fully stopped.");
         Err(error)
     }
 }

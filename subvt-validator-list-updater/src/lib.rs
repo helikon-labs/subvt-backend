@@ -4,7 +4,6 @@ use anyhow::Context;
 use async_lock::RwLock;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::{debug, error, trace};
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
@@ -18,6 +17,8 @@ use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::{BlockHeader, Era};
 use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -49,7 +50,7 @@ impl ValidatorListUpdater {
         let mut redis_cmd_pipeline = Pipeline::new();
         // delete history
         {
-            debug!("Clean Redis history.");
+            log::info!("Clean Redis history.");
             let mut processed_block_numbers = processed_block_numbers.write().await;
             let to_delete: Vec<u64> = processed_block_numbers
                 .iter()
@@ -67,7 +68,7 @@ impl ValidatorListUpdater {
                         CONFIG.substrate.chain, delete
                     ))
                     .query(&mut redis_connection)?;
-                debug!("Delete {} records for block #{}.", keys.len(), delete);
+                log::info!("Delete {} records for block #{}.", keys.len(), delete);
                 for key in keys {
                     redis_cmd_pipeline.cmd("DEL").arg(key);
                 }
@@ -94,7 +95,6 @@ impl ValidatorListUpdater {
                 }
             })
             .collect();
-        debug!("Prepare Redis command pipeline.");
         redis_cmd_pipeline
             .cmd("SADD")
             .arg(format!("{}:active:{}", prefix, "account_id_set"))
@@ -109,6 +109,7 @@ impl ValidatorListUpdater {
         redis_cmd_pipeline
             .arg(format!("{}:active_era", prefix))
             .arg(serde_json::to_string(active_era)?);
+        log::info!("Prepare validator details JSON entries.");
         // set validator details
         for validator in validators {
             let validator_prefix = format!(
@@ -157,7 +158,7 @@ impl ValidatorListUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(finalized_block_number);
-        debug!("Write to Redis.");
+        log::info!("Write to Redis.");
         redis_cmd_pipeline
             .query(&mut redis_connection)
             .context("Error while setting Redis validators.")?;
@@ -175,7 +176,7 @@ impl ValidatorListUpdater {
         let finalized_block_number = finalized_block_header
             .get_number()
             .context("Error while extracting finalized block number.")?;
-        debug!("Process new finalized block #{}.", finalized_block_number);
+        log::info!("Process new finalized block #{}.", finalized_block_number);
         let finalized_block_hash = client
             .get_block_hash(finalized_block_number)
             .await
@@ -187,7 +188,7 @@ impl ValidatorListUpdater {
             .await
             .context("Error while getting validators.")?;
         // enrich data with data from the relational database
-        debug!("Get RDB content.");
+        log::info!("Get RDB content.");
         for validator in validators.iter_mut() {
             let db_validator_info = postgres
                 .get_validator_info(
@@ -212,7 +213,7 @@ impl ValidatorListUpdater {
             validator.onekv_rank = db_validator_info.onekv_rank;
             validator.onekv_is_valid = db_validator_info.onekv_is_valid;
         }
-        debug!("Got RDB content. Update Redis.");
+        log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
         ValidatorListUpdater::update_redis(
             &active_era,
@@ -222,7 +223,7 @@ impl ValidatorListUpdater {
         )
         .await?;
         let elapsed = start.elapsed();
-        debug!("Redis updated. Took {} ms.", elapsed.as_millis());
+        log::info!("Redis updated. Took {} ms.", elapsed.as_millis());
         Ok(validators)
     }
 }
@@ -246,7 +247,7 @@ impl Service for ValidatorListUpdater {
             let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(Vec::new()));
             // clean Redis history
             {
-                debug!("Clean Redis history.");
+                log::info!("Clean Redis history.");
                 let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
                 let mut connection = redis_client.get_connection().context(format!(
                     "Cannot connect to Redis at URL {}.",
@@ -264,10 +265,11 @@ impl Service for ValidatorListUpdater {
             substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
                 let finalized_block_number = match finalized_block_header.get_number() {
                     Ok(block_number) => block_number,
-                    Err(_) => return error!("Cannot get block number for header: {:?}", finalized_block_header)
+                    Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
+                metrics::target_block_number().set(finalized_block_number as i64);
                 if is_busy.load(Ordering::SeqCst) {
-                    trace!("Busy processing a past block. Skip block #{}.", finalized_block_number);
+                    log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
                     return;
                 }
                 is_busy.store(true, Ordering::SeqCst);
@@ -276,6 +278,7 @@ impl Service for ValidatorListUpdater {
                 let postgres = postgres.clone();
                 let is_busy = Arc::clone(&is_busy);
                 tokio::spawn(async move {
+                    let start = std::time::Instant::now();
                     let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
                         &substrate_client,
                         &postgres,
@@ -283,17 +286,20 @@ impl Service for ValidatorListUpdater {
                         &finalized_block_header,
                     ).await;
                     if let Err(error) = update_result {
-                        error!("{:?}", error);
-                        error!(
+                        log::error!("{:?}", error);
+                        log::error!(
                             "Validator list update failed for block #{}. Will try again with the next block.",
                             finalized_block_header.get_number().unwrap_or(0),
                         );
+                    } else {
+                        metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                        metrics::processed_block_number().set(finalized_block_number as i64);
                     }
                     is_busy.store(false, Ordering::SeqCst);
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
-            error!(
+            log::error!(
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
