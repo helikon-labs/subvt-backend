@@ -10,7 +10,7 @@ pub fn target_finalized_block_number() -> IntGauge {
             "target_finalized_block_number",
             "Number of the target finalized block on the node",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
@@ -22,7 +22,7 @@ pub fn processed_finalized_block_number() -> IntGauge {
             "processed_finalized_block_number",
             "Number of the last processed block",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
@@ -34,7 +34,7 @@ pub fn subscription_count() -> IntGauge {
             "subscription_count",
             "Number subscribers to the service",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }

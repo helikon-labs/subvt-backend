@@ -10,7 +10,7 @@ pub fn target_best_block_number() -> IntGauge {
             "target_best_block_number",
             "Number of the target finalized block on the node",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
@@ -22,7 +22,7 @@ pub fn processed_best_block_number() -> IntGauge {
             "processed_best_block_number",
             "Number of the last processed block",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
@@ -34,10 +34,10 @@ pub fn processing_time_ms() -> Histogram {
             "block_processing_time_ms",
             "Block processing time in milliseconds",
             vec![
-                100.0, 250.0, 500.0, 1_000.0, 1_500.0, 2_000.0, 3_000.0, 5_000.0, 7_500.0, 10_000.0
+                100.0, 250.0, 500.0, 1_000.0, 1_500.0, 2_000.0, 3_000.0, 5_000.0, 7_500.0, 10_000.0,
             ],
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }

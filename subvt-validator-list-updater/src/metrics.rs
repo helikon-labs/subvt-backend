@@ -10,7 +10,7 @@ pub fn target_finalized_block_number() -> IntGauge {
             "target_finalized_block_number",
             "Number of the target finalized block on the node",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }

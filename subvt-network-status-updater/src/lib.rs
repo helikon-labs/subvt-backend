@@ -67,7 +67,8 @@ impl NetworkStatusUpdater {
             .context("Error while fetching best block hash.")?;
         log::debug!(
             "Best block #{} hash {}.",
-            best_block_number, best_block_hash
+            best_block_number,
+            best_block_hash
         );
         // finalized block number & hash
         let finalized_block_hash = client
@@ -83,7 +84,8 @@ impl NetworkStatusUpdater {
             .context("Error while extracting finalized block number.")?;
         log::debug!(
             "Finalized block #{} hash {}.",
-            finalized_block_number, finalized_block_hash
+            finalized_block_number,
+            finalized_block_hash
         );
         // epoch index & time
         let epoch = client
