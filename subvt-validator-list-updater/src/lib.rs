@@ -267,7 +267,7 @@ impl Service for ValidatorListUpdater {
                     Ok(block_number) => block_number,
                     Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
-                metrics::target_block_number().set(finalized_block_number as i64);
+                metrics::target_finalized_block_number().set(finalized_block_number as i64);
                 if is_busy.load(Ordering::SeqCst) {
                     log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
                     return;
@@ -293,7 +293,7 @@ impl Service for ValidatorListUpdater {
                         );
                     } else {
                         metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
-                        metrics::processed_block_number().set(finalized_block_number as i64);
+                        metrics::processed_finalized_block_number().set(finalized_block_number as i64);
                     }
                     is_busy.store(false, Ordering::SeqCst);
                 });

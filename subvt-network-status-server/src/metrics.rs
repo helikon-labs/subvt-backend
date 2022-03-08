@@ -1,13 +1,13 @@
 use once_cell::sync::Lazy;
 use subvt_metrics::registry::IntGauge;
 
-const METRIC_PREFIX: &str = "subvt_validator_list_server";
+const METRIC_PREFIX: &str = "subvt_network_status_server";
 
-pub fn target_finalized_block_number() -> IntGauge {
+pub fn target_best_block_number() -> IntGauge {
     static METER: Lazy<IntGauge> = Lazy::new(|| {
         subvt_metrics::registry::register_int_gauge(
             METRIC_PREFIX,
-            "target_finalized_block_number",
+            "target_best_block_number",
             "Number of the target finalized block on the node",
         )
             .unwrap()
@@ -15,11 +15,11 @@ pub fn target_finalized_block_number() -> IntGauge {
     METER.clone()
 }
 
-pub fn processed_finalized_block_number() -> IntGauge {
+pub fn processed_best_block_number() -> IntGauge {
     static METER: Lazy<IntGauge> = Lazy::new(|| {
         subvt_metrics::registry::register_int_gauge(
             METRIC_PREFIX,
-            "processed_finalized_block_number",
+            "processed_best_block_number",
             "Number of the last processed block",
         )
             .unwrap()
@@ -32,7 +32,7 @@ pub fn subscription_count() -> IntGauge {
         subvt_metrics::registry::register_int_gauge(
             METRIC_PREFIX,
             "subscription_count",
-            "Number subscribers to the service",
+            "Number of subscribers to the service",
         )
             .unwrap()
     });

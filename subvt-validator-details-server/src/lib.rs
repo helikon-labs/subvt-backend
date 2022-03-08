@@ -9,7 +9,6 @@ use async_trait::async_trait;
 use bus::Bus;
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
-use log::{debug, error, warn};
 use redis::RedisResult;
 use serde::Serialize;
 use std::collections::hash_map::DefaultHasher;
@@ -21,6 +20,8 @@ use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::crypto::AccountId;
 use subvt_types::subvt::{ValidatorDetails, ValidatorDetailsDiff};
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -100,7 +101,8 @@ impl ValidatorDetailsServer {
                 } else {
                     return Err(jsonrpsee_core::error::Error::Custom("Invalid account id.".to_string()));
                 };
-                debug!("New subscription {}.", account_id);
+                log::info!("New subscription {}.", account_id);
+                metrics::subscription_count().inc();
                 let mut validator_details = {
                     let validator_details = match ValidatorDetailsServer::fetch_validator_details(
                         &account_id.to_string(),
@@ -108,7 +110,7 @@ impl ValidatorDetailsServer {
                     ) {
                         Ok(validator_details) => validator_details,
                         Err(error) => {
-                            error!("Error while fetching validator details: {:?}", error);
+                            log::error!("Error while fetching validator details: {:?}", error);
                             let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
                             let _ = sink.send(&error_message);
                             return Err(jsonrpsee_core::error::Error::Custom(error_message));
@@ -161,7 +163,7 @@ impl ValidatorDetailsServer {
                                         .query::<u64>(&mut *data_connection) {
                                         (inactive_validator_storage_key_prefix, db_hash)
                                     } else {
-                                        error!(
+                                        log::error!(
                                             "Validator {} not found.",
                                             account_id
                                         );
@@ -174,7 +176,7 @@ impl ValidatorDetailsServer {
                                         let validator_json_string = match validator_json_string_result {
                                             Ok(validator_json_string) => validator_json_string,
                                             Err(error) => {
-                                                error!(
+                                                log::error!(
                                                     "Error while fetching validator JSON string for storage key {}: {:?}",
                                                     validator_storage_key_prefix,
                                                     error
@@ -187,7 +189,7 @@ impl ValidatorDetailsServer {
                                         let db_validator_details = match db_validator_details_result {
                                             Ok(db_validator_details) => db_validator_details,
                                             Err(error) => {
-                                                error!(
+                                                log::error!(
                                                     "Error while deserializing validator details for storage key {}: {:?}",
                                                     validator_storage_key_prefix,
                                                     error
@@ -211,10 +213,11 @@ impl ValidatorDetailsServer {
                                     };
                                     let send_result = sink.send(&update);
                                     if let Err(error) = send_result {
-                                        debug!("Subscription closed. {:?}", error);
+                                        log::info!("Subscription closed. {:?}", error);
+                                        metrics::subscription_count().dec();
                                         return;
                                     } else {
-                                        debug!("Published update for {}.", account_id);
+                                        log::debug!("Published update for {}.", account_id);
                                     }
                                 }
                                 BusEvent::Error => {
@@ -253,6 +256,7 @@ impl Service for ValidatorDetailsServer {
             "subvt:{}:validators:publish:finalized_block_number",
             CONFIG.substrate.chain
         ))?;
+        metrics::subscription_count().set(0);
         let server_stop_handle = ValidatorDetailsServer::run_rpc_server(
             &CONFIG.rpc.host,
             CONFIG.rpc.validator_details_port,
@@ -271,28 +275,29 @@ impl Service for ValidatorDetailsServer {
             }
             let finalized_block_number: u64 = payload.unwrap();
             if LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst) == finalized_block_number {
-                warn!(
+                log::warn!(
                     "Skip duplicate finalized block #{}.",
                     finalized_block_number
                 );
                 continue;
             }
-            debug!("New finalized block #{}.", finalized_block_number);
+            log::info!("New finalized block #{}.", finalized_block_number);
+            metrics::current_finalized_block_number().set(finalized_block_number as i64);
             {
                 let mut bus = bus.lock().unwrap();
                 bus.broadcast(BusEvent::NewFinalizedBlock(finalized_block_number));
-                debug!("Update published to the bus.");
+                log::debug!("Update published to the bus.");
             }
             LAST_FINALIZED_BLOCK_NUMBER.store(finalized_block_number, Ordering::SeqCst);
         };
-        error!("{:?}", error);
+        log::error!("{:?}", error);
         {
             let mut bus = bus.lock().unwrap();
             bus.broadcast(BusEvent::Error);
         }
-        debug!("Stopping RPC server...");
+        log::info!("Stopping RPC server...");
         server_stop_handle.stop()?;
-        debug!("RPC server fully stopped.");
+        log::info!("RPC server fully stopped.");
         Err(error)
     }
 }

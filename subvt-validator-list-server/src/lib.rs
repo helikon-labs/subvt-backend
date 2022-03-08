@@ -80,7 +80,7 @@ impl ValidatorListServer {
                                     log::info!("Subscription closed. {:?}", error);
                                     return;
                                 } else {
-                                    log::info!("Published diff.");
+                                    log::debug!("Published diff.");
                                 }
                             }
                             BusEvent::Error => {
@@ -124,7 +124,6 @@ impl Service for ValidatorListServer {
             .get_matches();
         let is_active_list = !matches.is_present("inactive");
         let mut last_finalized_block_number = 0;
-        metrics::subscription_count().set(0);
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
 
@@ -139,6 +138,7 @@ impl Service for ValidatorListServer {
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
+        metrics::subscription_count().set(0);
         let server_stop_handle = ValidatorListServer::run_rpc_server(
             &CONFIG.rpc.host,
             if is_active_list {
@@ -169,7 +169,7 @@ impl Service for ValidatorListServer {
                 continue 'outer;
             }
             log::info!("New finalized block #{}.", finalized_block_number);
-            metrics::target_block_number().set(finalized_block_number as i64);
+            metrics::target_finalized_block_number().set(finalized_block_number as i64);
             let prefix = format!(
                 "subvt:{}:validators:{}:{}",
                 CONFIG.substrate.chain,
@@ -283,7 +283,7 @@ impl Service for ValidatorListServer {
                 bus.broadcast(BusEvent::Update(update));
                 log::info!("Update published to the bus.");
             }
-            metrics::processed_block_number().set(finalized_block_number as i64);
+            metrics::processed_finalized_block_number().set(finalized_block_number as i64);
             last_finalized_block_number = finalized_block_number;
         };
         log::error!("{:?}", error);

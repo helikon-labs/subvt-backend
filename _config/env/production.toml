@@ -1,3 +1,7 @@
+[log]
+subvt_level = "info"
+other_level = "warn"
+
 [redis]
 url = "redis://subvt_network_redis:6379/"
 

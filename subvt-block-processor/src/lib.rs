@@ -1,6 +1,5 @@
 //! Indexes historical block data into the PostreSQL database instance.
 
-use crate::metrics::{processed_block_number, target_block_number};
 use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -377,7 +376,7 @@ impl Service for BlockProcessor {
                     Ok(block_number) => block_number,
                     Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
                 };
-                target_block_number().set(finalized_block_number as i64);
+                metrics::target_finalized_block_number().set(finalized_block_number as i64);
                 let block_processor_substrate_client = block_processor_substrate_client.clone();
                 let runtime_information = runtime_information.clone();
                 let postgres = postgres.clone();
@@ -420,7 +419,7 @@ impl Service for BlockProcessor {
                             metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             match update_result {
                                 Ok(_) => {
-                                    processed_block_number().set(block_number as i64);
+                                    metrics::processed_finalized_block_number().set(block_number as i64);
                                     block_number += 1
                                 },
                                 Err(error) => {

@@ -5,13 +5,14 @@ use anyhow::Context;
 use async_trait::async_trait;
 use chrono::Utc;
 use lazy_static::lazy_static;
-use log::{debug, error};
 use redis::Pipeline;
 use std::sync::{Arc, Mutex};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::{substrate::BlockHeader, subvt::NetworkStatus};
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -64,7 +65,7 @@ impl NetworkStatusUpdater {
             .get_block_hash(best_block_number)
             .await
             .context("Error while fetching best block hash.")?;
-        debug!(
+        log::debug!(
             "Best block #{} hash {}.",
             best_block_number, best_block_hash
         );
@@ -80,7 +81,7 @@ impl NetworkStatusUpdater {
         let finalized_block_number = finalized_block_header
             .get_number()
             .context("Error while extracting finalized block number.")?;
-        debug!(
+        log::debug!(
             "Finalized block #{} hash {}.",
             finalized_block_number, finalized_block_hash
         );
@@ -90,7 +91,7 @@ impl NetworkStatusUpdater {
             .await
             .context("Error while getting current epoch.")?;
         let epoch_remaining = epoch.get_end_date_time() - Utc::now();
-        debug!(
+        log::debug!(
             "Epoch {} start {} end {}. {} days {} hours {} minutes {} seconds.",
             epoch.index,
             epoch.get_start_date_time().format("%d-%m-%Y %H:%M:%S"),
@@ -118,7 +119,7 @@ impl NetworkStatusUpdater {
             .await
             .context("Error while getting active era.")?;
         let era_remaining = era.get_end_date_time() - Utc::now();
-        debug!(
+        log::debug!(
             "Era {} start {} end {}. {} days {} hours {} minutes {} seconds.",
             era.index,
             era.get_start_date_time().format("%d-%m-%Y %H:%M:%S"),
@@ -138,7 +139,7 @@ impl NetworkStatusUpdater {
             average_stake,
             median_stake,
         ) = if last_status.active_era.index == era.index {
-            debug!("Era hasn't changed.");
+            log::debug!("Era hasn't changed.");
             (
                 last_status.last_era_total_reward,
                 last_status.total_stake,
@@ -181,28 +182,28 @@ impl NetworkStatusUpdater {
         .chars()
         .take(4)
         .collect();
-        debug!(
+        log::debug!(
             "Last era total reward {}.{}{}.",
             last_era_total_reward as u64 / 10u64.pow(client.system_properties.token_decimals),
             last_era_total_reward_decimals,
             client.system_properties.token_symbol
         );
-        debug!(
-        "Return rate per cent {} total stake {} min stake {} max stake {} average stake {} median stake {}.",
-        return_rate_per_million / 10000,
-        total_stake,
-        min_stake,
-        max_stake,
-        average_stake,
-        median_stake,
-    );
+        log::debug!(
+            "Return rate per cent {} total stake {} min stake {} max stake {} average stake {} median stake {}.",
+            return_rate_per_million / 10000,
+            total_stake,
+            min_stake,
+            max_stake,
+            average_stake,
+            median_stake,
+        );
         // era reward points so far
         let era_reward_points = client
             .get_era_reward_points(era.index, &best_block_hash)
             .await
             .context("Error while getting current era reward points.")?
             .total;
-        debug!("{} total reward points so far.", era_reward_points);
+        log::debug!("{} total reward points so far.", era_reward_points);
         // prepare data
         let network_status = NetworkStatus {
             finalized_block_number,
@@ -224,7 +225,7 @@ impl NetworkStatusUpdater {
         };
         // write to redis
         NetworkStatusUpdater::update_redis(&network_status)?;
-        debug!("Redis updated.");
+        log::debug!("Redis updated.");
         Ok(network_status)
     }
 }
@@ -245,18 +246,26 @@ impl Service for NetworkStatusUpdater {
             substrate_client.subscribe_to_new_blocks(|best_block_header| {
                 let substrate_client = Arc::clone(&substrate_client);
                 tokio::spawn(async move {
+                    if let Ok(best_block_number) = best_block_header.get_number() {
+                        metrics::target_best_block_number().set(best_block_number as i64);
+                        log::info!("New best block #{}.", best_block_number);
+                    }
+                    let start = std::time::Instant::now();
                     let update_result = self.fetch_and_update_network_status(
                         &substrate_client,
                         &best_block_header,
                     ).await;
                     match update_result {
                         Ok(network_status) => {
+                            log::info!("Processed best block #{}.", network_status.best_block_number);
+                            metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                            metrics::processed_best_block_number().set(network_status.best_block_number as i64);
                             let mut last_network_status = self.last_network_status.lock().unwrap();
                             *last_network_status = network_status;
                         }
                         Err(error) => {
-                            error!("{:?}", error);
-                            error!(
+                            log::error!("{:?}", error);
+                            log::error!(
                                 "Network status update failed for block #{}. Will try again with the next block.",
                                 best_block_header.get_number().unwrap_or(0),
                             );
@@ -265,7 +274,7 @@ impl Service for NetworkStatusUpdater {
                 });
             }).await?;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
-            error!(
+            log::error!(
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );

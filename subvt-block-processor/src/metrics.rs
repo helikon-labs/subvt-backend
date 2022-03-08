@@ -3,11 +3,11 @@ use subvt_metrics::registry::{Histogram, IntGauge};
 
 const METRIC_PREFIX: &str = "subvt_block_processor";
 
-pub fn processed_block_number() -> IntGauge {
+pub fn processed_finalized_block_number() -> IntGauge {
     static METER: Lazy<IntGauge> = Lazy::new(|| {
         subvt_metrics::registry::register_int_gauge(
             METRIC_PREFIX,
-            "last_processed_block_number",
+            "processed_finalized_block_number",
             "Number of the last processed block",
         )
         .unwrap()
@@ -15,11 +15,11 @@ pub fn processed_block_number() -> IntGauge {
     METER.clone()
 }
 
-pub fn target_block_number() -> IntGauge {
+pub fn target_finalized_block_number() -> IntGauge {
     static METER: Lazy<IntGauge> = Lazy::new(|| {
         subvt_metrics::registry::register_int_gauge(
             METRIC_PREFIX,
-            "target_block_number",
+            "target_finalized_block_number",
             "Number of the target finalized block on the node",
         )
         .unwrap()

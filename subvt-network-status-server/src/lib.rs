@@ -6,12 +6,13 @@ use async_trait::async_trait;
 use bus::Bus;
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
-use log::{debug, error, warn};
 use redis::Connection;
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_types::subvt::{NetworkStatus, NetworkStatusDiff, NetworkStatusUpdate};
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -58,7 +59,8 @@ impl NetworkStatusServer {
             "subscribe_networkStatus",
             "unsubscribe_networkStatus",
             move |_params, mut sink, _| {
-                debug!("New subscription.");
+                log::info!("New subscription.");
+                metrics::subscription_count().inc();
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
                 {
                     let current_status = current_status.read().unwrap();
@@ -84,10 +86,11 @@ impl NetworkStatusServer {
                                 };
                                 let send_result = sink.send(&update);
                                 if let Err(error) = send_result {
-                                    debug!("Subscription closed. {:?}", error);
+                                    log::info!("Subscription closed. {:?}", error);
+                                    metrics::subscription_count().dec();
                                     return;
                                 } else {
-                                    debug!("Published diff.");
+                                    log::debug!("Published diff.");
                                 }
                             }
                             BusEvent::Error => {
@@ -128,6 +131,7 @@ impl Service for NetworkStatusServer {
             CONFIG.substrate.chain
         ))?;
         let mut data_connection = redis_client.get_connection()?;
+        metrics::subscription_count().set(0);
         let server_stop_handle = NetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
         let error: anyhow::Error = loop {
@@ -143,11 +147,12 @@ impl Service for NetworkStatusServer {
             {
                 let current_status = current_status.read().unwrap();
                 if current_status.best_block_number == best_block_number {
-                    warn!("Skip duplicate best block #{}.", best_block_number);
+                    log::warn!("Skip duplicate best block #{}.", best_block_number);
                     continue;
                 }
             }
-            debug!("New best block #{}.", best_block_number);
+            log::info!("New best block #{}.", best_block_number);
+            metrics::target_best_block_number().set(best_block_number as i64);
             match NetworkStatusServer::read_current_network_status(&mut data_connection).await {
                 Ok(new_status) => {
                     {
@@ -156,6 +161,7 @@ impl Service for NetworkStatusServer {
                             let diff = current_status.get_diff(&new_status);
                             let mut bus = bus.lock().unwrap();
                             bus.broadcast(BusEvent::NewBlock(Box::new(diff)));
+                            metrics::processed_best_block_number().set(best_block_number as i64);
                         }
                     }
                     let mut current_status = current_status.write().unwrap();
@@ -166,14 +172,14 @@ impl Service for NetworkStatusServer {
                 }
             }
         };
-        error!("{:?}", error);
+        log::error!("{:?}", error);
         {
             let mut bus = bus.lock().unwrap();
             bus.broadcast(BusEvent::Error);
         }
-        debug!("Stop RPC server.");
+        log::info!("Stop RPC server.");
         server_stop_handle.clone().stop()?;
-        debug!("RPC server stopped fully.");
+        log::info!("RPC server stopped fully.");
         Err(error)
     }
 }
