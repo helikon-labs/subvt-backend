@@ -3,7 +3,6 @@
 use crate::content::context::get_renderer_context;
 use crate::CONFIG;
 use std::collections::HashMap;
-use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::{Network, Notification, NotificationChannel};
 use tera::Tera;
 
@@ -17,6 +16,7 @@ pub struct NotificationContent {
 
 /// Provider struct. Has separate renderers for separate text notification channels.
 /// Expects the `template` folder in this crate to be in the same folder as the executable.
+#[derive(Clone)]
 pub struct ContentProvider {
     network_map: HashMap<u32, Network>,
     renderer_map: HashMap<String, Tera>,
@@ -73,17 +73,7 @@ impl ContentProvider {
         }
     }
 
-    pub async fn new() -> anyhow::Result<ContentProvider> {
-        let network_map = {
-            let postgres =
-                PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
-            let networks = postgres.get_networks().await?;
-            let mut network_map = HashMap::new();
-            for network in networks {
-                network_map.insert(network.id, network.clone());
-            }
-            network_map
-        };
+    pub fn new(network_map: HashMap<u32, Network>) -> anyhow::Result<ContentProvider> {
         let mut renderer_map = HashMap::new();
         renderer_map.insert(
             NotificationChannel::APNS.to_string(),

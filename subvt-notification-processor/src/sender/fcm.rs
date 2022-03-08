@@ -2,7 +2,6 @@ use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
 use fcm::Client as FCMClient;
-use log::{error, info};
 use serde::Serialize;
 use subvt_types::app::Notification;
 
@@ -17,8 +16,7 @@ pub(crate) struct FCMSender {
 }
 
 impl FCMSender {
-    pub async fn new() -> anyhow::Result<FCMSender> {
-        let content_provider = ContentProvider::new().await?;
+    pub async fn new(content_provider: ContentProvider) -> anyhow::Result<FCMSender> {
         Ok(FCMSender {
             fcm_client: FCMClient::new(),
             content_provider,
@@ -48,16 +46,17 @@ impl NotificationSender for FCMSender {
         builder.data(&message)?;
         match self.fcm_client.send(builder.finalize()).await {
             Ok(response) => {
-                info!(
+                log::info!(
                     "FCM message sent succesfully for notification #{}.",
                     notification.id
                 );
                 Ok(format!("{:?}", response))
             }
             Err(error) => {
-                error!(
+                log::error!(
                     "FCM message send error for notification #{}: {:?}.",
-                    notification.id, error,
+                    notification.id,
+                    error,
                 );
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
             }

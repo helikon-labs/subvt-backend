@@ -2,7 +2,6 @@ use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;
 use async_trait::async_trait;
-use log::{error, info};
 use subvt_types::app::Notification;
 
 pub(crate) struct APNSSender {
@@ -11,7 +10,7 @@ pub(crate) struct APNSSender {
 }
 
 impl APNSSender {
-    pub async fn new() -> anyhow::Result<APNSSender> {
+    pub async fn new(content_provider: ContentProvider) -> anyhow::Result<APNSSender> {
         let mut apns_key = std::fs::File::open(&CONFIG.notification_processor.apns_key_location)?;
         let apns_client = a2::Client::token(
             &mut apns_key,
@@ -23,7 +22,6 @@ impl APNSSender {
                 a2::Endpoint::Sandbox
             },
         )?;
-        let content_provider = ContentProvider::new().await?;
         Ok(APNSSender {
             apns_client,
             content_provider,
@@ -56,13 +54,14 @@ impl NotificationSender for APNSSender {
         );
         match self.apns_client.send(payload).await {
             Ok(response) => {
-                info!("APNS notification {} sent succesfully.", notification.id);
+                log::info!("APNS notification {} sent succesfully.", notification.id);
                 Ok(format!("{:?}", response))
             }
             Err(error) => {
-                error!(
+                log::error!(
                     "APNS notification {} send error: {:?}.",
-                    notification.id, error,
+                    notification.id,
+                    error,
                 );
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
             }

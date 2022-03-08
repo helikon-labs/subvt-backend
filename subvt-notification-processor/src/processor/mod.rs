@@ -8,6 +8,7 @@ pub(crate) mod immediate;
 impl NotificationProcessor {
     pub(crate) async fn process_notifications(
         &self,
+        maybe_network_id: Option<u32>,
         period_type: NotificationPeriodType,
         period: u32,
     ) -> anyhow::Result<()> {
@@ -18,7 +19,7 @@ impl NotificationProcessor {
         );
         match self
             .postgres
-            .get_pending_notifications_by_period_type(&period_type, period)
+            .get_pending_notifications_by_period_type(maybe_network_id, &period_type, period)
             .await
         {
             Ok(notifications) => {
@@ -64,7 +65,7 @@ impl NotificationProcessor {
             }
             Err(error) => {
                 log::error!(
-                    "Error while getting pending {}-{} notifications: {:?}",
+                    "Error while getting pending {}({}) notifications: {:?}",
                     period,
                     period_type,
                     error

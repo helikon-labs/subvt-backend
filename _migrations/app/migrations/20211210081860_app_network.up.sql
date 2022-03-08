@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS app_network
     ss58_prefix                         integer NOT NULL,
     token_ticker                        VARCHAR(16) NOT NULL,
     token_decimal_count                 integer NOT NULL,
+    redis_url                           VARCHAR(150) NOT NULL,
     network_status_service_url          VARCHAR(150),
     report_service_url                  VARCHAR(150),
     validator_details_service_url       VARCHAR(150),
@@ -17,5 +18,5 @@ CREATE TABLE IF NOT EXISTS app_network
     CONSTRAINT app_network_u_name UNIQUE (name)
 );
 
-INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count) VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'Kusama', 2, 'KSM', 12);
-INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count) VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'Polkadot', 0, 'DOT', 10);
+INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count, redis_url) VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'Kusama', 2, 'KSM', 12, 'redis://127.0.0.1:6379/');
+INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count, redis_url) VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'Polkadot', 0, 'DOT', 10, 'redis://127.0.0.1:6379/');

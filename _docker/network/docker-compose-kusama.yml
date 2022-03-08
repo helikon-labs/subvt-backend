@@ -36,7 +36,7 @@ services:
       - "-c"
       - "max_parallel_maintenance_workers=3"
     restart: unless-stopped
-    image: "helikon/subvt-backend-network-postgres:0.1.2"
+    image: "helikon/subvt-network-postgres:0.1.2"
     networks:
       - kusama_network_deployment
     ports:

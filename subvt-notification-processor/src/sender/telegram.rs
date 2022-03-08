@@ -2,7 +2,6 @@ use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
 use frankenstein::{AsyncApi as TelegramClient, AsyncTelegramApi, ChatId, SendMessageParams};
-use log::{error, info};
 use subvt_types::app::Notification;
 
 pub(crate) struct TelegramSender {
@@ -11,9 +10,8 @@ pub(crate) struct TelegramSender {
 }
 
 impl TelegramSender {
-    pub async fn new() -> anyhow::Result<TelegramSender> {
+    pub async fn new(content_provider: ContentProvider) -> anyhow::Result<TelegramSender> {
         let telegram_client = TelegramClient::new(&CONFIG.notification_processor.telegram_token);
-        let content_provider = ContentProvider::new().await?;
         Ok(TelegramSender {
             telegram_client,
             content_provider,
@@ -48,16 +46,17 @@ impl NotificationSender for TelegramSender {
         };
         match self.telegram_client.send_message(&params).await {
             Ok(response) => {
-                info!(
+                log::info!(
                     "Telegram notification sent succesfully for notification #{}.",
                     notification.id
                 );
                 Ok(format!("{:?}", response))
             }
             Err(error) => {
-                error!(
+                log::error!(
                     "Telegram notification send error for notification #{}: {:?}.",
-                    notification.id, error,
+                    notification.id,
+                    error,
                 );
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
             }

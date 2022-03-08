@@ -126,20 +126,33 @@ impl PostgreSQLAppStorage {
 
     pub async fn get_pending_notifications_by_period_type(
         &self,
+        maybe_network_id: Option<u32>,
         period_type: &NotificationPeriodType,
         period: u32,
     ) -> anyhow::Result<Vec<Notification>> {
         let db_notifications: Vec<PostgresNotification> = sqlx::query_as(
-            r#"
-            SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
-            FROM app_notification
-            WHERE processing_started_at IS NULL
-            AND period_type = $1
-            AND (period = 0 OR ($2 % period) = 0)
-            "#,
+            if maybe_network_id.is_some() {
+                r#"
+                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
+                FROM app_notification
+                WHERE processing_started_at IS NULL
+                AND period_type = $1
+                AND (period = 0 OR ($2 % period) = 0)
+                AND network_id = $3
+                "#
+            } else {
+                r#"
+                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
+                FROM app_notification
+                WHERE processing_started_at IS NULL
+                AND period_type = $1
+                AND (period = 0 OR ($2 % period) = 0)
+                "#
+            },
         )
             .bind(period_type)
             .bind(period as i32)
+            .bind(maybe_network_id.map(|id| id as i32))
             .fetch_all(&self.connection_pool)
             .await?;
         let mut notifications = vec![];

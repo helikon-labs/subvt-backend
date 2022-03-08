@@ -6225,6 +6225,7 @@ dependencies = [
  "chrono",
  "fcm",
  "frankenstein",
+ "futures",
  "job_scheduler",
  "lazy_static",
  "lettre 0.10.0-rc.4",

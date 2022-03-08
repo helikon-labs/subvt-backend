@@ -6,17 +6,14 @@ use crate::sender::email::EmailSender;
 use crate::sender::fcm::FCMSender;
 use crate::sender::telegram::TelegramSender;
 use crate::sender::NotificationSender;
-use anyhow::Context;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::info;
-use redis::Client as RedisClient;
 use std::collections::HashMap;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
-use subvt_types::app::NotificationChannel;
+use subvt_types::app::{Network, NotificationChannel};
 
 mod content;
 mod processor;
@@ -30,43 +27,58 @@ lazy_static! {
 
 pub struct NotificationProcessor {
     postgres: Arc<PostgreSQLAppStorage>,
-    redis: RedisClient,
     senders: SenderMap,
+    network_map: HashMap<u32, Network>,
 }
 
 impl NotificationProcessor {
-    async fn prepare_senders() -> anyhow::Result<SenderMap> {
+    async fn prepare_senders(network_map: &HashMap<u32, Network>) -> anyhow::Result<SenderMap> {
         let mut senders = HashMap::new();
+        let content_provider = ContentProvider::new(network_map.clone())?;
         senders.insert(
             NotificationChannel::APNS,
-            Arc::new(Box::new(APNSSender::new().await?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(APNSSender::new(content_provider.clone()).await?)
+                as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::Email,
-            Arc::new(Box::new(EmailSender::new().await?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(EmailSender::new(content_provider.clone()).await?)
+                as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::FCM,
-            Arc::new(Box::new(FCMSender::new().await?) as Box<dyn NotificationSender>),
+            Arc::new(Box::new(FCMSender::new(content_provider.clone()).await?)
+                as Box<dyn NotificationSender>),
         );
         senders.insert(
             NotificationChannel::Telegram,
-            Arc::new(Box::new(TelegramSender::new().await?) as Box<dyn NotificationSender>),
+            Arc::new(
+                Box::new(TelegramSender::new(content_provider.clone()).await?)
+                    as Box<dyn NotificationSender>,
+            ),
         );
         Ok(senders)
+    }
+
+    async fn get_network_map(
+        postgres: &PostgreSQLAppStorage,
+    ) -> anyhow::Result<HashMap<u32, Network>> {
+        let networks = postgres.get_networks().await?;
+        let mut network_map = HashMap::new();
+        for network in networks {
+            network_map.insert(network.id, network.clone());
+        }
+        Ok(network_map)
     }
 
     pub async fn new() -> anyhow::Result<NotificationProcessor> {
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        let redis = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let network_map = NotificationProcessor::get_network_map(&postgres).await?;
         Ok(NotificationProcessor {
             postgres,
-            redis,
-            senders: NotificationProcessor::prepare_senders().await?,
+            senders: NotificationProcessor::prepare_senders(&network_map).await?,
+            network_map,
         })
     }
 }
@@ -81,14 +93,20 @@ impl Service for NotificationProcessor {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        info!("Reset pending and failed notifications.");
+        log::info!("Reset pending and failed notifications.");
         self.postgres
             .reset_pending_and_failed_notifications()
             .await?;
-        info!("Start notification processors.");
+        log::info!("Start notification processors.");
         self.start_hourly_and_daily_notification_processor()?;
         self.start_immediate_notification_processor()?;
-        self.start_era_and_epoch_notification_processor().await?;
+        let mut join_handles = vec![];
+        for network in self.network_map.values() {
+            join_handles.push(tokio::task::spawn(
+                self.start_era_and_epoch_notification_processor(network),
+            ));
+        }
+        futures::future::try_join_all(join_handles).await?;
         Ok(())
     }
 }

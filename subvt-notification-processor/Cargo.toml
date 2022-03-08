@@ -13,6 +13,7 @@ async-trait = "0.1.52"
 chrono = "0.4.19"
 fcm = "0.9.1"
 frankenstein = { version = "0.10", default-features = false, features = ["async-http-client"] }
+futures = "0.3.21"
 job_scheduler = "1.2.1"
 lazy_static = "1.4.0"
 lettre = { version = "0.10.0-rc.4", default-features = true, features = ["tokio1-native-tls"]}
