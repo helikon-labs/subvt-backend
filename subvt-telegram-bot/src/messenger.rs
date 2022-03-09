@@ -112,13 +112,10 @@ impl MessageType {
                 );
                 context.insert(
                     "commission",
-                    &format!(
-                        "{}%",
-                        format_decimal(
-                            validator_details.preferences.commission_per_billion as u128,
-                            7,
-                            2,
-                        )
+                    &format_decimal(
+                        validator_details.preferences.commission_per_billion as u128,
+                        7,
+                        2,
                     ),
                 );
                 context.insert(

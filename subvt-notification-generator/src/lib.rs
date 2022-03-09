@@ -18,7 +18,7 @@ use subvt_types::app::{Notification, UserNotificationRule};
 use subvt_types::crypto::AccountId;
 use tokio::runtime::Builder;
 
-mod processor;
+mod inspect;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -31,7 +31,6 @@ impl NotificationGenerator {
     /// Persist notifications for a validator, which will later be be processed by
     /// `subvt-notification-sender`.
     async fn generate_notifications<T: Clone + Serialize>(
-        config: &Config,
         app_postgres: &PostgreSQLAppStorage,
         substrate_client: &Arc<SubstrateClient>,
         rules: &[UserNotificationRule],
@@ -63,7 +62,7 @@ impl NotificationGenerator {
                     id: 0,
                     user_id: rule.user_id,
                     user_notification_rule_id: rule.id,
-                    network_id: config.substrate.network_id,
+                    network_id: CONFIG.substrate.network_id,
                     period_type: rule.period_type,
                     period: rule.period,
                     validator_account_id: validator_account_id.clone(),

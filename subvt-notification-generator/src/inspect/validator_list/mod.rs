@@ -161,7 +161,6 @@ impl NotificationGenerator {
                     }
                 }
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &[rule],
@@ -207,7 +206,6 @@ impl NotificationGenerator {
                     }
                 }
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &[rule],
@@ -251,7 +249,6 @@ impl NotificationGenerator {
                     nominee_count: current_nomination.target_account_ids.len() as u64,
                 };
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -277,7 +274,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -299,7 +295,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -325,7 +320,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -351,7 +345,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -384,7 +377,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -419,7 +411,6 @@ impl NotificationGenerator {
                     )
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -459,7 +450,6 @@ impl NotificationGenerator {
                     .get_onekv_candidate_validity_items(current.onekv_candidate_record_id.unwrap())
                     .await?;
                 NotificationGenerator::generate_notifications(
-                    config,
                     app_postgres,
                     substrate_client,
                     &rules,
@@ -618,7 +608,6 @@ impl NotificationGenerator {
                                 .await?;
                             // generate notifications
                             NotificationGenerator::generate_notifications(
-                                config,
                                 app_postgres,
                                 substrate_client,
                                 &rules,
