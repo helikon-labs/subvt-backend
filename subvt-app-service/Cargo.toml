@@ -26,4 +26,4 @@ subvt-types = { path = "../subvt-types" }
 tokio = { version = "1.17.0", features = ["full"] }
 
 [dev-dependencies]
-actix-rt = "2.6.0"
+actix-rt = "2.7.0"
