@@ -1,0 +1,3 @@
+🥴️ {{ validator_display }} has lost a nomination.
+Nominator: {{ nominator_display }}
+Amount: {{ nomination_amount }} {{ token_ticker }}

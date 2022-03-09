@@ -1,0 +1,1 @@
+⭐️ {{ validator_display }} has received a new nomination of {{ nomination_amount }} {{ token_ticker }} from {{ nominator_display }}. There are {{ nominee_count }} total nominees.

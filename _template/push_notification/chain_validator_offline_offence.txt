@@ -1,0 +1,1 @@
+🆘 {{ validator_display }} was found to be offline at the end of the session!

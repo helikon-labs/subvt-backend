@@ -1,0 +1,1 @@
+⭐️ New nomination for {{ validator_display }}!

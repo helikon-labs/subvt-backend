@@ -1,0 +1,1 @@
+🥴️ Lost nomination for {{ validator_display }}.

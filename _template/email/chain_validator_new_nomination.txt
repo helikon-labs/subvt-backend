@@ -1,0 +1,4 @@
+⭐️ {{ validator_display }} received a new nomination!
+Nominator: {{ nominator_display }}
+Amount: {{ nomination_amount }} {{ token_ticker }}
+Nominee Count: {{ nominee_count }}
