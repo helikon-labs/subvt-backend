@@ -32,7 +32,7 @@ pub struct Network {
     pub token_ticker: String,
     pub token_decimal_count: u8,
     #[serde(skip_serializing)]
-    pub redis_url: String,
+    pub redis_url: Option<String>,
     pub network_status_service_url: Option<String>,
     pub report_service_url: Option<String>,
     pub validator_details_service_url: Option<String>,

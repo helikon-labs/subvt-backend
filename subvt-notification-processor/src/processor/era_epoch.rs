@@ -15,9 +15,13 @@ impl NotificationProcessor {
             "Start era/epoch notification processor for {}.",
             network.name,
         );
-        let redis = redis::Client::open(network.redis_url.as_str()).context(format!(
+        let redis_url = network
+            .redis_url
+            .as_ref()
+            .unwrap_or_else(|| panic!("{} Redis URL is missing.", network.name));
+        let redis = redis::Client::open(redis_url.as_str()).context(format!(
             "Cannot connect to {} Redis at URL {}.",
-            network.name, network.redis_url,
+            network.name, redis_url,
         ))?;
         let mut data_connection = redis.get_connection()?;
         let mut pub_sub_connection = redis.get_connection()?;

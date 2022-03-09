@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS app_network
     ss58_prefix                         integer NOT NULL,
     token_ticker                        VARCHAR(16) NOT NULL,
     token_decimal_count                 integer NOT NULL,
-    redis_url                           VARCHAR(150) NOT NULL,
+    redis_url                           VARCHAR(150),
     network_status_service_url          VARCHAR(150),
     report_service_url                  VARCHAR(150),
     validator_details_service_url       VARCHAR(150),

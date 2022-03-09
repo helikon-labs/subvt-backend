@@ -14,7 +14,7 @@ pub type PostgresNetwork = (
     i32,
     String,
     i32,
-    String,
+    Option<String>,
     Option<String>,
     Option<String>,
     Option<String>,
