@@ -209,13 +209,35 @@ impl PostgreSQLNetworkStorage {
         let result: (i32,) = sqlx::query_as(
             r#"
             INSERT INTO sub_app_event_onekv_rank_change (validator_account_id, prev_rank, current_rank)
-            VALUES ($1, $2)
+            VALUES ($1, $2, $3)
             RETURNING id
             "#,
         )
             .bind(validator_account_id.to_string())
             .bind(prev_rank as i64)
             .bind(current_rank as i64)
+            .fetch_one(&self.connection_pool)
+            .await?;
+        Ok(result.0 as u32)
+    }
+
+    pub async fn save_onekv_location_change_event(
+        &self,
+        validator_account_id: &AccountId,
+        prev_location: &Option<String>,
+        current_location: &Option<String>,
+    ) -> anyhow::Result<u32> {
+        self.save_account(validator_account_id).await?;
+        let result: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO sub_app_event_onekv_location_change (validator_account_id, prev_location, current_location)
+            VALUES ($1, $2, $3)
+            RETURNING id
+            "#,
+        )
+            .bind(validator_account_id.to_string())
+            .bind(prev_location)
+            .bind(current_location)
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0 as u32)

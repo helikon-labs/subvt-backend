@@ -45,6 +45,13 @@ pub struct OneKVRankChange {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OneKVLocationChange {
+    pub validator_account_id: AccountId,
+    pub prev_location: Option<String>,
+    pub current_location: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OneKVValidityChange {
     pub validator_account_id: AccountId,
     pub is_valid: bool,

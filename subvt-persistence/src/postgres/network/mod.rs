@@ -41,6 +41,7 @@ type PostgresValidatorInfo = (
     Option<bool>,
     Option<i32>,
     Option<i64>,
+    Option<String>,
     Option<bool>,
 );
 
@@ -1070,7 +1071,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_rank, onekv_is_valid
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_rank, onekv_location, onekv_is_valid
             FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
@@ -1102,7 +1103,8 @@ impl PostgreSQLNetworkStorage {
             heartbeat_received: validator_info.10,
             onekv_candidate_record_id: validator_info.11.map(|value| value as u32),
             onekv_rank: validator_info.12.map(|value| value as u64),
-            onekv_is_valid: validator_info.13,
+            onekv_location: validator_info.13,
+            onekv_is_valid: validator_info.14,
         })
     }
 

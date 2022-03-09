@@ -16,7 +16,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::app::app_event::{OneKVRankChange, OneKVValidityChange};
+use subvt_types::app::app_event::{OneKVLocationChange, OneKVRankChange, OneKVValidityChange};
 use subvt_types::substrate::Era;
 use subvt_types::{
     app::app_event,
@@ -365,7 +365,7 @@ impl NotificationGenerator {
                     .await?;
             }
         }
-        // check 1kv rank and validity
+        // check 1kv rank, validity and location
         if current.onekv_candidate_record_id.is_some()
             && (current.onekv_candidate_record_id == last.onekv_candidate_record_id)
         {
@@ -402,6 +402,41 @@ impl NotificationGenerator {
                         &current.account.id,
                         last.onekv_rank.unwrap(),
                         current.onekv_rank.unwrap(),
+                    )
+                    .await?;
+            }
+            // check location
+            if current.onekv_location != last.onekv_location {
+                debug!(
+                    "1KV location of {} changed from {:?} to {:?}.",
+                    current.account.address, last.onekv_location, current.onekv_location,
+                );
+                let rules = app_postgres
+                    .get_notification_rules_for_validator(
+                        &NotificationTypeCode::OneKVValidatorLocationChange.to_string(),
+                        config.substrate.network_id,
+                        &current.account.id,
+                    )
+                    .await?;
+                NotificationGenerator::generate_notifications(
+                    config,
+                    app_postgres,
+                    substrate_client,
+                    &rules,
+                    finalized_block_number,
+                    &current.account.id,
+                    Some(&OneKVLocationChange {
+                        validator_account_id: current.account.id.clone(),
+                        prev_location: last.onekv_location.clone(),
+                        current_location: current.onekv_location.clone(),
+                    }),
+                )
+                .await?;
+                network_postgres
+                    .save_onekv_location_change_event(
+                        &current.account.id,
+                        &last.onekv_location,
+                        &current.onekv_location,
                     )
                     .await?;
             }

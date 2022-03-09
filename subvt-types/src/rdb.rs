@@ -15,6 +15,7 @@ pub struct ValidatorInfo {
     pub heartbeat_received: Option<bool>,
     pub onekv_candidate_record_id: Option<u32>,
     pub onekv_rank: Option<u64>,
+    pub onekv_location: Option<String>,
     pub onekv_is_valid: Option<bool>,
 }
 

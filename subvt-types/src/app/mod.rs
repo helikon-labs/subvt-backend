@@ -117,6 +117,7 @@ pub enum NotificationTypeCode {
     TelemetryValidatorDownloadBwLow,
     TelemetryValidatorUploadBwLow,
     OneKVValidatorRankChange,
+    OneKVValidatorLocationChange,
     OneKVValidatorValidityChange,
 }
 
@@ -166,6 +167,7 @@ impl Display for NotificationTypeCode {
                 "telemetry_validator_upload_bw_low"
             }
             NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
+            NotificationTypeCode::OneKVValidatorLocationChange => "onekv_validator_location_change",
             NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
         };
         write!(f, "{}", code)
@@ -218,6 +220,7 @@ impl From<&str> for NotificationTypeCode {
                 NotificationTypeCode::TelemetryValidatorUploadBwLow
             }
             "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
+            "onekv_validator_location_change" => NotificationTypeCode::OneKVValidatorLocationChange,
             "onekv_validator_validity_change" => NotificationTypeCode::OneKVValidatorValidityChange,
             _ => panic!("Unknown notification type code: {}", code),
         }

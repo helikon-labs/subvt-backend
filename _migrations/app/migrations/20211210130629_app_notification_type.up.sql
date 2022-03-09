@@ -26,6 +26,7 @@ INSERT INTO app_notification_type(code) VALUES('telemetry_validator_finality_lag
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_download_bw_low');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_upload_bw_low');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change');
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change');
 
 CREATE TYPE app_notification_type_param_data_type AS ENUM ('string', 'integer', 'balance', 'float', 'boolean');
@@ -382,4 +383,5 @@ INSERT INTO app_notification_param_type(
     'Notification happens if the validator''s upload bandwidth is lower than this value in kilobits per second for this many seconds.'
 );
 -- onekv_validator_rank_change :: no param
+-- onekv_validator_location_change :: no param
 -- onekv_validator_validity_change :: no param

@@ -12,6 +12,7 @@ CREATE TYPE sub_validator_info AS (
     heartbeat_received boolean,
     onekv_candidate_record_id integer,
     onekv_rank bigint,
+    onekv_location string,
     onekv_is_valid boolean
 );
 
@@ -91,9 +92,9 @@ BEGIN
         ) INTO result_record.heartbeat_received;
     end if;
 
-    SELECT id, rank, is_valid
+    SELECT id, rank, location, is_valid
     FROM sub_onekv_candidate C
-    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_is_valid
+    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_location, result_record.onekv_is_valid
     WHERE C.validator_account_id = account_id_param
     ORDER BY id DESC
     LIMIT 1;
