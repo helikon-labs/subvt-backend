@@ -1,4 +1,6 @@
 use crate::{NotificationGenerator, CONFIG};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
 use subvt_types::subvt::ValidatorDetails;
@@ -6,6 +8,7 @@ use subvt_types::subvt::ValidatorDetails;
 impl NotificationGenerator {
     pub(crate) async fn inspect_onekv_location_change(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         finalized_block_number: u64,
         last: &ValidatorDetails,
         current: &ValidatorDetails,
@@ -26,6 +29,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             self.generate_notifications(
+                substrate_client,
                 &rules,
                 finalized_block_number,
                 &current.account.id,

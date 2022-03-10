@@ -1,5 +1,7 @@
 use crate::NotificationGenerator;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::Nomination;
 use subvt_types::subvt::ValidatorDetails;
@@ -11,6 +13,7 @@ mod renomination;
 impl NotificationGenerator {
     pub(crate) async fn inspect_nomination_changes(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
         last: &ValidatorDetails,
@@ -35,6 +38,7 @@ impl NotificationGenerator {
         // new nominations
         let new_nominator_ids = &current_nominator_ids - &last_nominator_ids;
         self.inspect_new_nominations(
+            substrate_client.clone(),
             address,
             finalized_block_number,
             current,
@@ -49,6 +53,7 @@ impl NotificationGenerator {
         }
         let lost_nominator_ids = &last_nominator_ids - &current_nominator_ids;
         self.inspect_lost_nominations(
+            substrate_client.clone(),
             address,
             finalized_block_number,
             current,
@@ -59,6 +64,7 @@ impl NotificationGenerator {
         // renominations
         let renominator_ids = &current_nominator_ids - &new_nominator_ids;
         self.inspect_renominations(
+            substrate_client,
             address,
             finalized_block_number,
             current,

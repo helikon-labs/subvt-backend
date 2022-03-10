@@ -1,13 +1,17 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::{
     app::app_event, app::NotificationTypeCode, crypto::AccountId, substrate::Nomination,
     subvt::ValidatorDetails,
 };
 
 impl NotificationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_renominations(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
         current: &ValidatorDetails,
@@ -47,6 +51,7 @@ impl NotificationGenerator {
                     nominee_count: current_nomination.target_account_ids.len() as u64,
                 };
                 self.generate_notifications(
+                    substrate_client.clone(),
                     &rules,
                     finalized_block_number,
                     &current.account.id,

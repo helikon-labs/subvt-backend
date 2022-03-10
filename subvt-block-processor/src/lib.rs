@@ -3,6 +3,7 @@
 use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use std::collections::HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -362,6 +363,7 @@ impl Service for BlockProcessor {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
+            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             let block_subscription_substrate_client = SubstrateClient::new(&CONFIG).await?;
             let block_processor_substrate_client =
                 Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
@@ -371,98 +373,110 @@ impl Service for BlockProcessor {
             );
             let is_indexing_past_blocks = Arc::new(AtomicBool::new(false));
 
-            block_subscription_substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
-                let finalized_block_number = match finalized_block_header.get_number() {
-                    Ok(block_number) => block_number,
-                    Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
-                };
-                metrics::target_finalized_block_number().set(finalized_block_number as i64);
-                let block_processor_substrate_client = block_processor_substrate_client.clone();
-                let runtime_information = runtime_information.clone();
-                let postgres = postgres.clone();
-                if is_indexing_past_blocks.load(Ordering::SeqCst) {
-                    log::debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
-                    return;
-                }
-                let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);
-
-                tokio::spawn(async move {
-                    let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
-                    let processed_block_height = match postgres.get_processed_block_height().await {
-                        Ok(processed_block_height) => processed_block_height,
+            block_subscription_substrate_client.subscribe_to_finalized_blocks(
+                CONFIG.substrate.request_timeout_seconds,
+                |finalized_block_header| async {
+                    let error_cell = error_cell.clone();
+                    if let Some(error) = error_cell.get() {
+                        return Err(anyhow::anyhow!("{:?}", error));
+                    }
+                    let finalized_block_number = match finalized_block_header.get_number() {
+                        Ok(block_number) => block_number,
                         Err(error) => {
-                            log::error!("Cannot get processed block height from the database: {:?}", error);
-                            return;
+                            log::error!("Cannot get block number for header: {:?}", finalized_block_header);
+                            return Err(anyhow::anyhow!("{:?}", error));
                         }
                     };
-                    if processed_block_height < (finalized_block_number - 1) {
-                        is_indexing_past_blocks.store(true, Ordering::SeqCst);
-                        let mut block_number = std::cmp::max(
-                            processed_block_height,
-                            CONFIG.block_processor.start_block_number
-                        );
-                        while block_number <= finalized_block_number {
-                            log::info!(
-                                "Process block #{}. Target #{}.",
-                                block_number,
-                                finalized_block_number
+                    metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    let block_processor_substrate_client = block_processor_substrate_client.clone();
+                    let runtime_information = runtime_information.clone();
+                    let postgres = postgres.clone();
+                    if is_indexing_past_blocks.load(Ordering::SeqCst) {
+                        log::debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
+                        return Ok(());
+                    }
+                    let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);
+                    tokio::spawn(async move {
+                        let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
+                        let processed_block_height = match postgres.get_processed_block_height().await {
+                            Ok(processed_block_height) => processed_block_height,
+                            Err(error) => {
+                                log::error!("Cannot get processed block height from the database: {:?}", error);
+                                let _ = error_cell.set(error);
+                                return;
+                            }
+                        };
+                        if processed_block_height < (finalized_block_number - 1) {
+                            is_indexing_past_blocks.store(true, Ordering::SeqCst);
+                            let mut block_number = std::cmp::max(
+                                processed_block_height,
+                                CONFIG.block_processor.start_block_number
                             );
-                            let start = std::time::Instant::now();
+                            while block_number <= finalized_block_number {
+                                log::info!(
+                                    "Process block #{}. Target #{}.",
+                                    block_number,
+                                    finalized_block_number
+                                );
+                                let start = std::time::Instant::now();
+                                let update_result = self.process_block(
+                                    &mut block_processor_substrate_client,
+                                    &runtime_information,
+                                    &postgres,
+                                    block_number,
+                                    false,
+                                    false,
+                                ).await;
+                                metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                                match update_result {
+                                    Ok(_) => {
+                                        metrics::processed_finalized_block_number().set(block_number as i64);
+                                        block_number += 1
+                                    },
+                                    Err(error) => {
+                                        log::error!("{:?}", error);
+                                        log::error!(
+                                            "History block processing failed for block #{}.",
+                                            block_number,
+                                        );
+                                        is_indexing_past_blocks.store(false, Ordering::SeqCst);
+                                        let _ = error_cell.set(error);
+                                        return;
+                                    }
+                                }
+                            }
+                            is_indexing_past_blocks.store(false, Ordering::SeqCst);
+                        } else {
+                            // update current era reward points every 3 minutes
+                            let blocks_per_3_minutes = 3 * 60 * 1000
+                                / block_processor_substrate_client
+                                .metadata
+                                .constants
+                                .expected_block_time_millis;
+                            log::info!("Process block #{}.", finalized_block_number);
                             let update_result = self.process_block(
                                 &mut block_processor_substrate_client,
                                 &runtime_information,
                                 &postgres,
-                                block_number,
-                                false,
-                                false,
+                                finalized_block_number,
+                                finalized_block_number % blocks_per_3_minutes == 0,
+                                true,
                             ).await;
-                            metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             match update_result {
-                                Ok(_) => {
-                                    metrics::processed_finalized_block_number().set(block_number as i64);
-                                    block_number += 1
-                                },
+                                Ok(_) => (),
                                 Err(error) => {
                                     log::error!("{:?}", error);
                                     log::error!(
-                                        "History block processing failed for block #{}.",
-                                        block_number,
+                                        "Block processing failed for finalized block #{}. Will try again with the next block.",
+                                        finalized_block_header.get_number().unwrap_or(0),
                                     );
-                                    is_indexing_past_blocks.store(false, Ordering::SeqCst);
-                                    return;
+                                    let _ = error_cell.set(error);
                                 }
                             }
                         }
-                        is_indexing_past_blocks.store(false, Ordering::SeqCst);
-                    } else {
-                        // update current era reward points every 3 minutes
-                        let blocks_per_3_minutes = 3 * 60 * 1000
-                            / block_processor_substrate_client
-                            .metadata
-                            .constants
-                            .expected_block_time_millis;
-                        log::info!("Process block #{}.", finalized_block_number);
-                        let update_result = self.process_block(
-                            &mut block_processor_substrate_client,
-                            &runtime_information,
-                            &postgres,
-                            finalized_block_number,
-                            finalized_block_number % blocks_per_3_minutes == 0,
-                            true,
-                        ).await;
-                        match update_result {
-                            Ok(_) => (),
-                            Err(error) => {
-                                log::error!("{:?}", error);
-                                log::error!(
-                                "Block processing failed for finalized block #{}. Will try again with the next block.",
-                                finalized_block_header.get_number().unwrap_or(0),
-                            );
-                            }
-                        }
-                    }
-                });
-            }).await?;
+                    });
+                    Ok(())
+            }).await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
                 "Finalized block subscription exited. Will refresh connection and subscription after {} seconds.",

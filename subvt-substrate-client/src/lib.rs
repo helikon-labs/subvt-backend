@@ -14,6 +14,7 @@ use sp_core::storage::{StorageChangeSet, StorageKey};
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
@@ -30,6 +31,7 @@ use subvt_types::substrate::{
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::decode_hex_string;
+use tokio::time::timeout;
 
 mod storage_utility;
 
@@ -1230,23 +1232,41 @@ impl SubstrateClient {
         &self,
         subscribe_method_name: &str,
         unsubscribe_method_name: &str,
-        callback: F,
-    ) -> anyhow::Result<()>
-    where
-        F: Fn(BlockHeader),
+        timeout_seconds: u64,
+        callback: impl Fn(BlockHeader) -> F,
+    ) where
+        F: Future<Output = anyhow::Result<()>>,
     {
-        let mut subscription: Subscription<BlockHeader> = self
+        let mut subscription: Subscription<BlockHeader> = match self
             .ws_client
             .subscribe(subscribe_method_name, None, unsubscribe_method_name)
-            .await?;
-        loop {
-            let maybe_block_header_result = subscription.next().await;
+            .await
+        {
+            Ok(subscription) => subscription,
+            Err(error) => {
+                error!("Error while subscribing to blocks: {:?}", error);
+                return;
+            }
+        };
+
+        while let Ok(maybe_block_header_result) = timeout(
+            std::time::Duration::from_secs(timeout_seconds),
+            subscription.next(),
+        )
+        .await
+        {
             match maybe_block_header_result {
                 Some(block_header_result) => match block_header_result {
-                    Ok(block_header) => callback(block_header),
+                    Ok(block_header) => {
+                        if let Err(error) = callback(block_header).await {
+                            error!("Error in callback: {:?}", error);
+                            break;
+                        }
+                    }
                     Err(error) => {
                         error!("Error while getting block header: {:?}", error);
                         error!("Will exit new block subscription.");
+                        break;
                     }
                 },
                 None => {
@@ -1255,32 +1275,39 @@ impl SubstrateClient {
                 }
             }
         }
-        Ok(())
     }
 
     /// Subscribes to new blocks.
-    pub async fn subscribe_to_new_blocks<F>(&self, callback: F) -> anyhow::Result<()>
-    where
-        F: Fn(BlockHeader),
+    pub async fn subscribe_to_new_blocks<F>(
+        &self,
+        timeout_seconds: u64,
+        callback: impl Fn(BlockHeader) -> F,
+    ) where
+        F: Future<Output = anyhow::Result<()>>,
     {
         self.subscribe_to_blocks(
             "chain_subscribeNewHeads",
             "chain_unsubscribeNewHeads",
+            timeout_seconds,
             callback,
         )
-        .await
+        .await;
     }
 
     /// Subscribes to finalized blocks.
-    pub async fn subscribe_to_finalized_blocks<F>(&self, callback: F) -> anyhow::Result<()>
-    where
-        F: Fn(BlockHeader),
+    pub async fn subscribe_to_finalized_blocks<F>(
+        &self,
+        timeout_seconds: u64,
+        callback: impl Fn(BlockHeader) -> F,
+    ) where
+        F: Future<Output = anyhow::Result<()>>,
     {
         self.subscribe_to_blocks(
             "chain_subscribeFinalizedHeads",
             "chain_unsubscribeFinalizedHeads",
+            timeout_seconds,
             callback,
         )
-        .await
+        .await;
     }
 }

@@ -2,6 +2,7 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use serde::Serialize;
 use sqlx::postgres::PgListener;
+use std::future::Future;
 use subvt_types::rdb::BlockProcessedNotification;
 
 enum Channel {
@@ -50,17 +51,46 @@ impl PostgreSQLNetworkStorage {
         .await
     }
 
-    pub async fn subscribe_to_processed_blocks<F>(&self, callback: F) -> anyhow::Result<()>
-    where
-        F: Fn(BlockProcessedNotification),
+    pub async fn subscribe_to_processed_blocks<F>(
+        &self,
+        callback: impl Fn(BlockProcessedNotification) -> F,
+    ) where
+        F: Future<Output = anyhow::Result<()>>,
     {
-        let mut listener = PgListener::connect(&self.uri).await?;
-        listener.listen(Channel::BlockProcessed.get_name()).await?;
+        let mut listener = match PgListener::connect(&self.uri).await {
+            Ok(listener) => listener,
+            Err(error) => {
+                log::error!("Error while getting Postgres listener: {:?}", error);
+                return;
+            }
+        };
+        if let Err(error) = listener.listen(Channel::BlockProcessed.get_name()).await {
+            log::error!("Error while trying to listen to Postgres: {:?}", error);
+            return;
+        }
         loop {
-            let pg_notification = listener.recv().await?;
+            let pg_notification = match listener.recv().await {
+                Ok(pg_notification) => pg_notification,
+                Err(error) => {
+                    log::error!("Error while getting Postgres notification: {:?}", error);
+                    return;
+                }
+            };
             let notification: BlockProcessedNotification =
-                serde_json::from_str(pg_notification.payload())?;
-            callback(notification)
+                match serde_json::from_str(pg_notification.payload()) {
+                    Ok(notification) => notification,
+                    Err(error) => {
+                        log::error!(
+                            "Error while deserializing Postgres notification JSON: {:?}",
+                            error
+                        );
+                        break;
+                    }
+                };
+            if let Err(error) = callback(notification).await {
+                log::error!("Error in callback: {:?}", error);
+                break;
+            }
         }
     }
 

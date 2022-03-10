@@ -6,6 +6,7 @@ rust-version = "1.56.0"
 
 [dependencies]
 anyhow = "1.0.56"
+async-lock = "2.5.0"
 blake2-rfc = { version = "0.2.18", default-features = false }
 byteorder = { version = "1.4.3", default-features = false }
 chrono = "0.4.19"
@@ -22,6 +23,7 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
+tokio = { version = "1.17.0", features = ["full"] }
 twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
 
 [dev-dependencies]

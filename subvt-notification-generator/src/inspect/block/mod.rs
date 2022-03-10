@@ -1,9 +1,12 @@
 //! Contains the logic to process new blocks' events and extrinsics and persist notifications
 //! to be later sent by `subvt-notification-sender`.
 
-use crate::NotificationGenerator;
+use crate::{NotificationGenerator, CONFIG};
 use async_lock::Mutex;
+use once_cell::sync::OnceCell;
 use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
+use subvt_types::rdb::BlockProcessedNotification;
 
 mod authorship;
 mod chilling;
@@ -11,7 +14,11 @@ mod offence;
 mod validate;
 
 impl NotificationGenerator {
-    async fn inspect_block(&self, block_number: u64) -> anyhow::Result<()> {
+    async fn inspect_block(
+        &self,
+        substrate_client: Arc<SubstrateClient>,
+        block_number: u64,
+    ) -> anyhow::Result<()> {
         log::info!("Inspect block #{}.", block_number);
         let block = match self
             .network_postgres
@@ -24,10 +31,14 @@ impl NotificationGenerator {
                 return Ok(());
             }
         };
-        self.inspect_block_authorship(&block).await?;
-        self.inspect_offline_offences(&block).await?;
-        self.inspect_chillings(&block).await?;
-        self.inspect_validate_extrinsics(&block).await?;
+        self.inspect_block_authorship(substrate_client.clone(), &block)
+            .await?;
+        self.inspect_offline_offences(substrate_client.clone(), &block)
+            .await?;
+        self.inspect_chillings(substrate_client.clone(), &block)
+            .await?;
+        self.inspect_validate_extrinsics(substrate_client.clone(), &block)
+            .await?;
         self.network_postgres
             .save_notification_generator_state(&block.hash, block_number)
             .await?;
@@ -37,9 +48,11 @@ impl NotificationGenerator {
 
     async fn on_new_block(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         last_processed_block_number_mutex: Arc<Mutex<Option<u64>>>,
-        new_block_number: u64,
+        postgres_notification: BlockProcessedNotification,
     ) -> anyhow::Result<()> {
+        let new_block_number = postgres_notification.block_number;
         let mut maybe_last_processed_block_number = last_processed_block_number_mutex.lock().await;
         let start_block_number =
             if let Some(last_processed_block_number) = *maybe_last_processed_block_number {
@@ -48,7 +61,10 @@ impl NotificationGenerator {
                 new_block_number
             };
         for block_number in start_block_number..=new_block_number {
-            match self.inspect_block(block_number).await {
+            match self
+                .inspect_block(substrate_client.clone(), block_number)
+                .await
+            {
                 Ok(()) => {
                     *maybe_last_processed_block_number = Some(block_number);
                 }
@@ -61,25 +77,47 @@ impl NotificationGenerator {
     }
 
     pub(crate) async fn start_block_inspection(&'static self) -> anyhow::Result<()> {
-        let last_processed_block_number_mutex = Arc::new(Mutex::new(
+        loop {
+            let last_processed_block_number_mutex = Arc::new(Mutex::new(
+                self.network_postgres
+                    .get_notification_generator_state()
+                    .await?
+                    .map(|state| state.1),
+            ));
+            let substrate_client: Arc<SubstrateClient> =
+                Arc::new(SubstrateClient::new(&CONFIG).await?);
+            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             self.network_postgres
-                .get_notification_generator_state()
-                .await?
-                .map(|state| state.1),
-        ));
-        self.network_postgres
-            .subscribe_to_processed_blocks(|notification| {
-                let last_processed_block_number_mutex = last_processed_block_number_mutex.clone();
-                tokio::spawn(async move {
-                    if let Err(error) = self
-                        .on_new_block(last_processed_block_number_mutex, notification.block_number)
-                        .await
-                    {
-                        log::error!("Error while processing block: {:?}.", error);
+                .subscribe_to_processed_blocks(|notification| async {
+                    let error_cell = error_cell.clone();
+                    if let Some(error) = error_cell.get() {
+                        return Err(anyhow::anyhow!("{:?}", error));
                     }
-                });
-            })
-            .await?;
-        Ok(())
+                    let last_processed_block_number_mutex =
+                        last_processed_block_number_mutex.clone();
+                    let substrate_client = substrate_client.clone();
+                    tokio::spawn(async move {
+                        if let Err(error) = self
+                            .on_new_block(
+                                substrate_client,
+                                last_processed_block_number_mutex,
+                                notification,
+                            )
+                            .await
+                        {
+                            log::error!("Error while processing block: {:?}.", error);
+                            let _ = error_cell.set(error);
+                        }
+                    });
+                    Ok(())
+                })
+                .await;
+            let delay_seconds = CONFIG.common.recovery_retry_seconds;
+            log::error!(
+                "Block inspection exited. Will restart after {} seconds.",
+                delay_seconds
+            );
+            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+        }
     }
 }

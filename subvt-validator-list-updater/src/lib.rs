@@ -4,6 +4,7 @@ use anyhow::Context;
 use async_lock::RwLock;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use redis::Pipeline;
 use std::collections::{hash_map::DefaultHasher, HashSet};
 use std::hash::{Hash, Hasher};
@@ -240,6 +241,7 @@ impl Service for ValidatorListUpdater {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
+            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
@@ -263,42 +265,53 @@ impl Service for ValidatorListUpdater {
                 }
                 redis_cmd_pipeline.query(&mut connection)?;
             }
-            substrate_client.subscribe_to_finalized_blocks(|finalized_block_header| {
-                let finalized_block_number = match finalized_block_header.get_number() {
-                    Ok(block_number) => block_number,
-                    Err(_) => return log::error!("Cannot get block number for header: {:?}", finalized_block_header)
-                };
-                metrics::target_finalized_block_number().set(finalized_block_number as i64);
-                if is_busy.load(Ordering::SeqCst) {
-                    log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
-                    return;
-                }
-                is_busy.store(true, Ordering::SeqCst);
-                let processed_block_numbers = processed_block_numbers.clone();
-                let substrate_client = Arc::clone(&substrate_client);
-                let postgres = postgres.clone();
-                let is_busy = Arc::clone(&is_busy);
-                tokio::spawn(async move {
-                    let start = std::time::Instant::now();
-                    let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
-                        &substrate_client,
-                        &postgres,
-                        &processed_block_numbers,
-                        &finalized_block_header,
-                    ).await;
-                    if let Err(error) = update_result {
-                        log::error!("{:?}", error);
-                        log::error!(
-                            "Validator list update failed for block #{}. Will try again with the next block.",
-                            finalized_block_header.get_number().unwrap_or(0),
-                        );
-                    } else {
-                        metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
-                        metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+            substrate_client.subscribe_to_finalized_blocks(
+                CONFIG.substrate.request_timeout_seconds,
+                |finalized_block_header| async {
+                    let error_cell = error_cell.clone();
+                    if let Some(error) = error_cell.get() {
+                        return Err(anyhow::anyhow!("{:?}", error));
                     }
-                    is_busy.store(false, Ordering::SeqCst);
-                });
-            }).await?;
+                    let finalized_block_number = match finalized_block_header.get_number() {
+                        Ok(block_number) => block_number,
+                        Err(error) => {
+                            log::error!("Cannot get block number for header: {:?}", finalized_block_header);
+                            return Err(anyhow::anyhow!("{:?}", error));
+                        }
+                    };
+                    metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    if is_busy.load(Ordering::SeqCst) {
+                        log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
+                        return Ok(());
+                    }
+                    is_busy.store(true, Ordering::SeqCst);
+                    let processed_block_numbers = processed_block_numbers.clone();
+                    let substrate_client = Arc::clone(&substrate_client);
+                    let postgres = postgres.clone();
+                    let is_busy = Arc::clone(&is_busy);
+                    tokio::spawn(async move {
+                        let start = std::time::Instant::now();
+                        let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
+                            &substrate_client,
+                            &postgres,
+                            &processed_block_numbers,
+                            &finalized_block_header,
+                        ).await;
+                        if let Err(error) = update_result {
+                            log::error!("{:?}", error);
+                            log::error!(
+                                "Validator list update failed for block #{}. Will try again with the next block.",
+                                finalized_block_header.get_number().unwrap_or(0),
+                            );
+                            let _ = error_cell.set(error);
+                        } else {
+                            metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                            metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+                        }
+                        is_busy.store(false, Ordering::SeqCst);
+                    });
+                    Ok(())
+            }).await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",

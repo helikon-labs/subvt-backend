@@ -1,9 +1,15 @@
 use crate::{NotificationGenerator, CONFIG};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
     /// Checks if there's any rule watching the author of the block for authorship.
-    pub(crate) async fn inspect_block_authorship(&self, block: &Block) -> anyhow::Result<()> {
+    pub(crate) async fn inspect_block_authorship(
+        &self,
+        substrate_client: Arc<SubstrateClient>,
+        block: &Block,
+    ) -> anyhow::Result<()> {
         log::debug!(
             "Inspect block #{} for authorship notifications.",
             block.number,
@@ -23,6 +29,7 @@ impl NotificationGenerator {
             )
             .await?;
         self.generate_notifications(
+            substrate_client,
             &rules,
             block.number,
             validator_account_id,

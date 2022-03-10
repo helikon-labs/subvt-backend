@@ -5,6 +5,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use chrono::Utc;
 use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use redis::Pipeline;
 use std::sync::{Arc, Mutex};
 use subvt_config::Config;
@@ -232,6 +233,44 @@ impl NetworkStatusUpdater {
     }
 }
 
+impl NetworkStatusUpdater {
+    async fn on_new_block(
+        &self,
+        substrate_client: Arc<SubstrateClient>,
+        best_block_header: BlockHeader,
+    ) -> anyhow::Result<()> {
+        if let Ok(best_block_number) = best_block_header.get_number() {
+            metrics::target_best_block_number().set(best_block_number as i64);
+            log::info!("New best block #{}.", best_block_number);
+        }
+        let start = std::time::Instant::now();
+        let update_result = self
+            .fetch_and_update_network_status(&substrate_client, &best_block_header)
+            .await;
+        match update_result {
+            Ok(network_status) => {
+                log::info!(
+                    "Processed best block #{}.",
+                    network_status.best_block_number
+                );
+                metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                metrics::processed_best_block_number().set(network_status.best_block_number as i64);
+                let mut last_network_status = self.last_network_status.lock().unwrap();
+                *last_network_status = network_status;
+                Ok(())
+            }
+            Err(error) => {
+                log::error!("{:?}", error);
+                log::error!(
+                    "Network status update failed for block #{}. Will try again with the next block.",
+                    best_block_header.get_number().unwrap_or(0),
+                );
+                Err(error)
+            }
+        }
+    }
+}
+
 /// Service implementation.
 #[async_trait(?Send)]
 impl Service for NetworkStatusUpdater {
@@ -245,36 +284,27 @@ impl Service for NetworkStatusUpdater {
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-            substrate_client.subscribe_to_new_blocks(|best_block_header| {
-                let substrate_client = Arc::clone(&substrate_client);
-                tokio::spawn(async move {
-                    if let Ok(best_block_number) = best_block_header.get_number() {
-                        metrics::target_best_block_number().set(best_block_number as i64);
-                        log::info!("New best block #{}.", best_block_number);
-                    }
-                    let start = std::time::Instant::now();
-                    let update_result = self.fetch_and_update_network_status(
-                        &substrate_client,
-                        &best_block_header,
-                    ).await;
-                    match update_result {
-                        Ok(network_status) => {
-                            log::info!("Processed best block #{}.", network_status.best_block_number);
-                            metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
-                            metrics::processed_best_block_number().set(network_status.best_block_number as i64);
-                            let mut last_network_status = self.last_network_status.lock().unwrap();
-                            *last_network_status = network_status;
+            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
+            substrate_client
+                .subscribe_to_new_blocks(
+                    CONFIG.substrate.request_timeout_seconds,
+                    |best_block_header| async {
+                        let error_cell = error_cell.clone();
+                        if let Some(error) = error_cell.get() {
+                            return Err(anyhow::anyhow!("{:?}", error));
                         }
-                        Err(error) => {
-                            log::error!("{:?}", error);
-                            log::error!(
-                                "Network status update failed for block #{}. Will try again with the next block.",
-                                best_block_header.get_number().unwrap_or(0),
-                            );
-                        }
-                    }
-                });
-            }).await?;
+                        let substrate_client = Arc::clone(&substrate_client);
+                        tokio::spawn(async move {
+                            if let Err(error) =
+                                self.on_new_block(substrate_client, best_block_header).await
+                            {
+                                let _ = error_cell.set(error);
+                            }
+                        });
+                        Ok(())
+                    },
+                )
+                .await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",

@@ -6,6 +6,8 @@ use crate::{NotificationGenerator, CONFIG};
 use redis::Connection;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::AtomicU32;
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
 mod add;
@@ -19,6 +21,7 @@ impl NotificationGenerator {
     /// Called after each validator list update PUBLISH event.
     async fn inspect_validator_list_update(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut Connection,
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
@@ -89,6 +92,7 @@ impl NotificationGenerator {
             );
             if let Some(updated) = self
                 .inspect_validator_changes(
+                    substrate_client.clone(),
                     redis_connection,
                     &validator_prefix,
                     finalized_block_number,
@@ -101,6 +105,7 @@ impl NotificationGenerator {
         }
         // unclimed payouts
         self.inspect_unclaimed_payouts(
+            substrate_client,
             redis_connection,
             &redis_storage_prefix,
             last_active_era_index,
@@ -113,6 +118,8 @@ impl NotificationGenerator {
 
     pub(crate) async fn start_validator_list_inspection(&'static self) -> anyhow::Result<()> {
         loop {
+            let substrate_client: Arc<SubstrateClient> =
+                Arc::new(SubstrateClient::new(&CONFIG).await?);
             let mut redis_pub_sub_connection = self.redis_client.get_connection()?;
             let mut redis_pub_sub = redis_pub_sub_connection.as_pubsub();
             let mut redis_data_connection = self.redis_client.get_connection()?;
@@ -146,6 +153,7 @@ impl NotificationGenerator {
                 }
                 if let Err(error) = self
                     .inspect_validator_list_update(
+                        substrate_client.clone(),
                         &mut redis_data_connection,
                         &mut validator_map,
                         finalized_block_number,

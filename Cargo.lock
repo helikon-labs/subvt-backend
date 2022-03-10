@@ -6334,6 +6334,7 @@ name = "subvt-substrate-client"
 version = "0.1.2"
 dependencies = [
  "anyhow",
+ "async-lock",
  "blake2-rfc",
  "byteorder",
  "chrono",

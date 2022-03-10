@@ -1,9 +1,15 @@
 use crate::{NotificationGenerator, CONFIG};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
     /// Checks validator offline events.
-    pub(crate) async fn inspect_offline_offences(&self, block: &Block) -> anyhow::Result<()> {
+    pub(crate) async fn inspect_offline_offences(
+        &self,
+        substrate_client: Arc<SubstrateClient>,
+        block: &Block,
+    ) -> anyhow::Result<()> {
         log::debug!("Inspect block #{} for offline offences.", block.number);
         for event in self
             .network_postgres
@@ -19,6 +25,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             self.generate_notifications(
+                substrate_client.clone(),
                 &rules,
                 block.number,
                 &event.validator_account_id,

@@ -1,5 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
 use subvt_types::crypto::AccountId;
@@ -9,6 +11,7 @@ use subvt_types::subvt::ValidatorDetails;
 impl NotificationGenerator {
     pub(crate) async fn inspect_lost_nominations(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
         current: &ValidatorDetails,
@@ -49,6 +52,7 @@ impl NotificationGenerator {
                     }
                 }
                 self.generate_notifications(
+                    substrate_client.clone(),
                     &[rule],
                     finalized_block_number,
                     &current.account.id,

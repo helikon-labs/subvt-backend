@@ -11,6 +11,7 @@ use lazy_static::lazy_static;
 use log::debug;
 use redis::Client as RedisClient;
 use serde::Serialize;
+use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -27,7 +28,6 @@ lazy_static! {
 
 pub struct NotificationGenerator {
     redis_client: RedisClient,
-    substrate_client: SubstrateClient,
     network_postgres: PostgreSQLNetworkStorage,
     app_postgres: PostgreSQLAppStorage,
 }
@@ -39,7 +39,6 @@ impl NotificationGenerator {
                 "Cannot connect to Redis at URL {}.",
                 CONFIG.redis.url
             ))?,
-            substrate_client: SubstrateClient::new(&CONFIG).await?,
             network_postgres: PostgreSQLNetworkStorage::new(
                 &CONFIG,
                 CONFIG.get_network_postgres_url(),
@@ -55,16 +54,16 @@ impl NotificationGenerator {
     /// `subvt-notification-sender`.
     async fn generate_notifications<T: Clone + Serialize>(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         rules: &[UserNotificationRule],
         block_number: u64,
         validator_account_id: &AccountId,
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
-        let block_hash = self.substrate_client.get_block_hash(block_number).await?;
+        let block_hash = substrate_client.get_block_hash(block_number).await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists
-        let account_json = if let Some(account) = self
-            .substrate_client
+        let account_json = if let Some(account) = substrate_client
             .get_accounts(&[validator_account_id.clone()], &block_hash)
             .await?
             .get(0)

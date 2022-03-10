@@ -4,11 +4,14 @@ use chrono::Utc;
 use redis::Connection as RedisConnection;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::{app::NotificationTypeCode, substrate::Era, subvt::ValidatorDetails};
 
 impl NotificationGenerator {
     pub(crate) async fn inspect_unclaimed_payouts(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         redis_storage_prefix: &str,
         last_active_era_index: &AtomicU32,
@@ -47,6 +50,7 @@ impl NotificationGenerator {
                             .await?;
                         // generate notifications
                         self.generate_notifications(
+                            substrate_client.clone(),
                             &rules,
                             finalized_block_number,
                             &validator.account.id,

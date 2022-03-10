@@ -3,6 +3,8 @@ use anyhow::Context;
 use redis::Connection as RedisConnection;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::sync::Arc;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
 mod active;
@@ -16,6 +18,7 @@ impl NotificationGenerator {
     /// checks for changes in the validator and persists notifications where a rule requires it.
     pub(crate) async fn inspect_validator_changes(
         &self,
+        substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         redis_prefix: &str,
         finalized_block_number: u64,
@@ -46,17 +49,43 @@ impl NotificationGenerator {
             serde_json::from_str::<ValidatorDetails>(&db_validator_json)?
         };
         // inspections
-        self.inspect_nomination_changes(address, finalized_block_number, last, &current)
-            .await?;
-        self.inspect_active_next_session(finalized_block_number, last, &current)
-            .await?;
-        self.inspect_inactive_next_session(finalized_block_number, last, &current)
-            .await?;
-        self.inspect_active(finalized_block_number, last, &current)
-            .await?;
-        self.inspect_inactive(finalized_block_number, last, &current)
-            .await?;
-        self.inspect_onekv_changes(finalized_block_number, last, &current)
+        self.inspect_nomination_changes(
+            substrate_client.clone(),
+            address,
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_active_next_session(
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_inactive_next_session(
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_active(
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_inactive(
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_onekv_changes(substrate_client, finalized_block_number, last, &current)
             .await?;
         // check 1kv rank, validity and location
         if current.onekv_candidate_record_id.is_some()
