@@ -5,18 +5,19 @@
 //! finishing of the processing of a block is signalled by the processor by means of PostgreSQL
 //! notifications.
 //! 3. Regular Telemetry checks (this is work in progress still).
+use anyhow::Context;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
+use redis::Client as RedisClient;
 use serde::Serialize;
-use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Notification, UserNotificationRule};
 use subvt_types::crypto::AccountId;
-use tokio::runtime::Builder;
 
 mod inspect;
 
@@ -24,24 +25,46 @@ lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-#[derive(Default)]
-pub struct NotificationGenerator;
+pub struct NotificationGenerator {
+    redis_client: RedisClient,
+    substrate_client: SubstrateClient,
+    network_postgres: PostgreSQLNetworkStorage,
+    app_postgres: PostgreSQLAppStorage,
+}
+
+impl NotificationGenerator {
+    pub async fn new() -> anyhow::Result<NotificationGenerator> {
+        Ok(NotificationGenerator {
+            redis_client: redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?,
+            substrate_client: SubstrateClient::new(&CONFIG).await?,
+            network_postgres: PostgreSQLNetworkStorage::new(
+                &CONFIG,
+                CONFIG.get_network_postgres_url(),
+            )
+            .await?,
+            app_postgres: PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?,
+        })
+    }
+}
 
 impl NotificationGenerator {
     /// Persist notifications for a validator, which will later be be processed by
     /// `subvt-notification-sender`.
     async fn generate_notifications<T: Clone + Serialize>(
-        app_postgres: &PostgreSQLAppStorage,
-        substrate_client: &Arc<SubstrateClient>,
+        &self,
         rules: &[UserNotificationRule],
         block_number: u64,
         validator_account_id: &AccountId,
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
-        let block_hash = substrate_client.get_block_hash(block_number).await?;
+        let block_hash = self.substrate_client.get_block_hash(block_number).await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists
-        let account_json = if let Some(account) = substrate_client
+        let account_json = if let Some(account) = self
+            .substrate_client
             .get_accounts(&[validator_account_id.clone()], &block_hash)
             .await?
             .get(0)
@@ -82,7 +105,7 @@ impl NotificationGenerator {
                         None
                     },
                 };
-                let _ = app_postgres.save_notification(&notification).await?;
+                let _ = self.app_postgres.save_notification(&notification).await?;
             }
         }
         Ok(())
@@ -99,18 +122,11 @@ impl Service for NotificationGenerator {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-        // for async in sync context
-        let tokio_rt = Builder::new_current_thread().enable_all().build().unwrap();
-        let validator_list_processor_substrate_client = substrate_client.clone();
-        // start processing validator list updates
-        std::thread::spawn(move || {
-            tokio_rt.block_on(NotificationGenerator::process_validator_list_updates(
-                &CONFIG,
-                validator_list_processor_substrate_client,
-            ));
-        });
-        // start processing events and extrinsics in new blocks
-        NotificationGenerator::start_processing_blocks(&CONFIG, substrate_client).await
+        futures::future::try_join_all(vec![
+            tokio::spawn(self.start_block_inspection()),
+            tokio::spawn(self.start_validator_list_inspection()),
+        ])
+        .await?;
+        Ok(())
     }
 }

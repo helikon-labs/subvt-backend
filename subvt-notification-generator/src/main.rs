@@ -1,14 +1,13 @@
 //! See `./lib.rs` for details.
 
-use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use subvt_notification_generator::NotificationGenerator;
 use subvt_service_common::Service;
 
-lazy_static! {
-    static ref SERVICE: NotificationGenerator = NotificationGenerator::default();
-}
+static SERVICE: OnceCell<NotificationGenerator> = OnceCell::new();
 
 #[tokio::main]
 async fn main() {
-    SERVICE.start().await;
+    let _ = SERVICE.set(NotificationGenerator::new().await.unwrap());
+    SERVICE.get().unwrap().start().await;
 }

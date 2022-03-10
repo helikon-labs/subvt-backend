@@ -12,7 +12,7 @@ CREATE TYPE sub_validator_info AS (
     heartbeat_received boolean,
     onekv_candidate_record_id integer,
     onekv_rank bigint,
-    onekv_location string,
+    onekv_location text,
     onekv_is_valid boolean
 );
 
