@@ -5,6 +5,8 @@ use crate::{NotificationGenerator, CONFIG};
 use async_lock::Mutex;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::rdb::BlockProcessedNotification;
 
@@ -16,30 +18,43 @@ mod validate;
 impl NotificationGenerator {
     async fn inspect_block(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         block_number: u64,
     ) -> anyhow::Result<()> {
         log::info!("Inspect block #{}.", block_number);
-        let block = match self
-            .network_postgres
-            .get_block_by_number(block_number)
-            .await?
-        {
+        let block = match network_postgres.get_block_by_number(block_number).await? {
             Some(block) => block,
             None => {
                 log::error!("Block ${} not found.", block_number);
                 return Ok(());
             }
         };
-        self.inspect_block_authorship(substrate_client.clone(), &block)
+        self.inspect_block_authorship(app_postgres.clone(), substrate_client.clone(), &block)
             .await?;
-        self.inspect_offline_offences(substrate_client.clone(), &block)
-            .await?;
-        self.inspect_chillings(substrate_client.clone(), &block)
-            .await?;
-        self.inspect_validate_extrinsics(substrate_client.clone(), &block)
-            .await?;
-        self.network_postgres
+        self.inspect_offline_offences(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            substrate_client.clone(),
+            &block,
+        )
+        .await?;
+        self.inspect_chillings(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            substrate_client.clone(),
+            &block,
+        )
+        .await?;
+        self.inspect_validate_extrinsics(
+            network_postgres.clone(),
+            app_postgres,
+            substrate_client.clone(),
+            &block,
+        )
+        .await?;
+        network_postgres
             .save_notification_generator_state(&block.hash, block_number)
             .await?;
         log::info!("Completed the inspection of block #{}.", block_number);
@@ -48,6 +63,8 @@ impl NotificationGenerator {
 
     async fn on_new_block(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         last_processed_block_number_mutex: Arc<Mutex<Option<u64>>>,
         postgres_notification: BlockProcessedNotification,
@@ -62,7 +79,12 @@ impl NotificationGenerator {
             };
         for block_number in start_block_number..=new_block_number {
             match self
-                .inspect_block(substrate_client.clone(), block_number)
+                .inspect_block(
+                    network_postgres.clone(),
+                    app_postgres.clone(),
+                    substrate_client.clone(),
+                    block_number,
+                )
                 .await
             {
                 Ok(()) => {
@@ -78,8 +100,13 @@ impl NotificationGenerator {
 
     pub(crate) async fn start_block_inspection(&'static self) -> anyhow::Result<()> {
         loop {
+            let network_postgres = Arc::new(
+                PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+            );
+            let app_postgres =
+                Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
             let last_processed_block_number_mutex = Arc::new(Mutex::new(
-                self.network_postgres
+                network_postgres
                     .get_notification_generator_state()
                     .await?
                     .map(|state| state.1),
@@ -87,7 +114,7 @@ impl NotificationGenerator {
             let substrate_client: Arc<SubstrateClient> =
                 Arc::new(SubstrateClient::new(&CONFIG).await?);
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
-            self.network_postgres
+            network_postgres
                 .subscribe_to_processed_blocks(|notification| async {
                     let error_cell = error_cell.clone();
                     if let Some(error) = error_cell.get() {
@@ -95,10 +122,14 @@ impl NotificationGenerator {
                     }
                     let last_processed_block_number_mutex =
                         last_processed_block_number_mutex.clone();
+                    let network_postgres = network_postgres.clone();
+                    let app_postgres = app_postgres.clone();
                     let substrate_client = substrate_client.clone();
                     tokio::spawn(async move {
                         if let Err(error) = self
                             .on_new_block(
+                                network_postgres,
+                                app_postgres,
                                 substrate_client,
                                 last_processed_block_number_mutex,
                                 notification,

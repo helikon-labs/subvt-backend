@@ -1,6 +1,8 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::{
     app::app_event, app::NotificationTypeCode, crypto::AccountId, substrate::Nomination,
@@ -11,6 +13,8 @@ impl NotificationGenerator {
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_renominations(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
@@ -31,8 +35,7 @@ impl NotificationGenerator {
                     prev_nomination.stake.active_amount,
                     current_nomination.stake.active_amount,
                 );
-                let rules = self
-                    .app_postgres
+                let rules = app_postgres
                     .get_notification_rules_for_validator(
                         &NotificationTypeCode::ChainValidatorNominationAmountChange.to_string(),
                         CONFIG.substrate.network_id,
@@ -51,6 +54,7 @@ impl NotificationGenerator {
                     nominee_count: current_nomination.target_account_ids.len() as u64,
                 };
                 self.generate_notifications(
+                    app_postgres.clone(),
                     substrate_client.clone(),
                     &rules,
                     finalized_block_number,
@@ -58,7 +62,7 @@ impl NotificationGenerator {
                     Some(&event),
                 )
                 .await?;
-                self.network_postgres
+                network_postgres
                     .save_nomination_amount_change_event(&event)
                     .await?;
             }

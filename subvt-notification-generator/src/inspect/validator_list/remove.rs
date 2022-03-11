@@ -1,11 +1,14 @@
 use crate::NotificationGenerator;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
+use std::sync::Arc;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::{crypto::AccountId, subvt::ValidatorDetails};
 
 impl NotificationGenerator {
     pub(crate) async fn remove_validators(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
         removed_validator_ids: &HashSet<String>,
@@ -14,7 +17,7 @@ impl NotificationGenerator {
         for removed_id in removed_validator_ids {
             let account_id = AccountId::from_str(removed_id)?;
             log::info!("Remove validator: {}", account_id.to_ss58_check());
-            self.network_postgres
+            network_postgres
                 .save_removed_validator_event(&account_id, finalized_block_number)
                 .await?;
             validator_map.remove(removed_id);

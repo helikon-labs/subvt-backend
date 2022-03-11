@@ -4,6 +4,8 @@ use redis::Connection as RedisConnection;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
@@ -16,8 +18,11 @@ mod nomination;
 impl NotificationGenerator {
     /// Runs after each notification from the validator list updater for each validator,
     /// checks for changes in the validator and persists notifications where a rule requires it.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_validator_changes(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         redis_prefix: &str,
@@ -50,6 +55,8 @@ impl NotificationGenerator {
         };
         // inspections
         self.inspect_nomination_changes(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             address,
             finalized_block_number,
@@ -58,6 +65,8 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_active_next_session(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             finalized_block_number,
             last,
@@ -65,6 +74,8 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_inactive_next_session(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             finalized_block_number,
             last,
@@ -72,6 +83,8 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_active(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             finalized_block_number,
             last,
@@ -79,20 +92,23 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_inactive(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
         )
         .await?;
-        self.inspect_onekv_changes(substrate_client, finalized_block_number, last, &current)
-            .await?;
-        // check 1kv rank, validity and location
-        if current.onekv_candidate_record_id.is_some()
-            && (current.onekv_candidate_record_id == last.onekv_candidate_record_id)
-        {
-            // check validity
-        }
+        self.inspect_onekv_changes(
+            network_postgres,
+            app_postgres.clone(),
+            substrate_client,
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
         Ok(Some(current))
     }
 }

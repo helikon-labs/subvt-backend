@@ -1,5 +1,6 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
@@ -7,6 +8,7 @@ impl NotificationGenerator {
     /// Checks if there's any rule watching the author of the block for authorship.
     pub(crate) async fn inspect_block_authorship(
         &self,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
@@ -20,8 +22,7 @@ impl NotificationGenerator {
             log::error!("Block ${} author is null.", block.number);
             return Ok(());
         };
-        let rules = self
-            .app_postgres
+        let rules = app_postgres
             .get_notification_rules_for_validator(
                 &NotificationTypeCode::ChainValidatorBlockAuthorship.to_string(),
                 CONFIG.substrate.network_id,
@@ -29,6 +30,7 @@ impl NotificationGenerator {
             )
             .await?;
         self.generate_notifications(
+            app_postgres,
             substrate_client,
             &rules,
             block.number,

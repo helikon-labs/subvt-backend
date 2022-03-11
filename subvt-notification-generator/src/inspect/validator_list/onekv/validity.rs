@@ -1,5 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
@@ -8,6 +10,8 @@ use subvt_types::subvt::ValidatorDetails;
 impl NotificationGenerator {
     pub(crate) async fn inspect_onekv_validity_change(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         finalized_block_number: u64,
         last: &ValidatorDetails,
@@ -20,19 +24,18 @@ impl NotificationGenerator {
                 last.onekv_is_valid.unwrap(),
                 current.onekv_is_valid.unwrap(),
             );
-            let rules = self
-                .app_postgres
+            let rules = app_postgres
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::OneKVValidatorValidityChange.to_string(),
                     CONFIG.substrate.network_id,
                     &current.account.id,
                 )
                 .await?;
-            let validity_items = self
-                .network_postgres
+            let validity_items = network_postgres
                 .get_onekv_candidate_validity_items(current.onekv_candidate_record_id.unwrap())
                 .await?;
             self.generate_notifications(
+                app_postgres,
                 substrate_client,
                 &rules,
                 finalized_block_number,
@@ -44,7 +47,7 @@ impl NotificationGenerator {
                 }),
             )
             .await?;
-            self.network_postgres
+            network_postgres
                 .save_onekv_validity_change_event(
                     &current.account.id,
                     current.onekv_is_valid.unwrap(),

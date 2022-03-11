@@ -1,6 +1,8 @@
 use crate::NotificationGenerator;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::Nomination;
@@ -11,8 +13,11 @@ mod new_nomination;
 mod renomination;
 
 impl NotificationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_nomination_changes(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
@@ -38,6 +43,8 @@ impl NotificationGenerator {
         // new nominations
         let new_nominator_ids = &current_nominator_ids - &last_nominator_ids;
         self.inspect_new_nominations(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             address,
             finalized_block_number,
@@ -53,6 +60,8 @@ impl NotificationGenerator {
         }
         let lost_nominator_ids = &last_nominator_ids - &current_nominator_ids;
         self.inspect_lost_nominations(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client.clone(),
             address,
             finalized_block_number,
@@ -64,6 +73,8 @@ impl NotificationGenerator {
         // renominations
         let renominator_ids = &current_nominator_ids - &new_nominator_ids;
         self.inspect_renominations(
+            network_postgres.clone(),
+            app_postgres.clone(),
             substrate_client,
             address,
             finalized_block_number,

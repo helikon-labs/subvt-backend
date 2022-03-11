@@ -3,11 +3,15 @@ use anyhow::Context;
 use redis::Connection as RedisConnection;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
+use std::sync::Arc;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::{crypto::AccountId, subvt::ValidatorDetails};
 
 impl NotificationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn add_validators(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
         redis_connection: &mut RedisConnection,
         redis_storage_prefix: &str,
         validator_map: &mut HashMap<String, ValidatorDetails>,
@@ -19,7 +23,7 @@ impl NotificationGenerator {
         for added_id in added_validator_ids {
             let account_id = AccountId::from_str(added_id)?;
             log::info!("Persist new validator: {}", account_id.to_ss58_check());
-            self.network_postgres
+            network_postgres
                 .save_new_validator_event(&account_id, finalized_block_number)
                 .await?;
             // add to validator map

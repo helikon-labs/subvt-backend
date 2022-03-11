@@ -1,5 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
@@ -8,6 +10,8 @@ use subvt_types::subvt::ValidatorDetails;
 impl NotificationGenerator {
     pub(crate) async fn inspect_onekv_rank_change(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         finalized_block_number: u64,
         last: &ValidatorDetails,
@@ -20,8 +24,7 @@ impl NotificationGenerator {
                 last.onekv_rank.unwrap(),
                 current.onekv_rank.unwrap(),
             );
-            let rules = self
-                .app_postgres
+            let rules = app_postgres
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::OneKVValidatorRankChange.to_string(),
                     CONFIG.substrate.network_id,
@@ -29,6 +32,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             self.generate_notifications(
+                app_postgres,
                 substrate_client,
                 &rules,
                 finalized_block_number,
@@ -40,7 +44,7 @@ impl NotificationGenerator {
                 }),
             )
             .await?;
-            self.network_postgres
+            network_postgres
                 .save_onekv_rank_change_event(
                     &current.account.id,
                     last.onekv_rank.unwrap(),

@@ -5,16 +5,13 @@
 //! finishing of the processing of a block is signalled by the processor by means of PostgreSQL
 //! notifications.
 //! 3. Regular Telemetry checks (this is work in progress still).
-use anyhow::Context;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use log::debug;
-use redis::Client as RedisClient;
 use serde::Serialize;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
-use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Notification, UserNotificationRule};
@@ -26,34 +23,15 @@ lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-pub struct NotificationGenerator {
-    redis_client: RedisClient,
-    network_postgres: PostgreSQLNetworkStorage,
-    app_postgres: PostgreSQLAppStorage,
-}
-
-impl NotificationGenerator {
-    pub async fn new() -> anyhow::Result<NotificationGenerator> {
-        Ok(NotificationGenerator {
-            redis_client: redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
-                "Cannot connect to Redis at URL {}.",
-                CONFIG.redis.url
-            ))?,
-            network_postgres: PostgreSQLNetworkStorage::new(
-                &CONFIG,
-                CONFIG.get_network_postgres_url(),
-            )
-            .await?,
-            app_postgres: PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?,
-        })
-    }
-}
+#[derive(Default)]
+pub struct NotificationGenerator;
 
 impl NotificationGenerator {
     /// Persist notifications for a validator, which will later be be processed by
     /// `subvt-notification-sender`.
     async fn generate_notifications<T: Clone + Serialize>(
         &self,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         rules: &[UserNotificationRule],
         block_number: u64,
@@ -104,7 +82,7 @@ impl NotificationGenerator {
                         None
                     },
                 };
-                let _ = self.app_postgres.save_notification(&notification).await?;
+                let _ = app_postgres.save_notification(&notification).await?;
             }
         }
         Ok(())

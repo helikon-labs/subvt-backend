@@ -5,12 +5,17 @@ use redis::Connection as RedisConnection;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::{app::NotificationTypeCode, substrate::Era, subvt::ValidatorDetails};
 
 impl NotificationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_unclaimed_payouts(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         redis_storage_prefix: &str,
@@ -32,16 +37,14 @@ impl NotificationGenerator {
                 .unclaimed_payout_check_delay_hours as i64
             && last_active_era_index.load(Ordering::SeqCst) != active_era.index
         {
-            if !self
-                .network_postgres
+            if !network_postgres
                 .notification_generator_has_processed_era(active_era.index)
                 .await?
             {
                 log::debug!("Process era #{} for unclaimed payouts.", active_era.index);
                 for validator in validator_map.values() {
                     if !validator.unclaimed_era_indices.is_empty() {
-                        let rules = self
-                            .app_postgres
+                        let rules = app_postgres
                             .get_notification_rules_for_validator(
                                 &NotificationTypeCode::ChainValidatorUnclaimedPayout.to_string(),
                                 CONFIG.substrate.network_id,
@@ -50,6 +53,7 @@ impl NotificationGenerator {
                             .await?;
                         // generate notifications
                         self.generate_notifications(
+                            app_postgres.clone(),
                             substrate_client.clone(),
                             &rules,
                             finalized_block_number,
@@ -59,7 +63,7 @@ impl NotificationGenerator {
                         .await?;
                     }
                 }
-                self.network_postgres
+                network_postgres
                     .save_notification_generator_processed_era(active_era.index)
                     .await?;
             }

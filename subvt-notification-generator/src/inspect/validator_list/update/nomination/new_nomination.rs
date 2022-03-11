@@ -1,6 +1,8 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
@@ -9,8 +11,11 @@ use subvt_types::substrate::{Balance, Nomination};
 use subvt_types::subvt::ValidatorDetails;
 
 impl NotificationGenerator {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_new_nominations(
         &self,
+        network_postgres: Arc<PostgreSQLNetworkStorage>,
+        app_postgres: Arc<PostgreSQLAppStorage>,
         substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
@@ -26,8 +31,7 @@ impl NotificationGenerator {
                 new_nominator_id.to_ss58_check(),
                 new_nomination.stake.active_amount,
             );
-            let rules = self
-                .app_postgres
+            let rules = app_postgres
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::ChainValidatorNewNomination.to_string(),
                     CONFIG.substrate.network_id,
@@ -51,6 +55,7 @@ impl NotificationGenerator {
                     }
                 }
                 self.generate_notifications(
+                    app_postgres.clone(),
                     substrate_client.clone(),
                     &[rule],
                     finalized_block_number,
@@ -59,9 +64,7 @@ impl NotificationGenerator {
                 )
                 .await?;
             }
-            self.network_postgres
-                .save_new_nomination_event(&event)
-                .await?;
+            network_postgres.save_new_nomination_event(&event).await?;
         }
         Ok(())
     }
