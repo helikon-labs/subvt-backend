@@ -5,6 +5,7 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
+mod binary_version;
 mod location;
 mod rank;
 mod validity;
@@ -24,6 +25,15 @@ impl NotificationGenerator {
         {
             return Ok(());
         }
+        self.inspect_onekv_binary_version_change(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            current,
+        )
+        .await?;
         self.inspect_onekv_rank_change(
             network_postgres.clone(),
             app_postgres.clone(),

@@ -6,9 +6,14 @@ use sqlx::{Pool, Postgres};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use subvt_config::Config;
-use subvt_types::app::db::{PostgresBlock, PostgresValidateExtrinsic};
+use subvt_types::app::db::{
+    PostgresBlock, PostgresPayoutStakersExtrinsic, PostgresSetControllerExtrinsic,
+    PostgresValidateExtrinsic,
+};
 use subvt_types::app::event::{ChilledEvent, ValidatorOfflineEvent};
-use subvt_types::app::extrinsic::ValidateExtrinsic;
+use subvt_types::app::extrinsic::{
+    PayoutStakersExtrinsic, SetControllerExtrinsic, ValidateExtrinsic,
+};
 use subvt_types::app::Block;
 use subvt_types::substrate::RewardDestination;
 use subvt_types::{
@@ -40,6 +45,7 @@ type PostgresValidatorInfo = (
     Option<i64>,
     Option<bool>,
     Option<i32>,
+    Option<String>,
     Option<i64>,
     Option<String>,
     Option<bool>,
@@ -990,6 +996,28 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
+    pub async fn get_payout_stakers_extrinsics_in_block(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<PayoutStakersExtrinsic>> {
+        let db_extrinsics: Vec<PostgresPayoutStakersExtrinsic> = sqlx::query_as(
+            r#"
+            SELECT "id", block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful
+            FROM sub_extrinsic_payout_stakers
+            WHERE block_hash = $1 AND is_successful = true
+            ORDER BY "id" ASC
+            "#,
+        )
+            .bind(block_hash)
+            .fetch_all(&self.connection_pool)
+            .await?;
+        let mut extrinsics = Vec::new();
+        for db_extrinsic in db_extrinsics {
+            extrinsics.push(PayoutStakersExtrinsic::from(db_extrinsic)?)
+        }
+        Ok(extrinsics)
+    }
+
     pub async fn save_set_controller_extrinsic(
         &self,
         block_hash: &str,
@@ -1021,6 +1049,28 @@ impl PostgreSQLNetworkStorage {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn get_set_controller_extrinsics_in_block(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<SetControllerExtrinsic>> {
+        let db_extrinsics: Vec<PostgresSetControllerExtrinsic> = sqlx::query_as(
+            r#"
+            SELECT "id", block_hash, extrinsic_index, is_nested_call, caller_account_id, controller_account_id, is_successful
+            FROM sub_extrinsic_set_controller
+            WHERE block_hash = $1 AND is_successful = true
+            ORDER BY "id" ASC
+            "#,
+        )
+            .bind(block_hash)
+            .fetch_all(&self.connection_pool)
+            .await?;
+        let mut extrinsics = Vec::new();
+        for db_extrinsic in db_extrinsics {
+            extrinsics.push(SetControllerExtrinsic::from(db_extrinsic)?)
+        }
+        Ok(extrinsics)
     }
 
     pub async fn save_bond_extrinsic(
@@ -1071,7 +1121,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_rank, onekv_location, onekv_is_valid
+            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_binary_version, onekv_rank, onekv_location, onekv_is_valid
             FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
@@ -1102,9 +1152,10 @@ impl PostgreSQLNetworkStorage {
             reward_points: validator_info.9.map(|value| value as u64),
             heartbeat_received: validator_info.10,
             onekv_candidate_record_id: validator_info.11.map(|value| value as u32),
-            onekv_rank: validator_info.12.map(|value| value as u64),
-            onekv_location: validator_info.13,
-            onekv_is_valid: validator_info.14,
+            onekv_binary_version: validator_info.12,
+            onekv_rank: validator_info.13.map(|value| value as u64),
+            onekv_location: validator_info.14,
+            onekv_is_valid: validator_info.15,
         })
     }
 

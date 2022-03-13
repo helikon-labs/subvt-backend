@@ -108,6 +108,10 @@ pub enum NotificationTypeCode {
     ChainValidateExtrinsic,
     ChainValidatorUnclaimedPayout,
     ChainValidatorBlockAuthorship,
+    ChainValidatorSetController,
+    ChainValidatorSessionKeysChanged,
+    ChainValidatorIdentityChanged,
+    ChainValidatorPayoutStakers,
     TelemetryValidatorOffline,
     TelemetryValidatorBinaryOutOfDate,
     TelemetryValidatorPeerCountLow,
@@ -116,6 +120,7 @@ pub enum NotificationTypeCode {
     TelemetryValidatorFinalityLagging,
     TelemetryValidatorDownloadBwLow,
     TelemetryValidatorUploadBwLow,
+    OneKVValidatorBinaryVersionChange,
     OneKVValidatorRankChange,
     OneKVValidatorLocationChange,
     OneKVValidatorValidityChange,
@@ -146,6 +151,14 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::ChainValidatorBlockAuthorship => {
                 "chain_validator_block_authorship"
             }
+            NotificationTypeCode::ChainValidatorSetController => "chain_validator_set_controller",
+            NotificationTypeCode::ChainValidatorSessionKeysChanged => {
+                "chain_validator_session_keys_changed"
+            }
+            NotificationTypeCode::ChainValidatorIdentityChanged => {
+                "chain_validator_identity_changed"
+            }
+            NotificationTypeCode::ChainValidatorPayoutStakers => "chain_validator_payout_stakers",
             NotificationTypeCode::TelemetryValidatorOffline => "telemetry_validator_offline",
             NotificationTypeCode::TelemetryValidatorBinaryOutOfDate => {
                 "telemetry_validator_binary_out_of_date"
@@ -165,6 +178,9 @@ impl Display for NotificationTypeCode {
             }
             NotificationTypeCode::TelemetryValidatorUploadBwLow => {
                 "telemetry_validator_upload_bw_low"
+            }
+            NotificationTypeCode::OneKVValidatorBinaryVersionChange => {
+                "onekv_validator_binary_version_change"
             }
             NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
             NotificationTypeCode::OneKVValidatorLocationChange => "onekv_validator_location_change",
@@ -199,6 +215,14 @@ impl From<&str> for NotificationTypeCode {
             "chain_validator_block_authorship" => {
                 NotificationTypeCode::ChainValidatorBlockAuthorship
             }
+            "chain_validator_set_controller" => NotificationTypeCode::ChainValidatorSetController,
+            "chain_validator_session_keys_changed" => {
+                NotificationTypeCode::ChainValidatorSessionKeysChanged
+            }
+            "chain_validator_identity_changed" => {
+                NotificationTypeCode::ChainValidatorIdentityChanged
+            }
+            "chain_validator_payout_stakers" => NotificationTypeCode::ChainValidatorPayoutStakers,
             "telemetry_validator_offline" => NotificationTypeCode::TelemetryValidatorOffline,
             "telemetry_validator_binary_out_of_date" => {
                 NotificationTypeCode::TelemetryValidatorBinaryOutOfDate
@@ -218,6 +242,9 @@ impl From<&str> for NotificationTypeCode {
             }
             "telemetry_validator_upload_bw_low" => {
                 NotificationTypeCode::TelemetryValidatorUploadBwLow
+            }
+            "onekv_validator_binary_version_change" => {
+                NotificationTypeCode::OneKVValidatorBinaryVersionChange
             }
             "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
             "onekv_validator_location_change" => NotificationTypeCode::OneKVValidatorLocationChange,

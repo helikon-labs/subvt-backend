@@ -17,6 +17,10 @@ INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive_next_se
 INSERT INTO app_notification_type(code) VALUES('chain_validate_extrinsic');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_unclaimed_payout');
 INSERT INTO app_notification_type(code) VALUES('chain_validator_block_authorship');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_set_controller');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_session_keys_changed');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_identity_changed');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_payout_stakers');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_offline');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_binary_out_of_date');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_peer_count_low');
@@ -25,6 +29,7 @@ INSERT INTO app_notification_type(code) VALUES('telemetry_validator_lagging');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_finality_lagging');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_download_bw_low');
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_upload_bw_low');
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change');
@@ -108,6 +113,10 @@ INSERT INTO app_notification_param_type(
 -- chain_validate_extrinsic :: no param
 -- chain_validator_unclaimed_payout :: no param
 -- chain_validator_block_authorship :: no param
+-- chain_validator_set_controller :: no param
+-- chain_validator_session_keys_changed :: no param
+-- chain_validator_identity_changed :: no param
+-- chain_validator_reward_payout :: no param
 -- telemetry_validator_offline
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -382,6 +391,7 @@ INSERT INTO app_notification_param_type(
     false,
     'Notification happens if the validator''s upload bandwidth is lower than this value in kilobits per second for this many seconds.'
 );
+-- onekv_validator_binary_version_change :: no param
 -- onekv_validator_rank_change :: no param
 -- onekv_validator_location_change :: no param
 -- onekv_validator_validity_change :: no param

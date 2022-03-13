@@ -38,6 +38,13 @@ pub struct NominationAmountChange {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OneKVBinaryVersionChange {
+    pub validator_account_id: AccountId,
+    pub prev_version: Option<String>,
+    pub current_version: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OneKVRankChange {
     pub validator_account_id: AccountId,
     pub prev_rank: u64,

@@ -11,9 +11,11 @@ use subvt_types::subvt::ValidatorDetails;
 
 mod active;
 mod active_next_session;
+mod identity;
 mod inactive;
 mod inactive_next_session;
 mod nomination;
+mod session_keys;
 
 impl NotificationGenerator {
     /// Runs after each notification from the validator list updater for each validator,
@@ -92,6 +94,24 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_inactive(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_session_key_change(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            substrate_client.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_identity_change(
             network_postgres.clone(),
             app_postgres.clone(),
             substrate_client.clone(),

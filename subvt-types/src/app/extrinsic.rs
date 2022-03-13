@@ -14,3 +14,26 @@ pub struct ValidateExtrinsic {
     pub blocks_nominations: bool,
     pub is_successful: bool,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct SetControllerExtrinsic {
+    pub id: u32,
+    pub block_hash: String,
+    pub extrinsic_index: u32,
+    pub is_nested_call: bool,
+    pub caller_account_id: AccountId,
+    pub controller_account_id: AccountId,
+    pub is_successful: bool,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PayoutStakersExtrinsic {
+    pub id: u32,
+    pub block_hash: String,
+    pub extrinsic_index: u32,
+    pub is_nested_call: bool,
+    pub caller_account_id: AccountId,
+    pub validator_account_id: AccountId,
+    pub era_index: u32,
+    pub is_successful: bool,
+}

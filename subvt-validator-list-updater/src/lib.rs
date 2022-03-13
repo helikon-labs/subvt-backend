@@ -211,6 +211,7 @@ impl ValidatorListUpdater {
             validator.reward_points = db_validator_info.reward_points;
             validator.heartbeat_received = db_validator_info.heartbeat_received;
             validator.onekv_candidate_record_id = db_validator_info.onekv_candidate_record_id;
+            validator.onekv_binary_version = db_validator_info.onekv_binary_version;
             validator.onekv_rank = db_validator_info.onekv_rank;
             validator.onekv_location = db_validator_info.onekv_location;
             validator.onekv_is_valid = db_validator_info.onekv_is_valid;

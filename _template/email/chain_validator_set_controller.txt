@@ -1,0 +1,1 @@
+⚓️ {{ validator_display }} has declared {{ controller_display }} as its new controller.

@@ -1,0 +1,1 @@
+🌏 {{ validator_display }}{% if current_location %} is now located in {{ current_location }}.{% else %} has no location now.{% endif %}{% if prev_location %} Previously located in {{ prev_location }}.{% else %} Had no location previously.{% endif %}

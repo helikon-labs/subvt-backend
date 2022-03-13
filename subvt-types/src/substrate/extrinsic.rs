@@ -248,36 +248,61 @@ pub enum StakingExtrinsic {
 impl StakingExtrinsic {
     pub fn from(
         name: &str,
-        signature: Option<Signature>,
+        maybe_signature: Option<Signature>,
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
             "bond" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Bond {
-                maybe_signature: signature,
+                maybe_signature,
                 controller: get_argument_primitive!(&arguments[0], MultiAddress),
                 amount: get_argument_primitive!(&arguments[1], CompactBalance).0,
                 reward_destination: get_argument_primitive!(&arguments[2], RewardDestination),
             })),
             "nominate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Nominate {
-                maybe_signature: signature,
+                maybe_signature,
                 targets: get_argument_vector!(&arguments[0], MultiAddress),
             })),
             "payout_stakers" => Some(SubstrateExtrinsic::Staking(
                 StakingExtrinsic::PayoutStakers {
-                    maybe_signature: signature,
+                    maybe_signature,
                     validator_account_id: get_argument_primitive!(&arguments[0], AccountId),
                     era_index: get_argument_primitive!(&arguments[1], EraIndex),
                 },
             )),
             "set_controller" => Some(SubstrateExtrinsic::Staking(
                 StakingExtrinsic::SetController {
-                    maybe_signature: signature,
+                    maybe_signature,
                     controller: get_argument_primitive!(&arguments[0], MultiAddress),
                 },
             )),
             "validate" => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
-                maybe_signature: signature,
+                maybe_signature,
                 preferences: get_argument_primitive!(&arguments[0], ValidatorPreferences),
+            })),
+            _ => None,
+        };
+        Ok(maybe_extrinsic)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum SessionExtrinsic {
+    SetKeys {
+        maybe_signature: Option<Signature>,
+        session_keys: [u8; 192],
+    },
+}
+
+impl SessionExtrinsic {
+    pub fn from(
+        name: &str,
+        maybe_signature: Option<Signature>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            "set_keys" => Some(SubstrateExtrinsic::Session(SessionExtrinsic::SetKeys {
+                maybe_signature,
+                session_keys: get_argument_primitive!(&arguments[0], SessionKeys),
             })),
             _ => None,
         };
@@ -333,6 +358,7 @@ pub enum SubstrateExtrinsic {
     ImOnline(ImOnlineExtrinsic),
     Multisig(MultisigExtrinsic),
     Proxy(ProxyExtrinsic),
+    Session(SessionExtrinsic),
     Staking(StakingExtrinsic),
     Timestamp(TimestampExtrinsic),
     Utility(UtilityExtrinsic),
@@ -463,6 +489,9 @@ impl SubstrateExtrinsic {
             }
             ("Proxy", "proxy") | ("Proxy", "proxy_announced") => {
                 ProxyExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
+            }
+            ("Session", "set_keys") => {
+                SessionExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             ("Timestamp", "set") => {
                 TimestampExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
