@@ -18,7 +18,7 @@ impl PostgreSQLNetworkStorage {
         Ok(chat_count.0 as u64)
     }
 
-    pub async fn get_chat_validator_count(&self) -> anyhow::Result<u64> {
+    pub async fn get_chat_total_validator_count(&self) -> anyhow::Result<u64> {
         let validator_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT validator_account_id) FROM (
@@ -214,5 +214,23 @@ impl PostgreSQLNetworkStorage {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn get_chat_validator_count(
+        &self,
+        telegram_chat_id: i64,
+    ) -> anyhow::Result<u16> {
+        let chat_validator_count: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT validator_account_id)
+            FROM sub_telegram_chat_validator
+            WHERE telegram_chat_id = $1
+            AND deleted_at IS NULL
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(chat_validator_count.0 as u16)
     }
 }

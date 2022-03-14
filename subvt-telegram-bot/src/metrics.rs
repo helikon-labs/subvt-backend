@@ -62,7 +62,7 @@ impl TelegramBot {
     }
 
     pub(crate) async fn update_metrics_validator_count(&self) -> anyhow::Result<()> {
-        validator_count().set(self.network_postgres.get_chat_validator_count().await? as i64);
+        validator_count().set(self.network_postgres.get_chat_total_validator_count().await? as i64);
         Ok(())
     }
 }

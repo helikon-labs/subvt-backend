@@ -30,6 +30,7 @@ pub enum MessageType {
     ValidatorNotFound(String),
     AddValidatorNotFound(String),
     ValidatorExistsOnChat(String),
+    TooManyValidatorsOnChat,
     NoValidatorsOnChat,
     ValidatorAdded,
     AddValidator,
@@ -77,6 +78,13 @@ impl MessageType {
             Self::ValidatorExistsOnChat(address) => {
                 context.insert("condensed_address", &get_condensed_address(address, None));
                 "validator_exists_on_chat.html"
+            }
+            Self::TooManyValidatorsOnChat => {
+                context.insert(
+                    "max_validators_per_chat",
+                    &CONFIG.telegram_bot.max_validators_per_chat
+                );
+                "too_many_validators_on_chat.html"
             }
             Self::NoValidatorsOnChat => "no_validators_on_chat.html",
             Self::ValidatorAdded => "validator_added.html",

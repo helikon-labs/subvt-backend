@@ -57,6 +57,18 @@ impl TelegramBot {
     }
 
     async fn process_add_command(&self, chat_id: i64, args: &[String]) -> anyhow::Result<()> {
+        let validator_count = self
+            .network_postgres
+            .get_chat_validator_count(chat_id)
+            .await?;
+        if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
+            self.messenger
+                .send_message(
+                    chat_id,
+                    MessageType::TooManyValidatorsOnChat,
+                )
+                .await?;
+        }
         if args.is_empty() {
             self.network_postgres
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)

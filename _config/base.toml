@@ -103,6 +103,7 @@ template_dir_path = "/path/to/the/template/dir"
 
 [telegram_bot]
 admin_chat_id = 123
+max_validators_per_chat = 25
 
 [metrics]
 host = "127.0.0.1"

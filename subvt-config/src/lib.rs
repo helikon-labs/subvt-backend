@@ -185,6 +185,7 @@ pub struct NotificationProcessorConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelegramBotConfig {
     pub admin_chat_id: i64,
+    pub max_validators_per_chat: u16,
 }
 
 /// Prometheus metrics config.
