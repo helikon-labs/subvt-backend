@@ -8,4 +8,4 @@ rust-version = "1.56.0"
 anyhow = "1.0.56"
 hex = "0.4"
 num-format = "0.4.0"
-parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
+parity-scale-codec = { version = "3.1.0", default-features = false, features = ["derive", "full"] }

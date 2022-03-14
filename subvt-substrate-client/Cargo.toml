@@ -16,7 +16,7 @@ jsonrpsee = { version = "0.9.0", features = ["full"] }
 jsonrpsee-core = "0.9.0"
 jsonrpsee-types = "0.9.0"
 log = "0.4.14"
-parity-scale-codec = { version = "2.3.1", default-features = false, features = ["derive", "full"] }
+parity-scale-codec = { version = "3.1.0", default-features = false, features = ["derive", "full"] }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.79"
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.17" }
