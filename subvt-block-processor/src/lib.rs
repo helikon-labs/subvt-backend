@@ -123,7 +123,6 @@ impl BlockProcessor {
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
         persist_era_reward_points: bool,
-        notify: bool,
     ) -> anyhow::Result<()> {
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
@@ -342,11 +341,9 @@ impl BlockProcessor {
             .await?
         }
         // notify
-        if notify {
-            postgres
-                .notify_block_processed(block_number, block_hash)
-                .await?;
-        }
+        postgres
+            .notify_block_processed(block_number, block_hash)
+            .await?;
         Ok(())
     }
 }
@@ -425,7 +422,6 @@ impl Service for BlockProcessor {
                                     &postgres,
                                     block_number,
                                     false,
-                                    false,
                                 ).await;
                                 metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                                 match update_result {
@@ -460,7 +456,6 @@ impl Service for BlockProcessor {
                                 &postgres,
                                 finalized_block_number,
                                 finalized_block_number % blocks_per_3_minutes == 0,
-                                true,
                             ).await;
                             match update_result {
                                 Ok(_) => (),
