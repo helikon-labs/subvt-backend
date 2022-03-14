@@ -1,1 +1,1 @@
-🆘 {{ validator_display }} offline!
+🆘 {{ validator_display }} offline

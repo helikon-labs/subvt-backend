@@ -87,6 +87,7 @@ impl NotificationGenerator {
         postgres_notification: BlockProcessedNotification,
     ) -> anyhow::Result<()> {
         let new_block_number = postgres_notification.block_number;
+        log::info!("Inspect block #{}.", new_block_number);
         let mut maybe_last_processed_block_number = last_processed_block_number_mutex.lock().await;
         let start_block_number =
             if let Some(last_processed_block_number) = *maybe_last_processed_block_number {
@@ -117,6 +118,7 @@ impl NotificationGenerator {
 
     pub(crate) async fn start_block_inspection(&'static self) -> anyhow::Result<()> {
         loop {
+            log::info!("Start inspecting new blocks.");
             let network_postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );

@@ -130,6 +130,7 @@ impl NotificationGenerator {
 
     pub(crate) async fn start_validator_list_inspection(&'static self) -> anyhow::Result<()> {
         loop {
+            log::info!("Start inspecting validator list updates.");
             let network_postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );

@@ -1,1 +1,1 @@
-{{ validator_display }} has a new controller ⚓️
+⚓️ {{ validator_display }} has a new controller

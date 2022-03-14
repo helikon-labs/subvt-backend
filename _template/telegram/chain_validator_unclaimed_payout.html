@@ -1,1 +1,4 @@
-💰 {{ validator_display }} has unclaimed rewards for {% if unclaimed_eras.length == 1 %}era{% else %}eras{% endif %} {{ unclaimed_eras | join(sep=", ") }}. Please claim your payouts as soon as possible.
+{{ validator_display }}
+💰 has unclaimed rewards for {% if unclaimed_eras.length == 1 %}era{% else %}eras{% endif %} {{ unclaimed_eras | join(sep=", ") }}.
+
+Please claim your payouts as soon as possible.

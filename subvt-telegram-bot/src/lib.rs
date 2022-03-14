@@ -31,7 +31,12 @@ lazy_static! {
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
     static ref DEFAULT_RULES: Vec<(NotificationTypeCode, NotificationPeriodType, u16)> = vec![
         (
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            NotificationTypeCode::ChainValidateExtrinsic,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorActive,
             NotificationPeriodType::Immediate,
             0,
         ),
@@ -41,7 +46,82 @@ lazy_static! {
             0,
         ),
         (
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorChilled,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorIdentityChanged,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorInactive,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
             NotificationTypeCode::ChainValidatorInactiveNextSession,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorLostNomination,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorNewNomination,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorOfflineOffence,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorPayoutStakers,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorSessionKeysChanged,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorSetController,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorUnclaimedPayout,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::OneKVValidatorBinaryVersionChange,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::OneKVValidatorLocationChange,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::OneKVValidatorRankChange,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::OneKVValidatorValidityChange,
             NotificationPeriodType::Immediate,
             0,
         ),

@@ -1,1 +1,1 @@
-{% if is_valid %}✅ {{ validator_display }} is now a valid 1KV validator{% else %}❌ {{ validator_display }} has become an invalid 1KV validator
+{% if is_valid %}✅ {{ validator_display }} is valid 1KV validator{% else %}❌ {{ validator_display }} is invalid 1KV validator{% endif %}

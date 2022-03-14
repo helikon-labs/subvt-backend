@@ -99,11 +99,8 @@ impl Service for NotificationGenerator {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        futures::future::try_join_all(vec![
-            tokio::spawn(self.start_block_inspection()),
-            tokio::spawn(self.start_validator_list_inspection()),
-        ])
-        .await?;
+        tokio::spawn(self.start_block_inspection());
+        self.start_validator_list_inspection().await?;
         Ok(())
     }
 }

@@ -1,1 +1,1 @@
-💰 {{ validator_display }} has unclaimed rewards!
+💰 {{ validator_display }} has unclaimed rewards

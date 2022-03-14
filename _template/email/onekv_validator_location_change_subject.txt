@@ -1,1 +1,1 @@
-🌏 {{ validator_display }} has a location update!
+🌏 {{ validator_display }} has a location update

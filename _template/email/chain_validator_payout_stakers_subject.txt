@@ -1,1 +1,1 @@
-⚡️ New payout for {{ validator_display }}!
+⚡️ New payout for {{ validator_display }}
