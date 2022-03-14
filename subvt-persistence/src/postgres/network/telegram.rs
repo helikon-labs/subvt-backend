@@ -216,10 +216,7 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_chat_validator_count(
-        &self,
-        telegram_chat_id: i64,
-    ) -> anyhow::Result<u16> {
+    pub async fn get_chat_validator_count(&self, telegram_chat_id: i64) -> anyhow::Result<u16> {
         let chat_validator_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT validator_account_id)

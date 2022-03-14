@@ -63,10 +63,7 @@ impl TelegramBot {
             .await?;
         if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
             self.messenger
-                .send_message(
-                    chat_id,
-                    MessageType::TooManyValidatorsOnChat,
-                )
+                .send_message(chat_id, MessageType::TooManyValidatorsOnChat)
                 .await?;
         }
         if args.is_empty() {

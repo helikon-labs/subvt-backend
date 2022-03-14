@@ -82,7 +82,7 @@ impl MessageType {
             Self::TooManyValidatorsOnChat => {
                 context.insert(
                     "max_validators_per_chat",
-                    &CONFIG.telegram_bot.max_validators_per_chat
+                    &CONFIG.telegram_bot.max_validators_per_chat,
                 );
                 "too_many_validators_on_chat.html"
             }
