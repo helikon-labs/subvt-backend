@@ -1,6 +1,8 @@
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
+    controller::set_controller_changed_context,
+    identity::set_identity_changed_context,
     lost_nomination::set_lost_nomination_context,
     new_nomination::set_new_nomination_context,
     offline_offence::set_offline_offence_context,
@@ -9,7 +11,9 @@ use crate::content::context::{
         location::set_onekv_location_changed_context, rank::set_onekv_rank_changed_context,
         validity::set_onekv_validity_changed_context,
     },
+    payout::set_payout_context,
     session_keys::set_session_keys_changed_context,
+    unclaimed_payout::set_unclaimed_payout_context,
     validate::set_validate_extrinsic_context,
     validator_active::set_validator_active_context,
     validator_chilled::set_validator_chilled_context,
@@ -19,11 +23,15 @@ use tera::Context;
 
 mod basic;
 mod block_authorship;
+mod controller;
+mod identity;
 mod lost_nomination;
 mod new_nomination;
 mod offline_offence;
 mod onekv;
+mod payout;
 mod session_keys;
+mod unclaimed_payout;
 mod validate;
 mod validator_active;
 mod validator_chilled;
@@ -61,6 +69,18 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::ChainValidatorSessionKeysChanged => {
             set_session_keys_changed_context(notification, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorSetController => {
+            set_controller_changed_context(network, notification, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorIdentityChanged => {
+            set_identity_changed_context(notification, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorUnclaimedPayout => {
+            set_unclaimed_payout_context(notification, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorPayoutStakers => {
+            set_payout_context(network, notification, &mut context);
         }
         NotificationTypeCode::OneKVValidatorBinaryVersionChange => {
             set_onekv_binary_version_changed_context(notification, &mut context);

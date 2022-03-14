@@ -16,8 +16,8 @@ use subvt_types::subvt::ValidatorDetails;
 mod add;
 mod init;
 mod onekv;
-mod payout;
 mod remove;
+mod unclaimed_payout;
 mod update;
 
 impl NotificationGenerator {
