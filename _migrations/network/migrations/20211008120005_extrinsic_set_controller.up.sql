@@ -28,3 +28,10 @@ ALTER TABLE sub_extrinsic_set_controller
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_set_controller_idx_block_hash
+    ON sub_extrinsic_set_controller (block_hash);
+CREATE INDEX sub_extrinsic_set_controller_idx_caller_account_id
+    ON sub_extrinsic_set_controller (caller_account_id);
+CREATE INDEX sub_extrinsic_set_controller_idx_controller_account_id
+    ON sub_extrinsic_set_controller (controller_account_id);

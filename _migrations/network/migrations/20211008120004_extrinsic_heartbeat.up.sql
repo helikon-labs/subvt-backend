@@ -24,3 +24,14 @@ ALTER TABLE sub_extrinsic_heartbeat
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_heartbeat_idx_block_hash
+    ON sub_extrinsic_heartbeat (block_hash);
+CREATE INDEX sub_extrinsic_heartbeat_idx_block_number
+    ON sub_extrinsic_heartbeat (block_number);
+CREATE INDEX sub_extrinsic_heartbeat_idx_session_index
+    ON sub_extrinsic_heartbeat (session_index);
+CREATE INDEX sub_extrinsic_heartbeat_idx_validator_account_id
+    ON sub_extrinsic_heartbeat (validator_account_id);
+CREATE INDEX sub_extrinsic_heartbeat_idx_validator_session_successful
+    ON sub_extrinsic_heartbeat (validator_account_id, session_index, is_successful);

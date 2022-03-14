@@ -21,3 +21,6 @@ ALTER TABLE sub_extrinsic_nominate
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_nominate_idx_block_hash
+    ON sub_extrinsic_nominate (block_hash);

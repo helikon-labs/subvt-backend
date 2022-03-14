@@ -13,3 +13,6 @@ ALTER TABLE sub_app_event_onekv_rank_change
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_app_event_onekv_rank_change_idx_validator
+    ON sub_app_event_onekv_rank_change (validator_account_id);

@@ -20,3 +20,6 @@ ALTER TABLE sub_event_killed_account
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_killed_account_idx_block_hash
+    ON sub_event_killed_account (block_hash);

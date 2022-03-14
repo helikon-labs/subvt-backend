@@ -11,3 +11,6 @@ ALTER TABLE sub_epoch
         REFERENCES sub_era (index)
         ON DELETE CASCADE
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_epoch_idx_era
+    ON sub_epoch (era_index);

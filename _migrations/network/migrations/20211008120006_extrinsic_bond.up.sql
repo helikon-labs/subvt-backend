@@ -30,3 +30,12 @@ ALTER TABLE sub_extrinsic_bond
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_bond_idx_block_hash
+    ON sub_extrinsic_bond (block_hash);
+CREATE INDEX sub_extrinsic_bond_idx_stash_account_id
+    ON sub_extrinsic_bond (stash_account_id);
+CREATE INDEX sub_extrinsic_bond_idx_controller_account_id
+    ON sub_extrinsic_bond (controller_account_id);
+CREATE INDEX sub_extrinsic_bond_idx_caller_controller
+    ON sub_extrinsic_bond (stash_account_id, controller_account_id);

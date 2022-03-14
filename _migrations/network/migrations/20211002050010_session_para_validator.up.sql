@@ -23,3 +23,12 @@ ALTER TABLE sub_session_para_validator
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_session_para_validator_idx_era_index
+    ON sub_session_para_validator (session_index);
+CREATE INDEX sub_session_para_validator_idx_session_index
+    ON sub_session_para_validator (session_index);
+CREATE INDEX sub_session_para_validator_idx_validator_account_id
+    ON sub_session_para_validator (validator_account_id);
+CREATE INDEX sub_session_para_validator_idx_session_index_validator
+    ON sub_session_para_validator (session_index, validator_account_id);

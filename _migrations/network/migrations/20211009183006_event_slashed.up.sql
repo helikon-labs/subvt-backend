@@ -21,3 +21,8 @@ ALTER TABLE sub_event_slashed
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_slashed_idx_block_hash
+    ON sub_event_slashed (block_hash);
+CREATE INDEX sub_event_slashed_idx_validator_account_id
+    ON sub_event_slashed (validator_account_id);

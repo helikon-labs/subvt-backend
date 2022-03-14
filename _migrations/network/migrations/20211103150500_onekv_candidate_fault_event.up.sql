@@ -14,3 +14,6 @@ ALTER TABLE sub_onekv_candidate_fault_event
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_onekv_candidate_fault_event_idx_validator_account_id
+    ON sub_onekv_candidate_fault_event (validator_account_id);

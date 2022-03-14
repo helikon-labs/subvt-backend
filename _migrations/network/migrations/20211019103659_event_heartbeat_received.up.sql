@@ -22,3 +22,12 @@ ALTER TABLE sub_event_heartbeat_received
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_heartbeat_received_idx_block_hash
+    ON sub_event_heartbeat_received (block_hash);
+CREATE INDEX sub_event_heartbeat_received_idx_validator_account_id
+    ON sub_event_heartbeat_received (validator_account_id);
+CREATE INDEX sub_event_heartbeat_received_idx_session_index
+    ON sub_event_heartbeat_received (session_index);
+CREATE INDEX sub_event_heartbeat_received_idx_session_index_account_id
+    ON sub_event_heartbeat_received (validator_account_id, session_index);

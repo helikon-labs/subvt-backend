@@ -53,3 +53,6 @@ ALTER TABLE sub_onekv_candidate
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_onekv_candidate_idx_validator_account_id
+    ON sub_onekv_candidate (validator_account_id);

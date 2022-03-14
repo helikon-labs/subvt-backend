@@ -20,3 +20,6 @@ ALTER TABLE sub_event_chilled
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_chilled_idx_block_hash
+    ON sub_event_chilled (block_hash);

@@ -21,3 +21,10 @@ ALTER TABLE sub_event_rewarded
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_rewarded_idx_block_hash
+    ON sub_event_rewarded (block_hash);
+CREATE INDEX sub_event_rewarded_idx_rewardee_account_id
+    ON sub_event_rewarded (rewardee_account_id);
+CREATE INDEX sub_event_rewarded_idx_extrinsic_index_block_hash_rewardee
+    ON sub_event_rewarded (extrinsic_index, block_hash, rewardee_account_id);

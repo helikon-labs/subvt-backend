@@ -12,3 +12,6 @@ ALTER TABLE sub_app_event_validator_active
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_app_event_validator_active_idx_validator
+    ON sub_app_event_validator_active (validator_account_id);

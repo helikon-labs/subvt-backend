@@ -23,3 +23,6 @@ ALTER TABLE sub_telegram_chat_validator
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_telegram_chat_validator_idx_chat_deleted_at
+    ON sub_telegram_chat_validator (telegram_chat_id, deleted_at);

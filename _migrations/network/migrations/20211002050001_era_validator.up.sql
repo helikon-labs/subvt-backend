@@ -38,3 +38,16 @@ ALTER TABLE sub_era_validator
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_era_validator_idx_era_index
+    ON sub_era_validator (era_index);
+CREATE INDEX sub_era_validator_idx_validator_account_id
+    ON sub_era_validator (validator_account_id);
+CREATE INDEX sub_era_validator_idx_era_index_validator_account_id
+    ON sub_era_validator (era_index, validator_account_id);
+CREATE INDEX sub_era_validator_idx_is_active
+    ON sub_era_validator (is_active);
+CREATE INDEX sub_era_validator_idx_active_validator_index
+    ON sub_era_validator (active_validator_index);
+CREATE INDEX sub_era_validator_idx_validator_account_id_is_active
+    ON sub_era_validator (validator_account_id, is_active);

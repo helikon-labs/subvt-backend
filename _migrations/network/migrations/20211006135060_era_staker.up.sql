@@ -30,3 +30,12 @@ ALTER TABLE sub_era_staker
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_era_staker_idx_era_index
+    ON sub_era_staker (era_index);
+CREATE INDEX sub_era_staker_idx_validator_account_id
+    ON sub_era_staker (validator_account_id);
+CREATE INDEX sub_era_staker_idx_nominator_account_id
+    ON sub_era_staker (nominator_account_id);
+CREATE INDEX sub_era_staker_idx_era_index_validator_account_id
+    ON sub_era_staker (era_index, validator_account_id);

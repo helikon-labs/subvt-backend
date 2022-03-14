@@ -22,3 +22,6 @@ ALTER TABLE sub_event_era_paid
         REFERENCES sub_era (index)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_era_paid_idx_block_hash
+    ON sub_event_era_paid (block_hash);

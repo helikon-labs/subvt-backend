@@ -15,3 +15,6 @@ ALTER TABLE sub_event_batch_interrupted
         REFERENCES sub_block (hash)
         ON DELETE CASCADE
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_batch_interrupted_idx_block_hash
+    ON sub_event_batch_interrupted (block_hash);

@@ -21,3 +21,6 @@ ALTER TABLE sub_extrinsic_nominate_validator
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_nominate_validator_idx_validator_account_id
+    ON sub_extrinsic_nominate_validator (validator_account_id);

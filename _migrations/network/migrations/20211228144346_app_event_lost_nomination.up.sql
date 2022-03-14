@@ -22,3 +22,6 @@ ALTER TABLE sub_app_event_lost_nomination
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_app_event_lost_nomination_idx_validator_account_id
+    ON sub_app_event_lost_nomination (validator_account_id);

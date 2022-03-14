@@ -27,3 +27,16 @@ ALTER TABLE sub_block
         REFERENCES sub_era (index)
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
+
+CREATE INDEX sub_block_idx_epoch_index
+    ON sub_block (epoch_index);
+CREATE INDEX sub_block_idx_era_index
+    ON sub_block (era_index);
+CREATE INDEX sub_block_idx_number
+    ON sub_block (number);
+CREATE INDEX sub_block_idx_hash_epoch_index
+    ON sub_block (hash, epoch_index);
+CREATE INDEX sub_block_idx_author_account_id
+    ON sub_block (author_account_id);
+CREATE INDEX sub_block_idx_era_index_author_account_id
+    ON sub_block (era_index, author_account_id);

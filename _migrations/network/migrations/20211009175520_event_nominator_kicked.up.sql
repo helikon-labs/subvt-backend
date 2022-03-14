@@ -27,3 +27,6 @@ ALTER TABLE sub_event_nominator_kicked
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_event_nominator_kicked_idx_block_hash
+    ON sub_event_nominator_kicked (block_hash);

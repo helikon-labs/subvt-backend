@@ -35,3 +35,18 @@ ALTER TABLE sub_extrinsic_payout_stakers
         REFERENCES sub_era (index)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
+
+CREATE INDEX sub_extrinsic_payout_stakers_idx_block_hash
+    ON sub_extrinsic_payout_stakers (block_hash);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_caller_account_id
+    ON sub_extrinsic_payout_stakers (caller_account_id);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_validator_account_id
+    ON sub_extrinsic_payout_stakers (validator_account_id);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_era_index
+    ON sub_extrinsic_payout_stakers (era_index);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_is_successful
+    ON sub_extrinsic_payout_stakers (is_successful);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_validator_era_successful
+    ON sub_extrinsic_payout_stakers (validator_account_id, era_index, is_successful);
+CREATE INDEX sub_extrinsic_payout_stakers_idx_era_block_success
+    ON sub_extrinsic_payout_stakers (era_index, extrinsic_index, block_hash, is_successful);
