@@ -1,1 +1,1 @@
-🔑️ {{ validator_display }} has new session keys {{ session_keys }}.
+🔑️ {{ validator_display }} has new session keys: {{ session_keys | lower }}.

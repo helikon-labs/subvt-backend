@@ -2,7 +2,6 @@ use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
@@ -11,7 +10,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         log::debug!("Inspect block #{} for offline offences.", block.number);
@@ -28,7 +26,6 @@ impl NotificationGenerator {
                 .await?;
             self.generate_notifications(
                 app_postgres.clone(),
-                substrate_client.clone(),
                 &rules,
                 block.number,
                 &event.validator_account_id,

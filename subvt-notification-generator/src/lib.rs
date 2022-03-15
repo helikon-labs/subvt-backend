@@ -32,12 +32,15 @@ impl NotificationGenerator {
     async fn generate_notifications<T: Clone + Serialize>(
         &self,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         rules: &[UserNotificationRule],
         block_number: u64,
         validator_account_id: &AccountId,
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
+        if rules.is_empty() {
+            return Ok(());
+        }
+        let substrate_client: Arc<SubstrateClient> = Arc::new(SubstrateClient::new(&CONFIG).await?);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists

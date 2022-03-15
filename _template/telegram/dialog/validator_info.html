@@ -23,7 +23,7 @@
 📊 Score {{ onekv_score }}{% endif %}{% if onekv_nominated_at %}
 💎 Last 1KV nomination {{ onekv_nominated_at }}{% endif %}{% if onekv_location %}
 🌍 {{ onekv_location }}{% endif %}{% if onekv_version %}
-🧬 Running {{ onekv_version }}{% endif %}
+🧬 Running <pre>{{ onekv_version }}{% endif %}</pre>
 📡 Discovered {{ onekv_discovered_at }}
 🗳 {{ onekv_democracy_vote_count }} democracy vote{% if onekv_democracy_vote_count != 1 %}s{% endif %}{% if onekv_democracy_vote_count == 0 %} 😕{% endif %}
 👥 Backs {{ onekv_council_vote_count }} councillor{% if onekv_council_vote_count != 1 %}s{% endif %}{% if onekv_council_vote_count == 0 %} 😕{% endif %}

@@ -10,7 +10,6 @@ use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
 mod add;
@@ -27,7 +26,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         validator_map: &mut HashMap<String, ValidatorDetails>,
         finalized_block_number: u64,
@@ -102,7 +100,6 @@ impl NotificationGenerator {
                 .inspect_validator_changes(
                     network_postgres.clone(),
                     app_postgres.clone(),
-                    substrate_client.clone(),
                     redis_connection,
                     &validator_prefix,
                     finalized_block_number,
@@ -113,11 +110,10 @@ impl NotificationGenerator {
                 validator_map.insert(validator_id.clone(), updated);
             }
         }
-        // unclimed payouts
+        // unclaimed payouts
         self.inspect_unclaimed_payouts(
             network_postgres,
             app_postgres,
-            substrate_client,
             redis_connection,
             &redis_storage_prefix,
             last_active_era_index,
@@ -136,8 +132,6 @@ impl NotificationGenerator {
             );
             let app_postgres =
                 Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-            let substrate_client: Arc<SubstrateClient> =
-                Arc::new(SubstrateClient::new(&CONFIG).await?);
             let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
                 "Cannot connect to Redis at URL {}.",
                 CONFIG.redis.url
@@ -177,7 +171,6 @@ impl NotificationGenerator {
                     .inspect_validator_list_update(
                         network_postgres.clone(),
                         app_postgres.clone(),
-                        substrate_client.clone(),
                         &mut redis_data_connection,
                         &mut validator_map,
                         finalized_block_number,

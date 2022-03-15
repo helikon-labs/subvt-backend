@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::{
     app::app_event, app::NotificationTypeCode, crypto::AccountId, substrate::Nomination,
     subvt::ValidatorDetails,
@@ -15,7 +14,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         address: &str,
         finalized_block_number: u64,
         current: &ValidatorDetails,
@@ -55,7 +53,6 @@ impl NotificationGenerator {
                 };
                 self.generate_notifications(
                     app_postgres.clone(),
-                    substrate_client.clone(),
                     &rules,
                     finalized_block_number,
                     &current.account.id,

@@ -1,7 +1,6 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{Block, NotificationTypeCode};
 
 impl NotificationGenerator {
@@ -9,7 +8,6 @@ impl NotificationGenerator {
     pub(crate) async fn inspect_block_authorship(
         &self,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         block: &Block,
     ) -> anyhow::Result<()> {
         log::debug!(
@@ -31,7 +29,6 @@ impl NotificationGenerator {
             .await?;
         self.generate_notifications(
             app_postgres,
-            substrate_client,
             &rules,
             block.number,
             validator_account_id,

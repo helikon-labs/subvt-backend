@@ -146,14 +146,14 @@ pub struct OneKVIdentity {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OneKVValidity {
-    #[serde(rename(deserialize = "_id"))]
+    #[serde(rename = "_id")]
     pub id: String,
     pub details: String,
-    #[serde(rename(deserialize = "valid"))]
+    #[serde(rename = "valid")]
     pub is_valid: bool,
-    #[serde(rename(deserialize = "type"))]
+    #[serde(rename = "type")]
     pub ty: String,
-    #[serde(rename(deserialize = "updated"))]
+    #[serde(rename = "updated")]
     pub updated_at: u64,
 }
 

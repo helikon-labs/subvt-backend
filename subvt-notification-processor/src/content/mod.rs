@@ -8,6 +8,7 @@ use tera::Tera;
 
 pub(crate) mod context;
 
+#[derive(Debug)]
 pub struct NotificationContent {
     pub subject: Option<String>,
     pub body_text: Option<String>,

@@ -6,7 +6,6 @@ use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::subvt::ValidatorDetails;
 
 mod active;
@@ -25,7 +24,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        substrate_client: Arc<SubstrateClient>,
         redis_connection: &mut RedisConnection,
         redis_prefix: &str,
         finalized_block_number: u64,
@@ -59,7 +57,6 @@ impl NotificationGenerator {
         self.inspect_nomination_changes(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             address,
             finalized_block_number,
             last,
@@ -69,7 +66,6 @@ impl NotificationGenerator {
         self.inspect_active_next_session(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -78,7 +74,6 @@ impl NotificationGenerator {
         self.inspect_inactive_next_session(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -87,7 +82,6 @@ impl NotificationGenerator {
         self.inspect_active(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -96,7 +90,6 @@ impl NotificationGenerator {
         self.inspect_inactive(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -105,7 +98,6 @@ impl NotificationGenerator {
         self.inspect_session_key_change(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -114,7 +106,6 @@ impl NotificationGenerator {
         self.inspect_identity_change(
             network_postgres.clone(),
             app_postgres.clone(),
-            substrate_client.clone(),
             finalized_block_number,
             last,
             &current,
@@ -123,7 +114,6 @@ impl NotificationGenerator {
         self.inspect_onekv_changes(
             network_postgres,
             app_postgres.clone(),
-            substrate_client,
             finalized_block_number,
             last,
             &current,
