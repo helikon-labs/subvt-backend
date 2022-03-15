@@ -23,10 +23,10 @@ pub(crate) async fn process_staking_extrinsic(
             amount,
             reward_destination,
         } => {
-            let maybe_stash_account_id = if let Some(real_account_id) = maybe_real_account_id {
-                Some(real_account_id)
-            } else if let Some(multisig_account_id) = maybe_multisig_account_id {
-                Some(multisig_account_id)
+            let maybe_stash_account_id = if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
             } else {
                 match signature {
                     Some(signature) => signature.get_signer_account_id(),
@@ -67,10 +67,10 @@ pub(crate) async fn process_staking_extrinsic(
             maybe_signature: signature,
             targets,
         } => {
-            let maybe_controller_account_id = if let Some(real_account_id) = maybe_real_account_id {
-                Some(real_account_id)
-            } else if let Some(multisig_account_id) = maybe_multisig_account_id {
-                Some(multisig_account_id)
+            let maybe_controller_account_id = if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
             } else {
                 match signature {
                     Some(signature) => signature.get_signer_account_id(),
@@ -107,17 +107,16 @@ pub(crate) async fn process_staking_extrinsic(
             validator_account_id,
             era_index,
         } => {
-            let maybe_caller_account_id =
-                if let Some(multisig_account_id) = maybe_multisig_account_id {
-                    Some(multisig_account_id)
-                } else if let Some(real_account_id) = maybe_real_account_id {
-                    Some(real_account_id)
-                } else {
-                    match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    }
-                };
+            let maybe_caller_account_id = if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
+            } else if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else {
+                match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                }
+            };
             if let Some(caller_account_id) = maybe_caller_account_id {
                 // ignore the errors here - may fail due to non-existent era foreign key,
                 // past eras may not have been saved
@@ -139,17 +138,16 @@ pub(crate) async fn process_staking_extrinsic(
             maybe_signature: signature,
             controller,
         } => {
-            let maybe_caller_account_id =
-                if let Some(multisig_account_id) = maybe_multisig_account_id {
-                    Some(multisig_account_id)
-                } else if let Some(real_account_id) = maybe_real_account_id {
-                    Some(real_account_id)
-                } else {
-                    match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    }
-                };
+            let maybe_caller_account_id = if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
+            } else if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else {
+                match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                }
+            };
             let controller_account_id = if let Some(account_id) = controller.get_account_id() {
                 account_id
             } else {
@@ -175,17 +173,16 @@ pub(crate) async fn process_staking_extrinsic(
             maybe_signature: signature,
             preferences,
         } => {
-            let maybe_controller_account_id =
-                if let Some(multisig_account_id) = maybe_multisig_account_id {
-                    Some(multisig_account_id)
-                } else if let Some(real_account_id) = maybe_real_account_id {
-                    Some(real_account_id)
-                } else {
-                    match signature {
-                        Some(signature) => signature.get_signer_account_id(),
-                        _ => None,
-                    }
-                };
+            let maybe_controller_account_id = if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
+            } else if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else {
+                match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                }
+            };
             if let Some(controller_account_id) = maybe_controller_account_id {
                 // get stash account id
                 if let Some(stash_account_id) = substrate_client
