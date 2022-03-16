@@ -1,1 +1,2 @@
-👤 {{ validator_display }} {% if identity %}has a new on-chain identity: {{ identity }}.{% else %} has no on-chain identity now.{% endif %}
+{{ validator_display }}
+👤 {% if identity %}has a new on-chain identity: {{ identity }}{% else %}has no on-chain identity now.{% endif %}

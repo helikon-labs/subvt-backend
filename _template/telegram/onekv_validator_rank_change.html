@@ -1,3 +1,3 @@
-{{ validator_display }}{% if current_rank > prev_rank %}
+<strong>{{ validator_display }}</strong>{% if current_rank > prev_rank %}
 📈 rank has increased from <strong>{{ prev_rank }}</strong> to <strong>{{ current_rank }}</strong>.{% else %}
 📉 rank has decreased from <strong>{{ prev_rank }}</strong> to <strong>{{ current_rank }}</strong>.{% endif %}

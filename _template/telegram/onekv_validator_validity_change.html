@@ -1,2 +1,3 @@
-{% if is_valid %}✅ {{ validator_display }} is now a valid 1KV validator.{% else %}❌ {{ validator_display }} has become an invalid 1KV validator:{% for invalidity_reason in invalidity_reasons %}
+<strong>{{ validator_display }}</strong>
+{% if is_valid %}✅ is now a valid 1KV validator.{% else %}❌ has become an invalid 1KV validator:{% for invalidity_reason in invalidity_reasons %}
 - {{ invalidity_reason }}{% endfor %}{% endif %}

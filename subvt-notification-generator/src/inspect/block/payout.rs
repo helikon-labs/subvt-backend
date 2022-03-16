@@ -12,7 +12,7 @@ impl NotificationGenerator {
         block: &Block,
     ) -> anyhow::Result<()> {
         log::debug!(
-            "Inspect block #{} for controller change extrinsics.",
+            "Inspect block #{} for staker payout extrinsics.",
             block.number
         );
         for extrinsic in network_postgres

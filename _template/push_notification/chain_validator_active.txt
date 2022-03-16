@@ -1,1 +1,5 @@
-{{ validator_display }} is now an active validator 🚀{% if total_stake %} Total Active Stake: {{ total_stake }} {{ token_ticker }}{% endif %}
+{{ validator_display }}
+🚀 is now active.{% if self_stake %}
+Self Stake: {{ self_stake }} {{ token_ticker }}
+Total Active Stake: {{ total_stake }} {{ token_ticker }}
+Active Nominator Count: {{ active_nominator_count }}{% endif %}

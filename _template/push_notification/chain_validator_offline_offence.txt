@@ -1,1 +1,3 @@
-🆘 {{ validator_display }} was found to be offline at the end of the session!
+{{ validator_display }}
+🆘 was found to be offline at the end of the session!
+This is going to cause the involuntary chilling of the validator.

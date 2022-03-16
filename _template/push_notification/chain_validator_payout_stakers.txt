@@ -1,1 +1,3 @@
-⚡️ Payout called for {{ validator_display }} for era {{ era_index }} by caller {{ caller_display }}.
+{{ validator_display }}
+💰️ payout called for era {{ era_index }}.
+Caller: {{ caller_display }}

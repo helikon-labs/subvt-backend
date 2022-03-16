@@ -1,7 +1,7 @@
-{{ validator_display }}
+<strong>{{ validator_display }}</strong>
 🥁 has declared a new intention to validate!
 ⚓️ Controller <a href="https://{{ chain }}.subscan.io/account/{{ controller_address }}">{{ controller_display }}</a>
 💷 {{ commission }}% commission
-{% if blocks_nominations %}⛔️ Blocks nominations{% else %}🟢 Does not block nominations{% endif %}
+{% if blocks_nominations %}⛔️ Blocks nominations{% else %}🙌 Does not block nominations{% endif %}
 
 You may view the extrinsic's block <a href="https://{{ chain }}.subscan.io/block/{{ block_hash }}">here</a>.

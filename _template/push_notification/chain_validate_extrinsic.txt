@@ -1,1 +1,6 @@
-🥁 {{ validator_display }} has declared a new intention to validate! ⚓️ Controller {{ controller_display }}. 💷 {{ commission }}% commission. {% if blocks_nominations %}⛔️ Blocks nominations{% else %}🟢 Does not block nominations{% endif %}.
+{{ validator_display }}
+
+🥁 has declared a new intention to validate!
+⚓️ Controller {{ controller_display }}.
+💷 {{ commission }}% commission.
+{% if blocks_nominations %}⛔️ Blocks nominations{% else %}🙌 Does not block nominations{% endif %}.
