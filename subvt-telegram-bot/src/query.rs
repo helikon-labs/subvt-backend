@@ -100,9 +100,15 @@ impl TelegramBot {
                                 .send_message(
                                     chat_id,
                                     MessageType::ValidatorInfo(
-                                        Box::new(validator_details),
+                                        Box::new(validator_details.clone()),
                                         Box::new(onekv_summary),
                                     ),
+                                )
+                                .await?;
+                            self.messenger
+                                .send_message(
+                                    chat_id,
+                                    MessageType::NominationSummary(validator_details),
                                 )
                                 .await?;
                         } else {
