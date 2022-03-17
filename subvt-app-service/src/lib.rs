@@ -20,6 +20,7 @@ use subvt_types::app::{
 use subvt_types::err::ServiceError;
 
 mod auth;
+pub(crate) mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();

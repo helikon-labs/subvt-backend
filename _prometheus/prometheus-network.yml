@@ -13,3 +13,8 @@ scrape_configs:
     static_configs:
       - targets: [ 'host.docker.internal:11012' ]
     metrics_path: "/metrics"
+  - job_name: subvt_app_service
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11013' ]
+    metrics_path: "/metrics"

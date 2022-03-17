@@ -1,6 +1,6 @@
 //! Authentication service and factory (`Transform`).
 use crate::auth::error::AuthError;
-use crate::ServiceState;
+use crate::{metrics, ServiceState};
 use actix_http::h1::Payload;
 use actix_web::web::{BytesMut, Data};
 use actix_web::{
@@ -136,11 +136,47 @@ where
     actix_service::forward_ready!(service);
 
     fn call(&self, mut request: ServiceRequest) -> Self::Future {
+        metrics::request_counter().inc();
+        metrics::connection_count().inc();
+        let start = std::time::Instant::now();
+        let method = request.method().as_str().to_owned();
         let service = self.service.clone();
         async move {
-            Self::authenticate(&mut request).await?;
-            let result = service.call(request).await?;
-            Ok(result)
+            if let Err(auth_error) = Self::authenticate(&mut request).await {
+                let status_code = auth_error.as_response_error().status_code();
+                metrics::observe_response_time_ms(
+                    &method,
+                    status_code.as_str(),
+                    start.elapsed().as_millis() as f64,
+                );
+                metrics::response_status_code_counter(status_code.as_str()).inc();
+                metrics::connection_count().dec();
+                return Err(auth_error);
+            }
+            return match service.call(request).await {
+                Ok(response) => {
+                    let status_code = response.response().status();
+                    metrics::observe_response_time_ms(
+                        &method,
+                        status_code.as_str(),
+                        start.elapsed().as_millis() as f64,
+                    );
+                    metrics::response_status_code_counter(status_code.as_str()).inc();
+                    metrics::connection_count().dec();
+                    Ok(response)
+                }
+                Err(error) => {
+                    let status_code = error.as_response_error().status_code();
+                    metrics::observe_response_time_ms(
+                        &method,
+                        status_code.as_str(),
+                        start.elapsed().as_millis() as f64,
+                    );
+                    metrics::response_status_code_counter(status_code.as_str()).inc();
+                    metrics::connection_count().dec();
+                    Err(error)
+                }
+            };
         }
         .boxed_local()
     }

@@ -93,9 +93,10 @@ pub fn register_histogram_vec(
     name: &str,
     help: &str,
     label_names: &[&str],
+    buckets: Vec<f64>,
 ) -> prometheus::Result<HistogramVec> {
     let gauge = prometheus::HistogramVec::new(
-        HistogramOpts::new(format!("{}::{}", prefix, name), help),
+        HistogramOpts::new(format!("{}::{}", prefix, name), help).buckets(buckets),
         label_names,
     )?;
     register(gauge.clone())?;
