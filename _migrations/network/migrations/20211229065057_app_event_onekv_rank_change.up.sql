@@ -2,8 +2,8 @@ CREATE TABLE IF NOT EXISTS sub_app_event_onekv_rank_change
 (
     id                          SERIAL PRIMARY KEY,
     validator_account_id        VARCHAR(66) NOT NULL,
-    prev_rank                   bigint NOT NULL,
-    current_rank                bigint NOT NULL,
+    prev_rank                   bigint,
+    current_rank                bigint,
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 

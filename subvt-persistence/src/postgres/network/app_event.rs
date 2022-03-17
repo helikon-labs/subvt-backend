@@ -268,8 +268,8 @@ impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_rank_change_event(
         &self,
         validator_account_id: &AccountId,
-        prev_rank: u64,
-        current_rank: u64,
+        prev_rank: Option<u64>,
+        current_rank: Option<u64>,
     ) -> anyhow::Result<u32> {
         self.save_account(validator_account_id).await?;
         let result: (i32,) = sqlx::query_as(
@@ -280,8 +280,8 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
             .bind(validator_account_id.to_string())
-            .bind(prev_rank as i64)
-            .bind(current_rank as i64)
+            .bind(prev_rank.map(|rank| rank as i64))
+            .bind(current_rank.map(|rank| rank as i64))
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0 as u32)

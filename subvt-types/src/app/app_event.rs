@@ -47,8 +47,8 @@ pub struct OneKVBinaryVersionChange {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OneKVRankChange {
     pub validator_account_id: AccountId,
-    pub prev_rank: u64,
-    pub current_rank: u64,
+    pub prev_rank: Option<u64>,
+    pub current_rank: Option<u64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

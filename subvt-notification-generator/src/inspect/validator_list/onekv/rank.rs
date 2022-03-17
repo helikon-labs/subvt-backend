@@ -17,10 +17,10 @@ impl NotificationGenerator {
     ) -> anyhow::Result<()> {
         if current.onekv_rank != last.onekv_rank {
             log::debug!(
-                "1KV rank of {} changed from {} to {}.",
+                "1KV rank of {} changed from {:?} to {:?}.",
                 current.account.address,
-                last.onekv_rank.unwrap(),
-                current.onekv_rank.unwrap(),
+                last.onekv_rank,
+                current.onekv_rank,
             );
             let rules = app_postgres
                 .get_notification_rules_for_validator(
@@ -36,16 +36,16 @@ impl NotificationGenerator {
                 &current.account.id,
                 Some(&app_event::OneKVRankChange {
                     validator_account_id: current.account.id.clone(),
-                    prev_rank: last.onekv_rank.unwrap(),
-                    current_rank: current.onekv_rank.unwrap(),
+                    prev_rank: last.onekv_rank,
+                    current_rank: current.onekv_rank,
                 }),
             )
             .await?;
             network_postgres
                 .save_onekv_rank_change_event(
                     &current.account.id,
-                    last.onekv_rank.unwrap(),
-                    current.onekv_rank.unwrap(),
+                    last.onekv_rank,
+                    current.onekv_rank,
                 )
                 .await?;
         }
