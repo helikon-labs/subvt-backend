@@ -1,1 +1,1 @@
-⭐️ New nomination for {{ validator_display }}!
+⭐️ {{ validator_display }} has a new nomination

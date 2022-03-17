@@ -1,1 +1,1 @@
-{{ validator_display }} is now active 🚀
+🚀 {{ validator_display }} is now active

@@ -1,1 +1,1 @@
-Be ready! {{ validator_display }} is active next session 🟡
+⏩🚀 {{ validator_display }} is active next session

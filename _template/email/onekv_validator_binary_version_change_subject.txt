@@ -1,1 +1,1 @@
-🧬 {{ validator_display }} has a version update
+🧬 {{ validator_display }} has a version change

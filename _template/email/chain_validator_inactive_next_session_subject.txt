@@ -1,1 +1,1 @@
-Be ready! {{ validator_display }} is inactive next session 😕
+⏩⏸ {{ validator_display }} is inactive next session

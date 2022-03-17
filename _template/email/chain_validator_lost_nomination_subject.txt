@@ -1,1 +1,1 @@
-🥴️ Lost nomination for {{ validator_display }}.
+⬇️ {{ validator_display }} has lost a nomination

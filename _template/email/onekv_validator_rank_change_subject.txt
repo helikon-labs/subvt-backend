@@ -1,1 +1,1 @@
-📈 {{ validator_display }} has a rank update
+📈 {{ validator_display }} has a 1KV rank update

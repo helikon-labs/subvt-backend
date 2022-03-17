@@ -1,1 +1,1 @@
-🥁 {{ validator_display }} has declared a new intention to validate!
+🥁 {{ validator_display }} wants to validate

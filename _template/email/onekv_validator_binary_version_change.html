@@ -1,3 +1,3 @@
-{{ validator_display }}
-🧬{% if current_version %} is now running version <strong>{{ current_version }}</strong>.{% else %} is now running a different version.{% endif %}{% if prev_version %}
-Previous version <strong>{{ prev_version }}</strong>.{% endif %}
+<strong>{{ validator_display }}</strong>
+🧬{% if current_version %} is now running version <pre>{{ current_version }}</pre>.{% else %} is now running a different version.{% endif %}{% if prev_version %}
+Previous version was <pre>{{ prev_version }}</pre>.{% endif %}
