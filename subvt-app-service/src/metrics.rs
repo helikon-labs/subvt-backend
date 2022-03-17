@@ -10,7 +10,7 @@ pub fn request_counter() -> IntCounter {
             "request_count",
             "The total number of requests made to the API",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
@@ -22,7 +22,7 @@ pub fn connection_count() -> IntGauge {
             "connection_count",
             "Number of API connections currently active",
         )
-            .unwrap()
+        .unwrap()
     });
     METER.clone()
 }
