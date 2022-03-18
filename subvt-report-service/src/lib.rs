@@ -1,7 +1,9 @@
 //!  Public reporting REST services.
+use actix_web::dev::Service as _;
 use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
+use futures_util::future::FutureExt;
 use lazy_static::lazy_static;
 use log::debug;
 use serde::Deserialize;
@@ -12,6 +14,8 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -137,6 +141,36 @@ impl Service for ReportService {
                 .app_data(Data::new(ServiceState {
                     postgres: postgres.clone(),
                 }))
+                .wrap_fn(|request, service| {
+                    metrics::request_counter().inc();
+                    metrics::connection_count().inc();
+                    let method = request.method().as_str().to_owned();
+                    let start = std::time::Instant::now();
+                    service.call(request).map(move |result| {
+                        match &result {
+                            Ok(response) => {
+                                let status_code = response.response().status();
+                                metrics::observe_response_time_ms(
+                                    &method,
+                                    status_code.as_str(),
+                                    start.elapsed().as_millis() as f64,
+                                );
+                                metrics::response_status_code_counter(status_code.as_str()).inc();
+                            }
+                            Err(error) => {
+                                let status_code = error.as_response_error().status_code();
+                                metrics::observe_response_time_ms(
+                                    &method,
+                                    status_code.as_str(),
+                                    start.elapsed().as_millis() as f64,
+                                );
+                                metrics::response_status_code_counter(status_code.as_str()).inc();
+                            }
+                        }
+                        metrics::connection_count().dec();
+                        result
+                    })
+                })
                 .service(era_validator_report_service)
                 .service(era_report_service)
         })

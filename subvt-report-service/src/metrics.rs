@@ -1,7 +1,7 @@
 use once_cell::sync::Lazy;
 use subvt_metrics::registry::{HistogramVec, IntCounter, IntCounterVec, IntGauge};
 
-const METRIC_PREFIX: &str = "subvt_app_service";
+const METRIC_PREFIX: &str = "subvt_report_service";
 
 pub(crate) fn request_counter() -> IntCounter {
     static METER: Lazy<IntCounter> = Lazy::new(|| {
