@@ -20,6 +20,7 @@ subvt-config = { path = "../subvt-config" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
+subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-substrate-client = { path = "../subvt-substrate-client" }
 tokio = { version = "1.17.0", features = ["full"] }

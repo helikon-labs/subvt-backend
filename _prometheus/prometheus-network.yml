@@ -8,10 +8,60 @@ scrape_configs:
     static_configs:
       - targets: [ 'host.docker.internal:11000' ]
     metrics_path: "/metrics"
+  - job_name: subvt_validator_list_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11001' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_validator_details_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11002' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_active_validator_list_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11003' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_inactive_validator_list_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11004' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_network_status_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11005' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_network_status_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11006' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_onekv_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11007' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_telemetry_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11008' ]
+    metrics_path: "/metrics"
   - job_name: subvt_report_service
     scrape_interval: 5s
     static_configs:
       - targets: [ 'host.docker.internal:11009' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_notification_generator
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11010' ]
+    metrics_path: "/metrics"
+  - job_name: subvt_notification_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:11011' ]
     metrics_path: "/metrics"
   - job_name: subvt_telegram_bot
     scrape_interval: 5s

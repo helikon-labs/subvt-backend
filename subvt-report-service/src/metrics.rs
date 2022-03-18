@@ -61,7 +61,7 @@ pub(crate) fn observe_response_time_ms(method: &str, status_code: &str, elapsed_
     match response_time_ms().get_metric_with_label_values(&[method, status_code]) {
         Ok(metrics) => metrics.observe(elapsed_ms),
         Err(metrics_error) => {
-            log::error!("Cannot access response time metrics: {:?}", metrics_error)
+            log::error!("Cannot access response time metrics: {:?}", metrics_error);
         }
     }
 }

@@ -8,6 +8,8 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_types::onekv::{OneKVCandidate, OneKVCandidateDetails, OneKVNominator};
 
+mod metrics;
+
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
@@ -33,18 +35,25 @@ impl Default for OneKVUpdater {
 impl OneKVUpdater {
     async fn update_candidates(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         info!("Fetch candidate list.");
+        let candidate_list_start = std::time::Instant::now();
         let response = self
             .http_client
             .get(&CONFIG.onekv.candidate_list_endpoint)
             .send()
             .await?;
         let candidates: Vec<OneKVCandidate> = response.json().await?;
+        metrics::candidate_list_fetch_time_ms()
+            .observe(candidate_list_start.elapsed().as_millis() as f64);
+        metrics::last_run_candidate_count().set(candidates.len() as i64);
         info!(
             "Fetched {} candidates. Fetch candidate details.",
             candidates.len()
         );
+
         // get details for each candidate
+        let mut candidate_details_success_count: usize = 0;
         for (index, candidate) in candidates.iter().enumerate() {
+            let candidate_details_start = std::time::Instant::now();
             let response_result = self
                 .http_client
                 .get(&format!(
@@ -53,6 +62,8 @@ impl OneKVUpdater {
                 ))
                 .send()
                 .await;
+            metrics::candidate_details_fetch_time_ms()
+                .observe(candidate_details_start.elapsed().as_millis() as f64);
             let response = match response_result {
                 Ok(response) => response,
                 Err(error) => {
@@ -85,6 +96,7 @@ impl OneKVUpdater {
                 .await;
             match save_result {
                 Ok(_) => {
+                    candidate_details_success_count += 1;
                     debug!(
                         "Fetched and persisted candidate {} of {} :: {}.",
                         index + 1,
@@ -100,6 +112,10 @@ impl OneKVUpdater {
                 }
             }
         }
+        metrics::last_run_candidate_details_fetch_success_count()
+            .set(candidate_details_success_count as i64);
+        metrics::last_run_candidate_details_fetch_error_count()
+            .set((candidates.len() - candidate_details_success_count) as i64);
         info!("1KV update completed.");
         Ok(())
     }
@@ -108,13 +124,16 @@ impl OneKVUpdater {
 impl OneKVUpdater {
     async fn update_nominators(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         info!("Fetch nominator list.");
+        let start = std::time::Instant::now();
         let response = self
             .http_client
             .get(&CONFIG.onekv.nominator_list_endpoint)
             .send()
             .await?;
+        metrics::nominator_list_fetch_time_ms().observe(start.elapsed().as_millis() as f64);
         let nominators: Vec<OneKVNominator> = response.json().await?;
         info!("Fetched {} nominators.", nominators.len());
+        metrics::last_run_nominator_count().set(nominators.len() as i64);
         for (index, nominator) in nominators.iter().enumerate() {
             let save_result = postgres
                 .save_onekv_nominator(
@@ -161,11 +180,16 @@ impl Service for OneKVUpdater {
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         loop {
             info!("Update 1KV candidates.");
+            metrics::last_run_timestamp_ms().set(chrono::Utc::now().timestamp_millis());
             if let Err(error) = self.update_candidates(&postgres).await {
+                metrics::last_run_candidate_count().set(0);
+                metrics::last_run_candidate_details_fetch_success_count().set(0);
+                metrics::last_run_candidate_details_fetch_error_count().set(0);
                 error!("1KV candidates update has failed: {:?}", error);
             }
             info!("Update 1KV nominators.");
             if let Err(error) = self.update_nominators(&postgres).await {
+                metrics::last_run_nominator_count().set(0);
                 error!("1KV nominators update has failed: {:?}", error);
             }
             info!("Sleep for {} seconds.", CONFIG.onekv.refresh_seconds);

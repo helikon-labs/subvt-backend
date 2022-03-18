@@ -1,7 +1,7 @@
 //! Contains the logic to process new blocks' events and extrinsics and persist notifications
 //! to be later sent by `subvt-notification-sender`.
 
-use crate::{NotificationGenerator, CONFIG};
+use crate::{metrics, NotificationGenerator, CONFIG};
 use async_lock::Mutex;
 use once_cell::sync::OnceCell;
 use std::sync::Arc;
@@ -64,7 +64,7 @@ impl NotificationGenerator {
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
         last_processed_block_number_mutex: Arc<Mutex<Option<u64>>>,
-        postgres_notification: BlockProcessedNotification,
+        postgres_notification: &BlockProcessedNotification,
     ) -> anyhow::Result<()> {
         let new_block_number = postgres_notification.block_number;
         let mut maybe_last_processed_block_number = last_processed_block_number_mutex.lock().await;
@@ -116,17 +116,27 @@ impl NotificationGenerator {
                     let network_postgres = network_postgres.clone();
                     let app_postgres = app_postgres.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = self
+                        let start = std::time::Instant::now();
+                        match self
                             .on_new_block(
                                 network_postgres,
                                 app_postgres,
                                 last_processed_block_number_mutex,
-                                notification,
+                                &notification,
                             )
                             .await
                         {
-                            log::error!("Error while processing block: {:?}.", error);
-                            let _ = error_cell.set(error);
+                            Ok(_) => {
+                                metrics::processed_block_number()
+                                    .set(notification.block_number as i64);
+                                metrics::block_processing_time_ms()
+                                    .observe(start.elapsed().as_millis() as f64);
+                            }
+                            Err(error) => {
+                                log::error!("Error while processing block: {:?}.", error);
+                                metrics::block_processor_error_counter().inc();
+                                let _ = error_cell.set(error);
+                            }
                         }
                     });
                     Ok(())

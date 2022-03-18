@@ -18,6 +18,7 @@ use subvt_types::app::{Notification, UserNotificationRule};
 use subvt_types::crypto::AccountId;
 
 mod inspect;
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -86,6 +87,11 @@ impl NotificationGenerator {
                     },
                 };
                 let _ = app_postgres.save_notification(&notification).await?;
+                metrics::notification_counter(
+                    &rule.notification_type.code,
+                    &format!("{}", channel.channel),
+                )
+                .inc();
             }
         }
         Ok(())

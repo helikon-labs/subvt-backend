@@ -1,4 +1,4 @@
-use crate::NotificationProcessor;
+use crate::{metrics, NotificationProcessor};
 use anyhow::Context;
 use subvt_types::app::{Network, NotificationPeriodType};
 use subvt_types::subvt::NetworkStatus;
@@ -50,7 +50,7 @@ impl NotificationProcessor {
                     network.name,
                     status.current_epoch.index,
                 );
-                if let Err(error) = self
+                match self
                     .process_notifications(
                         Some(network.id),
                         NotificationPeriodType::Epoch,
@@ -58,13 +58,19 @@ impl NotificationProcessor {
                     )
                     .await
                 {
-                    log::error!(
-                        "Error while processing {} epoch #{} notifications: {:?}",
-                        network.name,
-                        status.current_epoch.index,
-                        error,
-                    );
+                    Ok(_) => {
+                        metrics::epoch_index().set(status.current_epoch.index as i64);
+                    }
+                    Err(error) => {
+                        log::error!(
+                            "Error while processing {} epoch #{} notifications: {:?}",
+                            network.name,
+                            status.current_epoch.index,
+                            error,
+                        );
+                    }
                 }
+
                 current_epoch_index = status.current_epoch.index;
             }
             // process era notifications if epoch has changed
@@ -74,7 +80,7 @@ impl NotificationProcessor {
                     network.name,
                     status.active_era.index,
                 );
-                if let Err(error) = self
+                match self
                     .process_notifications(
                         Some(network.id),
                         NotificationPeriodType::Era,
@@ -82,11 +88,16 @@ impl NotificationProcessor {
                     )
                     .await
                 {
-                    log::error!(
-                        "Error while processing era #{} notifications: {:?}",
-                        status.active_era.index,
-                        error,
-                    );
+                    Ok(_) => {
+                        metrics::era_index().set(status.active_era.index as i64);
+                    }
+                    Err(error) => {
+                        log::error!(
+                            "Error while processing era #{} notifications: {:?}",
+                            status.active_era.index,
+                            error,
+                        );
+                    }
                 }
                 active_era_index = status.active_era.index;
             }

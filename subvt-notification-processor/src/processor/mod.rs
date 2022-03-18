@@ -1,4 +1,4 @@
-use crate::NotificationProcessor;
+use crate::{metrics, NotificationProcessor};
 use subvt_types::app::NotificationPeriodType;
 
 pub(crate) mod era_epoch;
@@ -46,8 +46,18 @@ impl NotificationProcessor {
                             notification.id,
                             notification.validator_account_id.to_ss58_check()
                         );
+                        let start = std::time::Instant::now();
                         match sender.send(&notification).await {
                             Ok(_success_log) => {
+                                metrics::sent_notification_counter(&format!(
+                                    "{}",
+                                    notification.notification_channel
+                                ))
+                                .inc();
+                                metrics::observe_notification_send_time_ms(
+                                    &format!("{}", notification.notification_channel),
+                                    start.elapsed().as_millis() as f64,
+                                );
                                 let _ = postgres.mark_notification_sent(nofication_id).await;
                             }
                             Err(error) => {
@@ -57,6 +67,11 @@ impl NotificationProcessor {
                                     period_type,
                                     error,
                                 );
+                                metrics::channel_error_counter(&format!(
+                                    "{}",
+                                    notification.notification_channel
+                                ))
+                                .inc();
                                 let _ = postgres.mark_notification_failed(nofication_id).await;
                             }
                         }

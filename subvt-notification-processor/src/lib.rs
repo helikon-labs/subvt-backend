@@ -16,6 +16,7 @@ use subvt_service_common::Service;
 use subvt_types::app::{Network, NotificationChannel};
 
 mod content;
+pub(crate) mod metrics;
 mod processor;
 mod sender;
 

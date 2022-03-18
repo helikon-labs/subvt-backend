@@ -2,7 +2,7 @@
 //! `subvt-validator-list-updater`, and the update is notified using the Redis PUBLISH function.
 //! Keeps a copy of the validator list in heap memory (vector) to track changes.
 
-use crate::{NotificationGenerator, CONFIG};
+use crate::{metrics, NotificationGenerator, CONFIG};
 use anyhow::Context;
 use redis::Connection as RedisConnection;
 use std::collections::{HashMap, HashSet};
@@ -167,6 +167,7 @@ impl NotificationGenerator {
                     );
                     continue;
                 }
+                let start = std::time::Instant::now();
                 if let Err(error) = self
                     .inspect_validator_list_update(
                         network_postgres.clone(),
@@ -178,8 +179,12 @@ impl NotificationGenerator {
                     )
                     .await
                 {
+                    metrics::validator_list_error_counter().inc();
                     break error;
                 }
+                metrics::processed_validator_list_block_number().set(finalized_block_number as i64);
+                metrics::validator_list_processing_time_ms()
+                    .observe(start.elapsed().as_millis() as f64);
                 log::info!(
                     "Completed validator list inspections for block #{}.",
                     finalized_block_number
