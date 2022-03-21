@@ -1,40 +1,51 @@
-use once_cell::sync::Lazy;
+use once_cell::sync::OnceCell;
 use subvt_metrics::registry::IntGauge;
 
-const METRIC_PREFIX: &str = "subvt_validator_list_server";
+static TARGET_FINALIZED_BLOCK_NUMBER: OnceCell<IntGauge> = OnceCell::new();
+static PROCESSED_FINALIZED_BLOCK_NUMBER: OnceCell<IntGauge> = OnceCell::new();
+static SUBSCRIPTION_COUNT: OnceCell<IntGauge> = OnceCell::new();
+
+pub(crate) fn init(prefix: &str) {
+    if TARGET_FINALIZED_BLOCK_NUMBER.get().is_none() {
+        let _ = TARGET_FINALIZED_BLOCK_NUMBER.set(
+            subvt_metrics::registry::register_int_gauge(
+                prefix,
+                "target_finalized_block_number",
+                "Number of the target finalized block on the node",
+            )
+            .unwrap(),
+        );
+    }
+    if PROCESSED_FINALIZED_BLOCK_NUMBER.get().is_none() {
+        let _ = PROCESSED_FINALIZED_BLOCK_NUMBER.set(
+            subvt_metrics::registry::register_int_gauge(
+                prefix,
+                "processed_finalized_block_number",
+                "Number of the target finalized block on the node",
+            )
+            .unwrap(),
+        );
+    }
+    if SUBSCRIPTION_COUNT.get().is_none() {
+        let _ = SUBSCRIPTION_COUNT.set(
+            subvt_metrics::registry::register_int_gauge(
+                prefix,
+                "subscription_count",
+                "Number of the target finalized block on the node",
+            )
+            .unwrap(),
+        );
+    }
+}
 
 pub fn target_finalized_block_number() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
-            METRIC_PREFIX,
-            "target_finalized_block_number",
-            "Number of the target finalized block on the node",
-        )
-        .unwrap()
-    });
-    METER.clone()
+    TARGET_FINALIZED_BLOCK_NUMBER.get().unwrap().clone()
 }
 
 pub fn processed_finalized_block_number() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
-            METRIC_PREFIX,
-            "processed_finalized_block_number",
-            "Number of the last processed block",
-        )
-        .unwrap()
-    });
-    METER.clone()
+    PROCESSED_FINALIZED_BLOCK_NUMBER.get().unwrap().clone()
 }
 
 pub fn subscription_count() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
-            METRIC_PREFIX,
-            "subscription_count",
-            "Number subscribers to the service",
-        )
-        .unwrap()
-    });
-    METER.clone()
+    SUBSCRIPTION_COUNT.get().unwrap().clone()
 }

@@ -7,6 +7,7 @@ use crate::sender::fcm::FCMSender;
 use crate::sender::telegram::TelegramSender;
 use crate::sender::NotificationSender;
 use async_trait::async_trait;
+use itertools::Itertools;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -100,14 +101,18 @@ impl Service for NotificationProcessor {
             .await?;
         log::info!("Start notification processors.");
         self.start_hourly_and_daily_notification_processor()?;
-        self.start_immediate_notification_processor()?;
-        let mut join_handles = vec![];
-        for network in self.network_map.values() {
-            join_handles.push(tokio::task::spawn(
-                self.start_era_and_epoch_notification_processor(network),
-            ));
+        let networks = self.network_map.values().collect_vec();
+        for network in networks {
+            let network = network.clone().to_owned();
+            let tokio_rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()?;
+            std::thread::spawn(move || {
+                let _ =
+                    tokio_rt.block_on(self.start_era_and_epoch_notification_processor(&network));
+            });
         }
-        futures::future::try_join_all(join_handles).await?;
+        self.start_immediate_notification_processor().await?;
         Ok(())
     }
 }

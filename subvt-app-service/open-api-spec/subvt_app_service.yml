@@ -576,7 +576,7 @@ definitions:
           format: "int64"
       period_type:
         type: "string"
-        enum: [ "immediate", "hour", "day", "era", "epoch" ]
+        enum: [ "off", "immediate", "hour", "day", "era", "epoch" ]
         description: "Period type for the notification rule."
       period:
         type: "integer"
@@ -761,7 +761,7 @@ definitions:
         description: "True if the rule is defined for all validators of the selected network, or for all validators if network is null."
       period_type:
         type: "string"
-        enum: [ "immediate", "hour", "day", "era", "epoch" ]
+        enum: [ "off", "immediate", "hour", "day", "era", "epoch" ]
         description: "Period type for the notification rule."
       period:
         type: "integer"

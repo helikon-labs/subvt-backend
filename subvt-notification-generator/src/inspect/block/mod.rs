@@ -93,6 +93,7 @@ impl NotificationGenerator {
     pub(crate) async fn start_block_inspection(&'static self) -> anyhow::Result<()> {
         loop {
             log::info!("Start inspecting new blocks.");
+            metrics::block_processor_error_counter().reset();
             let network_postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );

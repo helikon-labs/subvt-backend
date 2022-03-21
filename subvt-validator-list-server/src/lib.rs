@@ -8,7 +8,7 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
-use clap::{Arg, Command};
+use clap::{arg, Command};
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
@@ -36,6 +36,17 @@ pub enum BusEvent {
 
 #[derive(Default)]
 pub struct ValidatorListServer;
+
+#[allow(clippy::cognitive_complexity)]
+fn is_inactive() -> bool {
+    Command::new("SubVT Validator List Server")
+        .version("0.1.0")
+        .author("Kutsal Kaan Bilgin <kutsal@helikon.io>")
+        .about("Serves the active or inactive validator list for the SubVT app.")
+        .arg(arg!(-i --inactive "Active list is served by default. Use this flag to serve the inactive list."))
+        .get_matches()
+        .is_present("inactive")
+}
 
 impl ValidatorListServer {
     pub async fn run_rpc_server(
@@ -101,11 +112,7 @@ impl Service for ValidatorListServer {
     fn get_metrics_server_addr() -> (&'static str, u16) {
         (
             CONFIG.metrics.host.as_str(),
-            if Command::new("")
-                .arg(Arg::new("inactive"))
-                .get_matches()
-                .is_present("inactive")
-            {
+            if is_inactive() {
                 CONFIG.metrics.inactive_validator_list_server_port
             } else {
                 CONFIG.metrics.active_validator_list_server_port
@@ -114,15 +121,13 @@ impl Service for ValidatorListServer {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        let matches = Command::new("SubVT Validator List Server")
-            .version("0.1.0")
-            .author("Kutsal Kaan Bilgin <kutsal@helikon.io>")
-            .about("Serves the active or inactive validator list for the SubVT app.")
-            .arg(Arg::new("inactive").long("inactive").short('i').help(
-                "Active list is served by default. Use this flag to serve the inactive list.",
-            ))
-            .get_matches();
-        let is_active_list = !matches.is_present("inactive");
+        let is_active_list = !is_inactive();
+        // init metrics
+        metrics::init(if is_active_list {
+            "subvt_active_validator_list_server"
+        } else {
+            "subvt_inactive_validator_list_server"
+        });
         let mut last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
         let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));

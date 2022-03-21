@@ -23,7 +23,7 @@ pub struct Block {
     pub runtime_version: u16,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Network {
     pub id: u32,
     pub hash: String,
@@ -442,6 +442,7 @@ impl UserNotificationRuleParameter {
 #[sqlx(type_name = "app_notification_period_type", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum NotificationPeriodType {
+    Off,
     Immediate,
     Hour,
     Day,
@@ -455,6 +456,7 @@ impl Display for NotificationPeriodType {
             f,
             "{}",
             match self {
+                NotificationPeriodType::Off => "off",
                 NotificationPeriodType::Immediate => "immediate",
                 NotificationPeriodType::Hour => "hour",
                 NotificationPeriodType::Day => "day",

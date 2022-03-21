@@ -144,26 +144,19 @@ impl Service for ReportService {
                 .wrap_fn(|request, service| {
                     metrics::request_counter().inc();
                     metrics::connection_count().inc();
-                    let method = request.method().as_str().to_owned();
                     let start = std::time::Instant::now();
                     service.call(request).map(move |result| {
                         match &result {
                             Ok(response) => {
                                 let status_code = response.response().status();
-                                metrics::observe_response_time_ms(
-                                    &method,
-                                    status_code.as_str(),
-                                    start.elapsed().as_millis() as f64,
-                                );
+                                metrics::response_time_ms()
+                                    .observe(start.elapsed().as_millis() as f64);
                                 metrics::response_status_code_counter(status_code.as_str()).inc();
                             }
                             Err(error) => {
                                 let status_code = error.as_response_error().status_code();
-                                metrics::observe_response_time_ms(
-                                    &method,
-                                    status_code.as_str(),
-                                    start.elapsed().as_millis() as f64,
-                                );
+                                metrics::response_time_ms()
+                                    .observe(start.elapsed().as_millis() as f64);
                                 metrics::response_status_code_counter(status_code.as_str()).inc();
                             }
                         }

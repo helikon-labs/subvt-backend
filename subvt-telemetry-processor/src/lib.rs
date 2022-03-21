@@ -7,13 +7,14 @@ use async_trait::async_trait;
 use async_tungstenite::{tokio::connect_async, tungstenite::Message};
 use futures::{SinkExt, StreamExt};
 use lazy_static::lazy_static;
-use log::{debug, error, info, trace, warn};
 use std::collections::HashMap;
 use std::sync::mpsc::{self, Receiver, Sender};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_types::telemetry::{FeedMessage, NodeDetails, NodeLocation};
+
+mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -30,7 +31,7 @@ impl TelemetryProcessor {
     ) -> anyhow::Result<()> {
         match feed_message {
             FeedMessage::Version(version) => {
-                trace!("Version: {}.", version);
+                log::debug!("Version: {}.", version);
             }
             FeedMessage::BestBlock {
                 block_number,
@@ -38,19 +39,21 @@ impl TelemetryProcessor {
                 avg_block_time,
             } => {
                 // TODO persist
-                trace!(
+                log::debug!(
                     "Best block: {} {} {:?}.",
                     block_number,
                     timestamp,
                     avg_block_time
                 );
+                metrics::best_block_number().set(*block_number as i64);
             }
             FeedMessage::BestFinalized {
                 block_number,
                 block_hash,
             } => {
                 // TODO persist
-                trace!("Best finalized: {} {}.", block_number, block_hash);
+                log::debug!("Finalized block: {} {}.", block_number, block_hash);
+                metrics::finalized_block_number().set(*block_number as i64);
             }
             FeedMessage::AddedNode {
                 node_id,
@@ -62,7 +65,8 @@ impl TelemetryProcessor {
                 location,
                 startup_time,
             } => {
-                trace!("Add node #{} :: {:?}.", node_id, node_details);
+                log::debug!("Add node #{} :: {:?}.", node_id, node_details);
+                metrics::node_count().inc();
                 let mut map = node_map.lock().await;
                 map.insert(*node_id, *node_details.clone());
                 postgres
@@ -70,7 +74,8 @@ impl TelemetryProcessor {
                     .await?;
             }
             FeedMessage::RemovedNode { node_id } => {
-                trace!("Removed node #{}.", node_id);
+                log::debug!("Removed node #{}.", node_id);
+                metrics::node_count().dec();
                 let mut map = node_map.lock().await;
                 map.remove(node_id);
                 postgres.remove_node(*node_id).await?;
@@ -88,7 +93,7 @@ impl TelemetryProcessor {
                 node_id,
                 block_details,
             } => {
-                trace!(
+                log::trace!(
                     "Node #{} imported block #{}.",
                     node_id,
                     block_details.block_number
@@ -106,21 +111,21 @@ impl TelemetryProcessor {
                 block_number,
                 block_hash,
             } => {
-                trace!("Node #{} finalized block #{}.", node_id, block_number);
+                log::trace!("Node #{} finalized block #{}.", node_id, block_number);
                 postgres
                     .update_node_finalized_block(*node_id, *block_number, block_hash)
                     .await?;
             }
             FeedMessage::NodeStatsUpdate { node_id, stats } => {
-                trace!("Node #{} status {:?}.", node_id, stats);
+                log::trace!("Node #{} status {:?}.", node_id, stats);
                 if let Err(error) = postgres.save_node_stats(*node_id, stats).await {
-                    error!("Error while saving node stats: {:?}", error);
+                    log::error!("Error while saving node stats: {:?}", error);
                 }
             }
             FeedMessage::NodeHardware { node_id, hardware } => {
-                trace!("Node #{} hardware {:?}.", node_id, hardware);
+                log::trace!("Node #{} hardware {:?}.", node_id, hardware);
                 if hardware.0.len() != hardware.1.len() || hardware.1.len() != hardware.2.len() {
-                    warn!(
+                    log::warn!(
                         "Invalid node network stats data. Timestamp [{}], download bandwidth [{}] and upload bandwidth [{}] vectors are not of equal lengths.",
                         hardware.2.len(),
                         hardware.1.len(),
@@ -129,36 +134,36 @@ impl TelemetryProcessor {
                 } else if let Err(error) =
                     postgres.save_node_network_stats(*node_id, hardware).await
                 {
-                    error!("Error while saving node network stats: {:?}", error);
+                    log::error!("Error while saving node network stats: {:?}", error);
                 }
             }
             FeedMessage::TimeSync { time } => {
-                trace!("Time sync :: {}", time);
+                log::debug!("Time sync :: {}", time);
             }
             FeedMessage::AddedChain {
                 name,
                 genesis_hash,
                 node_count,
             } => {
-                trace!("Added chain {} {} {}", name, genesis_hash, node_count);
+                log::debug!("Added chain {} {} {}", name, genesis_hash, node_count);
             }
             FeedMessage::RemovedChain { genesis_hash } => {
-                trace!("Removed chain {}", genesis_hash);
+                log::debug!("Removed chain {}", genesis_hash);
             }
             FeedMessage::SubscribedTo { genesis_hash } => {
-                trace!("Subscribed to chain {}", genesis_hash);
+                log::debug!("Subscribed to chain {}", genesis_hash);
             }
             FeedMessage::UnsubscribedFrom { genesis_hash } => {
-                trace!("Unsubscribed from chain {}", genesis_hash);
+                log::debug!("Unsubscribed from chain {}", genesis_hash);
             }
             FeedMessage::Pong { message } => {
-                trace!("Pong :: {}", message);
+                log::trace!("Pong :: {}", message);
             }
             FeedMessage::StaleNode { node_id } => {
-                trace!("Stale node #{}.", node_id);
+                log::trace!("Stale node #{}.", node_id);
             }
             FeedMessage::NodeIOUpdate { node_id, io } => {
-                trace!("IO update #{} :: {:?}", node_id, io);
+                log::trace!("IO update #{} :: {:?}", node_id, io);
             }
             _ => (),
         }
@@ -170,27 +175,27 @@ impl TelemetryProcessor {
         let (mut ws_stream, _) = connect_async(&CONFIG.telemetry.websocket_url)
             .await
             .context("Failed to connect")?;
-        debug!("Telemetry server websocket handshake has been successfully completed.");
+        log::debug!("Telemetry server websocket handshake has been successfully completed.");
         ws_stream
             .send(Message::text(format!(
                 "subscribe:{}",
                 CONFIG.substrate.chain_genesis_hash
             )))
             .await?;
-        debug!("Subscribed to the chain.");
+        log::debug!("Subscribed to the chain.");
         // receiver thread
         let error = loop {
             let message_result = match ws_stream.next().await {
                 Some(message_result) => message_result,
                 None => {
-                    warn!("None message received. Try to receive next message.");
+                    log::warn!("None message received. Try to receive next message.");
                     continue;
                 }
             };
             let message = match message_result {
                 Ok(message) => message,
                 Err(error) => {
-                    error!("Error while receiving Telemetry message: {:?}", error);
+                    log::error!("Error while receiving Telemetry message: {:?}", error);
                     break error.into();
                 }
             };
@@ -198,7 +203,7 @@ impl TelemetryProcessor {
             let feed_messages = match FeedMessage::from_bytes(bytes) {
                 Ok(feed_messages) => feed_messages,
                 Err(error) => {
-                    error!("Error while decoding Telemetry feed message: {:?}", error);
+                    log::error!("Error while decoding Telemetry feed message: {:?}", error);
                     break error;
                 }
             };
@@ -232,27 +237,22 @@ impl Service for TelemetryProcessor {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        info!("Running the Telemetry processor.");
+        log::info!("Running the Telemetry processor.");
+        metrics::init();
+        metrics::node_count().set(0);
         let (tx, rx) = mpsc::channel();
-        let receiver_join_handle = tokio::spawn(async move {
+        tokio::spawn(async move {
             loop {
                 let tx = tx.clone();
                 if let Err(error) = TelemetryProcessor::receive_messages(tx).await {
-                    error!("Error while receiving feed messages: {:?}", error);
+                    log::error!("Error while receiving feed messages: {:?}", error);
                 }
             }
         });
         let node_map: Mutex<HashMap<u64, NodeDetails>> = Default::default();
-        let processor_join_handle = tokio::spawn(async move {
-            if let Err(error) = TelemetryProcessor::process_messages(node_map, rx).await {
-                error!("Error while processing feed messages: {:?}", error);
-            }
-        });
-        info!("Receiving and processing messages.");
-        let (receiver_result, processor_result) =
-            tokio::join!(receiver_join_handle, processor_join_handle);
-        receiver_result?;
-        processor_result?;
+        if let Err(error) = TelemetryProcessor::process_messages(node_map, rx).await {
+            log::error!("Error while processing feed messages: {:?}", error);
+        }
         Ok(())
     }
 }

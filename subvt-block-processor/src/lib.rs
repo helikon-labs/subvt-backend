@@ -450,6 +450,7 @@ impl Service for BlockProcessor {
                                 .constants
                                 .expected_block_time_millis;
                             log::info!("Process block #{}.", finalized_block_number);
+                            let start = std::time::Instant::now();
                             let update_result = self.process_block(
                                 &mut block_processor_substrate_client,
                                 &runtime_information,
@@ -457,8 +458,11 @@ impl Service for BlockProcessor {
                                 finalized_block_number,
                                 finalized_block_number % blocks_per_3_minutes == 0,
                             ).await;
+                            metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             match update_result {
-                                Ok(_) => (),
+                                Ok(_) => {
+                                    metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+                                },
                                 Err(error) => {
                                     log::error!("{:?}", error);
                                     log::error!(

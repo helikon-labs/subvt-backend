@@ -1,5 +1,5 @@
 use once_cell::sync::Lazy;
-use subvt_metrics::registry::{HistogramVec, IntCounter, IntCounterVec, IntGauge};
+use subvt_metrics::registry::{Histogram, IntCounter, IntCounterVec, IntGauge};
 
 const METRIC_PREFIX: &str = "subvt_app_service";
 
@@ -27,13 +27,12 @@ pub(crate) fn connection_count() -> IntGauge {
     METER.clone()
 }
 
-fn response_time_ms() -> HistogramVec {
-    static METER: Lazy<HistogramVec> = Lazy::new(|| {
-        subvt_metrics::registry::register_histogram_vec(
+pub(crate) fn response_time_ms() -> Histogram {
+    static METER: Lazy<Histogram> = Lazy::new(|| {
+        subvt_metrics::registry::register_histogram(
             METRIC_PREFIX,
             "response_time_ms",
             "Response time in milliseconds",
-            &["method", "status_code"],
             vec![
                 50.0, 100.0, 250.0, 500.0, 750.0, 1_000.0, 1_500.0, 2_500.0, 5_000.0, 10_000.0,
                 15_000.0, 30_000.0,
@@ -55,13 +54,4 @@ pub(crate) fn response_status_code_counter(status_code: &str) -> IntCounter {
         .unwrap()
     });
     METER.with_label_values(&[status_code])
-}
-
-pub(crate) fn observe_response_time_ms(method: &str, status_code: &str, elapsed_ms: f64) {
-    match response_time_ms().get_metric_with_label_values(&[method, status_code]) {
-        Ok(metrics) => metrics.observe(elapsed_ms),
-        Err(metrics_error) => {
-            log::error!("Cannot access response time metrics: {:?}", metrics_error);
-        }
-    }
 }
