@@ -569,7 +569,7 @@ impl Messenger {
         let params = SendMessageParams {
             chat_id: ChatId::Integer(chat_id),
             text: message_type.get_content(&self.renderer),
-            parse_mode: Some("html".to_string()),
+            parse_mode: Some(frankenstein::ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
             disable_notification: None,
