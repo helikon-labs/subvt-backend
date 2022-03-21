@@ -1,7 +1,9 @@
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
-use frankenstein::{AsyncApi as TelegramClient, AsyncTelegramApi, ChatId, SendMessageParams};
+use frankenstein::{
+    AsyncApi as TelegramClient, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams,
+};
 use subvt_types::app::Notification;
 
 pub(crate) struct TelegramSender {
@@ -35,7 +37,7 @@ impl NotificationSender for TelegramSender {
         let params = SendMessageParams {
             chat_id: ChatId::Integer(notification.notification_target.parse()?),
             text: message,
-            parse_mode: Some("html".to_string()),
+            parse_mode: Some(ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
             disable_notification: None,
