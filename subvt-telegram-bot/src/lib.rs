@@ -222,15 +222,30 @@ impl TelegramBot {
             .chat_exists_by_id(message.chat.id)
             .await?
         {
-            let app_user_id = self.create_app_user(message.chat.id).await?;
-            log::info!(
-                "Save new chat {}. App user id {}.",
-                message.chat.id,
-                app_user_id
-            );
-            self.network_postgres
-                .save_chat(app_user_id, message.chat.id, &TelegramChatState::Default)
-                .await?;
+            if self
+                .network_postgres
+                .chat_is_deleted(message.chat.id)
+                .await?
+            {
+                self.network_postgres.undelete_chat(message.chat.id).await?;
+                let app_user_id = self
+                    .network_postgres
+                    .get_chat_app_user_id(message.chat.id)
+                    .await?;
+                self.app_postgres
+                    .undelete_user_notification_rules(app_user_id)
+                    .await?;
+            } else {
+                let app_user_id = self.create_app_user(message.chat.id).await?;
+                log::info!(
+                    "Save new chat {}. App user id {}.",
+                    message.chat.id,
+                    app_user_id
+                );
+                self.network_postgres
+                    .save_chat(app_user_id, message.chat.id, &TelegramChatState::Default)
+                    .await?;
+            }
             self.update_metrics_chat_count().await?;
         }
         // group chat started - send intro

@@ -81,6 +81,37 @@ impl PostgreSQLNetworkStorage {
         Ok(record_count.0 > 0)
     }
 
+    pub async fn chat_is_deleted(&self, telegram_chat_id: i64) -> anyhow::Result<bool> {
+        let maybe_is_deleted: Option<(bool,)> = sqlx::query_as(
+            r#"
+            SELECT (deleted_at IS NOT NULL) AS is_deleted FROM sub_telegram_chat
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        if let Some(is_deleted) = maybe_is_deleted {
+            Ok(is_deleted.0)
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub async fn undelete_chat(&self, telegram_chat_id: i64) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telegram_chat
+            SET deleted_at = NULL
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn save_chat(
         &self,
         app_user_id: u32,

@@ -547,4 +547,18 @@ impl PostgreSQLAppStorage {
         transaction.commit().await?;
         Ok(user_notification_rule_id as u32)
     }
+
+    pub async fn undelete_user_notification_rules(&self, user_id: u32) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE app_user_notification_rule
+            SET deleted_at = NULL
+            WHERE user_id = $1
+            "#,
+        )
+        .bind(user_id as i32)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
 }
