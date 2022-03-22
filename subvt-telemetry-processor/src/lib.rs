@@ -38,7 +38,6 @@ impl TelemetryProcessor {
                 timestamp,
                 avg_block_time,
             } => {
-                // TODO persist
                 log::debug!(
                     "Best block: {} {} {:?}.",
                     block_number,
@@ -46,14 +45,22 @@ impl TelemetryProcessor {
                     avg_block_time
                 );
                 metrics::best_block_number().set(*block_number as i64);
+                postgres
+                    .update_best_block_number(*block_number, *timestamp, *avg_block_time)
+                    .await?;
             }
             FeedMessage::BestFinalized {
                 block_number,
                 block_hash,
             } => {
-                // TODO persist
                 log::debug!("Finalized block: {} {}.", block_number, block_hash);
                 metrics::finalized_block_number().set(*block_number as i64);
+                postgres
+                    .update_finalized_block_number(
+                        *block_number,
+                        &format!("0x{}", block_hash.trim_start_matches("0x").to_uppercase()),
+                    )
+                    .await?;
             }
             FeedMessage::AddedNode {
                 node_id,

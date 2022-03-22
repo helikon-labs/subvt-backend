@@ -175,4 +175,44 @@ impl PostgreSQLNetworkStorage {
         transaction.commit().await?;
         Ok(())
     }
+
+    pub async fn update_best_block_number(
+        &self,
+        best_block_number: u64,
+        best_block_timestamp: u64,
+        average_block_time_ms: Option<u64>,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telemetry_network_status
+            SET best_block_number = $1, best_block_timestamp = $2, average_block_time_ms = $3
+            WHERE id = 1
+            "#,
+        )
+        .bind(best_block_number as i64)
+        .bind(best_block_timestamp as i64)
+        .bind(average_block_time_ms.map(|ms| ms as i64))
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_finalized_block_number(
+        &self,
+        finalized_block_number: u64,
+        finalized_block_hash: &str,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telemetry_network_status
+            SET finalized_block_number = $1, finalized_block_hash = $2, updated_at = now()
+            WHERE id = 1
+            "#,
+        )
+        .bind(finalized_block_number as i64)
+        .bind(finalized_block_hash)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
 }

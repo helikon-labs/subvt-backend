@@ -374,8 +374,8 @@ pub struct Signature {
     pub signer: MultiAddress,
     pub signature: sp_runtime::MultiSignature,
     pub era: Option<sp_runtime::generic::Era>,
-    pub nonce: Option<u64>,
-    pub tip: Option<u64>,
+    pub nonce: Option<u32>,
+    pub tip: Option<Balance>,
 }
 
 impl Signature {
@@ -406,8 +406,8 @@ impl SubstrateExtrinsic {
                 };
                 let signature = sp_runtime::MultiSignature::decode(&mut *bytes)?;
                 let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes)?;
-                let nonce: Compact<u64> = Decode::decode(&mut *bytes)?;
-                let tip: Compact<u64> = Decode::decode(&mut *bytes)?;
+                let nonce: Compact<u32> = Decode::decode(&mut *bytes)?; // u32
+                let tip: Compact<Balance> = Decode::decode(&mut *bytes)?;
                 let signature = Signature {
                     signer,
                     signature,

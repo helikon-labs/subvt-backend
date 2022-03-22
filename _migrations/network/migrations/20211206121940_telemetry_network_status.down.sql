@@ -1,0 +1,1 @@
+DROP TABLE sub_telemetry_network_status CASCADE;
