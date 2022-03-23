@@ -81,7 +81,7 @@ pub(crate) async fn process_staking_extrinsic(
                 let target_account_ids: Vec<AccountId> = targets
                     .iter()
                     .filter_map(|target_multi_address| match target_multi_address {
-                        MultiAddress::Id(account_id) => Some(account_id.clone()),
+                        MultiAddress::Id(account_id) => Some(*account_id),
                         _ => {
                             log::error!("Unsupported multi-address type for nomination target.");
                             None

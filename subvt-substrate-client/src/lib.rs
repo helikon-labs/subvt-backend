@@ -470,10 +470,8 @@ impl SubstrateClient {
         let identity_map = { self.get_identities(account_ids, block_hash).await? };
         let parent_account_id_map = { self.get_parent_account_ids(account_ids, block_hash).await? };
         let parent_account_identity_map = {
-            let super_account_ids: Vec<AccountId> = parent_account_id_map
-                .values()
-                .map(|pair| pair.0.clone())
-                .collect();
+            let super_account_ids: Vec<AccountId> =
+                parent_account_id_map.values().map(|pair| pair.0).collect();
             self.get_identities(&super_account_ids, block_hash).await?
         };
         let accounts: Vec<Account> = account_ids
@@ -481,7 +479,7 @@ impl SubstrateClient {
             .cloned()
             .map(|account_id| {
                 let mut account = Account {
-                    id: account_id.clone(),
+                    id: account_id,
                     address: account_id.to_ss58_check(),
                     ..Default::default()
                 };
@@ -490,7 +488,7 @@ impl SubstrateClient {
                 }
                 if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
                     let mut parent_account = Account {
-                        id: parent_account_id.0.clone(),
+                        id: parent_account_id.0,
                         address: parent_account_id.0.to_ss58_check(),
                         ..Default::default()
                     };
@@ -583,8 +581,8 @@ impl SubstrateClient {
                         if let Some(account_id) =
                             active_validator_account_ids.get(*validator_index as usize)
                         {
-                            para_core_assignment_map.insert(account_id.clone(), None);
-                            map.insert(para_validator_index as u32, account_id.clone());
+                            para_core_assignment_map.insert(*account_id, None);
+                            map.insert(para_validator_index as u32, *account_id);
                         }
                     }
                     map
@@ -608,8 +606,7 @@ impl SubstrateClient {
                 for assignment in &para_core_assignments {
                     if let Some(group) = para_validator_group_map.get(&assignment.group_index) {
                         for account_id in group {
-                            para_core_assignment_map
-                                .insert(account_id.clone(), Some(assignment.clone()));
+                            para_core_assignment_map.insert(*account_id, Some(assignment.clone()));
                         }
                     }
                 }
@@ -630,7 +627,7 @@ impl SubstrateClient {
                     None
                 };
                 validator_map.insert(
-                    account.id.clone(),
+                    account.id,
                     ValidatorDetails {
                         account: account.clone(),
                         is_active,
@@ -762,7 +759,7 @@ impl SubstrateClient {
                         let account_id = self.account_id_from_storage_key(storage_key);
                         let bytes: &[u8] = &data.0;
                         let nomination = Nomination::from_bytes(bytes, account_id).unwrap();
-                        nomination_map.insert(nomination.stash_account.id.clone(), nomination);
+                        nomination_map.insert(nomination.stash_account.id, nomination);
                     }
                 }
             }
@@ -810,7 +807,7 @@ impl SubstrateClient {
                         let mut bytes: &[u8] = &data.0;
                         let controller_account_id: AccountId = Decode::decode(&mut bytes).unwrap();
                         if let Some(validator) = validator_map.get_mut(&account_id) {
-                            validator.controller_account_id = controller_account_id.clone();
+                            validator.controller_account_id = controller_account_id;
                         }
                         controller_account_id_map.insert(account_id, controller_account_id);
                     }

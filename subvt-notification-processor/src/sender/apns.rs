@@ -2,7 +2,7 @@ use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;
 use async_trait::async_trait;
-use subvt_types::app::Notification;
+use subvt_types::app::{Notification, NotificationChannel};
 
 pub(crate) struct APNSSender {
     apns_client: a2::Client,
@@ -29,6 +29,31 @@ impl APNSSender {
     }
 }
 
+impl APNSSender {
+    async fn send_inner(&self, message: &str, target: &str) -> anyhow::Result<String> {
+        let mut builder = a2::PlainNotificationBuilder::new(message);
+        builder.set_sound("default");
+        // builder.set_badge(1u32);
+        let payload = builder.build(
+            target,
+            a2::NotificationOptions {
+                apns_topic: Some(CONFIG.notification_processor.apns_topic.as_ref()),
+                ..Default::default()
+            },
+        );
+        match self.apns_client.send(payload).await {
+            Ok(response) => {
+                log::info!("APNS notification sent succesfully.");
+                Ok(format!("{:?}", response))
+            }
+            Err(error) => {
+                log::error!("APNS notification send error: {:?}.", error,);
+                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
+            }
+        }
+    }
+}
+
 #[async_trait]
 impl NotificationSender for APNSSender {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
@@ -42,29 +67,33 @@ impl NotificationSender for APNSSender {
                     notification.notification_type_code
                 )
             });
-        let mut builder = a2::PlainNotificationBuilder::new(&message);
-        builder.set_sound("default");
-        // builder.set_badge(1u32);
-        let payload = builder.build(
-            &notification.notification_target,
-            a2::NotificationOptions {
-                apns_topic: Some(CONFIG.notification_processor.apns_topic.as_ref()),
-                ..Default::default()
-            },
-        );
-        match self.apns_client.send(payload).await {
-            Ok(response) => {
-                log::info!("APNS notification {} sent succesfully.", notification.id);
-                Ok(format!("{:?}", response))
-            }
-            Err(error) => {
-                log::error!(
-                    "APNS notification {} send error: {:?}.",
-                    notification.id,
-                    error,
-                );
-                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
-            }
-        }
+        self.send_inner(&message, &notification.notification_target)
+            .await
+    }
+
+    async fn send_grouped(
+        &self,
+        network_id: u32,
+        notification_type_code: &str,
+        channel: &NotificationChannel,
+        target: &str,
+        notifications: &[Notification],
+    ) -> anyhow::Result<String> {
+        let message = self
+            .content_provider
+            .get_grouped_notification_content(
+                network_id,
+                notification_type_code,
+                channel,
+                notifications,
+            )?
+            .body_text
+            .unwrap_or_else(|| {
+                panic!(
+                    "Cannot get text content for APNS {} notification.",
+                    notification_type_code
+                )
+            });
+        self.send_inner(&message, target).await
     }
 }

@@ -35,7 +35,7 @@ impl NotificationGenerator {
                 finalized_block_number,
                 &current.account.id,
                 Some(&app_event::OneKVLocationChange {
-                    validator_account_id: current.account.id.clone(),
+                    validator_account_id: current.account.id,
                     prev_location: last.onekv_location.clone(),
                     current_location: current.onekv_location.clone(),
                 }),

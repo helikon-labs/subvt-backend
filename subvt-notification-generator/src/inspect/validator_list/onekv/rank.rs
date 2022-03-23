@@ -35,7 +35,7 @@ impl NotificationGenerator {
                 finalized_block_number,
                 &current.account.id,
                 Some(&app_event::OneKVRankChange {
-                    validator_account_id: current.account.id.clone(),
+                    validator_account_id: current.account.id,
                     prev_rank: last.onekv_rank,
                     current_rank: current.onekv_rank,
                 }),

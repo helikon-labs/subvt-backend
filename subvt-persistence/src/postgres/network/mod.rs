@@ -104,7 +104,7 @@ impl PostgreSQLNetworkStorage {
             let mut nominator_account_id_set: HashSet<AccountId> = HashSet::new();
             for validator_stake in &era_stakers.stakers {
                 for nominator_stake in &validator_stake.nominators {
-                    nominator_account_id_set.insert(nominator_stake.account.id.clone());
+                    nominator_account_id_set.insert(nominator_stake.account.id);
                 }
             }
             nominator_account_id_set.len() as i64

@@ -8,7 +8,7 @@ use std::str::FromStr;
 
 use crate::substrate::error::DecodeError;
 
-#[derive(Clone, Debug, Encode, Default, Decode, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Encode, Default, Decode, Eq, Hash, PartialEq)]
 pub struct AccountId([u8; 32]);
 
 impl AccountId {

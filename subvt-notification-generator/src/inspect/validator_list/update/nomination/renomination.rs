@@ -41,9 +41,9 @@ impl NotificationGenerator {
                     )
                     .await?;
                 let event = app_event::NominationAmountChange {
-                    validator_account_id: current.account.id.clone(),
+                    validator_account_id: current.account.id,
                     discovered_block_number: finalized_block_number,
-                    nominator_stash_account_id: current_nomination.stash_account.id.clone(),
+                    nominator_stash_account_id: current_nomination.stash_account.id,
                     prev_active_amount: prev_nomination.stake.active_amount,
                     prev_total_amount: prev_nomination.stake.total_amount,
                     prev_nominee_count: prev_nomination.target_account_ids.len() as u64,

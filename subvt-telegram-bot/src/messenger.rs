@@ -220,7 +220,7 @@ impl MessageType {
                     let active_nominator_account_ids: Vec<AccountId> = validator_stake
                         .nominators
                         .iter()
-                        .map(|n| n.account.id.clone())
+                        .map(|n| n.account.id)
                         .collect();
                     let mut inactive_nominator_count: usize = 0;
                     let mut inactive_nomination_total: Balance = 0;
@@ -301,7 +301,7 @@ impl MessageType {
                         .iter()
                         .map(|n| {
                             active_nomination_total += n.stake;
-                            active_nominator_account_ids.push(n.account.id.clone());
+                            active_nominator_account_ids.push(n.account.id);
                             (
                                 n.account.get_display_or_condensed_address(Some(3)),
                                 n.stake,

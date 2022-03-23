@@ -131,7 +131,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
                 validator_stake
                     .nominators
                     .iter()
-                    .map(|nominator_stake| nominator_stake.account.id.clone())
+                    .map(|nominator_stake| nominator_stake.account.id)
                     .collect()
             } else {
                 Vec::new()
@@ -144,8 +144,8 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             .collect();
 
         ValidatorSummary {
-            account_id: validator.account.id.clone(),
-            controller_account_id: validator.controller_account_id.clone(),
+            account_id: validator.account.id,
+            controller_account_id: validator.controller_account_id,
             display: validator.account.get_display(),
             parent_display: validator.account.get_parent_display(),
             child_display: validator.account.child_display.clone(),

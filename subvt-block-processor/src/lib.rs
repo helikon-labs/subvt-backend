@@ -57,8 +57,7 @@ impl BlockProcessor {
         let validator_stake_map = {
             let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::new();
             for validator_stake in &era_stakers.stakers {
-                validator_stake_map
-                    .insert(validator_stake.account.id.clone(), validator_stake.clone());
+                validator_stake_map.insert(validator_stake.account.id, validator_stake.clone());
             }
             validator_stake_map
         };

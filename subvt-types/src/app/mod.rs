@@ -51,7 +51,7 @@ pub struct User {
     pub public_key_hex: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Hash, Eq, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Hash, Eq, PartialEq, Serialize)]
 pub enum NotificationChannel {
     #[serde(rename = "apns")]
     APNS,
@@ -483,6 +483,7 @@ pub struct UserNotificationRule {
     pub notes: Option<String>,
 }
 
+#[derive(Clone, Debug)]
 pub struct Notification {
     pub id: u32,
     pub user_id: u32,

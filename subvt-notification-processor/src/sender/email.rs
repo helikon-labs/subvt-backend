@@ -1,10 +1,11 @@
+use crate::content::NotificationContent;
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
-use subvt_types::app::Notification;
+use subvt_types::app::{Notification, NotificationChannel};
 
 pub(crate) type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 
@@ -29,36 +30,27 @@ impl EmailSender {
     }
 }
 
-#[async_trait]
-impl NotificationSender for EmailSender {
-    async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
-        let content = self
-            .content_provider
-            .get_notification_content(notification)?;
+impl EmailSender {
+    async fn send_inner(
+        &self,
+        target: &str,
+        content: NotificationContent,
+    ) -> anyhow::Result<String> {
         let (subject, body_text, body_html) = (
-            content.subject.unwrap_or_else(|| {
-                panic!(
-                    "Cannot get subject for email {} notification.",
-                    notification.notification_type_code
-                )
-            }),
-            content.body_text.unwrap_or_else(|| {
-                panic!(
-                    "Cannot get body text for email {} notification.",
-                    notification.notification_type_code
-                )
-            }),
-            content.body_html.unwrap_or_else(|| {
-                panic!(
-                    "Cannot get body html for email {} notification.",
-                    notification.notification_type_code
-                )
-            }),
+            content
+                .subject
+                .unwrap_or_else(|| panic!("Cannot get subject for email notification.")),
+            content
+                .body_text
+                .unwrap_or_else(|| panic!("Cannot get body text for email notification.")),
+            content
+                .body_html
+                .unwrap_or_else(|| panic!("Cannot get body html for email notification.")),
         );
         let message = lettre::Message::builder()
             .from(CONFIG.notification_processor.email_from.parse()?)
             .reply_to(CONFIG.notification_processor.email_reply_to.parse()?)
-            .to("kutsalbilgin@gmail.com".parse()?)
+            .to(target.parse()?)
             .subject(subject)
             .multipart(
                 MultiPart::alternative()
@@ -75,20 +67,41 @@ impl NotificationSender for EmailSender {
             )?;
         match self.mailer.send(message).await {
             Ok(response) => {
-                log::info!(
-                    "Mail sent succesfully for notification #{}.",
-                    notification.id
-                );
+                log::info!("Mail sent succesfully for notification.");
                 Ok(format!("{:?}", response))
             }
             Err(error) => {
-                log::error!(
-                    "Mail send error for notification #{}: {:?}.",
-                    notification.id,
-                    error,
-                );
+                log::error!("Mail send error: {:?}.", error,);
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
             }
         }
+    }
+}
+
+#[async_trait]
+impl NotificationSender for EmailSender {
+    async fn send(&self, notification: &Notification) -> anyhow::Result<String> {
+        let content = self
+            .content_provider
+            .get_notification_content(notification)?;
+        self.send_inner(&notification.notification_target, content)
+            .await
+    }
+
+    async fn send_grouped(
+        &self,
+        network_id: u32,
+        notification_type_code: &str,
+        channel: &NotificationChannel,
+        target: &str,
+        notifications: &[Notification],
+    ) -> anyhow::Result<String> {
+        let content = self.content_provider.get_grouped_notification_content(
+            network_id,
+            notification_type_code,
+            channel,
+            notifications,
+        )?;
+        self.send_inner(target, content).await
     }
 }

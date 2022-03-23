@@ -34,7 +34,7 @@ impl BlockProcessor {
                     index,
                     true,
                     maybe_multisig_account_id,
-                    Some(real_account_id.clone()),
+                    Some(*real_account_id),
                     is_successful,
                     call,
                 )
@@ -56,7 +56,7 @@ impl BlockProcessor {
                     index,
                     true,
                     maybe_multisig_account_id,
-                    Some(real_account_id.clone()),
+                    Some(*real_account_id),
                     is_successful,
                     call,
                 )

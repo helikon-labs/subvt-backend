@@ -1,3 +1,4 @@
+use crate::content::context::block_authorship::set_block_authorship_grouped_context;
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
@@ -35,6 +36,25 @@ mod unclaimed_payout;
 mod validate;
 mod validator_active;
 mod validator_chilled;
+
+pub(crate) fn get_grouped_renderer_context(
+    network: &Network,
+    notification_type_code: &str,
+    notifications: &[Notification],
+) -> anyhow::Result<Context> {
+    let mut context = Context::new();
+    set_basic_context(network, notifications.get(0).unwrap(), &mut context)?;
+    match NotificationTypeCode::from(notification_type_code) {
+        NotificationTypeCode::ChainValidatorBlockAuthorship => {
+            set_block_authorship_grouped_context(notifications, &mut context)?;
+        }
+        _ => todo!(
+            "Grouped push notification content not yet ready for {}.",
+            notification_type_code,
+        ),
+    }
+    Ok(context)
+}
 
 pub(crate) fn get_renderer_context(
     network: &Network,

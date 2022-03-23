@@ -66,7 +66,7 @@ candidate_history_record_count = 5
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
 nominator_list_endpoint = "https://kusama.w3f.community/nominators"
-refresh_seconds = 60
+refresh_seconds = 300
 request_timeout_seconds = 60
 
 [report]

@@ -46,7 +46,7 @@ impl NotificationGenerator {
         // get account information for the validator stash address, which is used to display
         // identity information if exists
         let account_json = if let Some(account) = substrate_client
-            .get_accounts(&[validator_account_id.clone()], &block_hash)
+            .get_accounts(&[*validator_account_id], &block_hash)
             .await?
             .get(0)
         {
@@ -69,11 +69,11 @@ impl NotificationGenerator {
                     network_id: CONFIG.substrate.network_id,
                     period_type: rule.period_type,
                     period: rule.period,
-                    validator_account_id: validator_account_id.clone(),
+                    validator_account_id: *validator_account_id,
                     validator_account_json: account_json.clone(),
                     notification_type_code: rule.notification_type.code.clone(),
                     user_notification_channel_id: channel.id,
-                    notification_channel: channel.channel.clone(),
+                    notification_channel: channel.channel,
                     notification_target: channel.target.clone(),
                     log: None,
                     created_at: None,

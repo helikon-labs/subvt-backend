@@ -198,7 +198,7 @@ impl Service for ValidatorListServer {
                 let validator_map = validator_map.read().unwrap();
                 for validator_account_id in validator_map.keys() {
                     if !validator_account_ids.contains(&validator_account_id.to_string()) {
-                        update.remove_ids.push(validator_account_id.clone());
+                        update.remove_ids.push(*validator_account_id);
                     }
                 }
             }
@@ -274,7 +274,7 @@ impl Service for ValidatorListServer {
                     validator.apply_diff(&diff);
                 }
                 for validator in new_validators {
-                    validator_map.insert(validator.account.id.clone(), validator);
+                    validator_map.insert(validator.account.id, validator);
                 }
             }
             log::info!(

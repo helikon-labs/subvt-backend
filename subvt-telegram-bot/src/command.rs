@@ -110,7 +110,7 @@ impl TelegramBot {
                                     id: 0,
                                     user_id: app_user_id,
                                     network_id: CONFIG.substrate.network_id,
-                                    validator_account_id: account_id.clone(),
+                                    validator_account_id: account_id,
                                 })
                                 .await?;
                             let query = Query {

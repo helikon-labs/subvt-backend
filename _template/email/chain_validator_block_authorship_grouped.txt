@@ -1,0 +1,2 @@
+{{ validator_display }}
+⛓ has authored {% if block_numbers | length > 1 %}blocks{% else %}block{% endif %} {% for block_number in block_numbers %}{{ block_number }}{% if not loop.last %}, {% endif %}{% endfor %}.

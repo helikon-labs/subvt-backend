@@ -105,12 +105,14 @@ impl TelegramBot {
                                     ),
                                 )
                                 .await?;
+                            /*
                             self.messenger
                                 .send_message(
                                     chat_id,
                                     MessageType::NominationSummary(validator_details),
                                 )
                                 .await?;
+                             */
                         } else {
                             log::warn!(
                                 "Validator not found! Selected for validator info in chat {}.",

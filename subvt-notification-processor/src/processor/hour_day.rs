@@ -9,7 +9,7 @@ impl NotificationProcessor {
         &'static self,
     ) -> anyhow::Result<()> {
         log::info!("Start hourly & daily notification processor.");
-        let tokio_rt = Builder::new_current_thread().enable_all().build()?;
+        let tokio_rt = Builder::new_multi_thread().enable_all().build().unwrap();
         std::thread::spawn(move || {
             let mut scheduler = job_scheduler::JobScheduler::new();
             // hourly jobs
@@ -17,13 +17,18 @@ impl NotificationProcessor {
                 "0 0 0/1 * * *".parse().unwrap(),
                 || {
                     log::info!("New hour: check for notifications.");
-                    if let Err(error) = tokio_rt.block_on(self.process_notifications(
-                        None,
-                        NotificationPeriodType::Hour,
-                        Utc::now().hour(),
-                    )) {
-                        log::error!("Error while processing hourly notifications: {:?}", error);
-                    }
+                    tokio_rt.spawn(async {
+                        if let Err(error) = self
+                            .process_notifications(
+                                None,
+                                NotificationPeriodType::Hour,
+                                Utc::now().hour(),
+                            )
+                            .await
+                        {
+                            log::error!("Error while processing hourly notifications: {:?}", error);
+                        }
+                    });
                 },
             ));
             // daily jobs - send at midday UTC
@@ -31,13 +36,18 @@ impl NotificationProcessor {
                 "0 0 12 * * *".parse().unwrap(),
                 || {
                     log::info!("New day: check for notifications.");
-                    if let Err(error) = tokio_rt.block_on(self.process_notifications(
-                        None,
-                        NotificationPeriodType::Day,
-                        Utc::now().day(),
-                    )) {
-                        log::error!("Error while processing daily notifications: {:?}", error);
-                    }
+                    tokio_rt.spawn(async {
+                        if let Err(error) = self
+                            .process_notifications(
+                                None,
+                                NotificationPeriodType::Day,
+                                Utc::now().day(),
+                            )
+                            .await
+                        {
+                            log::error!("Error while processing daily notifications: {:?}", error);
+                        }
+                    });
                 },
             ));
             loop {

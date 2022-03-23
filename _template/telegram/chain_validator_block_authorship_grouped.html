@@ -1,0 +1,2 @@
+<strong>{{ validator_display }}</strong>
+⛓ has authored {% if block_numbers | length > 1 %}blocks{% else %}block{% endif %} {% for block_number in block_numbers %}<a href="https://{{ chain }}.subscan.io/block/{{ block_number }}">{{ block_number }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.

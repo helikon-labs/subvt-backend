@@ -4,8 +4,10 @@
 🔑️ Session keys <pre>{{ condensed_session_keys }}</pre>{% if is_active %}
 🚀 Active validator{% if is_para_validator %}
 ⭐️ Paravalidator{% endif %}{% if is_active_next_session %}
-▶️ Active next session{% else %}⏸ Not active next session{% endif %}{% else %}
-⏸ Not active{% if is_active_next_session %}▶️ Active next session{% endif %}{% endif %}
+▶️ Active next session{% else %}
+⏸ Not active next session{% endif %}{% else %}
+⏸ Not active{% if is_active_next_session %}
+▶️ Active next session{% endif %}{% endif %}
 💷 {{ commission }}% commission{% if blocks_nominations %}
 ⛔️ Blocks nominations{% endif %}{% if oversubscribed %}
 ⚖️ Oversubscribed{% endif %}{% if heartbeat_received %}

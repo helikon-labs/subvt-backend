@@ -1,6 +1,6 @@
 //! Templated notification content provider.
 
-use crate::content::context::get_renderer_context;
+use crate::content::context::{get_grouped_renderer_context, get_renderer_context};
 use crate::CONFIG;
 use std::collections::HashMap;
 use subvt_types::app::{Network, Notification, NotificationChannel};
@@ -20,7 +20,7 @@ pub struct NotificationContent {
 #[derive(Clone)]
 pub struct ContentProvider {
     network_map: HashMap<u32, Network>,
-    renderer_map: HashMap<String, Tera>,
+    renderer_map: HashMap<NotificationChannel, Tera>,
 }
 
 fn get_tera(folder_name: &str) -> anyhow::Result<Tera> {
@@ -34,12 +34,49 @@ fn get_tera(folder_name: &str) -> anyhow::Result<Tera> {
 }
 
 impl ContentProvider {
+    pub fn get_grouped_notification_content(
+        &self,
+        network_id: u32,
+        notification_type_code: &str,
+        channel: &NotificationChannel,
+        notifications: &[Notification],
+    ) -> anyhow::Result<NotificationContent> {
+        match self.renderer_map.get(channel) {
+            Some(renderer) => {
+                let network = self
+                    .network_map
+                    .get(&network_id)
+                    .unwrap_or_else(|| panic!("Cannot find network with id {}.", network_id));
+                let context =
+                    get_grouped_renderer_context(network, notification_type_code, notifications)?;
+                let notification_content = NotificationContent {
+                    subject: renderer
+                        .render(
+                            &format!("{}_grouped_subject.txt", notification_type_code),
+                            &context,
+                        )
+                        .ok(),
+                    body_text: renderer
+                        .render(&format!("{}_grouped.txt", notification_type_code), &context)
+                        .ok(),
+                    body_html: renderer
+                        .render(
+                            &format!("{}_grouped.html", notification_type_code),
+                            &context,
+                        )
+                        .ok(),
+                };
+                Ok(notification_content)
+            }
+            None => panic!("No renderer for notification channel: {}", channel),
+        }
+    }
+
     pub fn get_notification_content(
         &self,
         notification: &Notification,
     ) -> anyhow::Result<NotificationContent> {
-        let channel = notification.notification_channel.to_string();
-        match self.renderer_map.get(&channel) {
+        match self.renderer_map.get(&notification.notification_channel) {
             Some(renderer) => {
                 let network = self
                     .network_map
@@ -70,29 +107,20 @@ impl ContentProvider {
                 };
                 Ok(notification_content)
             }
-            None => panic!("No renderer for notification channel: {}", channel),
+            None => panic!(
+                "No renderer for notification channel: {}",
+                notification.notification_channel
+            ),
         }
     }
 
     pub fn new(network_map: HashMap<u32, Network>) -> anyhow::Result<ContentProvider> {
         let mut renderer_map = HashMap::new();
-        renderer_map.insert(
-            NotificationChannel::APNS.to_string(),
-            get_tera("push_notification")?,
-        );
-        renderer_map.insert(NotificationChannel::Email.to_string(), get_tera("email")?);
-        renderer_map.insert(
-            NotificationChannel::FCM.to_string(),
-            get_tera("push_notification")?,
-        );
-        renderer_map.insert(
-            NotificationChannel::Telegram.to_string(),
-            get_tera("telegram")?,
-        );
-        renderer_map.insert(
-            NotificationChannel::SMS.to_string(),
-            get_tera("push_notification")?,
-        );
+        renderer_map.insert(NotificationChannel::APNS, get_tera("push_notification")?);
+        renderer_map.insert(NotificationChannel::Email, get_tera("email")?);
+        renderer_map.insert(NotificationChannel::FCM, get_tera("push_notification")?);
+        renderer_map.insert(NotificationChannel::Telegram, get_tera("telegram")?);
+        renderer_map.insert(NotificationChannel::SMS, get_tera("push_notification")?);
         Ok(ContentProvider {
             network_map,
             renderer_map,

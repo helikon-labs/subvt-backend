@@ -35,7 +35,7 @@ impl NotificationGenerator {
                 finalized_block_number,
                 &current.account.id,
                 Some(&app_event::OneKVBinaryVersionChange {
-                    validator_account_id: current.account.id.clone(),
+                    validator_account_id: current.account.id,
                     prev_version: last.onekv_binary_version.clone(),
                     current_version: current.onekv_binary_version.clone(),
                 }),

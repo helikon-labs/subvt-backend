@@ -1,0 +1,1 @@
+⛓ {{ validator_display }} has authored new blocks

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use subvt_types::app::Notification;
+use subvt_types::app::{Notification, NotificationChannel};
 
 pub mod apns;
 pub mod email;
@@ -15,4 +15,12 @@ pub(crate) enum NotificationSenderError {
 #[async_trait]
 pub(crate) trait NotificationSender: Sync + Send {
     async fn send(&self, notification: &Notification) -> anyhow::Result<String>;
+    async fn send_grouped(
+        &self,
+        network_id: u32,
+        notification_type_code: &str,
+        channel: &NotificationChannel,
+        target: &str,
+        notifications: &[Notification],
+    ) -> anyhow::Result<String>;
 }
