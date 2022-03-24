@@ -20,18 +20,21 @@ impl TelegramBot {
             self.messenger
                 .send_message(chat_id, MessageType::NoValidatorsOnChat)
                 .await?;
-        } else if validator_account_ids.len() == 1 {
-            let query = Query {
-                query_type,
-                parameter: Some(validator_account_ids.get(0).unwrap().to_ss58_check()),
-            };
-            self.process_query(chat_id, &query).await?;
         } else {
             info!("Send validator list for query: {}", query_type);
             let mut validators = Vec::new();
+            let mut missing_validator_addresses = Vec::new();
             for account_id in &validator_account_ids {
-                if let Some(validator_details) = self.redis.fetch_validator_details(account_id)? {
-                    validators.push(validator_details);
+                if self.redis.validator_exists_by_account_id(account_id)? {
+                    if let Ok(Some(validator_details)) =
+                        self.redis.fetch_validator_details(account_id)
+                    {
+                        validators.push(validator_details);
+                    } else {
+                        missing_validator_addresses.push(account_id.to_ss58_check());
+                    }
+                } else {
+                    missing_validator_addresses.push(account_id.to_ss58_check());
                 }
             }
             validators.sort_by(|v1, v2| {
@@ -50,7 +53,14 @@ impl TelegramBot {
                 }
             });
             self.messenger
-                .send_message(chat_id, MessageType::ValidatorList(validators, query_type))
+                .send_message(
+                    chat_id,
+                    MessageType::ValidatorList {
+                        validators,
+                        missing_validator_addresses,
+                        query_type,
+                    },
+                )
                 .await?;
         }
         Ok(())

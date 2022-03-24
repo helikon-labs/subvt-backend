@@ -1,1 +1,2 @@
-Please select a validator:
+{% if missing_validator_addresses | length > 0 %}Your validator{% if missing_validator_addresses | length > 1 %}s{% endif %} with address{% if missing_validator_addresses | length > 1 %}es{% endif %} <pre>{{ missing_validator_addresses | join(sep="</pre>, <pre>") | safe }}</pre> {% if missing_validator_addresses | length > 1 %}were{% else %}was{% endif %} not found in the active or inactive validator lists.{% endif %}{% if validator_count == 0 %} No other validators in the active of inactive lists.{% else %}
+Please select a validator:{% endif %}

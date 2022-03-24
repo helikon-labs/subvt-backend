@@ -34,7 +34,11 @@ pub enum MessageType {
     NoValidatorsOnChat,
     ValidatorAdded,
     AddValidator,
-    ValidatorList(Vec<ValidatorDetails>, QueryType),
+    ValidatorList {
+        validators: Vec<ValidatorDetails>,
+        missing_validator_addresses: Vec<String>,
+        query_type: QueryType,
+    },
     ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
     NominationSummary(ValidatorDetails),
     NominationDetails {
@@ -89,7 +93,21 @@ impl MessageType {
             Self::NoValidatorsOnChat => "no_validators_on_chat.html",
             Self::ValidatorAdded => "validator_added.html",
             Self::AddValidator => "add_validator.html",
-            Self::ValidatorList(_, _) => "select_validator.html",
+            Self::ValidatorList {
+                validators,
+                missing_validator_addresses,
+                ..
+            } => {
+                context.insert("validator_count", &validators.len());
+                context.insert(
+                    "missing_validator_addresses",
+                    &missing_validator_addresses
+                        .iter()
+                        .map(|address| get_condensed_address(address, None))
+                        .collect::<Vec<String>>(),
+                );
+                "select_validator.html"
+            }
             Self::ValidatorInfo(validator_details, maybe_onekv_summary) => {
                 if let Some(display) = validator_details.account.get_full_display() {
                     context.insert("has_display", &true);
@@ -507,37 +525,45 @@ impl Messenger {
                     inline_keyboard: rows,
                 }))
             }
-            MessageType::ValidatorList(validators, query_type) => {
-                let mut rows = vec![];
-                for validator in validators {
-                    let query = Query {
-                        query_type: query_type.clone(),
-                        parameter: Some(validator.account.address.clone()),
-                    };
+            MessageType::ValidatorList {
+                validators,
+                query_type,
+                ..
+            } => {
+                if validators.is_empty() {
+                    None
+                } else {
+                    let mut rows = vec![];
+                    for validator in validators {
+                        let query = Query {
+                            query_type: query_type.clone(),
+                            parameter: Some(validator.account.address.clone()),
+                        };
+                        rows.push(vec![InlineKeyboardButton {
+                            text: validator.account.get_display_or_condensed_address(None),
+                            url: None,
+                            login_url: None,
+                            callback_data: Some(serde_json::to_string(&query)?),
+                            switch_inline_query: None,
+                            switch_inline_query_current_chat: None,
+                            callback_game: None,
+                            pay: None,
+                        }]);
+                    }
                     rows.push(vec![InlineKeyboardButton {
-                        text: validator.account.get_display_or_condensed_address(None),
+                        text: self.renderer.render("cancel.html", &Context::new())?,
                         url: None,
                         login_url: None,
-                        callback_data: Some(serde_json::to_string(&query)?),
+                        callback_data: Some(serde_json::to_string(&Query::get_cancel_query())?),
                         switch_inline_query: None,
                         switch_inline_query_current_chat: None,
                         callback_game: None,
                         pay: None,
                     }]);
+                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                        inline_keyboard: rows,
+                    }))
                 }
-                rows.push(vec![InlineKeyboardButton {
-                    text: self.renderer.render("cancel.html", &Context::new())?,
-                    url: None,
-                    login_url: None,
-                    callback_data: Some(serde_json::to_string(&Query::get_cancel_query())?),
-                    switch_inline_query: None,
-                    switch_inline_query_current_chat: None,
-                    callback_game: None,
-                    pay: None,
-                }]);
-                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                    inline_keyboard: rows,
-                }))
             }
             MessageType::NominationSummary(validator_details) => {
                 if validator_details.nominations.is_empty() {
