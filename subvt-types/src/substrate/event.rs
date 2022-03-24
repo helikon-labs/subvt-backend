@@ -14,7 +14,7 @@ use crate::{
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
 use log::{debug, error};
-use pallet_democracy::{ReferendumIndex, VoteThreshold};
+use pallet_democracy::{AccountVote, PropIndex, ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
 use parity_scale_codec::{Compact, Decode};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
@@ -80,6 +80,11 @@ pub enum DemocracyEvent {
         extrinsic_index: Option<u32>,
         referendum_index: ReferendumIndex,
     },
+    Delegated {
+        extrinsic_index: Option<u32>,
+        original_account_id: AccountId,
+        delegate_account_id: AccountId,
+    },
     NotPassed {
         extrinsic_index: Option<u32>,
         referendum_index: ReferendumIndex,
@@ -88,15 +93,30 @@ pub enum DemocracyEvent {
         extrinsic_index: Option<u32>,
         referendum_index: ReferendumIndex,
     },
+    Proposed {
+        extrinsic_index: Option<u32>,
+        proposal_index: PropIndex,
+        deposit: Balance,
+    },
+    Seconded {
+        extrinsic_index: Option<u32>,
+        account_id: AccountId,
+        proposal_index: PropIndex,
+    },
     Started {
         extrinsic_index: Option<u32>,
         referendum_index: ReferendumIndex,
         vote_threshold: VoteThreshold,
     },
+    Undelegated {
+        extrinsic_index: Option<u32>,
+        account_id: AccountId,
+    },
     Voted {
         extrinsic_index: Option<u32>,
         account_id: AccountId,
         referendum_index: ReferendumIndex,
+        vote: AccountVote<Balance>,
     },
 }
 
@@ -111,6 +131,11 @@ impl DemocracyEvent {
                 extrinsic_index,
                 referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
             })),
+            "Delegated" => Some(SubstrateEvent::Democracy(DemocracyEvent::Delegated {
+                extrinsic_index,
+                original_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                delegate_account_id: get_argument_primitive!(&arguments[1], AccountId),
+            })),
             "NotPassed" => Some(SubstrateEvent::Democracy(DemocracyEvent::NotPassed {
                 extrinsic_index,
                 referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
@@ -119,10 +144,30 @@ impl DemocracyEvent {
                 extrinsic_index,
                 referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
             })),
+            "Proposed" => Some(SubstrateEvent::Democracy(DemocracyEvent::Proposed {
+                extrinsic_index,
+                proposal_index: get_argument_primitive!(&arguments[0], DemocracyProposalIndex),
+                deposit: get_argument_primitive!(&arguments[1], Balance),
+            })),
+            "Seconded" => Some(SubstrateEvent::Democracy(DemocracyEvent::Seconded {
+                extrinsic_index,
+                account_id: get_argument_primitive!(&arguments[0], AccountId),
+                proposal_index: get_argument_primitive!(&arguments[1], DemocracyProposalIndex),
+            })),
             "Started" => Some(SubstrateEvent::Democracy(DemocracyEvent::Started {
                 extrinsic_index,
                 referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
                 vote_threshold: get_argument_primitive!(&arguments[1], DemocracyVoteThreshold),
+            })),
+            "Undelegated" => Some(SubstrateEvent::Democracy(DemocracyEvent::Undelegated {
+                extrinsic_index,
+                account_id: get_argument_primitive!(&arguments[0], AccountId),
+            })),
+            "Voted" => Some(SubstrateEvent::Democracy(DemocracyEvent::Voted {
+                extrinsic_index,
+                account_id: get_argument_primitive!(&arguments[0], AccountId),
+                referendum_index: get_argument_primitive!(&arguments[1], ReferendumIndex),
+                vote: get_argument_primitive!(&arguments[2], DemocracyAccountVote),
             })),
             _ => None,
         };
