@@ -1,3 +1,4 @@
+use crate::event::democracy::process_democracy_event;
 use crate::event::imonline::process_imonline_event;
 use crate::event::staking::process_staking_event;
 use crate::event::system::process_system_event;
@@ -7,6 +8,7 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::event::SubstrateEvent;
 
+mod democracy;
 mod imonline;
 mod staking;
 mod system;
@@ -28,6 +30,9 @@ impl BlockProcessor {
         event: &SubstrateEvent,
     ) -> anyhow::Result<()> {
         match event {
+            SubstrateEvent::Democracy(democracy_event) => {
+                process_democracy_event(postgres, block_hash, event_index, democracy_event).await?
+            }
             SubstrateEvent::ImOnline(im_online_event) => {
                 process_imonline_event(
                     substrate_client,

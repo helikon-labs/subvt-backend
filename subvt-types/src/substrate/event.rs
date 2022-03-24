@@ -14,6 +14,7 @@ use crate::{
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
 use log::{debug, error};
+use pallet_democracy::{ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
 use parity_scale_codec::{Compact, Decode};
 use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
@@ -66,6 +67,62 @@ impl BalancesEvent {
                 from_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 to_account_id: get_argument_primitive!(&arguments[1], AccountId),
                 amount: get_argument_primitive!(&arguments[2], Balance),
+            })),
+            _ => None,
+        };
+        Ok(maybe_event)
+    }
+}
+
+#[derive(Debug)]
+pub enum DemocracyEvent {
+    Cancelled {
+        extrinsic_index: Option<u32>,
+        referendum_index: ReferendumIndex,
+    },
+    NotPassed {
+        extrinsic_index: Option<u32>,
+        referendum_index: ReferendumIndex,
+    },
+    Passed {
+        extrinsic_index: Option<u32>,
+        referendum_index: ReferendumIndex,
+    },
+    Started {
+        extrinsic_index: Option<u32>,
+        referendum_index: ReferendumIndex,
+        vote_threshold: VoteThreshold,
+    },
+    Voted {
+        extrinsic_index: Option<u32>,
+        account_id: AccountId,
+        referendum_index: ReferendumIndex,
+    },
+}
+
+impl DemocracyEvent {
+    pub fn from(
+        name: &str,
+        extrinsic_index: Option<u32>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        let maybe_event = match name {
+            "Cancelled" => Some(SubstrateEvent::Democracy(DemocracyEvent::Cancelled {
+                extrinsic_index,
+                referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
+            })),
+            "NotPassed" => Some(SubstrateEvent::Democracy(DemocracyEvent::NotPassed {
+                extrinsic_index,
+                referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
+            })),
+            "Passed" => Some(SubstrateEvent::Democracy(DemocracyEvent::Passed {
+                extrinsic_index,
+                referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
+            })),
+            "Started" => Some(SubstrateEvent::Democracy(DemocracyEvent::Started {
+                extrinsic_index,
+                referendum_index: get_argument_primitive!(&arguments[0], ReferendumIndex),
+                vote_threshold: get_argument_primitive!(&arguments[1], DemocracyVoteThreshold),
             })),
             _ => None,
         };
@@ -640,6 +697,7 @@ impl UtilityEvent {
 #[derive(Debug)]
 pub enum SubstrateEvent {
     Balances(BalancesEvent),
+    Democracy(DemocracyEvent),
     Identity(IdentityEvent),
     ImOnline(ImOnlineEvent),
     Offences(OffencesEvent),
@@ -703,6 +761,7 @@ impl SubstrateEvent {
         // debug!("Will decode {}.{}.", module.name, event.name);
         let maybe_event = match module.name.as_str() {
             "Balances" => BalancesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Democracy" => DemocracyEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Identity" => IdentityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "ImOnline" => ImOnlineEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Offences" => OffencesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
