@@ -47,35 +47,6 @@ impl ValidatorListUpdater {
             "subvt:{}:validators:{}",
             CONFIG.substrate.chain, finalized_block_number
         );
-        // prepare first command pipeline
-        let mut redis_cmd_pipeline = Pipeline::new();
-        // delete history
-        {
-            log::info!("Clean Redis history.");
-            let mut processed_block_numbers = processed_block_numbers.write().await;
-            let to_delete: Vec<u64> = processed_block_numbers
-                .iter()
-                .cloned()
-                .take(
-                    processed_block_numbers
-                        .len()
-                        .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
-                )
-                .collect();
-            for delete in to_delete {
-                let keys: Vec<String> = redis::cmd("KEYS")
-                    .arg(format!(
-                        "subvt:{}:validators:{}:*",
-                        CONFIG.substrate.chain, delete
-                    ))
-                    .query(&mut redis_connection)?;
-                log::info!("Delete {} records for block #{}.", keys.len(), delete);
-                for key in keys {
-                    redis_cmd_pipeline.cmd("DEL").arg(key);
-                }
-                processed_block_numbers.remove(0);
-            }
-        }
         let active_account_ids: HashSet<String> = validators
             .iter()
             .filter_map(|validator| {
@@ -96,20 +67,8 @@ impl ValidatorListUpdater {
                 }
             })
             .collect();
-        redis_cmd_pipeline
-            .cmd("SADD")
-            .arg(format!("{}:active:{}", prefix, "account_id_set"))
-            .arg(active_account_ids);
-        redis_cmd_pipeline
-            .cmd("SADD")
-            .arg(format!("{}:inactive:{}", prefix, "account_id_set"))
-            .arg(inactive_account_ids);
-        // each validator
+        let mut redis_cmd_pipeline = Pipeline::new();
         redis_cmd_pipeline.cmd("MSET");
-        // set era
-        redis_cmd_pipeline
-            .arg(format!("{}:active_era", prefix))
-            .arg(serde_json::to_string(active_era)?);
         log::info!("Prepare validator details JSON entries.");
         // set validator details
         for validator in validators {
@@ -144,6 +103,16 @@ impl ValidatorListUpdater {
                 .arg(validator_prefix)
                 .arg(validator_json_string);
         }
+        // set active and inactive account id sets
+        redis_cmd_pipeline
+            .cmd("SADD")
+            .arg(format!("{}:active:{}", prefix, "account_id_set"))
+            .arg(active_account_ids);
+        redis_cmd_pipeline
+            .cmd("SADD")
+            .arg(format!("{}:inactive:{}", prefix, "account_id_set"))
+            .arg(inactive_account_ids);
+        redis_cmd_pipeline.cmd("MSET");
         // set finalized block number
         redis_cmd_pipeline
             .arg(format!(
@@ -151,6 +120,10 @@ impl ValidatorListUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(finalized_block_number);
+        // set era
+        redis_cmd_pipeline
+            .arg(format!("{}:active_era", prefix))
+            .arg(serde_json::to_string(active_era)?);
         // publish event
         redis_cmd_pipeline
             .cmd("PUBLISH")
@@ -163,8 +136,41 @@ impl ValidatorListUpdater {
         redis_cmd_pipeline
             .query(&mut redis_connection)
             .context("Error while setting Redis validators.")?;
-        let mut processed_block_numbers = processed_block_numbers.write().await;
-        processed_block_numbers.push(finalized_block_number);
+        {
+            let mut processed_block_numbers = processed_block_numbers.write().await;
+            processed_block_numbers.push(finalized_block_number);
+        }
+        // delete history
+        {
+            log::info!("Clean redundant Redis history.");
+            let mut redis_cmd_pipeline = Pipeline::new();
+            let mut processed_block_numbers = processed_block_numbers.write().await;
+            let to_delete: Vec<u64> = processed_block_numbers
+                .iter()
+                .cloned()
+                .take(
+                    processed_block_numbers
+                        .len()
+                        .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
+                )
+                .collect();
+            for delete in to_delete {
+                let keys: Vec<String> = redis::cmd("KEYS")
+                    .arg(format!(
+                        "subvt:{}:validators:{}:*",
+                        CONFIG.substrate.chain, delete
+                    ))
+                    .query(&mut redis_connection)?;
+                log::info!("Delete {} records for block #{}.", keys.len(), delete);
+                for key in keys {
+                    redis_cmd_pipeline.cmd("DEL").arg(key);
+                }
+                processed_block_numbers.remove(0);
+            }
+            redis_cmd_pipeline
+                .query(&mut redis_connection)
+                .context("Error while setting Redis validators.")?;
+        }
         Ok(())
     }
 
