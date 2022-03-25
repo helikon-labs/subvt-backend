@@ -1,2 +1,2 @@
 {{ validator_display }}
-⛓ has authored {% if block_numbers | length > 1 %}blocks{% else %}block{% endif %} {% for block_number in block_numbers %}{{ block_number }}{% if not loop.last %}, {% endif %}{% endfor %}.
+⛓ has authored {% if block_numbers | length > 1 %}blocks{% else %}block{% endif %} {% for block_number in block_numbers %}{{ block_number }}{% if not loop.last %}, {% endif %}{% endfor %}{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period }}{% if notification_period > 1 %}s{% endif %}{% endif %}.

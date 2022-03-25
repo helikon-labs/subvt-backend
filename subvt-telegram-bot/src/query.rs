@@ -81,50 +81,30 @@ impl TelegramBot {
             QueryType::ValidatorInfo => {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        if let Some(validator_details) =
-                            self.redis.fetch_validator_details(&account_id)?
-                        {
-                            log::info!(
-                                "Validator selected for validator info in chat {}.",
-                                chat_id
-                            );
-                            let onekv_summary =
-                                if let Some(id) = validator_details.onekv_candidate_record_id {
-                                    self.network_postgres
-                                        .get_onekv_candidate_summary_by_id(id)
-                                        .await?
-                                } else {
-                                    None
-                                };
-                            self.messenger
-                                .send_message(
-                                    chat_id,
-                                    MessageType::ValidatorInfo(
-                                        Box::new(validator_details.clone()),
-                                        Box::new(onekv_summary),
-                                    ),
-                                )
-                                .await?;
-                            /*
-                            self.messenger
-                                .send_message(
-                                    chat_id,
-                                    MessageType::NominationSummary(validator_details),
-                                )
-                                .await?;
-                             */
-                        } else {
-                            log::warn!(
-                                "Validator not found! Selected for validator info in chat {}.",
-                                chat_id
-                            );
-                            self.messenger
-                                .send_message(
-                                    chat_id,
-                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                        let maybe_validator_details =
+                            self.redis.fetch_validator_details(&account_id)?;
+                        if let Some(validator_details) = &maybe_validator_details {
+                            self.network_postgres
+                                .update_chat_validator_display(
+                                    &account_id,
+                                    &validator_details.account.get_full_display(),
                                 )
                                 .await?;
                         }
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorInfo {
+                                    address: validator_address.clone(),
+                                    maybe_validator_details: Box::new(maybe_validator_details),
+                                    maybe_onekv_candidate_summary: Box::new(
+                                        self.network_postgres
+                                            .get_onekv_candidate_summary_by_account_id(&account_id)
+                                            .await?,
+                                    ),
+                                },
+                            )
+                            .await?;
                     }
                 }
             }
@@ -138,6 +118,12 @@ impl TelegramBot {
                                 "Validator selected for nomination summary in chat {}.",
                                 chat_id
                             );
+                            self.network_postgres
+                                .update_chat_validator_display(
+                                    &account_id,
+                                    &validator_details.account.get_full_display(),
+                                )
+                                .await?;
                             self.messenger
                                 .send_message(
                                     chat_id,
@@ -201,9 +187,9 @@ impl TelegramBot {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         log::info!("Validator selected for removal in chat {}.", chat_id);
-                        if self
+                        if let Some(validator) = self
                             .network_postgres
-                            .chat_has_validator(chat_id, &account_id)
+                            .get_chat_validator_by_account_id(chat_id, &account_id)
                             .await?
                         {
                             if self
@@ -223,13 +209,8 @@ impl TelegramBot {
                                         &account_id,
                                     )
                                     .await?;
-                                let validator_details =
-                                    self.redis.fetch_validator_details(&account_id)?;
                                 self.messenger
-                                    .send_message(
-                                        chat_id,
-                                        MessageType::ValidatorRemoved(validator_details),
-                                    )
+                                    .send_message(chat_id, MessageType::ValidatorRemoved(validator))
                                     .await?;
                             } else {
                                 self.messenger

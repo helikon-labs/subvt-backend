@@ -13,6 +13,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::substrate::Balance;
 use subvt_types::subvt::ValidatorDetails;
+use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
 use tera::{Context, Tera};
@@ -35,18 +36,21 @@ pub enum MessageType {
     ValidatorAdded,
     AddValidator,
     ValidatorList {
-        validators: Vec<ValidatorDetails>,
-        missing_validator_addresses: Vec<String>,
+        validators: Vec<TelegramChatValidator>,
         query_type: QueryType,
     },
-    ValidatorInfo(Box<ValidatorDetails>, Box<Option<OneKVCandidateSummary>>),
+    ValidatorInfo {
+        address: String,
+        maybe_validator_details: Box<Option<ValidatorDetails>>,
+        maybe_onekv_candidate_summary: Box<Option<OneKVCandidateSummary>>,
+    },
     NominationSummary(ValidatorDetails),
     NominationDetails {
         validator_details: ValidatorDetails,
         onekv_nominator_account_ids: Vec<AccountId>,
     },
     RemoveValidatorNotFound(String),
-    ValidatorRemoved(Option<ValidatorDetails>),
+    ValidatorRemoved(TelegramChatValidator),
 }
 
 impl MessageType {
@@ -79,8 +83,8 @@ impl MessageType {
                 context.insert("condensed_address", &get_condensed_address(address, None));
                 "add_validator_not_found.html"
             }
-            Self::ValidatorExistsOnChat(address) => {
-                context.insert("condensed_address", &get_condensed_address(address, None));
+            Self::ValidatorExistsOnChat(validator_display) => {
+                context.insert("validator_display", validator_display);
                 "validator_exists_on_chat.html"
             }
             Self::TooManyValidatorsOnChat => {
@@ -93,68 +97,63 @@ impl MessageType {
             Self::NoValidatorsOnChat => "no_validators_on_chat.html",
             Self::ValidatorAdded => "validator_added.html",
             Self::AddValidator => "add_validator.html",
-            Self::ValidatorList {
-                validators,
-                missing_validator_addresses,
-                ..
+            Self::ValidatorList { .. } => "select_validator.html",
+            Self::ValidatorInfo {
+                address,
+                maybe_validator_details,
+                maybe_onekv_candidate_summary,
             } => {
-                context.insert("validator_count", &validators.len());
-                context.insert(
-                    "missing_validator_addresses",
-                    &missing_validator_addresses
-                        .iter()
-                        .map(|address| get_condensed_address(address, None))
-                        .collect::<Vec<String>>(),
-                );
-                "select_validator.html"
-            }
-            Self::ValidatorInfo(validator_details, maybe_onekv_summary) => {
-                if let Some(display) = validator_details.account.get_full_display() {
-                    context.insert("has_display", &true);
-                    context.insert("display", &display);
-                } else {
-                    context.insert("has_display", &false);
-                }
-                context.insert("network", &CONFIG.substrate.chain);
-                let address = &validator_details.account.address;
-                context.insert("address", address);
                 context.insert("condensed_address", &get_condensed_address(address, None));
-                let controller_address = validator_details.controller_account_id.to_ss58_check();
-                context.insert("controller_address", &controller_address);
-                context.insert(
-                    "condensed_controller_address",
-                    &get_condensed_address(&controller_address, None),
-                );
-                context.insert(
-                    "condensed_session_keys",
-                    &get_condensed_session_keys(&validator_details.next_session_keys)
-                        .to_lowercase(),
-                );
-                context.insert("is_active", &validator_details.is_active);
-                context.insert("is_para_validator", &validator_details.is_para_validator);
-                context.insert(
-                    "is_active_next_session",
-                    &validator_details.active_next_session,
-                );
-                context.insert(
-                    "commission",
-                    &format_decimal(
-                        validator_details.preferences.commission_per_billion as u128,
-                        7,
-                        2,
-                    ),
-                );
-                context.insert(
-                    "blocks_nominations",
-                    &validator_details.preferences.blocks_nominations,
-                );
-                context.insert("oversubscribed", &validator_details.oversubscribed);
-                if let Some(heartbeat_received) = validator_details.heartbeat_received {
-                    context.insert("heartbeat_received", &heartbeat_received);
+                context.insert("is_validator", &maybe_validator_details.is_some());
+                if let Some(validator_details) = &**maybe_validator_details {
+                    if let Some(display) = validator_details.account.get_full_display() {
+                        context.insert("has_display", &true);
+                        context.insert("display", &display);
+                    } else {
+                        context.insert("has_display", &false);
+                    }
+                    context.insert("network", &CONFIG.substrate.chain);
+                    let address = &validator_details.account.address;
+                    context.insert("address", address);
+                    context.insert("condensed_address", &get_condensed_address(address, None));
+                    let controller_address =
+                        validator_details.controller_account_id.to_ss58_check();
+                    context.insert("controller_address", &controller_address);
+                    context.insert(
+                        "condensed_controller_address",
+                        &get_condensed_address(&controller_address, None),
+                    );
+                    context.insert(
+                        "condensed_session_keys",
+                        &get_condensed_session_keys(&validator_details.next_session_keys)
+                            .to_lowercase(),
+                    );
+                    context.insert("is_active", &validator_details.is_active);
+                    context.insert("is_para_validator", &validator_details.is_para_validator);
+                    context.insert(
+                        "is_active_next_session",
+                        &validator_details.active_next_session,
+                    );
+                    context.insert(
+                        "commission",
+                        &format_decimal(
+                            validator_details.preferences.commission_per_billion as u128,
+                            7,
+                            2,
+                        ),
+                    );
+                    context.insert(
+                        "blocks_nominations",
+                        &validator_details.preferences.blocks_nominations,
+                    );
+                    context.insert("oversubscribed", &validator_details.oversubscribed);
+                    if let Some(heartbeat_received) = validator_details.heartbeat_received {
+                        context.insert("heartbeat_received", &heartbeat_received);
+                    }
+                    context.insert("slash_count", &validator_details.slash_count);
                 }
-                context.insert("slash_count", &validator_details.slash_count);
-                if let Some(onekv_summary) = &**maybe_onekv_summary {
-                    context.insert("is_onekv", &true);
+                context.insert("is_onekv", &maybe_onekv_candidate_summary.is_some());
+                if let Some(onekv_summary) = &**maybe_onekv_candidate_summary {
                     context.insert("onekv_name", &onekv_summary.name);
                     if let Some(location) = &onekv_summary.location {
                         context.insert("onekv_location", location);
@@ -222,8 +221,6 @@ impl MessageType {
                         "onekv_last_updated",
                         &last_updated.format(date_time_format).to_string(),
                     );
-                } else {
-                    context.insert("is_onekv", &false);
                 }
                 "validator_info.html"
             }
@@ -418,15 +415,13 @@ impl MessageType {
                 context.insert("condensed_address", &get_condensed_address(address, None));
                 "remove_validator_not_found.html"
             }
-            Self::ValidatorRemoved(maybe_validator_details) => {
-                if let Some(validator_details) = maybe_validator_details {
-                    context.insert(
-                        "display",
-                        &validator_details
-                            .account
-                            .get_display_or_condensed_address(None),
-                    );
-                }
+            Self::ValidatorRemoved(validator) => {
+                let display = if let Some(display) = &validator.display {
+                    display.clone()
+                } else {
+                    get_condensed_address(&validator.address, None)
+                };
+                context.insert("display", &display);
                 "validator_removed.html"
             }
         };
@@ -528,7 +523,6 @@ impl Messenger {
             MessageType::ValidatorList {
                 validators,
                 query_type,
-                ..
             } => {
                 if validators.is_empty() {
                     None
@@ -537,10 +531,14 @@ impl Messenger {
                     for validator in validators {
                         let query = Query {
                             query_type: query_type.clone(),
-                            parameter: Some(validator.account.address.clone()),
+                            parameter: Some(validator.address.clone()),
                         };
                         rows.push(vec![InlineKeyboardButton {
-                            text: validator.account.get_display_or_condensed_address(None),
+                            text: if let Some(display) = &validator.display {
+                                display.to_owned()
+                            } else {
+                                get_condensed_address(&validator.address, None)
+                            },
                             url: None,
                             login_url: None,
                             callback_data: Some(serde_json::to_string(&query)?),

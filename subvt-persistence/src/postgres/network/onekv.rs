@@ -208,22 +208,22 @@ impl PostgreSQLNetworkStorage {
 }
 
 impl PostgreSQLNetworkStorage {
-    pub async fn get_onekv_candidate_summary_by_id(
+    pub async fn get_onekv_candidate_summary_by_account_id(
         &self,
-        id: u32,
+        account_id: &AccountId,
     ) -> anyhow::Result<Option<OneKVCandidateSummary>> {
         let maybe_candidate_summary: Option<PostgresCandidateSummary> = sqlx::query_as(
             r#"
             SELECT id, onekv_id, discovered_at, name, nominated_at, online_since, offline_since, rank, score_total, score_aggregate, telemetry_id, version, location, democracy_vote_count, council_votes, created_at
             FROM sub_onekv_candidate
-            WHERE id = $1
+            WHERE validator_account_id = $1
             ORDER BY id DESC
             LIMIT 1
             "#,
         )
-        .bind(id as i32)
-        .fetch_optional(&self.connection_pool)
-        .await?;
+            .bind(account_id.to_string())
+            .fetch_optional(&self.connection_pool)
+            .await?;
         if let Some(summary) = maybe_candidate_summary {
             Ok(Some(OneKVCandidateSummary {
                 record_id: summary.0 as u32,

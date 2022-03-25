@@ -2,7 +2,7 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
-use subvt_types::telegram::TelegramChatState;
+use subvt_types::telegram::{TelegramChatState, TelegramChatValidator};
 
 impl PostgreSQLNetworkStorage {
     pub async fn get_chat_count(&self) -> anyhow::Result<u64> {
@@ -21,8 +21,8 @@ impl PostgreSQLNetworkStorage {
     pub async fn get_chat_total_validator_count(&self) -> anyhow::Result<u64> {
         let validator_count: (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(DISTINCT validator_account_id) FROM (
-                SELECT validator_account_id
+            SELECT COUNT(DISTINCT account_id) FROM (
+                SELECT account_id
                 FROM sub_telegram_chat_validator
                 WHERE deleted_at IS NULL
             ) AS validators
@@ -46,13 +46,39 @@ impl PostgreSQLNetworkStorage {
         Ok(chat_validators.iter().map(|v| v.0).collect())
     }
 
-    pub async fn get_chat_validator_account_ids(
+    pub async fn get_chat_validator_by_account_id(
         &self,
         telegram_chat_id: i64,
-    ) -> anyhow::Result<Vec<AccountId>> {
-        let chat_validators: Vec<(String,)> = sqlx::query_as(
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<TelegramChatValidator>> {
+        let maybe_chat_validator: Option<(i32, String, Option<String>)> = sqlx::query_as(
             r#"
-            SELECT validator_account_id
+            SELECT id, address, display
+            FROM sub_telegram_chat_validator
+            WHERE telegram_chat_id = $1
+            AND account_id = $2
+            AND deleted_at IS NULL
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .bind(account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_chat_validator.map(|v| TelegramChatValidator {
+            id: v.0 as u64,
+            account_id: *account_id,
+            address: v.1,
+            display: v.2,
+        }))
+    }
+
+    pub async fn get_chat_validators(
+        &self,
+        telegram_chat_id: i64,
+    ) -> anyhow::Result<Vec<TelegramChatValidator>> {
+        let chat_validators: Vec<(i32, String, String, Option<String>)> = sqlx::query_as(
+            r#"
+            SELECT id, account_id, address, display
             FROM sub_telegram_chat_validator
             WHERE telegram_chat_id = $1
             AND deleted_at IS NULL
@@ -61,11 +87,16 @@ impl PostgreSQLNetworkStorage {
         .bind(telegram_chat_id)
         .fetch_all(&self.connection_pool)
         .await?;
-        let mut account_ids = Vec::new();
-        for chat_validator in &chat_validators {
-            account_ids.push(AccountId::from_str(&chat_validator.0)?);
+        let mut result = vec![];
+        for chat_validator in chat_validators {
+            result.push(TelegramChatValidator {
+                id: chat_validator.0 as u64,
+                account_id: AccountId::from_str(&chat_validator.1)?,
+                address: chat_validator.2.clone(),
+                display: chat_validator.3.to_owned(),
+            });
         }
-        Ok(account_ids)
+        Ok(result)
     }
 
     pub async fn chat_exists_by_id(&self, telegram_chat_id: i64) -> anyhow::Result<bool> {
@@ -107,6 +138,25 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(telegram_chat_id)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_chat_validator_display(
+        &self,
+        account_id: &AccountId,
+        display: &Option<String>,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telegram_chat_validator
+            SET display = $1
+            WHERE account_id = $2
+            "#,
+        )
+        .bind(display)
+        .bind(account_id.to_string())
         .execute(&self.connection_pool)
         .await?;
         Ok(())
@@ -155,7 +205,7 @@ impl PostgreSQLNetworkStorage {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM sub_telegram_chat_validator
-            WHERE telegram_chat_id = $1 AND validator_account_id = $2 AND deleted_at IS NULL
+            WHERE telegram_chat_id = $1 AND account_id = $2 AND deleted_at IS NULL
             "#,
         )
         .bind(telegram_chat_id)
@@ -168,19 +218,23 @@ impl PostgreSQLNetworkStorage {
     pub async fn add_validator_to_chat(
         &self,
         telegram_chat_id: i64,
-        validator_account_id: &AccountId,
+        account_id: &AccountId,
+        address: &str,
+        display: &Option<String>,
     ) -> anyhow::Result<u64> {
-        self.save_account(validator_account_id).await?;
+        self.save_account(account_id).await?;
         let id: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_telegram_chat_validator (telegram_chat_id, validator_account_id)
-            VALUES ($1, $2)
-            ON CONFLICT(telegram_chat_id, validator_account_id) DO UPDATE SET deleted_at = NULL
+            INSERT INTO sub_telegram_chat_validator (telegram_chat_id, account_id, address, display)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT(telegram_chat_id, account_id) DO UPDATE SET deleted_at = NULL
             RETURNING id
             "#,
         )
         .bind(telegram_chat_id as i64)
-        .bind(&validator_account_id.to_string())
+        .bind(&account_id.to_string())
+        .bind(address)
+        .bind(display)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(id.0 as u64)
@@ -189,19 +243,19 @@ impl PostgreSQLNetworkStorage {
     pub async fn remove_validator_from_chat(
         &self,
         telegram_chat_id: i64,
-        validator_account_id: &AccountId,
+        account_id: &AccountId,
     ) -> anyhow::Result<bool> {
         let maybe_id: Option<(i32,)> = sqlx::query_as(
             r#"
             UPDATE sub_telegram_chat_validator
             SET deleted_at = now()
             WHERE telegram_chat_id = $1
-            AND validator_account_id = $2
+            AND account_id = $2
             RETURNING id
             "#,
         )
         .bind(telegram_chat_id as i64)
-        .bind(validator_account_id.to_string())
+        .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
         Ok(maybe_id.is_some())
@@ -250,7 +304,7 @@ impl PostgreSQLNetworkStorage {
     pub async fn get_chat_validator_count(&self, telegram_chat_id: i64) -> anyhow::Result<u16> {
         let chat_validator_count: (i64,) = sqlx::query_as(
             r#"
-            SELECT COUNT(DISTINCT validator_account_id)
+            SELECT COUNT(DISTINCT account_id)
             FROM sub_telegram_chat_validator
             WHERE telegram_chat_id = $1
             AND deleted_at IS NULL

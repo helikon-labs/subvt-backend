@@ -12,44 +12,30 @@ impl TelegramBot {
         chat_id: i64,
         query_type: QueryType,
     ) -> anyhow::Result<()> {
-        let validator_account_ids = self
-            .network_postgres
-            .get_chat_validator_account_ids(chat_id)
-            .await?;
-        if validator_account_ids.is_empty() {
+        let mut validators = self.network_postgres.get_chat_validators(chat_id).await?;
+        if validators.is_empty() {
             self.messenger
                 .send_message(chat_id, MessageType::NoValidatorsOnChat)
                 .await?;
+        } else if validators.len() == 1 {
+            let query = Query {
+                query_type,
+                parameter: Some(validators.get(0).unwrap().account_id.to_ss58_check()),
+            };
+            self.process_query(chat_id, &query).await?;
         } else {
             info!("Send validator list for query: {}", query_type);
-            let mut validators = Vec::new();
-            let mut missing_validator_addresses = Vec::new();
-            for account_id in &validator_account_ids {
-                if self.redis.validator_exists_by_account_id(account_id)? {
-                    if let Ok(Some(validator_details)) =
-                        self.redis.fetch_validator_details(account_id)
-                    {
-                        validators.push(validator_details);
-                    } else {
-                        missing_validator_addresses.push(account_id.to_ss58_check());
-                    }
-                } else {
-                    missing_validator_addresses.push(account_id.to_ss58_check());
-                }
-            }
             validators.sort_by(|v1, v2| {
-                let maybe_v1_display = v1.account.get_display();
-                let maybe_v2_display = v2.account.get_display();
-                if let Some(v1_display) = maybe_v1_display {
-                    if let Some(v2_display) = maybe_v2_display {
-                        v1_display.cmp(&v2_display)
+                if let Some(v1_display) = &v1.display {
+                    if let Some(v2_display) = &v2.display {
+                        v1_display.cmp(v2_display)
                     } else {
                         Ordering::Less
                     }
-                } else if maybe_v2_display.is_some() {
+                } else if v2.display.is_some() {
                     Ordering::Greater
                 } else {
-                    v1.account.address.cmp(&v2.account.address)
+                    v1.address.cmp(&v2.address)
                 }
             });
             self.messenger
@@ -57,7 +43,6 @@ impl TelegramBot {
                     chat_id,
                     MessageType::ValidatorList {
                         validators,
-                        missing_validator_addresses,
                         query_type,
                     },
                 )
@@ -88,7 +73,7 @@ impl TelegramBot {
         for address in args {
             match AccountId::from_ss58_check(address) {
                 Ok(account_id) => {
-                    if self.redis.validator_exists_by_account_id(&account_id)? {
+                    if let Some(validator) = self.redis.fetch_validator_details(&account_id)? {
                         if self
                             .network_postgres
                             .chat_has_validator(chat_id, &account_id)
@@ -97,13 +82,20 @@ impl TelegramBot {
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::ValidatorExistsOnChat(address.clone()),
+                                    MessageType::ValidatorExistsOnChat(
+                                        validator.account.get_display_or_condensed_address(None),
+                                    ),
                                 )
                                 .await?;
                         } else {
                             let id = self
                                 .network_postgres
-                                .add_validator_to_chat(chat_id, &account_id)
+                                .add_validator_to_chat(
+                                    chat_id,
+                                    &account_id,
+                                    &account_id.to_ss58_check(),
+                                    &validator.account.get_full_display(),
+                                )
                                 .await?;
                             self.update_metrics_validator_count().await?;
                             info!(

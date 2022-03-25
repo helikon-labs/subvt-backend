@@ -1,5 +1,5 @@
 {{ validator_display }}
-⭐️ has received a new nomination!
+⭐️ has received a new nomination{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period }}{% if notification_period > 1 %}s{% endif %}{% endif %}!
 Nominator: {{ nominator_display }}
 Amount: {{ nomination_amount }} {{ token_ticker }}
 Nominee Count: {{ nominee_count }}

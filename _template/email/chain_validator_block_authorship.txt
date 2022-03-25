@@ -1,2 +1,2 @@
 {{ validator_display }}
-⛓ has authored block {{ block_number }}
+⛓ has authored block {{ block_number }}{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period }}{% if notification_period > 1 %}s{% endif %}{% endif %}.

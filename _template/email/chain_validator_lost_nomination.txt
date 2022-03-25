@@ -1,4 +1,4 @@
 {{ validator_display }}
-⬇️ has lost a nomination.
+⬇️ has lost a nomination{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period }}{% if notification_period > 1 %}s{% endif %}{% endif %}.
 Nominator: {{ nominator_display }}
 Amount: {{ nomination_amount }} {{ token_ticker }}

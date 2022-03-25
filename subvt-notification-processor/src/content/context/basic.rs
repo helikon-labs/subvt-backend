@@ -1,5 +1,5 @@
 use crate::CONFIG;
-use subvt_types::app::{Network, Notification};
+use subvt_types::app::{Network, Notification, NotificationPeriodType};
 use tera::Context;
 
 pub(crate) fn set_basic_context(
@@ -7,6 +7,16 @@ pub(crate) fn set_basic_context(
     notification: &Notification,
     context: &mut Context,
 ) -> anyhow::Result<()> {
+    match notification.period_type {
+        NotificationPeriodType::Off | NotificationPeriodType::Immediate => (),
+        _ => {
+            context.insert(
+                "notification_period_type",
+                &format!("{}", notification.period_type),
+            );
+            context.insert("notification_period", &format!("{}", notification.period));
+        }
+    }
     context.insert("chain", &CONFIG.substrate.chain);
     context.insert(
         "validator_address",

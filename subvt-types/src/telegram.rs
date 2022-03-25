@@ -1,3 +1,4 @@
+use crate::crypto::AccountId;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -27,4 +28,12 @@ impl Display for TelegramChatState {
         };
         write!(f, "{}", display)
     }
+}
+
+#[derive(Debug)]
+pub struct TelegramChatValidator {
+    pub id: u64,
+    pub account_id: AccountId,
+    pub address: String,
+    pub display: Option<String>,
 }
