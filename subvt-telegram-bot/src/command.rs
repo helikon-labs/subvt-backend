@@ -202,6 +202,12 @@ impl TelegramBot {
                 self.process_validators_command(chat_id, QueryType::NominationSummary)
                     .await?
             }
+            "/settings" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.messenger
+                    .send_message(chat_id, MessageType::Settings)
+                    .await?;
+            }
             "/broadcasttest" => {
                 crate::metrics::command_call_counter(command).inc();
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {

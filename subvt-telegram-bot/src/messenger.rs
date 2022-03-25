@@ -51,6 +51,7 @@ pub enum MessageType {
     },
     RemoveValidatorNotFound(String),
     ValidatorRemoved(TelegramChatValidator),
+    Settings,
 }
 
 impl MessageType {
@@ -424,6 +425,7 @@ impl MessageType {
                 context.insert("display", &display);
                 "validator_removed.html"
             }
+            Self::Settings => "settings.html",
         };
         renderer.render(template_name, &context).unwrap()
     }
@@ -479,6 +481,14 @@ impl Messenger {
             Ok(response) => Ok(response),
             Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
         }
+    }
+
+    fn get_settings_keyboard(&self) -> ReplyMarkup {
+        let mut rows = vec![];
+
+        ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+            inline_keyboard: rows,
+        })
     }
 
     pub async fn send_message(
@@ -588,6 +598,7 @@ impl Messenger {
                     }))
                 }
             }
+            MessageType::Settings => Some(self.get_settings_keyboard()),
             _ => None,
         };
         let params = SendMessageParams {

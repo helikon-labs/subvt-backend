@@ -14,7 +14,7 @@ pub(crate) fn set_basic_context(
                 "notification_period_type",
                 &format!("{}", notification.period_type),
             );
-            context.insert("notification_period", &format!("{}", notification.period));
+            context.insert("notification_period", &notification.period);
         }
     }
     context.insert("chain", &CONFIG.substrate.chain);
