@@ -33,6 +33,16 @@ INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_c
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change');
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change');
+-- democracy
+INSERT INTO app_notification_type(code) VALUES('democracy_cancelled');
+INSERT INTO app_notification_type(code) VALUES('democracy_delegated');
+INSERT INTO app_notification_type(code) VALUES('democracy_not_passed');
+INSERT INTO app_notification_type(code) VALUES('democracy_passed');
+INSERT INTO app_notification_type(code) VALUES('democracy_proposed');
+INSERT INTO app_notification_type(code) VALUES('democracy_seconded');
+INSERT INTO app_notification_type(code) VALUES('democracy_started');
+INSERT INTO app_notification_type(code) VALUES('democracy_undelegated');
+INSERT INTO app_notification_type(code) VALUES('democracy_voted');
 
 CREATE TYPE app_notification_type_param_data_type AS ENUM ('string', 'integer', 'balance', 'float', 'boolean');
 
@@ -395,3 +405,4 @@ INSERT INTO app_notification_param_type(
 -- onekv_validator_rank_change :: no param
 -- onekv_validator_location_change :: no param
 -- onekv_validator_validity_change :: no param
+-- democracy notifications :: no param

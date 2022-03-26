@@ -38,6 +38,36 @@ impl PostgreSQLAppStorage {
         Ok(param_types)
     }
 
+    pub async fn get_notification_rules_by_type(
+        &self,
+        notification_type_code: &str,
+        network_id: u32,
+    ) -> anyhow::Result<Vec<UserNotificationRule>> {
+        let rule_ids: Vec<(i32,)> = sqlx::query_as(
+            r#"
+            SELECT "id"
+            FROM app_user_notification_rule UNR
+            WHERE UNR.notification_type_code = $1
+            AND UNR.deleted_at IS NULL
+            AND (UNR.network_id IS NULL OR UNR.network_id = $2)
+            "#,
+        )
+        .bind(notification_type_code)
+        .bind(network_id as i32)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut result = Vec::new();
+        for rule_id in rule_ids {
+            if let Some(rule) = self
+                .get_user_notification_rule_by_id(rule_id.0 as u32)
+                .await?
+            {
+                result.push(rule);
+            }
+        }
+        Ok(result)
+    }
+
     pub async fn get_notification_rules_for_validator(
         &self,
         notification_type_code: &str,

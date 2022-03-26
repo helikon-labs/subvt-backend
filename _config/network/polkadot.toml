@@ -4,6 +4,8 @@ chain_display = "Polkadot"
 chain_genesis_hash = "0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3"
 rpc_url = "wss://rpc.polkadot.io:443"
 network_id = 2
+token_ticker = "DOT"
+token_decimals = 10
 
 [block_processor]
 # min supported for Polkadot is 2_005_673, metadata v12

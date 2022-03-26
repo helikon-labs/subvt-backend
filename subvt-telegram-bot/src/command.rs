@@ -73,7 +73,8 @@ impl TelegramBot {
         for address in args {
             match AccountId::from_ss58_check(address) {
                 Ok(account_id) => {
-                    if let Some(validator) = self.redis.fetch_validator_details(&account_id)? {
+                    if let Some(validator) = self.redis.fetch_validator_details(&account_id).await?
+                    {
                         if self
                             .network_postgres
                             .chat_has_validator(chat_id, &account_id)

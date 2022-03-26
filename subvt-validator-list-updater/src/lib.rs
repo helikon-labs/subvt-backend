@@ -33,13 +33,12 @@ pub struct ValidatorListUpdater;
 impl ValidatorListUpdater {
     async fn update_redis(
         active_era: &Era,
-        processed_block_numbers: &Arc<RwLock<Vec<u64>>>,
         finalized_block_number: u64,
         validators: &[ValidatorDetails],
     ) -> anyhow::Result<()> {
         // get redis connection
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_connection().context(format!(
+        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
@@ -134,43 +133,49 @@ impl ValidatorListUpdater {
             .arg(finalized_block_number);
         log::info!("Write to Redis.");
         redis_cmd_pipeline
-            .query(&mut redis_connection)
+            .query_async(&mut redis_connection)
+            .await
             .context("Error while setting Redis validators.")?;
-        {
-            let mut processed_block_numbers = processed_block_numbers.write().await;
-            processed_block_numbers.push(finalized_block_number);
-        }
-        // delete history
-        {
-            log::info!("Clean redundant Redis history.");
-            let mut redis_cmd_pipeline = Pipeline::new();
-            let mut processed_block_numbers = processed_block_numbers.write().await;
-            let to_delete: Vec<u64> = processed_block_numbers
-                .iter()
-                .cloned()
-                .take(
-                    processed_block_numbers
-                        .len()
-                        .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
-                )
-                .collect();
-            for delete in to_delete {
-                let keys: Vec<String> = redis::cmd("KEYS")
-                    .arg(format!(
-                        "subvt:{}:validators:{}:*",
-                        CONFIG.substrate.chain, delete
-                    ))
-                    .query(&mut redis_connection)?;
-                log::info!("Delete {} records for block #{}.", keys.len(), delete);
-                for key in keys {
-                    redis_cmd_pipeline.cmd("DEL").arg(key);
-                }
-                processed_block_numbers.remove(0);
+        Ok(())
+    }
+
+    async fn clear_history(processed_block_numbers: &Arc<RwLock<Vec<u64>>>) -> anyhow::Result<()> {
+        log::info!("Clean redundant Redis history.");
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
+        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
+        let mut redis_cmd_pipeline = Pipeline::new();
+        let mut processed_block_numbers = processed_block_numbers.write().await;
+        let to_delete: Vec<u64> = processed_block_numbers
+            .iter()
+            .cloned()
+            .take(
+                processed_block_numbers
+                    .len()
+                    .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
+            )
+            .collect();
+        log::info!("Delete from history: {:?}", to_delete);
+        for delete in to_delete {
+            let keys: Vec<String> = redis::cmd("KEYS")
+                .arg(format!(
+                    "subvt:{}:validators:{}:*",
+                    CONFIG.substrate.chain, delete
+                ))
+                .query_async(&mut redis_connection)
+                .await?;
+            log::info!("Delete {} records for block #{}.", keys.len(), delete);
+            for key in keys {
+                redis_cmd_pipeline.cmd("DEL").arg(key);
             }
-            redis_cmd_pipeline
-                .query(&mut redis_connection)
-                .context("Error while setting Redis validators.")?;
+            processed_block_numbers.remove(0);
         }
+        redis_cmd_pipeline
+            .query_async(&mut redis_connection)
+            .await
+            .context("Error while setting Redis validators.")?;
         Ok(())
     }
 
@@ -224,16 +229,58 @@ impl ValidatorListUpdater {
         }
         log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
-        ValidatorListUpdater::update_redis(
-            &active_era,
-            processed_block_numbers,
-            finalized_block_number,
-            &validators,
-        )
-        .await?;
+        ValidatorListUpdater::update_redis(&active_era, finalized_block_number, &validators)
+            .await?;
         let elapsed = start.elapsed();
         log::info!("Redis updated. Took {} ms.", elapsed.as_millis());
+        {
+            let mut processed_block_numbers = processed_block_numbers.write().await;
+            processed_block_numbers.push(finalized_block_number);
+        }
+        ValidatorListUpdater::clear_history(processed_block_numbers).await?;
+        // update Redis processed block numbers
+        {
+            let processed_block_numbers = processed_block_numbers.read().await;
+            ValidatorListUpdater::store_processed_block_numbers(&processed_block_numbers).await?;
+        }
         Ok(validators)
+    }
+
+    async fn store_processed_block_numbers(
+        processed_block_numbers: &Vec<u64>,
+    ) -> anyhow::Result<()> {
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
+        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
+        redis::cmd("SET")
+            .arg(&[
+                format!(
+                    "subvt:{}:validators:processed_block_numbers",
+                    CONFIG.substrate.chain
+                ),
+                serde_json::to_string(processed_block_numbers)?,
+            ])
+            .query_async(&mut redis_connection)
+            .await?;
+        Ok(())
+    }
+
+    async fn fetch_processed_block_numbers() -> anyhow::Result<Vec<u64>> {
+        let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
+        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
+            "Cannot connect to Redis at URL {}.",
+            CONFIG.redis.url
+        ))?;
+        let json_str: String = redis::cmd("GET")
+            .arg(format!(
+                "subvt:{}:validators:processed_block_numbers",
+                CONFIG.substrate.chain
+            ))
+            .query_async(&mut redis_connection)
+            .await?;
+        Ok(serde_json::from_str(&json_str)?)
     }
 }
 
@@ -254,24 +301,9 @@ impl Service for ValidatorListUpdater {
             );
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
             let is_busy = Arc::new(AtomicBool::new(false));
-            let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(Vec::new()));
-            // clean Redis history
-            {
-                log::info!("Clean Redis history.");
-                let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-                let mut connection = redis_client.get_connection().context(format!(
-                    "Cannot connect to Redis at URL {}.",
-                    CONFIG.redis.url
-                ))?;
-                let keys: Vec<String> = redis::cmd("KEYS")
-                    .arg(format!("subvt:{}:*", CONFIG.substrate.chain))
-                    .query(&mut connection)?;
-                let mut redis_cmd_pipeline = Pipeline::new();
-                for key in keys {
-                    redis_cmd_pipeline.cmd("DEL").arg(key);
-                }
-                redis_cmd_pipeline.query(&mut connection)?;
-            }
+            let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(
+                ValidatorListUpdater::fetch_processed_block_numbers().await?,
+            ));
             substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,
                 |finalized_block_header| async {

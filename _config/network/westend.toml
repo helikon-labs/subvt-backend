@@ -7,7 +7,6 @@ rpc_url = "wss://westend-rpc.polkadot.io:443"
 network_id = 3
 token_ticker = "WND"
 token_decimals = 12
-token_format_decimal_points = 4
 
 [block_processor]
 # min supported for Kusama is 4_401_243, metadata v12

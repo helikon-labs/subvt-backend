@@ -20,54 +20,65 @@ impl Redis {
 }
 
 impl Redis {
-    pub fn get_finalized_block_number(&self) -> anyhow::Result<Option<u64>> {
+    pub async fn get_finalized_block_number(&self) -> anyhow::Result<Option<u64>> {
         let key = format!(
             "subvt:{}:validators:finalized_block_number",
             CONFIG.substrate.chain
         );
-        let mut connection = self.client.get_connection()?;
-        if let Ok(finalized_block_number) = redis::cmd("GET").arg(key).query(&mut connection) {
+        let mut connection = self.client.get_async_connection().await?;
+        if let Ok(finalized_block_number) = redis::cmd("GET")
+            .arg(key)
+            .query_async(&mut connection)
+            .await
+        {
             Ok(Some(finalized_block_number))
         } else {
             Ok(None)
         }
     }
 
-    pub fn validator_exists_by_account_id(&self, account_id: &AccountId) -> anyhow::Result<bool> {
-        let finalized_block_number = if let Some(number) = self.get_finalized_block_number()? {
+    pub async fn validator_exists_by_account_id(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<bool> {
+        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
+        {
             number
         } else {
             log::warn!("Finalized block number does not exist on Redis.");
             return Ok(false);
         };
-        let mut connection = self.client.get_connection()?;
+        let mut connection = self.client.get_async_connection().await?;
         let active_set_key = format!(
             "subvt:{}:validators:{}:active:account_id_set",
             CONFIG.substrate.chain, finalized_block_number
         );
         let active_account_ids: Vec<String> = redis::cmd("SMEMBERS")
             .arg(active_set_key)
-            .query(&mut connection)?;
+            .query_async(&mut connection)
+            .await?;
         let inactive_set_key = format!(
             "subvt:{}:validators:{}:inactive:account_id_set",
             CONFIG.substrate.chain, finalized_block_number
         );
         let inactive_account_ids: Vec<String> = redis::cmd("SMEMBERS")
             .arg(inactive_set_key)
-            .query(&mut connection)?;
+            .query_async(&mut connection)
+            .await?;
         Ok(active_account_ids.contains(&account_id.to_string())
             || inactive_account_ids.contains(&account_id.to_string()))
     }
 
-    pub fn fetch_validator_details(
+    pub async fn fetch_validator_details(
         &self,
         account_id: &AccountId,
     ) -> anyhow::Result<Option<ValidatorDetails>> {
-        if !self.validator_exists_by_account_id(account_id)? {
+        if !self.validator_exists_by_account_id(account_id).await? {
             return Ok(None);
         }
-        let mut connection = self.client.get_connection()?;
-        let finalized_block_number = if let Some(number) = self.get_finalized_block_number()? {
+        let mut connection = self.client.get_async_connection().await?;
+        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
+        {
             number
         } else {
             log::warn!("Finalized block number not found on Redis.");
@@ -79,7 +90,8 @@ impl Redis {
         );
         let active_validator_json_string_result: RedisResult<String> = redis::cmd("GET")
             .arg(active_validator_key)
-            .query(&mut connection);
+            .query_async(&mut connection)
+            .await;
         let validator_json_string = match active_validator_json_string_result {
             Ok(validator_json_string) => validator_json_string,
             Err(_) => {
@@ -89,7 +101,8 @@ impl Redis {
                 );
                 redis::cmd("GET")
                     .arg(inactive_validator_key)
-                    .query(&mut connection)?
+                    .query_async(&mut connection)
+                    .await?
             }
         };
         Ok(Some(serde_json::from_str(&validator_json_string)?))

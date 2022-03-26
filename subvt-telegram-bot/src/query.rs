@@ -5,15 +5,15 @@ use subvt_types::crypto::AccountId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum QueryType {
-    #[serde(rename = "VI")]
+    #[serde(rename = "V")]
     ValidatorInfo,
-    #[serde(rename = "NS")]
+    #[serde(rename = "N")]
     NominationSummary,
-    #[serde(rename = "ND")]
+    #[serde(rename = "D")]
     NominationDetails,
-    #[serde(rename = "RV")]
+    #[serde(rename = "R")]
     RemoveValidator,
-    #[serde(rename = "CB")]
+    #[serde(rename = "B")]
     ConfirmBroadcast,
     #[serde(rename = "C")]
     Cancel,
@@ -82,7 +82,7 @@ impl TelegramBot {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         let maybe_validator_details =
-                            self.redis.fetch_validator_details(&account_id)?;
+                            self.redis.fetch_validator_details(&account_id).await?;
                         if let Some(validator_details) = &maybe_validator_details {
                             self.network_postgres
                                 .update_chat_validator_display(
@@ -112,7 +112,7 @@ impl TelegramBot {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         if let Some(validator_details) =
-                            self.redis.fetch_validator_details(&account_id)?
+                            self.redis.fetch_validator_details(&account_id).await?
                         {
                             log::info!(
                                 "Validator selected for nomination summary in chat {}.",
@@ -149,7 +149,7 @@ impl TelegramBot {
                 if let Some(validator_address) = &query.parameter {
                     if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
                         if let Some(validator_details) =
-                            self.redis.fetch_validator_details(&account_id)?
+                            self.redis.fetch_validator_details(&account_id).await?
                         {
                             log::info!(
                                 "Validator selected for nomination details in chat {}.",

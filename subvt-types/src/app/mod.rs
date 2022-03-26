@@ -124,6 +124,15 @@ pub enum NotificationTypeCode {
     TelemetryValidatorPeerCountLow,
     TelemetryValidatorTooManyTxsInQueue,
     TelemetryValidatorUploadBwLow,
+    DemocracyCancelled,
+    DemocracyDelegated,
+    DemocracyNotPassed,
+    DemocracyPassed,
+    DemocracyProposed,
+    DemocracySeconded,
+    DemocracyStarted,
+    DemocracyUndelegated,
+    DemocracyVoted,
 }
 
 impl Display for NotificationTypeCode {
@@ -185,6 +194,16 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
             NotificationTypeCode::OneKVValidatorLocationChange => "onekv_validator_location_change",
             NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
+            // democracy
+            NotificationTypeCode::DemocracyCancelled => "democracy_cancelled",
+            NotificationTypeCode::DemocracyDelegated => "democracy_delegated",
+            NotificationTypeCode::DemocracyNotPassed => "democracy_not_passed",
+            NotificationTypeCode::DemocracyPassed => "democracy_passed",
+            NotificationTypeCode::DemocracyProposed => "democracy_proposed",
+            NotificationTypeCode::DemocracySeconded => "democracy_seconded",
+            NotificationTypeCode::DemocracyStarted => "democracy_started",
+            NotificationTypeCode::DemocracyUndelegated => "democracy_undelegated",
+            NotificationTypeCode::DemocracyVoted => "democracy_voted",
         };
         write!(f, "{}", code)
     }
@@ -249,6 +268,15 @@ impl From<&str> for NotificationTypeCode {
             "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
             "onekv_validator_location_change" => NotificationTypeCode::OneKVValidatorLocationChange,
             "onekv_validator_validity_change" => NotificationTypeCode::OneKVValidatorValidityChange,
+            "democracy_cancelled" => NotificationTypeCode::DemocracyCancelled,
+            "democracy_delegated" => NotificationTypeCode::DemocracyDelegated,
+            "democracy_not_passed" => NotificationTypeCode::DemocracyNotPassed,
+            "democracy_passed" => NotificationTypeCode::DemocracyPassed,
+            "democracy_proposed" => NotificationTypeCode::DemocracyProposed,
+            "democracy_seconded" => NotificationTypeCode::DemocracySeconded,
+            "democracy_started" => NotificationTypeCode::DemocracyStarted,
+            "democracy_undelegated" => NotificationTypeCode::DemocracyUndelegated,
+            "democracy_voted" => NotificationTypeCode::DemocracyVoted,
             _ => panic!("Unknown notification type code: {}", code),
         }
     }
