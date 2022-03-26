@@ -31,7 +31,7 @@ use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
 use pallet_scheduler::TaskAddress;
-use pallet_staking::{Exposure, ValidatorPrefs};
+use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
@@ -41,11 +41,13 @@ use polkadot_primitives::v1::{
 };
 use polkadot_primitives::v2::PvfCheckStatement;
 use polkadot_runtime::MaxAdditionalFields;
+use polkadot_runtime_common::assigned_slots::SlotLeasePeriodStart;
 use polkadot_runtime_common::{
     auctions::AuctionIndex,
     claims::{EcdsaSignature, EthereumAddress, StatementKind},
 };
 use polkadot_runtime_parachains::disputes::{DisputeLocation, DisputeResult};
+use polkadot_runtime_parachains::paras::ParaGenesisArgs;
 use polkadot_runtime_parachains::ump::{MessageId, OverweightIndex};
 use sp_consensus_babe::{digests::NextConfigDescriptor, EquivocationProof};
 use sp_core::sr25519::Signature;
@@ -100,6 +102,10 @@ pub enum ArgumentPrimitive {
     CompactMoment(Compact<u64>),
     CompactParachainId(Compact<Id>),
     CompactWeight(Compact<Weight>),
+    ConfigOpBalance(ConfigOp<Balance>),
+    ConfigOpPercent(ConfigOp<Percent>),
+    ConfigOpPerbill(ConfigOp<Perbill>),
+    ConfigOpU32(ConfigOp<u32>),
     CoreIndex(CoreIndex),
     DefunctVoter(DefunctVoter),
     DemocracyConviction(Conviction),
@@ -153,9 +159,11 @@ pub enum ArgumentPrimitive {
     ParachainCompactLeasePeriod(Compact<BlockNumber>),
     ParachainUMPMessageId(MessageId),
     ParachainUMPOverweightIndex(OverweightIndex),
+    ParaGenesisArgs(ParaGenesisArgs),
     Perbill(Perbill),
     Percent(Percent),
     Perquintill(Perquintill),
+    SlotLeasePeriodStart(SlotLeasePeriodStart),
     RewardDestination(RewardDestination),
     SchedulerLookupError(LookupError),
     U8(u8),
@@ -349,6 +357,10 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<ReferendumIndex>", decode_compact_referendum_index, CompactReferendumIndex),
     ("Compact<u32>", decode_compact_u32, CompactU32),
     ("Compact<Weight>", decode_compact_weight, CompactWeight),
+    ("ConfigOp<BalanceOf<T>>", decode_config_op_balance, ConfigOpBalance),
+    ("ConfigOp<u32>", decode_config_op_u32, ConfigOpU32),
+    ("ConfigOp<Percent>", decode_config_op_percent, ConfigOpPercent),
+    ("ConfigOp<Perbill>", decode_config_op_perbill, ConfigOpPerbill),
     ("CoreIndex", decode_core_index, CoreIndex),
     ("DefunctVoter<<T::Lookup as StaticLookup>::Source>", decode_defunct_voter, DefunctVoter),
     ("Conviction", decode_democracy_conviction, DemocracyConviction),
@@ -402,6 +414,7 @@ generate_argument_primitive_decoder_impl! {[
     ("HeadData", decode_parachain_head_data, ParachainHeadData),
     ("HrmpChannelId", decode_parachain_hrmp_channel_id, ParachainHRMPChannelId),
     ("ParaId", decode_parachain_id, ParachainId),
+    ("ParaGenesisArgs", decode_para_genesis_args, ParaGenesisArgs),
     ("LeasePeriod", decode_parachain_lease_period_1, ParachainLeasePeriod),
     ("LeasePeriodOf<T>", decode_parachain_lease_period_2, ParachainLeasePeriod),
     ("Compact<LeasePeriodOf<T>>", decode_parachain_compact_lease_period, ParachainCompactLeasePeriod),
@@ -434,6 +447,7 @@ generate_argument_primitive_decoder_impl! {[
     ("T::Keys", decode_session_keys, SessionKeys),
     ("SlotRange", decode_slot_range, SlotRange),
     ("SolutionOrSnapshotSize", decode_solution_or_snapshot_size, SolutionOrSnapshotSize),
+    ("SlotLeasePeriodStart", decode_slot_lease_period_start, SlotLeasePeriodStart),
     ("StatementKind", decode_statement_kind, StatementKind),
     ("ValidationCode", decode_validation_code, ValidationCode),
     ("ValidationCodeHash", decode_validation_code_hash, ValidationCodeHash),
@@ -627,6 +641,7 @@ impl Argument {
                     || name == "Box<T::PalletsOrigin>"
                     || name == "ChangesTrieConfiguration"
                     || name == "Box<CallOrHashOf<T>>"
+                    || name == "Box<xcm::opaque::VersionedXcm>"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),

@@ -484,7 +484,7 @@ impl Messenger {
     }
 
     fn get_settings_keyboard(&self) -> ReplyMarkup {
-        let mut rows = vec![];
+        let rows = vec![];
 
         ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
             inline_keyboard: rows,

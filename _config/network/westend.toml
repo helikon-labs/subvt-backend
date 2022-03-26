@@ -1,0 +1,20 @@
+[substrate]
+chain = "westend"
+chain_display = "Westend"
+chain_genesis_hash = "0xE143F23803AC50E8F6F8E62695D1CE9E4E1D68AA36C1CD2CFD15340213F3423E"
+rpc_url = "wss://westend-rpc.polkadot.io:443"
+# for internal use, 1 for Kusama, 2 for Polkadot, 3 for Westend
+network_id = 3
+token_ticker = "WND"
+token_decimals = 12
+token_format_decimal_points = 4
+
+[block_processor]
+# min supported for Kusama is 4_401_243, metadata v12
+# first block of 2021 for Kusama is 6_015_486
+start_block_number = 10_130_000
+
+[telemetry]
+# W3F       wss://telemetry-backend.w3f.community/feed
+# Polkadot  wss://feed.telemetry.polkadot.io/feed
+websocket_url = "wss://feed.telemetry.polkadot.io/feed"

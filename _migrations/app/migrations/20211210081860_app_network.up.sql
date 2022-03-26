@@ -20,3 +20,4 @@ CREATE TABLE IF NOT EXISTS app_network
 
 INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count, redis_url) VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'Kusama', 2, 'KSM', 12, 'redis://127.0.0.1:6379/');
 INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count, redis_url) VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'Polkadot', 0, 'DOT', 10, 'redis://127.0.0.1:6379/');
+INSERT INTO app_network(id, hash, name, ss58_prefix, token_ticker, token_decimal_count, redis_url) VALUES(3, '0xE143F23803AC50E8F6F8E62695D1CE9E4E1D68AA36C1CD2CFD15340213F3423E', 'Westend', 42, 'WND', 12, 'redis://127.0.0.1:6379/');

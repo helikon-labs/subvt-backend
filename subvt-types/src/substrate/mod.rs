@@ -58,7 +58,7 @@ impl LastRuntimeUpgradeInfo {
 pub enum Chain {
     Kusama,
     Polkadot,
-    Darwinia,
+    Westend,
 }
 
 impl FromStr for Chain {
@@ -69,7 +69,7 @@ impl FromStr for Chain {
         match s.to_lowercase().as_str() {
             "kusama" | "ksm" => Ok(Self::Kusama),
             "polkadot" | "dot" => Ok(Self::Polkadot),
-            "darwinia" => Ok(Self::Darwinia),
+            "westend" | "wnd" => Ok(Self::Westend),
             _ => panic!("Unkown chain: {}", s),
         }
     }
@@ -81,7 +81,7 @@ impl Chain {
         match self {
             Self::Kusama => Ss58AddressFormat::from(2u16),
             Self::Polkadot => Ss58AddressFormat::from(0u16),
-            Self::Darwinia => Ss58AddressFormat::from(18u16),
+            Self::Westend => Ss58AddressFormat::from(42u16),
         }
     }
 
