@@ -128,7 +128,7 @@ lazy_static! {
         // democracy
         (
             NotificationTypeCode::DemocracyCancelled,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
