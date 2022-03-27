@@ -1,4 +1,7 @@
 use crate::content::context::block_authorship::set_block_authorship_grouped_context;
+use crate::content::context::democracy::{
+    set_democracy_cancelled_context, set_democracy_delegated_context,
+};
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
@@ -21,7 +24,6 @@ use crate::content::context::{
 };
 use subvt_types::app::{Network, Notification, NotificationTypeCode};
 use tera::Context;
-use crate::content::context::democracy::{set_democracy_cancelled_context, set_democracy_delegated_context};
 
 mod basic;
 mod block_authorship;
@@ -120,11 +122,7 @@ pub(crate) fn get_renderer_context(
             set_democracy_cancelled_context(notification, &mut context);
         }
         NotificationTypeCode::DemocracyDelegated => {
-            set_democracy_delegated_context(
-                network,
-                notification,
-                &mut context
-            );
+            set_democracy_delegated_context(network, notification, &mut context);
         }
         _ => todo!(
             "Push notification content not yet ready for {}.",
