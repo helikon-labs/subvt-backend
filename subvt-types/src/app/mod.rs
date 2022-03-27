@@ -27,7 +27,8 @@ pub struct Block {
 pub struct Network {
     pub id: u32,
     pub hash: String,
-    pub name: String,
+    pub chain: String,
+    pub display: String,
     pub ss58_prefix: u32,
     pub token_ticker: String,
     pub token_decimal_count: u8,
@@ -519,7 +520,7 @@ pub struct Notification {
     pub network_id: u32,
     pub period_type: NotificationPeriodType,
     pub period: u16,
-    pub validator_account_id: AccountId,
+    pub validator_account_id: Option<AccountId>,
     pub validator_account_json: Option<String>,
     pub notification_type_code: String,
     pub user_notification_channel_id: u32,

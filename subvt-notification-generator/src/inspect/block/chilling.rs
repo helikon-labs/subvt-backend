@@ -28,7 +28,7 @@ impl NotificationGenerator {
                 app_postgres.clone(),
                 &rules,
                 block.number,
-                &event.stash_account_id,
+                &Some(event.stash_account_id),
                 Some(&event.clone()),
             )
             .await?;

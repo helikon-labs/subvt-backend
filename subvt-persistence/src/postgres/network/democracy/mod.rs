@@ -3,65 +3,10 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::Balance;
 
+pub(crate) mod cancelled;
+pub(crate) mod delegated;
+
 impl PostgreSQLNetworkStorage {
-    pub async fn save_democracy_cancelled_event(
-        &self,
-        block_hash: &str,
-        extrinsic_index: Option<i32>,
-        event_index: i32,
-        referendum_index: u32,
-    ) -> anyhow::Result<Option<i32>> {
-        let maybe_result: Option<(i32,)> = sqlx::query_as(
-            r#"
-            INSERT INTO sub_event_democracy_cancelled (block_hash, extrinsic_index, event_index, referendum_index)
-            VALUES ($1, $2, $3, $4)
-            RETURNING id
-            "#,
-        )
-            .bind(block_hash)
-            .bind(extrinsic_index)
-            .bind(event_index)
-            .bind(referendum_index as i64)
-            .fetch_optional(&self.connection_pool)
-            .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn save_democracy_delegated_event(
-        &self,
-        block_hash: &str,
-        extrinsic_index: Option<i32>,
-        event_index: i32,
-        original_account_id: &AccountId,
-        delegate_account_id: &AccountId,
-    ) -> anyhow::Result<Option<i32>> {
-        self.save_account(original_account_id).await?;
-        self.save_account(delegate_account_id).await?;
-        let maybe_result: Option<(i32,)> = sqlx::query_as(
-            r#"
-            INSERT INTO sub_event_democracy_delegated (block_hash, extrinsic_index, event_index, original_account_id, delegate_account_id)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id
-            "#,
-        )
-            .bind(block_hash)
-            .bind(extrinsic_index)
-            .bind(event_index)
-            .bind(original_account_id.to_string())
-            .bind(delegate_account_id.to_string())
-            .fetch_optional(&self.connection_pool)
-            .await?;
-        if let Some(result) = maybe_result {
-            Ok(Some(result.0))
-        } else {
-            Ok(None)
-        }
-    }
-
     pub async fn save_democracy_not_passed_event(
         &self,
         block_hash: &str,

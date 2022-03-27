@@ -33,7 +33,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 finalized_block_number,
-                &current.account.id,
+                &Some(current.account.id),
                 Some(&app_event::OneKVBinaryVersionChange {
                     validator_account_id: current.account.id,
                     prev_version: last.onekv_binary_version.clone(),

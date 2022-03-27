@@ -88,13 +88,22 @@ impl NotificationProcessor {
         let postgres = self.postgres.clone();
         tokio::spawn(async move {
             let notification_id = notification.id;
-            log::info!(
-                "Send {} {} notification #{} for {}.",
-                notification.notification_type_code,
-                notification.notification_channel,
-                notification.id,
-                notification.validator_account_id.to_ss58_check()
-            );
+            if let Some(account_id) = notification.validator_account_id {
+                log::info!(
+                    "Send {} {} notification #{} for {}.",
+                    notification.notification_type_code,
+                    notification.notification_channel,
+                    notification.id,
+                    account_id.to_ss58_check()
+                );
+            } else {
+                log::info!(
+                    "Send {} {} notification #{}.",
+                    notification.notification_type_code,
+                    notification.notification_channel,
+                    notification.id,
+                );
+            }
             let start = std::time::Instant::now();
             match sender.send(&notification).await {
                 Ok(_success_log) => {

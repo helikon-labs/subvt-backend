@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS app_notification
     network_id                      integer NOT NULL,
     period_type                     app_notification_period_type NOT NULL,
     period                          integer NOT NULL,
-    validator_account_id            VARCHAR(66) NOT NULL,
+    validator_account_id            VARCHAR(66),
     validator_account_json          text,
     notification_type_code          VARCHAR(256) NOT NULL,
     user_notification_channel_id    integer NOT NULL,

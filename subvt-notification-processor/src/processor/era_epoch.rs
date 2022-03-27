@@ -13,15 +13,15 @@ impl NotificationProcessor {
     ) -> anyhow::Result<()> {
         log::info!(
             "Start era/epoch notification processor for {}.",
-            network.name,
+            network.display,
         );
         let redis_url = network
             .redis_url
             .as_ref()
-            .unwrap_or_else(|| panic!("{} Redis URL is missing.", network.name));
+            .unwrap_or_else(|| panic!("{} Redis URL is missing.", network.display));
         let redis = redis::Client::open(redis_url.as_str()).context(format!(
             "Cannot connect to {} Redis at URL {}.",
-            network.name, redis_url,
+            network.display, redis_url,
         ))?;
         let mut data_connection = redis.get_connection()?;
         let mut pub_sub_connection = redis.get_connection()?;
@@ -30,24 +30,24 @@ impl NotificationProcessor {
         let mut pub_sub = pub_sub_connection.as_pubsub();
         pub_sub.subscribe(format!(
             "subvt:{}:network_status:publish:best_block_number",
-            network.name.to_lowercase(),
+            network.display.to_lowercase(),
         ))?;
         loop {
             let _ = pub_sub.get_message();
-            let key = format!("subvt:{}:network_status", network.name.to_lowercase());
+            let key = format!("subvt:{}:network_status", network.display.to_lowercase());
             let status_json_string: String =
                 redis::cmd("GET").arg(key).query(&mut data_connection)?;
             let status: NetworkStatus = serde_json::from_str(&status_json_string)?;
             log::info!(
                 "New {} status, best block #{}.",
-                network.name,
+                network.display,
                 status.best_block_number,
             );
             // process epoch notifications if epoch has changed
             if current_epoch_index != status.current_epoch.index {
                 log::info!(
                     "New {} epoch #{}. Check for notifications.",
-                    network.name,
+                    network.display,
                     status.current_epoch.index,
                 );
                 match self
@@ -64,7 +64,7 @@ impl NotificationProcessor {
                     Err(error) => {
                         log::error!(
                             "Error while processing {} epoch #{} notifications: {:?}",
-                            network.name,
+                            network.display,
                             status.current_epoch.index,
                             error,
                         );
@@ -77,7 +77,7 @@ impl NotificationProcessor {
             if active_era_index != status.active_era.index {
                 log::info!(
                     "New {} era #{}. Check for notifications.",
-                    network.name,
+                    network.display,
                     status.active_era.index,
                 );
                 match self

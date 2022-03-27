@@ -54,7 +54,7 @@ impl NotificationGenerator {
                             app_postgres.clone(),
                             &rules,
                             finalized_block_number,
-                            &validator.account.id,
+                            &Some(validator.account.id),
                             Some(&validator.unclaimed_era_indices),
                         )
                         .await?;

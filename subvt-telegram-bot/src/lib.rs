@@ -133,27 +133,27 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracyDelegated,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::DemocracyNotPassed,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::DemocracyPassed,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::DemocracyProposed,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::DemocracySeconded,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
@@ -163,7 +163,7 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracyUndelegated,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (

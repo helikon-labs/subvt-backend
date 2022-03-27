@@ -21,10 +21,12 @@ use crate::content::context::{
 };
 use subvt_types::app::{Network, Notification, NotificationTypeCode};
 use tera::Context;
+use crate::content::context::democracy::{set_democracy_cancelled_context, set_democracy_delegated_context};
 
 mod basic;
 mod block_authorship;
 mod controller;
+mod democracy;
 mod identity;
 mod lost_nomination;
 mod new_nomination;
@@ -113,6 +115,16 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::OneKVValidatorValidityChange => {
             set_onekv_validity_changed_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyCancelled => {
+            set_democracy_cancelled_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyDelegated => {
+            set_democracy_delegated_context(
+                network,
+                notification,
+                &mut context
+            );
         }
         _ => todo!(
             "Push notification content not yet ready for {}.",

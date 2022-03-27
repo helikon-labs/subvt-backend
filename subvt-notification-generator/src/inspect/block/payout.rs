@@ -30,7 +30,7 @@ impl NotificationGenerator {
                 app_postgres.clone(),
                 &rules,
                 block.number,
-                &extrinsic.caller_account_id,
+                &Some(extrinsic.caller_account_id),
                 Some(&extrinsic.clone()),
             )
             .await?;

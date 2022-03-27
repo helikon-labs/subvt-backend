@@ -141,7 +141,7 @@ impl PostgreSQLAppStorage {
             .bind(notification.network_id as i32)
             .bind(&notification.period_type)
             .bind(notification.period as i32)
-            .bind(notification.validator_account_id.to_string())
+            .bind(notification.validator_account_id.map(|account_id| account_id.to_string()))
             .bind(&notification.validator_account_json)
             .bind(&notification.notification_type_code)
             .bind(notification.user_notification_channel_id as i32)

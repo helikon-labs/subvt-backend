@@ -33,7 +33,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 finalized_block_number,
-                &current.account.id,
+                &Some(current.account.id),
                 Some(&app_event::OneKVLocationChange {
                     validator_account_id: current.account.id,
                     prev_location: last.onekv_location.clone(),

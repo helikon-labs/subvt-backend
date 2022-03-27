@@ -56,7 +56,7 @@ impl NotificationGenerator {
                     app_postgres.clone(),
                     &[rule],
                     finalized_block_number,
-                    &current.account.id,
+                    &Some(current.account.id),
                     Some(&event),
                 )
                 .await?;

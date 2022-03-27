@@ -1,4 +1,3 @@
-use crate::CONFIG;
 use subvt_types::app::{Network, Notification, NotificationPeriodType};
 use tera::Context;
 
@@ -17,23 +16,22 @@ pub(crate) fn set_basic_context(
             context.insert("notification_period", &notification.period);
         }
     }
-    context.insert("chain", &CONFIG.substrate.chain);
-    context.insert(
-        "validator_address",
-        &notification
-            .validator_account_id
-            .to_ss58_check_with_version(network.ss58_prefix as u16),
-    );
-    context.insert(
-        "validator_display",
-        &if let Some(account) = &notification.get_account()? {
-            account.get_display_or_condensed_address(None)
-        } else {
-            notification
-                .validator_account_id
-                .to_ss58_check_with_version(network.ss58_prefix as u16)
-        },
-    );
+    context.insert("chain", &network.chain);
+    context.insert("chain_display", &network.display);
+    if let Some(account_id) = notification.validator_account_id.as_ref() {
+        context.insert(
+            "validator_address",
+            &account_id.to_ss58_check_with_version(network.ss58_prefix as u16),
+        );
+        context.insert(
+            "validator_display",
+            &if let Some(account) = &notification.get_account()? {
+                account.get_display_or_condensed_address(None)
+            } else {
+                account_id.to_ss58_check_with_version(network.ss58_prefix as u16)
+            },
+        );
+    }
     context.insert("token_ticker", &network.token_ticker);
     Ok(())
 }

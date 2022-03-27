@@ -27,7 +27,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 finalized_block_number,
-                &current.account.id,
+                &Some(current.account.id),
                 Some(&current.next_session_keys),
             )
             .await?;

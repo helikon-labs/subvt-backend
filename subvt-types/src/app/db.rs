@@ -11,6 +11,7 @@ pub type PostgresNetwork = (
     i32,
     String,
     String,
+    String,
     i32,
     String,
     i32,
@@ -27,16 +28,17 @@ impl From<PostgresNetwork> for Network {
         Network {
             id: db_network.0 as u32,
             hash: db_network.1.clone(),
-            name: db_network.2.clone(),
-            ss58_prefix: db_network.3 as u32,
-            token_ticker: db_network.4.clone(),
-            token_decimal_count: db_network.5 as u8,
-            redis_url: db_network.6,
-            network_status_service_url: db_network.7,
-            report_service_url: db_network.8,
-            validator_details_service_url: db_network.9,
-            active_validator_list_service_url: db_network.10,
-            inactive_validator_list_service_url: db_network.11,
+            chain: db_network.2.clone(),
+            display: db_network.3.clone(),
+            ss58_prefix: db_network.4 as u32,
+            token_ticker: db_network.5.clone(),
+            token_decimal_count: db_network.6 as u8,
+            redis_url: db_network.7,
+            network_status_service_url: db_network.8,
+            report_service_url: db_network.9,
+            validator_details_service_url: db_network.10,
+            active_validator_list_service_url: db_network.11,
+            inactive_validator_list_service_url: db_network.12,
         }
     }
 }
@@ -185,7 +187,7 @@ pub type PostgresNotification = (
     i32,
     NotificationPeriodType,
     i32,
-    String,
+    Option<String>,
     Option<String>,
     String,
     i32,
@@ -204,7 +206,11 @@ impl Notification {
             network_id: db_notification.3 as u32,
             period_type: db_notification.4,
             period: db_notification.5 as u16,
-            validator_account_id: AccountId::from_str(&db_notification.6)?,
+            validator_account_id: if let Some(hex_string) = db_notification.6.as_ref() {
+                Some(AccountId::from_str(hex_string)?)
+            } else {
+                None
+            },
             validator_account_json: db_notification.7.clone(),
             notification_type_code: db_notification.8.clone(),
             user_notification_channel_id: db_notification.9 as u32,

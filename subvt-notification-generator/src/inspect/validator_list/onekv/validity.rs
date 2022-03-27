@@ -36,7 +36,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 finalized_block_number,
-                &current.account.id,
+                &Some(current.account.id),
                 Some(&app_event::OneKVValidityChange {
                     validator_account_id: current.account.id,
                     is_valid: current.onekv_is_valid.unwrap(),

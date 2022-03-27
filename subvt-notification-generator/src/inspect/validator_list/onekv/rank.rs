@@ -33,7 +33,7 @@ impl NotificationGenerator {
                 app_postgres,
                 &rules,
                 finalized_block_number,
-                &current.account.id,
+                &Some(current.account.id),
                 Some(&app_event::OneKVRankChange {
                     validator_account_id: current.account.id,
                     prev_rank: last.onekv_rank,

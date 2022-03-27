@@ -35,7 +35,7 @@ impl NotificationGenerator {
         app_postgres: Arc<PostgreSQLAppStorage>,
         rules: &[UserNotificationRule],
         block_number: u64,
-        validator_account_id: &AccountId,
+        maybe_validator_account_id: &Option<AccountId>,
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
         if rules.is_empty() {
@@ -45,22 +45,30 @@ impl NotificationGenerator {
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists
-        let account_json = if let Some(account) = substrate_client
-            .get_accounts(&[*validator_account_id], &block_hash)
-            .await?
-            .get(0)
-        {
-            Some(serde_json::to_string(account)?)
+        let account_json = if let Some(validator_account_id) = maybe_validator_account_id.as_ref() {
+            if let Some(account) = substrate_client
+                .get_accounts(&[*validator_account_id], &block_hash)
+                .await?
+                .get(0)
+            {
+                Some(serde_json::to_string(account)?)
+            } else {
+                None
+            }
         } else {
             None
         };
         // create separate notifications for each rule and notification channel
         for rule in rules {
-            debug!(
-                "Generate {} notification for {}.",
-                rule.notification_type.code,
-                validator_account_id.to_ss58_check(),
-            );
+            if let Some(validator_account_id) = maybe_validator_account_id {
+                debug!(
+                    "Generate {} notification for {:?}.",
+                    rule.notification_type.code,
+                    validator_account_id.to_ss58_check(),
+                );
+            } else {
+                debug!("Generate {} notification.", rule.notification_type.code,);
+            }
             for channel in &rule.notification_channels {
                 let notification = Notification {
                     id: 0,
@@ -69,7 +77,7 @@ impl NotificationGenerator {
                     network_id: CONFIG.substrate.network_id,
                     period_type: rule.period_type,
                     period: rule.period,
-                    validator_account_id: *validator_account_id,
+                    validator_account_id: *maybe_validator_account_id,
                     validator_account_json: account_json.clone(),
                     notification_type_code: rule.notification_type.code.clone(),
                     user_notification_channel_id: channel.id,
