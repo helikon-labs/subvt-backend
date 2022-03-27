@@ -26,9 +26,9 @@ pub struct NetworkStatusUpdater {
 
 impl NetworkStatusUpdater {
     /// Updates the Redis database with the given network status data.
-    fn update_redis(status: &NetworkStatus) -> anyhow::Result<()> {
+    async fn update_redis(status: &NetworkStatus) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_connection().context(format!(
+        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
@@ -44,7 +44,8 @@ impl NetworkStatusUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(status.best_block_number)
-            .query(&mut redis_connection)
+            .query_async(&mut redis_connection)
+            .await
             .context("Error while publishing Redis pub/sub event.")?;
         Ok(())
     }
@@ -227,7 +228,7 @@ impl NetworkStatusUpdater {
             era_reward_points,
         };
         // write to redis
-        NetworkStatusUpdater::update_redis(&network_status)?;
+        NetworkStatusUpdater::update_redis(&network_status).await?;
         log::debug!("Redis updated.");
         Ok(network_status)
     }
