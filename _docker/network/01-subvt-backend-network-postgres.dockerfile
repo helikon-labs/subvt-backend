@@ -1,4 +1,4 @@
-FROM timescale/timescaledb:2.5.2-pg14
+FROM timescale/timescaledb:2.6.0-pg14
 ENV POSTGRES_PASSWORD postgres
 ENV POSTGRES_HOST postgres
 ENV PGDATA /var/lib/postgresql/data
