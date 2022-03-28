@@ -17,7 +17,6 @@ pub(crate) fn set_basic_context(
         }
     }
     context.insert("chain", &network.chain);
-    context.insert("chain_display", &network.display);
     if let Some(account_id) = notification.validator_account_id.as_ref() {
         context.insert(
             "validator_address",

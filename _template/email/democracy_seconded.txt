@@ -1,0 +1,2 @@
+{{ validator_display }}
+🗳✋️ has seconded {{ chain | capitalize }} democracy proposal #{{ proposal_index }}.

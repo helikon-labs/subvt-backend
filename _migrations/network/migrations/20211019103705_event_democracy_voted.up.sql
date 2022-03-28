@@ -6,7 +6,9 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_voted
     event_index         integer NOT NULL,
     account_id          VARCHAR(66) NOT NULL,
     referendum_index    bigint NOT NULL,
-    vote_encoded_hex    text NOT NULL,
+    aye_balance         VARCHAR(128),
+    nay_balance         VARCHAR(128),
+    conviction          integer,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 

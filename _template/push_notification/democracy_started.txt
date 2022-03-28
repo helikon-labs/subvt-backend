@@ -1,0 +1,3 @@
+🗳️▶️ New {{ chain | capitalize }} referendum #{{ referendum_index }} has started.
+Vote threshold is {% if vote_threshold == "SimpleMajority" %}simple majority{% elif vote_threshold == "SuperMajorityApprove" %}super majority approve{% elif vote_threshold == "SuperMajorityAgainst" %}super majority against{% endif %}.
+Don't forget to cast your vote:)

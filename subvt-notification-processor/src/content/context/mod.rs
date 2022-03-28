@@ -1,6 +1,8 @@
 use crate::content::context::block_authorship::set_block_authorship_grouped_context;
 use crate::content::context::democracy::{
     set_democracy_cancelled_context, set_democracy_delegated_context,
+    set_democracy_not_passed_context, set_democracy_passed_context, set_democracy_proposed_context,
+    set_democracy_seconded_context, set_democracy_started_context, set_democracy_voted_context,
 };
 use crate::content::context::{
     basic::set_basic_context,
@@ -123,6 +125,25 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::DemocracyDelegated => {
             set_democracy_delegated_context(network, notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyNotPassed => {
+            set_democracy_not_passed_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyPassed => {
+            set_democracy_passed_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyProposed => {
+            set_democracy_proposed_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracySeconded => {
+            set_democracy_seconded_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyStarted => {
+            set_democracy_started_context(notification, &mut context);
+        }
+        NotificationTypeCode::DemocracyUndelegated => (),
+        NotificationTypeCode::DemocracyVoted => {
+            set_democracy_voted_context(notification, &mut context);
         }
         _ => todo!(
             "Push notification content not yet ready for {}.",

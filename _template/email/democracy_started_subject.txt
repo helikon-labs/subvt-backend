@@ -1,0 +1,1 @@
+🗳📢 New {{ chain | capitalize }} referendum

@@ -1,4 +1,5 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_types::app::event::democracy::{AccountVote, Conviction};
 use subvt_types::substrate::event::DemocracyEvent;
 
 pub(crate) async fn process_democracy_event(
@@ -135,10 +136,6 @@ pub(crate) async fn process_democracy_event(
             vote,
         } => {
             let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
-            let vote_encoded_hex = format!(
-                "0x{}",
-                hex::encode_upper(parity_scale_codec::Encode::encode(vote)),
-            );
             postgres
                 .save_democracy_voted_event(
                     block_hash,
@@ -146,7 +143,38 @@ pub(crate) async fn process_democracy_event(
                     event_index as i32,
                     account_id,
                     *referendum_index,
-                    &vote_encoded_hex,
+                    match vote {
+                        AccountVote::Standard { vote, balance } => {
+                            if vote.aye {
+                                Some(*balance)
+                            } else {
+                                None
+                            }
+                        }
+                        AccountVote::Split { aye, .. } => Some(*aye),
+                    },
+                    match vote {
+                        AccountVote::Standard { vote, balance } => {
+                            if !vote.aye {
+                                Some(*balance)
+                            } else {
+                                None
+                            }
+                        }
+                        AccountVote::Split { nay, .. } => Some(*nay),
+                    },
+                    match vote {
+                        AccountVote::Standard { vote, .. } => match vote.conviction {
+                            Conviction::None => Some(0),
+                            Conviction::Locked1x => Some(1),
+                            Conviction::Locked2x => Some(2),
+                            Conviction::Locked3x => Some(3),
+                            Conviction::Locked4x => Some(4),
+                            Conviction::Locked5x => Some(5),
+                            Conviction::Locked6x => Some(6),
+                        },
+                        AccountVote::Split { .. } => None,
+                    },
                 )
                 .await?;
         }
