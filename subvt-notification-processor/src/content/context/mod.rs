@@ -4,6 +4,8 @@ use crate::content::context::democracy::{
     set_democracy_not_passed_context, set_democracy_passed_context, set_democracy_proposed_context,
     set_democracy_seconded_context, set_democracy_started_context, set_democracy_voted_context,
 };
+use crate::content::context::lost_nomination::set_lost_nomination_grouped_context;
+use crate::content::context::new_nomination::set_new_nomination_grouped_context;
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
@@ -53,6 +55,12 @@ pub(crate) fn get_grouped_renderer_context(
     match NotificationTypeCode::from(notification_type_code) {
         NotificationTypeCode::ChainValidatorBlockAuthorship => {
             set_block_authorship_grouped_context(notifications, &mut context)?;
+        }
+        NotificationTypeCode::ChainValidatorNewNomination => {
+            set_new_nomination_grouped_context(network, notifications, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorLostNomination => {
+            set_lost_nomination_grouped_context(network, notifications, &mut context);
         }
         _ => todo!(
             "Grouped push notification content not yet ready for {}.",

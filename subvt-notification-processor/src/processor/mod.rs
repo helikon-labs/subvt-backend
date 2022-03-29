@@ -177,7 +177,9 @@ impl NotificationProcessor {
                         .push(notification.clone());
                 }
                 for (key, notification_group) in notification_groups.into_iter() {
-                    if key.1 == NotificationTypeCode::ChainValidatorBlockAuthorship.to_string()
+                    if (key.1 == NotificationTypeCode::ChainValidatorBlockAuthorship.to_string()
+                        || key.1 == NotificationTypeCode::ChainValidatorNewNomination.to_string()
+                        || key.1 == NotificationTypeCode::ChainValidatorLostNomination.to_string())
                         && notification_group.len() > 1
                     {
                         self.process_notification_group(
