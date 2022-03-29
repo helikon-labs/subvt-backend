@@ -20,7 +20,7 @@ impl TelegramBot {
         } else if validators.len() == 1 {
             let query = Query {
                 query_type,
-                parameter: Some(validators.get(0).unwrap().account_id.to_ss58_check()),
+                parameter: Some(validators.get(0).unwrap().id.to_string()),
             };
             self.process_query(chat_id, &query).await?;
         } else {
@@ -118,7 +118,7 @@ impl TelegramBot {
                                 .await?;
                             let query = Query {
                                 query_type: QueryType::ValidatorInfo,
-                                parameter: Some(account_id.to_ss58_check()),
+                                parameter: Some(id.to_string()),
                             };
                             self.process_query(chat_id, &query).await?;
                             self.messenger
@@ -175,12 +175,16 @@ impl TelegramBot {
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();
                 if let Some(validator_address) = args.get(0) {
-                    if AccountId::from_ss58_check(validator_address).is_ok() {
+                    if let Some(chat_validator) = self
+                        .network_postgres
+                        .get_chat_validator_by_address(chat_id, validator_address)
+                        .await?
+                    {
                         self.process_query(
                             chat_id,
                             &Query {
                                 query_type: QueryType::RemoveValidator,
-                                parameter: Some(validator_address.clone()),
+                                parameter: Some(chat_validator.id.to_string()),
                             },
                         )
                         .await?;

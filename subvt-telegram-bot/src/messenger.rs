@@ -28,7 +28,9 @@ pub enum MessageType {
     UnknownCommand(String),
     InvalidAddress(String),
     InvalidAddressTryAgain(String),
-    ValidatorNotFound(String),
+    ValidatorNotFound {
+        maybe_address: Option<String>,
+    },
     AddValidatorNotFound(String),
     ValidatorExistsOnChat(String),
     TooManyValidatorsOnChat,
@@ -44,12 +46,14 @@ pub enum MessageType {
         maybe_validator_details: Box<Option<ValidatorDetails>>,
         maybe_onekv_candidate_summary: Box<Option<OneKVCandidateSummary>>,
     },
-    NominationSummary(ValidatorDetails),
+    NominationSummary {
+        chat_validator_id: u64,
+        validator_details: ValidatorDetails,
+    },
     NominationDetails {
         validator_details: ValidatorDetails,
         onekv_nominator_account_ids: Vec<AccountId>,
     },
-    RemoveValidatorNotFound(String),
     ValidatorRemoved(TelegramChatValidator),
     Settings,
 }
@@ -76,8 +80,10 @@ impl MessageType {
                 context.insert("address", address);
                 "invalid_address_try_again.html"
             }
-            Self::ValidatorNotFound(address) => {
-                context.insert("address", address);
+            Self::ValidatorNotFound { maybe_address } => {
+                if let Some(address) = maybe_address {
+                    context.insert("condensed_address", &get_condensed_address(address, None));
+                }
                 "validator_not_found.html"
             }
             Self::AddValidatorNotFound(address) => {
@@ -225,7 +231,9 @@ impl MessageType {
                 }
                 "validator_info.html"
             }
-            Self::NominationSummary(validator_details) => {
+            Self::NominationSummary {
+                validator_details, ..
+            } => {
                 let self_stake = validator_details.self_stake.total_amount;
                 let (
                     active_nominator_count,
@@ -412,10 +420,6 @@ impl MessageType {
                 }
                 "nomination_details.html"
             }
-            Self::RemoveValidatorNotFound(address) => {
-                context.insert("condensed_address", &get_condensed_address(address, None));
-                "remove_validator_not_found.html"
-            }
             Self::ValidatorRemoved(validator) => {
                 let display = if let Some(display) = &validator.display {
                     display.clone()
@@ -541,7 +545,7 @@ impl Messenger {
                     for validator in validators {
                         let query = Query {
                             query_type: query_type.clone(),
-                            parameter: Some(validator.address.clone()),
+                            parameter: Some(validator.id.to_string()),
                         };
                         rows.push(vec![InlineKeyboardButton {
                             text: if let Some(display) = &validator.display {
@@ -573,13 +577,16 @@ impl Messenger {
                     }))
                 }
             }
-            MessageType::NominationSummary(validator_details) => {
+            MessageType::NominationSummary {
+                chat_validator_id,
+                validator_details,
+            } => {
                 if validator_details.nominations.is_empty() {
                     None
                 } else {
                     let query = Query {
                         query_type: QueryType::NominationDetails,
-                        parameter: Some(validator_details.account.address.clone()),
+                        parameter: Some(chat_validator_id.to_string()),
                     };
                     let rows = vec![vec![InlineKeyboardButton {
                         text: self

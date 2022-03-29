@@ -46,6 +46,64 @@ impl PostgreSQLNetworkStorage {
         Ok(chat_validators.iter().map(|v| v.0).collect())
     }
 
+    pub async fn get_chat_validator_by_id(
+        &self,
+        telegram_chat_id: i64,
+        chat_validator_id: u64,
+    ) -> anyhow::Result<Option<TelegramChatValidator>> {
+        let maybe_chat_validator: Option<(String, String, Option<String>)> = sqlx::query_as(
+            r#"
+            SELECT account_id, address, display
+            FROM sub_telegram_chat_validator
+            WHERE telegram_chat_id = $1
+            AND id = $2
+            AND deleted_at IS NULL
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .bind(chat_validator_id as i32)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(match maybe_chat_validator {
+            Some(v) => Some(TelegramChatValidator {
+                id: chat_validator_id,
+                account_id: AccountId::from_str(&v.0)?,
+                address: v.1,
+                display: v.2,
+            }),
+            None => None,
+        })
+    }
+
+    pub async fn get_chat_validator_by_address(
+        &self,
+        telegram_chat_id: i64,
+        address: &str,
+    ) -> anyhow::Result<Option<TelegramChatValidator>> {
+        let maybe_chat_validator: Option<(i32, String, Option<String>)> = sqlx::query_as(
+            r#"
+            SELECT id, account_id, display
+            FROM sub_telegram_chat_validator
+            WHERE telegram_chat_id = $1
+            AND address = $2
+            AND deleted_at IS NULL
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .bind(address)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(match maybe_chat_validator {
+            Some(v) => Some(TelegramChatValidator {
+                id: v.0 as u64,
+                account_id: AccountId::from_str(&v.1)?,
+                address: address.to_owned(),
+                display: v.2,
+            }),
+            None => None,
+        })
+    }
+
     pub async fn get_chat_validator_by_account_id(
         &self,
         telegram_chat_id: i64,

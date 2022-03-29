@@ -1,21 +1,20 @@
 use crate::{MessageType, TelegramBot, CONFIG};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
-use subvt_types::crypto::AccountId;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum QueryType {
-    #[serde(rename = "V")]
+    #[serde(rename = "VI")]
     ValidatorInfo,
-    #[serde(rename = "N")]
+    #[serde(rename = "NS")]
     NominationSummary,
-    #[serde(rename = "D")]
+    #[serde(rename = "ND")]
     NominationDetails,
-    #[serde(rename = "R")]
+    #[serde(rename = "RV")]
     RemoveValidator,
-    #[serde(rename = "B")]
+    #[serde(rename = "CB")]
     ConfirmBroadcast,
-    #[serde(rename = "C")]
+    #[serde(rename = "X")]
     Cancel,
 }
 
@@ -79,14 +78,20 @@ impl TelegramBot {
                 }
             }
             QueryType::ValidatorInfo => {
-                if let Some(validator_address) = &query.parameter {
-                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        let maybe_validator_details =
-                            self.redis.fetch_validator_details(&account_id).await?;
+                if let Some(id_str) = &query.parameter {
+                    if let Some(validator) = self
+                        .network_postgres
+                        .get_chat_validator_by_id(chat_id, id_str.parse()?)
+                        .await?
+                    {
+                        let maybe_validator_details = self
+                            .redis
+                            .fetch_validator_details(&validator.account_id)
+                            .await?;
                         if let Some(validator_details) = &maybe_validator_details {
                             self.network_postgres
                                 .update_chat_validator_display(
-                                    &account_id,
+                                    &validator.account_id,
                                     &validator_details.account.get_full_display(),
                                 )
                                 .await?;
@@ -95,13 +100,24 @@ impl TelegramBot {
                             .send_message(
                                 chat_id,
                                 MessageType::ValidatorInfo {
-                                    address: validator_address.clone(),
+                                    address: validator.address.clone(),
                                     maybe_validator_details: Box::new(maybe_validator_details),
                                     maybe_onekv_candidate_summary: Box::new(
                                         self.network_postgres
-                                            .get_onekv_candidate_summary_by_account_id(&account_id)
+                                            .get_onekv_candidate_summary_by_account_id(
+                                                &validator.account_id,
+                                            )
                                             .await?,
                                     ),
+                                },
+                            )
+                            .await?;
+                    } else {
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorNotFound {
+                                    maybe_address: None,
                                 },
                             )
                             .await?;
@@ -109,10 +125,16 @@ impl TelegramBot {
                 }
             }
             QueryType::NominationSummary => {
-                if let Some(validator_address) = &query.parameter {
-                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        if let Some(validator_details) =
-                            self.redis.fetch_validator_details(&account_id).await?
+                if let Some(id_str) = &query.parameter {
+                    if let Some(validator) = self
+                        .network_postgres
+                        .get_chat_validator_by_id(chat_id, id_str.parse()?)
+                        .await?
+                    {
+                        if let Some(validator_details) = self
+                            .redis
+                            .fetch_validator_details(&validator.account_id)
+                            .await?
                         {
                             log::info!(
                                 "Validator selected for nomination summary in chat {}.",
@@ -120,14 +142,17 @@ impl TelegramBot {
                             );
                             self.network_postgres
                                 .update_chat_validator_display(
-                                    &account_id,
+                                    &validator.account_id,
                                     &validator_details.account.get_full_display(),
                                 )
                                 .await?;
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::NominationSummary(validator_details),
+                                    MessageType::NominationSummary {
+                                        validator_details,
+                                        chat_validator_id: id_str.parse()?,
+                                    },
                                 )
                                 .await?;
                         } else {
@@ -138,18 +163,35 @@ impl TelegramBot {
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                                    MessageType::ValidatorNotFound {
+                                        maybe_address: None,
+                                    },
                                 )
                                 .await?;
                         }
+                    } else {
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorNotFound {
+                                    maybe_address: None,
+                                },
+                            )
+                            .await?;
                     }
                 }
             }
             QueryType::NominationDetails => {
-                if let Some(validator_address) = &query.parameter {
-                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        if let Some(validator_details) =
-                            self.redis.fetch_validator_details(&account_id).await?
+                if let Some(id_str) = &query.parameter {
+                    if let Some(validator) = self
+                        .network_postgres
+                        .get_chat_validator_by_id(chat_id, id_str.parse()?)
+                        .await?
+                    {
+                        if let Some(validator_details) = self
+                            .redis
+                            .fetch_validator_details(&validator.account_id)
+                            .await?
                         {
                             log::info!(
                                 "Validator selected for nomination details in chat {}.",
@@ -176,55 +218,66 @@ impl TelegramBot {
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::ValidatorNotFound(validator_address.clone()),
+                                    MessageType::ValidatorNotFound {
+                                        maybe_address: None,
+                                    },
                                 )
                                 .await?;
                         }
+                    } else {
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorNotFound {
+                                    maybe_address: None,
+                                },
+                            )
+                            .await?;
                     }
                 }
             }
             QueryType::RemoveValidator => {
-                if let Some(validator_address) = &query.parameter {
-                    if let Ok(account_id) = AccountId::from_ss58_check(validator_address) {
-                        log::info!("Validator selected for removal in chat {}.", chat_id);
-                        if let Some(validator) = self
+                if let Some(id_str) = &query.parameter {
+                    log::info!("Validator selected for removal in chat {}.", chat_id);
+                    if let Some(validator) = self
+                        .network_postgres
+                        .get_chat_validator_by_id(chat_id, id_str.parse()?)
+                        .await?
+                    {
+                        if self
                             .network_postgres
-                            .get_chat_validator_by_account_id(chat_id, &account_id)
+                            .remove_validator_from_chat(chat_id, &validator.account_id)
                             .await?
                         {
-                            if self
-                                .network_postgres
-                                .remove_validator_from_chat(chat_id, &account_id)
-                                .await?
-                            {
-                                self.update_metrics_validator_count().await?;
-                                let app_user_id =
-                                    self.network_postgres.get_chat_app_user_id(chat_id).await?;
-                                // remove from app, so it doesn't receive notifications
-                                let _ = self
-                                    .app_postgres
-                                    .delete_user_validator_by_account_id(
-                                        app_user_id,
-                                        CONFIG.substrate.network_id,
-                                        &account_id,
-                                    )
-                                    .await?;
-                                self.messenger
-                                    .send_message(chat_id, MessageType::ValidatorRemoved(validator))
-                                    .await?;
-                            } else {
-                                self.messenger
-                                    .send_message(chat_id, MessageType::GenericError)
-                                    .await?;
-                            }
-                        } else {
-                            self.messenger
-                                .send_message(
-                                    chat_id,
-                                    MessageType::RemoveValidatorNotFound(validator_address.clone()),
+                            self.update_metrics_validator_count().await?;
+                            let app_user_id =
+                                self.network_postgres.get_chat_app_user_id(chat_id).await?;
+                            // remove from app, so it doesn't receive notifications
+                            let _ = self
+                                .app_postgres
+                                .delete_user_validator_by_account_id(
+                                    app_user_id,
+                                    CONFIG.substrate.network_id,
+                                    &validator.account_id,
                                 )
                                 .await?;
+                            self.messenger
+                                .send_message(chat_id, MessageType::ValidatorRemoved(validator))
+                                .await?;
+                        } else {
+                            self.messenger
+                                .send_message(chat_id, MessageType::GenericError)
+                                .await?;
                         }
+                    } else {
+                        self.messenger
+                            .send_message(
+                                chat_id,
+                                MessageType::ValidatorNotFound {
+                                    maybe_address: None,
+                                },
+                            )
+                            .await?;
                     }
                 }
             }

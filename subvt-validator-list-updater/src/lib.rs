@@ -273,16 +273,23 @@ impl ValidatorListUpdater {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        match redis::cmd("GET")
-            .arg(format!(
-                "subvt:{}:validators:processed_block_numbers",
-                CONFIG.substrate.chain
-            ))
-            .query_async::<_, String>(&mut redis_connection)
-            .await
-        {
-            Ok(json_str) => Ok(serde_json::from_str(&json_str)?),
-            Err(_) => Ok(vec![]),
+        let key = format!(
+            "subvt:{}:validators:processed_block_numbers",
+            CONFIG.substrate.chain
+        );
+        let key_exists: bool = redis::cmd("EXISTS")
+            .arg(&key)
+            .query_async(&mut redis_connection)
+            .await?;
+        if key_exists {
+            Ok(serde_json::from_str(
+                &redis::cmd("GET")
+                    .arg(&key)
+                    .query_async::<_, String>(&mut redis_connection)
+                    .await?,
+            )?)
+        } else {
+            Ok(vec![])
         }
     }
 }
