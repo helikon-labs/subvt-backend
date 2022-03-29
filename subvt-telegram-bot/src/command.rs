@@ -1,6 +1,5 @@
 use crate::query::QueryType;
 use crate::{MessageType, Query, TelegramBot, CONFIG};
-use log::info;
 use std::cmp::Ordering;
 use subvt_types::app::UserValidator;
 use subvt_types::crypto::AccountId;
@@ -24,7 +23,7 @@ impl TelegramBot {
             };
             self.process_query(chat_id, &query).await?;
         } else {
-            info!("Send validator list for query: {}", query_type);
+            log::info!("Send validator list for query: {}", query_type);
             validators.sort_by(|v1, v2| {
                 if let Some(v1_display) = &v1.display {
                     if let Some(v2_display) = &v2.display {
@@ -99,7 +98,7 @@ impl TelegramBot {
                                 )
                                 .await?;
                             self.update_metrics_validator_count().await?;
-                            info!(
+                            log::info!(
                                 "Validator {} added to chat #{}. Record id: {}.",
                                 account_id.to_string(),
                                 chat_id,
@@ -150,9 +149,11 @@ impl TelegramBot {
         command: &str,
         args: &[String],
     ) -> anyhow::Result<()> {
-        info!(
+        log::info!(
             "Process command {} for chat {} with arguments: {:?}",
-            command, chat_id, args,
+            command,
+            chat_id,
+            args,
         );
         match command {
             "/start" => {

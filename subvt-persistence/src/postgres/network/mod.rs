@@ -1,6 +1,5 @@
 //! Storage related to a network supported by SubVT.
 //! Each supported network has a separate database.
-use log::debug;
 use parity_scale_codec::Encode;
 use sqlx::{Pool, Postgres};
 use std::collections::{HashMap, HashSet};
@@ -59,7 +58,7 @@ pub struct PostgreSQLNetworkStorage {
 
 impl PostgreSQLNetworkStorage {
     pub async fn new(config: &Config, uri: String) -> anyhow::Result<PostgreSQLNetworkStorage> {
-        debug!("Establishing network database connection pool...");
+        log::info!("Establishing network database connection pool...");
         let connection_pool = sqlx::postgres::PgPoolOptions::new()
             .connect_timeout(std::time::Duration::from_secs(
                 config.network_postgres.connection_timeout_seconds,
@@ -67,7 +66,7 @@ impl PostgreSQLNetworkStorage {
             .max_connections(config.network_postgres.pool_max_connections)
             .connect(&uri)
             .await?;
-        debug!("Network database connection pool established.");
+        log::info!("Network database connection pool established.");
         Ok(PostgreSQLNetworkStorage {
             uri,
             connection_pool,

@@ -5,7 +5,6 @@ use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use futures_util::future::FutureExt;
 use lazy_static::lazy_static;
-use log::debug;
 use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -116,7 +115,7 @@ async fn era_report_service(
 }
 
 async fn on_server_ready() {
-    debug!("HTTP service started.");
+    log::info!("HTTP service started.");
 }
 
 #[derive(Default)]
@@ -135,7 +134,7 @@ impl Service for ReportService {
         let postgres = Arc::new(
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
         );
-        debug!("Starting HTTP service.");
+        log::info!("Starting HTTP service.");
         let server = HttpServer::new(move || {
             App::new()
                 .app_data(Data::new(ServiceState {

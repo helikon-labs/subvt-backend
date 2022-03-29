@@ -7,7 +7,6 @@ use frankenstein::{
     SendMessageParams,
 };
 use itertools::Itertools;
-use log::info;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
@@ -620,7 +619,7 @@ impl Messenger {
             allow_sending_without_reply: None,
             reply_markup: inline_keyboard,
         };
-        info!(
+        log::info!(
             "Message to chat {}: {}",
             chat_id,
             params.text.replace('\n', ""),

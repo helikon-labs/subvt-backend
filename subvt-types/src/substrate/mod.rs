@@ -4,7 +4,6 @@
 use crate::crypto::AccountId;
 use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
-use log::{error, warn};
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
@@ -260,20 +259,20 @@ impl BlockHeader {
                 Some(authority_index as usize)
             }
             "aura" => {
-                error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{}] not supported.", consensus_engine);
                 None
             }
             "FRNK" => {
                 // GRANDPA
-                error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{}] not supported.", consensus_engine);
                 None
             }
             "pow_" => {
-                error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{}] not supported.", consensus_engine);
                 None
             }
             _ => {
-                error!("Unknown consensus engine [{}].", consensus_engine);
+                log::error!("Unknown consensus engine [{}].", consensus_engine);
                 None
             }
         }
@@ -306,17 +305,17 @@ impl BlockHeader {
                     }
                 }
                 DigestItem::RuntimeEnvironmentUpdated => {
-                    warn!(
+                    log::warn!(
                         "Log type: RuntimeEnvironmentUpdated. Cannot get author validator index."
                     );
                 }
                 DigestItem::Other(_) => {
-                    warn!("Unknown log type. Cannot get author validator index.");
+                    log::warn!("Unknown log type. Cannot get author validator index.");
                 }
             }
         }
         if validator_index.is_none() {
-            error!("Author validator index not found.");
+            log::error!("Author validator index not found.");
         }
         validator_index
     }

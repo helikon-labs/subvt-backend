@@ -16,7 +16,7 @@ pub trait Service {
     async fn start(&'static self) {
         let config = Config::default();
         subvt_logging::init(&config);
-        log::debug!("Starting service...");
+        log::info!("Starting service...");
         Chain::from_str(&config.substrate.chain)
             .unwrap()
             .sp_core_set_default_ss58_version();

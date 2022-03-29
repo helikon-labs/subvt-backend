@@ -13,7 +13,6 @@ use crate::{
         Block, MultiAddress, ProxyType, ValidatorPreferences,
     },
 };
-use log::{debug, error};
 use pallet_multisig::Timepoint;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::BlockNumber;
@@ -502,12 +501,13 @@ impl SubstrateExtrinsic {
             _ => None,
         };
         let extrinsic = if let Some(extrinsic) = maybe_extrinsic {
-            debug!("Decoded extrinsic {}.{}.", module.name, call.name);
+            log::debug!("Decoded extrinsic {}.{}.", module.name, call.name);
             extrinsic
         } else {
-            debug!(
+            log::debug!(
                 "Decoded non-specified extrinsic {}.{}.",
-                module.name, call.name
+                module.name,
+                call.name
             );
             SubstrateExtrinsic::Other {
                 signature,
@@ -530,7 +530,7 @@ impl SubstrateExtrinsic {
             let mut bytes: &[u8] = byte_vector.as_ref();
             match SubstrateExtrinsic::decode_extrinsic(chain, metadata, &None, &mut bytes) {
                 Ok(extrinsic) => extrinsics.push(extrinsic),
-                Err(error) => error!(
+                Err(error) => log::error!(
                     "Error decoding extrinsic #{} for block #{}: {:?}",
                     extrinsic_index,
                     block.header.get_number().unwrap(),

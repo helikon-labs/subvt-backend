@@ -3,7 +3,6 @@
 use crate::substrate::{argument::Argument, Chain, LastRuntimeUpgradeInfo};
 use core::convert::TryInto;
 use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
-use log::debug;
 use parity_scale_codec::{Decode, Encode, Error as CodecError};
 use scale_info::form::PortableForm;
 use std::fmt::{Display, Formatter};
@@ -124,8 +123,8 @@ impl Metadata {
 impl Metadata {
     pub fn log_all_calls(&self) {
         let mut call_primitive_arg_name_set: HashSet<String> = HashSet::default();
-        debug!("METADATA ALL CALLS");
-        debug!("==========================================================");
+        log::debug!("METADATA ALL CALLS");
+        log::debug!("==========================================================");
         for module in self.modules.values() {
             for call in module.calls.values() {
                 let mut call_spec = module.name.clone() + "." + &call.name + "(";
@@ -136,22 +135,22 @@ impl Metadata {
                     call_primitive_arg_name_set.extend(primitive_set);
                 }
                 call_spec.push(')');
-                debug!("{}", call_spec);
+                log::debug!("{}", call_spec);
             }
         }
-        debug!("==========================================================");
-        debug!("METADATA CALL ARGUMENTS PRIMITIVE SET");
-        debug!("==========================================================");
+        log::debug!("==========================================================");
+        log::debug!("METADATA CALL ARGUMENTS PRIMITIVE SET");
+        log::debug!("==========================================================");
         for (index, event_arg_name) in call_primitive_arg_name_set.iter().enumerate() {
-            debug!("#{} {}", index + 1, event_arg_name);
+            log::debug!("#{} {}", index + 1, event_arg_name);
         }
-        debug!("==========================================================");
+        log::debug!("==========================================================");
     }
 
     pub fn log_all_events(&self) {
         let mut event_primitive_arg_name_set: HashSet<String> = HashSet::default();
-        debug!("METADATA ALL EVENTS");
-        debug!("==========================================================");
+        log::debug!("METADATA ALL EVENTS");
+        log::debug!("==========================================================");
         for module in self.modules.values() {
             for event in module.events.values() {
                 let mut event_spec = format!("{}.{}(", module.name, event.name);
@@ -162,23 +161,23 @@ impl Metadata {
                     event_primitive_arg_name_set.extend(primitive_set);
                 }
                 event_spec.push(')');
-                debug!("{}", event_spec);
+                log::debug!("{}", event_spec);
             }
         }
-        debug!("==========================================================");
-        debug!("PRIMITIVE EVENT ARG SET");
-        debug!("==========================================================");
+        log::debug!("==========================================================");
+        log::debug!("PRIMITIVE EVENT ARG SET");
+        log::debug!("==========================================================");
         for (index, event_arg_name) in event_primitive_arg_name_set.iter().enumerate() {
-            debug!("#{} {}", index + 1, event_arg_name);
+            log::debug!("#{} {}", index + 1, event_arg_name);
         }
-        debug!("==========================================================");
+        log::debug!("==========================================================");
     }
 
     pub fn check_primitive_argument_support(
         &self,
         chain: &Chain,
     ) -> Result<(), crate::substrate::argument::ArgumentDecodeError> {
-        debug!("Checking SubVT runtime for event primitive argument support...");
+        log::info!("Checking SubVT runtime for event primitive argument support...");
         let mut primitive_arg_name_set: HashSet<String> = HashSet::default();
         for module in self.modules.values() {
             for event in module.events.values() {

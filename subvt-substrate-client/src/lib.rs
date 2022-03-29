@@ -8,7 +8,6 @@ use jsonrpsee::{
     rpc_params,
     ws_client::WsClientBuilder,
 };
-use log::{debug, error, trace};
 use parity_scale_codec::Decode;
 use sp_core::storage::{StorageChangeSet, StorageKey};
 use std::collections::hash_map::DefaultHasher;
@@ -48,7 +47,7 @@ pub struct SubstrateClient {
 impl SubstrateClient {
     /// Connect to the node and construct a new Substrate client.
     pub async fn new(config: &Config) -> anyhow::Result<Self> {
-        debug!("Constructing Substrate client.");
+        log::info!("Constructing Substrate client.");
         let ws_client = WsClientBuilder::default()
             .connection_timeout(std::time::Duration::from_secs(
                 config.substrate.connection_timeout_seconds,
@@ -58,7 +57,7 @@ impl SubstrateClient {
             ))
             .build(&config.substrate.rpc_url)
             .await?;
-        debug!("Substrate connection successful.");
+        log::info!("Substrate connection successful.");
         // get current block hash
         let block_hash: String = ws_client.request("chain_getBlockHash", None).await?;
         let chain: String = ws_client.request("system_chain", None).await?;
@@ -69,7 +68,7 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
-        debug!("Got metadata.");
+        log::info!("Got metadata.");
         // metadata.log_all_calls();
         // metadata.log_all_events();
         metadata.check_primitive_argument_support(&chain)?;
@@ -81,10 +80,10 @@ impl SubstrateClient {
             .await?;
         metadata.last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
-        debug!("Got last runtime upgrade info.");
+        log::info!("Got last runtime upgrade info.");
         let system_properties: SystemProperties =
             ws_client.request("system_properties", None).await?;
-        debug!("Got system properties. {:?}", system_properties);
+        log::info!("Got system properties. {:?}", system_properties);
         Ok(Self {
             chain,
             metadata,
@@ -394,7 +393,7 @@ impl SubstrateClient {
                 get_storage_map_key(&self.metadata, "Identity", "SuperOf", &account_id)
             })
             .collect();
-        trace!("Got {} keys for super accounts.", keys.len());
+        log::trace!("Got {} keys for super accounts.", keys.len());
         if keys.is_empty() {
             return Ok(HashMap::new());
         }
@@ -402,7 +401,7 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
-        trace!(
+        log::trace!(
             "Got {} optional super accounts records.",
             values[0].changes.len()
         );
@@ -422,7 +421,7 @@ impl SubstrateClient {
                 );
             }
         }
-        trace!(
+        log::trace!(
             "Got {} super accounts. Get identities for super accounts.",
             parent_account_map.len()
         );
@@ -441,7 +440,7 @@ impl SubstrateClient {
                 get_storage_map_key(&self.metadata, "Identity", "IdentityOf", account_id)
             })
             .collect();
-        trace!("Got {} storage keys for identities.", keys.len());
+        log::trace!("Got {} storage keys for identities.", keys.len());
         if keys.is_empty() {
             return Ok(HashMap::new());
         }
@@ -449,7 +448,7 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
-        trace!("Got {} optional identities.", values[0].changes.len());
+        log::trace!("Got {} optional identities.", values[0].changes.len());
         let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::new();
         for (storage_key, storage_data) in values[0].changes.iter() {
             let account_id = self.account_id_from_storage_key(storage_key);
@@ -549,7 +548,7 @@ impl SubstrateClient {
         block_hash: &str,
         era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
-        debug!("Getting all validators...");
+        log::info!("Getting all validators.");
         let max_nominator_rewarded_per_validator: u32 = self
             .metadata
             .module("Staking")?
@@ -558,16 +557,16 @@ impl SubstrateClient {
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
             .await?;
-        debug!(
+        log::info!(
             "There are {} validators (active and waiting).",
             all_keys.len()
         );
-        debug!("Get complete account, active and para-validator info for all validators.");
+        log::debug!("Get complete account, active and para-validator info for all validators.");
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
         {
             let active_validator_account_ids =
                 self.get_active_validator_account_ids(block_hash).await?;
-            debug!("Get para validators and core assignments.");
+            log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
                 HashMap::new();
             if let Some(para_validator_indices) =
@@ -611,7 +610,7 @@ impl SubstrateClient {
                     }
                 }
             };
-            debug!("Get accounts.");
+            log::debug!("Get accounts.");
             let account_ids: Vec<AccountId> = all_keys
                 .iter()
                 .map(|key| self.account_id_from_storage_key_string(key))
@@ -640,7 +639,7 @@ impl SubstrateClient {
         }
         // get next session keys
         {
-            debug!("Get session keys.");
+            log::debug!("Get session keys.");
             let keys: Vec<String> = validator_map
                 .values()
                 .map(|validator| {
@@ -670,7 +669,7 @@ impl SubstrateClient {
         }
         // get next session active validator keys
         {
-            debug!("Find out which validators are active next session.");
+            log::debug!("Find out which validators are active next session.");
             let hex_string: String = self
                 .ws_client
                 .request(
@@ -689,7 +688,7 @@ impl SubstrateClient {
         }
         // get reward destinations
         {
-            debug!("Get reward destinations.");
+            log::debug!("Get reward destinations.");
             let keys: Vec<String> = validator_map
                 .values()
                 .map(|validator| {
@@ -716,7 +715,7 @@ impl SubstrateClient {
         }
         // get nominations
         {
-            debug!("Get all nominations.");
+            log::debug!("Get all nominations.");
             let mut all_keys: Vec<String> = Vec::new();
             loop {
                 let last = all_keys.last();
@@ -744,7 +743,7 @@ impl SubstrateClient {
                 }
             }
 
-            debug!(
+            log::debug!(
                 "Got {} nomination storage keys. Accessing storage.",
                 all_keys.len()
             );
@@ -763,7 +762,7 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!(
+            log::debug!(
                 "Got {} nominations. Get nominator accounts.",
                 nomination_map.len()
             );
@@ -780,7 +779,7 @@ impl SubstrateClient {
                 }
             }
 
-            debug!("Get validator controller account ids.");
+            log::debug!("Get validator controller account ids.");
             let mut controller_storage_keys: Vec<String> = validator_map
                 .keys()
                 .map(|validator_account_id| {
@@ -813,7 +812,7 @@ impl SubstrateClient {
                     }
                 }
             }
-            debug!("Get nomination amounts and self stakes.");
+            log::debug!("Get nomination amounts and self stakes.");
             let controller_account_ids: Vec<AccountId> =
                 controller_account_id_map.values().cloned().collect();
             let ledger_storage_keys: Vec<String> = controller_account_ids
@@ -857,11 +856,11 @@ impl SubstrateClient {
                     hasher.finish()
                 });
             }
-            debug!("Nomination data complete.");
+            log::debug!("Nomination data complete.");
         }
         // get validator prefs
         {
-            debug!("Get validator preferences.");
+            log::debug!("Get validator preferences.");
             let values: Vec<StorageChangeSet<String>> = self
                 .ws_client
                 .request("state_queryStorageAt", rpc_params!(all_keys, &block_hash))
@@ -878,7 +877,7 @@ impl SubstrateClient {
         }
         // get active stakers
         {
-            debug!("Get active stakers.");
+            log::debug!("Get active stakers.");
             let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
             for validator_stake in &era_stakers.stakers {
                 if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
@@ -907,7 +906,7 @@ impl SubstrateClient {
                 }
             }
         }
-        debug!("Validator data complete.");
+        log::info!("Fetched complete validators data.");
         Ok(validator_map
             .into_iter()
             .map(|(_, validator)| validator)
@@ -1241,7 +1240,7 @@ impl SubstrateClient {
         {
             Ok(subscription) => subscription,
             Err(error) => {
-                error!("Error while subscribing to blocks: {:?}", error);
+                log::error!("Error while subscribing to blocks: {:?}", error);
                 return;
             }
         };
@@ -1256,18 +1255,18 @@ impl SubstrateClient {
                 Some(block_header_result) => match block_header_result {
                     Ok(block_header) => {
                         if let Err(error) = callback(block_header).await {
-                            error!("Error in callback: {:?}", error);
+                            log::error!("Error in callback: {:?}", error);
                             break;
                         }
                     }
                     Err(error) => {
-                        error!("Error while getting block header: {:?}", error);
-                        error!("Will exit new block subscription.");
+                        log::error!("Error while getting block header: {:?}", error);
+                        log::error!("Will exit new block subscription.");
                         break;
                     }
                 },
                 None => {
-                    error!("Empty block header. Will exit new block subscription.");
+                    log::error!("Empty block header. Will exit new block subscription.");
                     break;
                 }
             }

@@ -6,7 +6,6 @@ use actix_web::web::Data;
 use actix_web::{delete, get, post, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::debug;
 use serde::Deserialize;
 use std::collections::HashSet;
 use std::sync::Arc;
@@ -427,7 +426,7 @@ async fn delete_user_notification_rule(
 }
 
 async fn on_server_ready() {
-    debug!("HTTP service started.");
+    log::debug!("HTTP service started.");
 }
 
 #[derive(Default)]
@@ -447,7 +446,7 @@ impl Service for AppService {
         // persistence instance
         let postgres =
             Arc::new(PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?);
-        debug!("Starting HTTP service.");
+        log::debug!("Starting HTTP service.");
         let server = HttpServer::new(move || {
             App::new()
                 .app_data(Data::new(ServiceState {

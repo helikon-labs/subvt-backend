@@ -7,7 +7,6 @@
 //! 3. Regular Telemetry checks (this is work in progress still).
 use async_trait::async_trait;
 use lazy_static::lazy_static;
-use log::debug;
 use serde::Serialize;
 use std::sync::Arc;
 use subvt_config::Config;
@@ -61,13 +60,13 @@ impl NotificationGenerator {
         // create separate notifications for each rule and notification channel
         for rule in rules {
             if let Some(validator_account_id) = maybe_validator_account_id {
-                debug!(
+                log::debug!(
                     "Generate {} notification for {:?}.",
                     rule.notification_type.code,
                     validator_account_id.to_ss58_check(),
                 );
             } else {
-                debug!("Generate {} notification.", rule.notification_type.code,);
+                log::debug!("Generate {} notification.", rule.notification_type.code,);
             }
             for channel in &rule.notification_channels {
                 let notification = Notification {

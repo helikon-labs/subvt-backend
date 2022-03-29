@@ -13,7 +13,6 @@ use crate::{
     },
 };
 use frame_support::dispatch::{DispatchError, DispatchInfo};
-use log::{debug, error};
 use pallet_democracy::{AccountVote, PropIndex, ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
 use parity_scale_codec::{Compact, Decode};
@@ -821,12 +820,13 @@ impl SubstrateEvent {
             _ => None,
         };
         let substrate_event = if let Some(substrate_event) = maybe_event {
-            debug!("Decoded event {}.{}.", module.name, event.name);
+            log::debug!("Decoded event {}.{}.", module.name, event.name);
             substrate_event
         } else {
-            debug!(
+            log::debug!(
                 "Decoded non-specified event {}.{}.",
-                module.name, event.name
+                module.name,
+                event.name
             );
             SubstrateEvent::Other {
                 module_name: module.name.clone(),
@@ -849,7 +849,7 @@ impl SubstrateEvent {
         for event_index in 0..event_count {
             match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
                 Ok(event) => events.push(event),
-                Err(error) => error!(
+                Err(error) => log::error!(
                     "Error decoding event #{} for block #{}: {:?}",
                     event_index,
                     block.header.get_number().unwrap(),
