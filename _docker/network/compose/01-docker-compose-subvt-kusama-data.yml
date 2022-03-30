@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  subvt_kusama_postgres:
+    container_name: subvt_kusama_postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "shared_buffers=4GB"
+      - "-c"
+      - "effective_cache_size=12GB"
+      - "-c"
+      - "maintenance_work_mem=2GB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=102400kB"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
+      - "-c"
+      - "max_worker_processes=6"
+      - "-c"
+      - "max_parallel_workers_per_gather=3"
+      - "-c"
+      - "max_parallel_workers=6"
+      - "-c"
+      - "max_parallel_maintenance_workers=3"
+    restart: unless-stopped
+    image: "helikon/subvt-network-postgres:0.1.3"
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - subvt_kusama_postgres_data:/var/lib/postgresql/data
+  subvt_kusama_redis:
+    container_name: subvt_kusama_redis
+    restart: unless-stopped
+    image: "redis:6.2.6"
+    command: redis-server --save "" --appendonly no
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - subvt_kusama_redis_data:/data
+volumes:
+  subvt_kusama_postgres_data:
+    name: subvt_kusama_postgres_data
+  subvt_kusama_redis_data:
+    name: subvt_kusama_redis_data
+networks:
+  subvt_kusama:
+    name: subvt_kusama

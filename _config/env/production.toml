@@ -11,5 +11,5 @@ host = "subvt_network_postgres"
 [onekv]
 refresh_seconds = 300
 
-[notification_sender]
+[notification_processor]
 apns_is_production = true

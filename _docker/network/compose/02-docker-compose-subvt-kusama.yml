@@ -1,0 +1,190 @@
+version: '3.8'
+
+services:
+  subvt_kusama_block_processor:
+    container_name: subvt_kusama_block_processor
+    restart: unless-stopped
+    image: "helikon/subvt-block-processor:0.1.3"
+    depends_on:
+      - subvt_kusama_postgres
+      - subvt_kusama_redis
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11000:11000"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
+      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=9000000
+  subvt_kusama_validator_list_updater:
+    container_name: subvt_kusama_validator_list_updater
+    restart: unless-stopped
+    image: "helikon/subvt-validator-list-updater:0.1.3"
+    depends_on:
+      - subvt_kusama_block_processor
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11001:11001"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
+  subvt_kusama_active_validator_list_server:
+    container_name: subvt_kusama_active_validator_list_server
+    restart: unless-stopped
+    image: "helikon/subvt-active-validator-list-server:0.1.3"
+    depends_on:
+      - subvt_kusama_validator_list_updater
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:7889:7889"
+      - "127.0.0.1:11003:11003"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_inactive_validator_list_server:
+    container_name: subvt_kusama_inactive_validator_list_server
+    restart: unless-stopped
+    image: "helikon/subvt-inactive-validator-list-server:0.1.3"
+    depends_on:
+      - subvt_kusama_validator_list_updater
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:7890:7890"
+      - "127.0.0.1:11004:11004"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_validator_details_server:
+    container_name: subvt_kusama_validator_details_server
+    restart: unless-stopped
+    image: "helikon/subvt-validator-details-server:0.1.3"
+    depends_on:
+      - subvt_kusama_validator_list_updater
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:7891:7891"
+      - "127.0.0.1:11002:11002"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_network_status_updater:
+    container_name: subvt_kusama_network_status_updater
+    restart: unless-stopped
+    image: "helikon/subvt-network-status-updater:0.1.3"
+    depends_on:
+      - subvt_kusama_redis
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11005:11005"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
+  subvt_kusama_network_status_server:
+    container_name: subvt_kusama_network_status_server
+    restart: unless-stopped
+    image: "helikon/subvt-network-status-server:0.1.3"
+    depends_on:
+      - subvt_kusama_network_status_updater
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:7888:7888"
+      - "127.0.0.1:11006:11006"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_onekv_updater:
+    container_name: subvt_kusama_onekv_updater
+    restart: unless-stopped
+    image: "helikon/subvt-onekv-updater:0.1.3"
+    depends_on:
+      - subvt_kusama_postgres
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11007:11007"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_telemetry_processor:
+    container_name: subvt_kusama_telemetry_processor
+    restart: unless-stopped
+    image: "helikon/subvt-telemetry-processor:0.1.3"
+    depends_on:
+      - subvt_kusama_postgres
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11008:11008"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_notification_generator:
+    container_name: subvt_kusama_notification_generator
+    restart: unless-stopped
+    image: "helikon/subvt-notification_generator:0.1.3"
+    depends_on:
+      - subvt_kusama_network_status_updater
+      - subvt_kusama_validator_list_updater
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11010:11010"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # app postgres !!!
+  subvt_kusama_report_service:
+    container_name: subvt_kusama_report_service
+    restart: unless-stopped
+    image: "helikon/subvt-report-service:0.1.3"
+    depends_on:
+      - subvt_kusama_postgres
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:7900:7900"
+      - "127.0.0.1:11009:11009"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+  subvt_kusama_telegram_bot:
+    container_name: subvt_kusama_telegram_bot
+    restart: unless-stopped
+    image: "helikon/subvt-telegram-bot:0.1.3"
+    depends_on:
+      - subvt_kusama_postgres
+    networks:
+      - subvt_kusama
+    ports:
+      - "127.0.0.1:11012:11012"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=5281138895:AAEbcdY-tLA1P8bLoQGOnyyb9Da0k8dWb2E
+      - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
+      - SUBVT__TELEGRAM_BOT__ADMIN_CHAT_ID=1130952914
+networks:
+  subvt_kusama:
+    external:
+      name: subvt_kusama

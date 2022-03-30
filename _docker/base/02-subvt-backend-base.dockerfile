@@ -1,5 +1,3 @@
-FROM helikon/subvt-backend-base:0.1.3 as builder
-
 FROM debian:buster-slim
 # install certificate authority certificates, create config directory
 RUN apt-get update \
@@ -9,6 +7,4 @@ RUN apt-get update \
     && mkdir -p /subvt/config
 # copy config files
 COPY ./_config/ /subvt/config/
-# copy executable
-COPY --from=builder /subvt/bin/subvt-validator-list-updater /usr/local/bin/
-CMD ["subvt-validator-list-updater"]
+COPY ./_template/ /subvt/template/

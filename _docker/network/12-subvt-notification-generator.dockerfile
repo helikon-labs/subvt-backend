@@ -10,5 +10,5 @@ RUN apt-get update \
 # copy config files
 COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-validator-list-updater /usr/local/bin/
-CMD ["subvt-validator-list-updater"]
+COPY --from=builder /subvt/bin/subvt-notification-generator /usr/local/bin/
+CMD ["subvt-notification-generator"]

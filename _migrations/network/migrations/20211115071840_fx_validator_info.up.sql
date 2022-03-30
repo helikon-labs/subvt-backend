@@ -49,9 +49,11 @@ BEGIN
 	
     SELECT STRING_AGG(EV.era_index::character varying, ',')
     INTO result_record.unclaimed_eras
-    FROM sub_era_validator EV
-    WHERE EV.validator_account_id = account_id_param
+    FROM sub_era_validator EV, sub_era E
+    WHERE EV.era_index = E.index
+    AND EV.validator_account_id = account_id_param
     AND EV.is_active = true
+    AND E.end_timestamp < (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000)
     AND NOT EXISTS(
         SELECT 1
         FROM sub_extrinsic_payout_stakers EPS

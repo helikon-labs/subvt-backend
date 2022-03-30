@@ -4,9 +4,10 @@
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
+use futures_util::StreamExt as _;
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
-use redis::Connection;
+use redis::aio::Connection;
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
@@ -34,7 +35,8 @@ impl NetworkStatusServer {
         let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
         let status_json_string: String = redis::cmd("GET")
             .arg(key)
-            .query(connection)
+            .query_async(connection)
+            .await
             .context("Can't read network status from Redis.")?;
         let status: NetworkStatus = serde_json::from_str(&status_json_string)
             .context("Can't deserialize network status json.")?;
@@ -124,22 +126,20 @@ impl Service for NetworkStatusServer {
             CONFIG.redis.url
         ))?;
 
-        let mut pub_sub_connection = redis_client.get_connection()?;
-        let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub.subscribe(format!(
-            "subvt:{}:network_status:publish:best_block_number",
-            CONFIG.substrate.chain
-        ))?;
-        let mut data_connection = redis_client.get_connection()?;
+        let mut pub_sub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        pub_sub_connection
+            .subscribe(format!(
+                "subvt:{}:network_status:publish:best_block_number",
+                CONFIG.substrate.chain
+            ))
+            .await?;
+        let mut data_connection = redis_client.get_async_connection().await?;
         metrics::subscription_count().set(0);
         let server_stop_handle = NetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
+        let mut pubsub_stream = pub_sub_connection.on_message();
         let error: anyhow::Error = loop {
-            let message = pub_sub.get_message();
-            if let Err(error) = message {
-                break error.into();
-            }
-            let payload = message.unwrap().get_payload();
+            let payload = pubsub_stream.next().await.unwrap().get_payload();
             if let Err(error) = payload {
                 break error.into();
             }

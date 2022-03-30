@@ -104,13 +104,28 @@ impl Service for NotificationProcessor {
         let networks = self.network_map.values().collect_vec();
         for network in networks {
             let network = network.clone().to_owned();
-            std::thread::spawn(move || {
+            std::thread::spawn(move || loop {
                 let tokio_rt = tokio::runtime::Builder::new_multi_thread()
                     .enable_all()
                     .build()
                     .unwrap();
-                let _ =
-                    tokio_rt.block_on(self.start_era_and_epoch_notification_processor(&network));
+                if let Err(error) =
+                    tokio_rt.block_on(self.start_era_and_epoch_notification_processor(&network))
+                {
+                    log::error!(
+                        "Error while starting era and epoch notification processor for {}:{:?}",
+                        network.display,
+                        error
+                    );
+                }
+                log::error!(
+                        "Era and epoch notification processor for {} is going to be restarted after {} seconds.",
+                        network.display,
+                        CONFIG.common.recovery_retry_seconds,
+                    );
+                std::thread::sleep(std::time::Duration::from_secs(
+                    CONFIG.common.recovery_retry_seconds,
+                ));
             });
         }
         self.start_immediate_notification_processor().await?;

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  subvt_app_service:
+    container_name: subvt_app_service
+    restart: unless-stopped
+    image: "helikon/subvt-app-service:0.1.3"
+    networks:
+      - subvt_app
+    ports:
+      - "127.0.0.1:7901:7901"
+      - "127.0.0.1:11013:11013"
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # postgres
+      - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
+      - SUBVT__APP_POSTGRES__PORT=5432
+  subvt_notification_processor:
+    container_name: subvt_notification_processor
+    restart: unless-stopped
+    image: "helikon/subvt-notification-processor:0.1.3"
+    networks:
+      - subvt_app
+    ports:
+      - "127.0.0.1:11011:11011"
+    volumes:
+      - /Users/kukabi/Documents/development/subvt/subvt-backend/_cert:/subvt/cert
+    environment:
+      - SUBVT_ENV=production
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # postgres
+      - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
+      - SUBVT__APP_POSTGRES__PORT=5432
+      # templates
+      - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
+      # telegram
+      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=TELEGRAM_TOKEN
+      # APNS
+      - SUBVT__NOTIFICATION_PROCESSOR__APNS_KEY_LOCATION=/subvt/cert/subvt_apns_key.p8
+      - SUBVT__NOTIFICATION_PROCESSOR__APNS_KEY_ID=JW65N3F7R6
+      - SUBVT__NOTIFICATION_PROCESSOR__APNS_KEY_TEAM_ID=TM389H3UFR
+      - SUBVT__NOTIFICATION_PROCESSOR__APNS_TOPIC=io.helikon.subvt
+      # FCM
+      - SUBVT__NOTIFICATION_PROCESSOR__FCM_API_KEY=FCM_API_KEY
+      # email
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_FROM=from@test.org
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_REPLY_TO=from@test.org
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_ACCOUNT=from@test.org
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_PASSWORD=password
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_SMTP_SERVER_URL=mail.host.com
+      - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_SMTP_SERVER_TLS_PORT=587
+networks:
+  subvt_app:
+    external:
+      name: subvt_app

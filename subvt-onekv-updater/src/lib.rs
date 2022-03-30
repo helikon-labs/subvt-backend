@@ -196,7 +196,7 @@ impl Service for OneKVUpdater {
                 log::error!("1KV nominators update has failed: {:?}", error);
             }
             log::info!("Sleep for {} seconds.", CONFIG.onekv.refresh_seconds);
-            std::thread::sleep(std::time::Duration::from_secs(CONFIG.onekv.refresh_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(CONFIG.onekv.refresh_seconds)).await;
         }
     }
 }

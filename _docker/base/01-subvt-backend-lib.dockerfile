@@ -1,4 +1,4 @@
-FROM rust:1.58 as builder
+FROM rust:1.59 as builder
 RUN mkdir -p /subvt/bin \
     && mkdir -p /subvt/src
 WORKDIR /subvt/src
@@ -15,9 +15,10 @@ RUN cp target/release/subvt-app-service /subvt/bin/ \
   && cp target/release/subvt-network-status-server /subvt/bin/ \
   && cp target/release/subvt-network-status-updater /subvt/bin/ \
   && cp target/release/subvt-notification-generator /subvt/bin/ \
-  && cp target/release/subvt-notification-sender /subvt/bin/ \
+  && cp target/release/subvt-notification-processor /subvt/bin/ \
   && cp target/release/subvt-onekv-updater /subvt/bin/ \
   && cp target/release/subvt-report-service /subvt/bin/ \
+  && cp target/release/subvt-telegram-bot /subvt/bin/ \
   && cp target/release/subvt-telemetry-processor /subvt/bin/ \
   && cp target/release/subvt-validator-details-server /subvt/bin/ \
   && cp target/release/subvt-validator-list-server /subvt/bin/ \

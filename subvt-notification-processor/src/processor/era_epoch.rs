@@ -1,5 +1,6 @@
 use crate::{metrics, NotificationProcessor};
 use anyhow::Context;
+use futures_util::StreamExt as _;
 use subvt_types::app::{Network, NotificationPeriodType};
 use subvt_types::subvt::NetworkStatus;
 
@@ -23,20 +24,24 @@ impl NotificationProcessor {
             "Cannot connect to {} Redis at URL {}.",
             network.display, redis_url,
         ))?;
-        let mut data_connection = redis.get_connection()?;
-        let mut pub_sub_connection = redis.get_connection()?;
+        let mut data_connection = redis.get_async_connection().await?;
+        let mut pub_sub_connection = redis.get_async_connection().await?.into_pubsub();
         let mut active_era_index = 0;
         let mut current_epoch_index = 0;
-        let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub.subscribe(format!(
-            "subvt:{}:network_status:publish:best_block_number",
-            network.display.to_lowercase(),
-        ))?;
+        pub_sub_connection
+            .subscribe(format!(
+                "subvt:{}:network_status:publish:best_block_number",
+                network.display.to_lowercase(),
+            ))
+            .await?;
+        let mut pubsub_stream = pub_sub_connection.on_message();
         loop {
-            let _ = pub_sub.get_message();
+            let _ = pubsub_stream.next().await;
             let key = format!("subvt:{}:network_status", network.display.to_lowercase());
-            let status_json_string: String =
-                redis::cmd("GET").arg(key).query(&mut data_connection)?;
+            let status_json_string: String = redis::cmd("GET")
+                .arg(key)
+                .query_async(&mut data_connection)
+                .await?;
             let status: NetworkStatus = serde_json::from_str(&status_json_string)?;
             log::info!(
                 "New {} status, best block #{}.",

@@ -1,4 +1,4 @@
-FROM helikon/subvt-backend-base:0.1.2 as builder
+FROM helikon/subvt-backend-base:0.1.3 as builder
 
 FROM debian:buster-slim
 # install certificate authority certificates, create config directory

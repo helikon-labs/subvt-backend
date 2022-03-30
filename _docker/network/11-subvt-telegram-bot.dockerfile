@@ -1,4 +1,4 @@
-FROM helikon/subvt-backend-base:0.1.2 as builder
+FROM helikon/subvt-backend-base:0.1.3 as builder
 
 FROM debian:buster-slim
 # install certificate authority certificates, create config directory
@@ -10,5 +10,5 @@ RUN apt-get update \
 # copy config files
 COPY ./_config/ /subvt/config/
 # copy executable
-COPY --from=builder /subvt/bin/subvt-report-service /usr/local/bin/
-CMD ["subvt-report-service"]
+COPY --from=builder /subvt/bin/subvt-telegram-bot /usr/local/bin/
+CMD ["subvt-telegram-bot"]
