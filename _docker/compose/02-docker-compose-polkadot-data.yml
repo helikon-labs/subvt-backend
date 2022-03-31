@@ -1,8 +1,8 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  subvt_kusama_postgres:
-    container_name: subvt_kusama_postgres
+  subvt_polkadot_postgres:
+    container_name: subvt_polkadot_postgres
     command:
       - "postgres"
       - "-c"
@@ -40,27 +40,27 @@ services:
     restart: unless-stopped
     image: "helikon/subvt-network-postgres:0.1.3"
     networks:
-      - subvt_kusama
+      - subvt_polkadot
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
-      - subvt_kusama_postgres_data:/var/lib/postgresql/data
-  subvt_kusama_redis:
-    container_name: subvt_kusama_redis
+      - subvt_polkadot_postgres_data:/var/lib/postgresql/data
+  subvt_polkadot_redis:
+    container_name: subvt_polkadot_redis
     restart: unless-stopped
     image: "redis:6.2.6"
     command: redis-server --save "" --appendonly no
     networks:
-      - subvt_kusama
+      - subvt_polkadot
     ports:
       - "127.0.0.1:6379:6379"
     volumes:
-      - subvt_kusama_redis_data:/data
+      - subvt_polkadot_redis_data:/data
 volumes:
-  subvt_kusama_postgres_data:
-    name: subvt_kusama_postgres_data
-  subvt_kusama_redis_data:
-    name: subvt_kusama_redis_data
+  subvt_polkadot_postgres_data:
+    name: subvt_polkadot_postgres_data
+  subvt_polkadot_redis_data:
+    name: subvt_polkadot_redis_data
 networks:
-  subvt_kusama:
-    name: subvt_kusama
+  subvt_polkadot:
+    name: subvt_polkadot

@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   subvt_app_service:
@@ -9,7 +9,7 @@ services:
       - subvt_app
     ports:
       - "127.0.0.1:7901:7901"
-      - "127.0.0.1:11013:11013"
+      #- "127.0.0.1:11013:11013"
     environment:
       - SUBVT_ENV=production
       - SUBVT_CONFIG_DIR=/subvt/config
@@ -22,16 +22,20 @@ services:
     image: "helikon/subvt-notification-processor:0.1.3"
     networks:
       - subvt_app
-    ports:
-      - "127.0.0.1:11011:11011"
+      - subvt_kusama
+    ports: []
+      #- "127.0.0.1:11011:11011"
     volumes:
-      - /Users/kukabi/Documents/development/subvt/subvt-backend/_cert:/subvt/cert
+      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_cert:/subvt/cert
     environment:
       - SUBVT_ENV=production
       - SUBVT_CONFIG_DIR=/subvt/config
       # postgres
       - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
       - SUBVT__APP_POSTGRES__PORT=5432
+      # redis
+      - SUBVT__REDIS__KUSAMA_URL=redis://subvt_kusama_redis:6379/
+      - SUBVT__REDIS__POLKADOT_URL=redis://subvt_kusama_redis:6379/
       # templates
       - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
       # telegram
@@ -52,5 +56,6 @@ services:
       - SUBVT__NOTIFICATION_PROCESSOR__EMAIL_SMTP_SERVER_TLS_PORT=587
 networks:
   subvt_app:
-    external:
-      name: subvt_app
+    name: subvt_app
+  subvt_kusama:
+    name: subvt_kusama
