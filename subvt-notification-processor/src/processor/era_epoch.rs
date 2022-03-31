@@ -1,7 +1,9 @@
-use crate::{metrics, NotificationProcessor};
+use crate::{metrics, NotificationProcessor, CONFIG};
 use anyhow::Context;
 use futures_util::StreamExt as _;
+use std::str::FromStr;
 use subvt_types::app::{Network, NotificationPeriodType};
+use subvt_types::substrate::Chain;
 use subvt_types::subvt::NetworkStatus;
 
 impl NotificationProcessor {
@@ -16,25 +18,26 @@ impl NotificationProcessor {
             "Start era/epoch notification processor for {}.",
             network.display,
         );
-        let redis_url = network
-            .redis_url
-            .as_ref()
-            .unwrap_or_else(|| panic!("{} Redis URL is missing.", network.display));
+        let redis_url = match Chain::from_str(&network.chain)? {
+            Chain::Kusama => &CONFIG.redis.kusama_url,
+            Chain::Polkadot => &CONFIG.redis.polkadot_url,
+            Chain::Westend => &CONFIG.redis.westend_url,
+        };
         let redis = redis::Client::open(redis_url.as_str()).context(format!(
             "Cannot connect to {} Redis at URL {}.",
             network.display, redis_url,
         ))?;
         let mut data_connection = redis.get_async_connection().await?;
-        let mut pub_sub_connection = redis.get_async_connection().await?.into_pubsub();
+        let mut pubsub_connection = redis.get_async_connection().await?.into_pubsub();
         let mut active_era_index = 0;
         let mut current_epoch_index = 0;
-        pub_sub_connection
+        pubsub_connection
             .subscribe(format!(
                 "subvt:{}:network_status:publish:best_block_number",
                 network.display.to_lowercase(),
             ))
             .await?;
-        let mut pubsub_stream = pub_sub_connection.on_message();
+        let mut pubsub_stream = pubsub_connection.on_message();
         loop {
             let _ = pubsub_stream.next().await;
             let key = format!("subvt:{}:network_status", network.display.to_lowercase());

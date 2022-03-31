@@ -126,8 +126,8 @@ impl Service for NetworkStatusServer {
             CONFIG.redis.url
         ))?;
 
-        let mut pub_sub_connection = redis_client.get_async_connection().await?.into_pubsub();
-        pub_sub_connection
+        let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        pubsub_connection
             .subscribe(format!(
                 "subvt:{}:network_status:publish:best_block_number",
                 CONFIG.substrate.chain
@@ -137,9 +137,14 @@ impl Service for NetworkStatusServer {
         metrics::subscription_count().set(0);
         let server_stop_handle = NetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
-        let mut pubsub_stream = pub_sub_connection.on_message();
+        let mut pubsub_stream = pubsub_connection.on_message();
         let error: anyhow::Error = loop {
-            let payload = pubsub_stream.next().await.unwrap().get_payload();
+            let maybe_message = pubsub_stream.next().await;
+            let payload = if let Some(message) = maybe_message {
+                message.get_payload()
+            } else {
+                continue;
+            };
             if let Err(error) = payload {
                 break error.into();
             }

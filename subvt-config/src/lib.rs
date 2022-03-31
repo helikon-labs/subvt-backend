@@ -106,6 +106,9 @@ pub struct HTTPConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct RedisConfig {
     pub url: String,
+    pub kusama_url: String,
+    pub polkadot_url: String,
+    pub westend_url: String,
 }
 
 /// PostgreSQL configuration. PostgreSQL is used for historical indexed blockchain data storage.

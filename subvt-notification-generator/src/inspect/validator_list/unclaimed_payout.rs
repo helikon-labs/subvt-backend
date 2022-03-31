@@ -1,7 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use anyhow::Context;
 use chrono::Utc;
-use redis::Connection as RedisConnection;
+use redis::aio::Connection as RedisConnection;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -24,7 +24,8 @@ impl NotificationGenerator {
         // check era change & unclaimed payouts
         let db_active_era_json: String = redis::cmd("GET")
             .arg(format!("{}:active_era", redis_storage_prefix))
-            .query(redis_connection)
+            .query_async(redis_connection)
+            .await
             .context("Can't read active era JSON from Redis.")?;
         let active_era: Era = serde_json::from_str(&db_active_era_json)?;
         let era_start = active_era.get_start_date_time();

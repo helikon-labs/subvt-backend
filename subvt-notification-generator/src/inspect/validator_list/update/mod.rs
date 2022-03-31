@@ -1,6 +1,6 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
-use redis::Connection as RedisConnection;
+use redis::aio::Connection as RedisConnection;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
@@ -39,7 +39,8 @@ impl NotificationGenerator {
         // current hash
         let db_hash: u64 = redis::cmd("GET")
             .arg(format!("{}:hash", redis_prefix))
-            .query(redis_connection)
+            .query_async(redis_connection)
+            .await
             .context("Can't read validator hash from Redis.")?;
         // return if there's no change in the validator's details
         if hash == db_hash {
@@ -49,7 +50,8 @@ impl NotificationGenerator {
         let current = {
             let db_validator_json: String = redis::cmd("GET")
                 .arg(redis_prefix)
-                .query(redis_connection)
+                .query_async(redis_connection)
+                .await
                 .context("Can't read validator JSON from Redis.")?;
             serde_json::from_str::<ValidatorDetails>(&db_validator_json)?
         };

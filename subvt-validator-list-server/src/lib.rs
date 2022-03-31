@@ -9,6 +9,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
 use clap::{arg, Command};
+use futures_util::StreamExt as _;
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
@@ -136,12 +137,13 @@ impl Service for ValidatorListServer {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        let mut pub_sub_connection = redis_client.get_connection()?;
-        let mut pub_sub = pub_sub_connection.as_pubsub();
-        pub_sub.subscribe(format!(
-            "subvt:{}:validators:publish:finalized_block_number",
-            CONFIG.substrate.chain
-        ))?;
+        let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        pubsub_connection
+            .subscribe(format!(
+                "subvt:{}:validators:publish:finalized_block_number",
+                CONFIG.substrate.chain
+            ))
+            .await?;
         let mut data_connection = redis_client.get_connection()?;
         metrics::subscription_count().set(0);
         let server_stop_handle = ValidatorListServer::run_rpc_server(
@@ -156,12 +158,14 @@ impl Service for ValidatorListServer {
         )
         .await?;
 
+        let mut pubsub_stream = pubsub_connection.on_message();
         let error: anyhow::Error = 'outer: loop {
-            let message = pub_sub.get_message();
-            if let Err(error) = message {
-                break error.into();
-            }
-            let payload = message.unwrap().get_payload();
+            let maybe_message = pubsub_stream.next().await;
+            let payload = if let Some(message) = maybe_message {
+                message.get_payload()
+            } else {
+                continue;
+            };
             if let Err(error) = payload {
                 break error.into();
             }

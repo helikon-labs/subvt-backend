@@ -1,10 +1,10 @@
 use anyhow::Context;
-use redis::Connection as RedisConnection;
+use redis::aio::Connection as RedisConnection;
 use std::collections::{HashMap, HashSet};
 use subvt_types::subvt::ValidatorDetails;
 
 /// Does the initial population of the cached validator map.
-pub(crate) fn populate_validator_map(
+pub(crate) async fn populate_validator_map(
     connection: &mut RedisConnection,
     prefix: &str,
     active_validator_account_ids: &HashSet<String>,
@@ -28,9 +28,9 @@ pub(crate) fn populate_validator_map(
         .collect();
     let validator_json_strings: Vec<String> = redis::cmd("MGET")
         .arg(&all_keys)
-        .query(connection)
-        .context("Can't read validator JSON string from Redis.")
-        .unwrap();
+        .query_async(connection)
+        .await
+        .context("Can't read validator JSON string from Redis.")?;
     log::debug!(
         "Got JSON string for {} validators.",
         validator_json_strings.len()

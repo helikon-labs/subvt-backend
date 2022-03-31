@@ -34,6 +34,9 @@ app_service_port = 7901
 
 [redis]
 url = "redis://127.0.0.1:6379/"
+kusama_url = "redis://127.0.0.1:6379/"
+polkadot_url = "redis://127.0.0.1:6379/"
+westend_url = "redis://127.0.0.1:6379/"
 
 [app_postgres]
 host = "127.0.0.1"

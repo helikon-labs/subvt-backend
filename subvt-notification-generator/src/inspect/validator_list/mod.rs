@@ -4,7 +4,8 @@
 
 use crate::{metrics, NotificationGenerator, CONFIG};
 use anyhow::Context;
-use redis::Connection as RedisConnection;
+use futures_util::StreamExt as _;
+use redis::aio::Connection as RedisConnection;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
@@ -41,10 +42,12 @@ impl NotificationGenerator {
         );
         let active_validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
             .arg(format!("{}:active:account_id_set", redis_storage_prefix))
-            .query(redis_connection)?;
+            .query_async(redis_connection)
+            .await?;
         let inactive_validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
             .arg(format!("{}:inactive:account_id_set", redis_storage_prefix))
-            .query(redis_connection)?;
+            .query_async(redis_connection)
+            .await?;
         let all_validator_account_ids: HashSet<String> = active_validator_account_ids
             .union(&inactive_validator_account_ids)
             .cloned()
@@ -57,7 +60,8 @@ impl NotificationGenerator {
                 &active_validator_account_ids,
                 &all_validator_account_ids,
                 validator_map,
-            )?;
+            )
+            .await?;
             return Ok(());
         }
         let prev_validator_account_ids: HashSet<String> = validator_map.keys().cloned().collect();
@@ -137,26 +141,28 @@ impl NotificationGenerator {
                 "Cannot connect to Redis at URL {}.",
                 CONFIG.redis.url
             ))?;
-            let mut redis_pub_sub_connection = redis_client.get_connection()?;
-            let mut redis_pub_sub = redis_pub_sub_connection.as_pubsub();
-            let mut redis_data_connection = redis_client.get_connection()?;
-            let _ = redis_pub_sub
+            let mut redis_pubsub_connection =
+                redis_client.get_async_connection().await?.into_pubsub();
+            let mut redis_data_connection = redis_client.get_async_connection().await?;
+            redis_pubsub_connection
                 .subscribe(format!(
                     "subvt:{}:validators:publish:finalized_block_number",
                     CONFIG.substrate.chain
                 ))
-                .unwrap();
+                .await?;
             // keep this to avoid duplicate block processing
             let mut last_finalized_block_number = 0;
             // keep track of validators
             let mut validator_map: HashMap<String, ValidatorDetails> = HashMap::new();
             let last_active_era_index = AtomicU32::new(0);
+            let mut pubsub_stream = redis_pubsub_connection.on_message();
             let error: anyhow::Error = loop {
-                let message = redis_pub_sub.get_message();
-                if let Err(error) = message {
-                    break error.into();
-                }
-                let payload = message.unwrap().get_payload();
+                let maybe_message = pubsub_stream.next().await;
+                let payload = if let Some(message) = maybe_message {
+                    message.get_payload()
+                } else {
+                    continue;
+                };
                 if let Err(error) = payload {
                     break error.into();
                 }

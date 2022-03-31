@@ -1,6 +1,6 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
-use redis::Connection as RedisConnection;
+use redis::aio::Connection as RedisConnection;
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -40,7 +40,8 @@ impl NotificationGenerator {
             let validator = {
                 let db_validator_json: String = redis::cmd("GET")
                     .arg(validator_prefix)
-                    .query(redis_connection)
+                    .query_async(redis_connection)
+                    .await
                     .context("Can't read validator JSON from Redis.")?;
                 serde_json::from_str::<ValidatorDetails>(&db_validator_json)?
             };

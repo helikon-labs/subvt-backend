@@ -8,6 +8,12 @@ url = "redis://subvt_network_redis:6379/"
 [network_postgres]
 host = "subvt_network_postgres"
 
+[redis]
+url = "redis://127.0.0.1:6379/"
+kusama_url = "redis://127.0.0.1:6379/"
+polkadot_url = "redis://127.0.0.1:6379/"
+westend_url = "redis://127.0.0.1:6379/"
+
 [onekv]
 refresh_seconds = 300
 
