@@ -7,13 +7,14 @@ services:
     image: "helikon/subvt-block-processor:0.1.3"
     networks:
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11000:11000"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
       # rpc
@@ -28,13 +29,14 @@ services:
       - subvt_kusama_block_processor
     networks:
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11001:11001"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
       # postgres
@@ -51,13 +53,14 @@ services:
       - subvt_kusama
     ports:
       - "127.0.0.1:7889:7889"
-      # - "127.0.0.1:11003:11003"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
   subvt_kusama_inactive_validator_list_server:
@@ -70,13 +73,14 @@ services:
       - subvt_kusama
     ports:
       - "127.0.0.1:7890:7890"
-      # - "127.0.0.1:11004:11004"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
   subvt_kusama_validator_details_server:
@@ -89,13 +93,14 @@ services:
       - subvt_kusama
     ports:
       - "127.0.0.1:7891:7891"
-      # - "127.0.0.1:11002:11002"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
   subvt_kusama_network_status_updater:
@@ -104,13 +109,14 @@ services:
     image: "helikon/subvt-network-status-updater:0.1.3"
     networks:
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11005:11005"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
       # rpc
@@ -125,13 +131,14 @@ services:
       - subvt_kusama
     ports:
       - "127.0.0.1:7888:7888"
-      # - "127.0.0.1:11006:11006"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
   subvt_kusama_onekv_updater:
@@ -140,13 +147,14 @@ services:
     image: "helikon/subvt-onekv-updater:0.1.3"
     networks:
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11007:11007"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
   subvt_kusama_telemetry_processor:
@@ -155,13 +163,14 @@ services:
     image: "helikon/subvt-telemetry-processor:0.1.3"
     networks:
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11008:11008"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
   subvt_kusama_notification_generator:
@@ -174,13 +183,14 @@ services:
     networks:
       - subvt_app
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11010:11010"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # app postgres
       - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
       # network postgres
@@ -195,13 +205,14 @@ services:
       - subvt_kusama
     ports:
       - "127.0.0.1:7900:7900"
-      # - "127.0.0.1:11009:11009"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
   subvt_kusama_telegram_bot:
@@ -211,13 +222,14 @@ services:
     networks:
       - subvt_app
       - subvt_kusama
-    ports: [] # ["127.0.0.1:11012:11012"]
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
       - SUBVT__LOG__SUBVT_LEVEL=debug
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
       # app postgres
       - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
       # redis

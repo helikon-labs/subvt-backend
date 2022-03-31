@@ -21,8 +21,8 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1647862359874,
+  "id": 3,
+  "iteration": 1648735784370,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -40,6 +40,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -85,7 +89,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_telemetry_processor::finalized_block_number",
@@ -98,6 +102,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -143,7 +151,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_telemetry_processor::best_block_number",
@@ -156,6 +164,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -201,7 +213,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_telemetry_processor::node_count",
@@ -903,6 +915,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -948,7 +964,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_active_validator_list_server::processed_finalized_block_number",
@@ -961,6 +977,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1006,7 +1026,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_active_validator_list_server::target_finalized_block_number",
@@ -1019,6 +1039,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1064,7 +1088,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_active_validator_list_server::subscription_count",
@@ -1077,6 +1101,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1122,7 +1150,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_inactive_validator_list_server::processed_finalized_block_number",
@@ -1135,6 +1163,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1180,7 +1212,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_inactive_validator_list_server::target_finalized_block_number",
@@ -1193,6 +1225,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1238,7 +1274,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_inactive_validator_list_server::subscription_count",
@@ -2253,6 +2289,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2302,7 +2342,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": false,
           "expr": "sum(subvt_notification_generator::notification_count)",
@@ -2318,6 +2358,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2362,7 +2406,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_notification_generator::processed_block_number",
@@ -2375,6 +2419,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2423,7 +2471,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_notification_generator::block_processor_error_count",
@@ -2436,6 +2484,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2481,7 +2533,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_notification_generator::processed_validator_list_block_number",
@@ -2494,6 +2546,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2542,7 +2598,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_notification_generator::block_processor_error_count",
@@ -2568,6 +2624,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2617,7 +2677,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_telegram_bot::chat_count",
@@ -2630,6 +2690,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2679,7 +2743,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_telegram_bot::validator_count",
@@ -2692,6 +2756,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2738,7 +2806,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": false,
           "expr": "subvt_telegram_bot::command_call_count",
@@ -2752,6 +2820,10 @@
       "type": "bargauge"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2798,7 +2870,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": false,
           "expr": "subvt_telegram_bot::query_call_count",
@@ -2825,6 +2897,10 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2869,7 +2945,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_report_service::connection_count",
@@ -2882,6 +2958,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2927,7 +3007,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_report_service::request_count",
@@ -2942,6 +3022,10 @@
       "type": "stat"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2989,7 +3073,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
           "expr": "subvt_report_service::response_status_code_count",
@@ -3002,6 +3086,10 @@
       "type": "bargauge"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -3054,7 +3142,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "9YiL8UPnk"
+            "uid": "${prometheus_data_source}"
           },
           "exemplar": false,
           "expr": "subvt_report_service::response_time_ms_bucket",
@@ -3077,9 +3165,9 @@
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "Prometheus",
-          "value": "Prometheus"
+          "selected": false,
+          "text": "SubVT Kusama Prometheus",
+          "value": "SubVT Kusama Prometheus"
         },
         "hide": 0,
         "includeAll": false,
@@ -3101,8 +3189,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "SubVT",
+  "title": "SubVT (Network)",
   "uid": "1-0ZgEE7z",
-  "version": 15,
+  "version": 1,
   "weekStart": ""
 }

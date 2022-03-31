@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# prometheus job definitions for Kusama deployment
+scrape_configs:
+  - job_name: subvt_block_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_block_processor:11000" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_validator_list_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_validator_list_updater:11001" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_active_validator_list_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_active_validator_list_server:11003" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_inactive_validator_list_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_inactive_validator_list_server:11004" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_validator_details_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_validator_details_server:11002" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_network_status_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_network_status_updater:11005" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_network_status_server
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_network_status_server:11006" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_onekv_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_onekv_updater:11007" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_telemetry_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_telemetry_processor:11008" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_report_service
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_report_service:11009" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_notification_generator
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_notification_generator:11010" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_telegram_bot
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_telegram_bot:11012" ]
+    metrics_path: "/metrics"

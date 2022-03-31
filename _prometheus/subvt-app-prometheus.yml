@@ -4,13 +4,13 @@ global:
 
 # prometheus job definitions for application deployment
 scrape_configs:
-  - job_name: subvt_notification_processor
-    scrape_interval: 5s
-    static_configs:
-      - targets: [ 'host.docker.internal:11011' ]
-    metrics_path: "/metrics"
   - job_name: subvt_app_service
     scrape_interval: 5s
     static_configs:
-      - targets: [ 'host.docker.internal:11013' ]
+      - targets: [ "subvt_app_service:11013" ]
+    metrics_path: "/metrics"
+  - job_name: subvt_notification_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_notification_processor:11011" ]
     metrics_path: "/metrics"
