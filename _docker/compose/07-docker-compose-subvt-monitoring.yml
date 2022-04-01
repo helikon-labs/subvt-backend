@@ -25,7 +25,7 @@ services:
     image: "grafana/grafana-oss:8.4.4"
     networks:
       - subvt_monitoring
-    ports: [ "127.0.0.1:3000:3000" ]
+    ports: [ "3000:3000" ]
 networks:
   subvt_kusama:
     name: subvt_kusama

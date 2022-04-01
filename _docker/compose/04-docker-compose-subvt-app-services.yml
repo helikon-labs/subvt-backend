@@ -8,7 +8,7 @@ services:
     networks:
       - subvt_app
     ports:
-      - "127.0.0.1:7901:7901"
+      - "7901:7901"
     environment:
       - SUBVT_ENV=production
       - SUBVT_CONFIG_DIR=/subvt/config
@@ -28,6 +28,7 @@ services:
       - subvt_kusama
     volumes:
       - /Users/kukabi/Documents/Development/subvt/subvt-backend/_cert:/subvt/cert
+      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_template:/subvt/template
     environment:
       - SUBVT_ENV=production
       - SUBVT_CONFIG_DIR=/subvt/config

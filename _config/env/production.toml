@@ -16,3 +16,6 @@ refresh_seconds = 300
 
 [notification_processor]
 apns_is_production = true
+
+[metrics]
+host = "0.0.0.0"

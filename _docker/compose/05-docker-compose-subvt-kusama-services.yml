@@ -20,7 +20,7 @@ services:
       # rpc
       - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
       # start block
-      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=12047800
+      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=12059700
   subvt_kusama_validator_list_updater:
     container_name: subvt_kusama_validator_list_updater
     restart: unless-stopped
@@ -52,7 +52,7 @@ services:
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:7889:7889"
+      - "7889:7889"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -72,7 +72,7 @@ services:
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:7890:7890"
+      - "7890:7890"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -92,7 +92,7 @@ services:
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:7891:7891"
+      - "7891:7891"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -130,7 +130,7 @@ services:
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:7888:7888"
+      - "7888:7888"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -204,7 +204,7 @@ services:
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:7900:7900"
+      - "7900:7900"
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -222,6 +222,8 @@ services:
     networks:
       - subvt_app
       - subvt_kusama
+    volumes:
+      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_template:/subvt/template
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
