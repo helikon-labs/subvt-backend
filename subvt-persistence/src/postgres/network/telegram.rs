@@ -373,4 +373,40 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(chat_validator_count.0 as u16)
     }
+
+    pub async fn set_chat_settings_message_id(
+        &self,
+        telegram_chat_id: i64,
+        settings_message_id: Option<i32>,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telegram_chat
+            SET settings_message_id = $1
+            WHERE telegram_chat_id = $2
+            "#,
+        )
+        .bind(settings_message_id)
+        .bind(telegram_chat_id)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_chat_settings_message_id(
+        &self,
+        telegram_chat_id: i64,
+    ) -> anyhow::Result<Option<i32>> {
+        let settings_message_id: (Option<i32>,) = sqlx::query_as(
+            r#"
+            SELECT settings_message_id FROM sub_telegram_chat
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .fetch_one(&self.connection_pool)
+        .await?;
+
+        Ok(settings_message_id.0)
+    }
 }

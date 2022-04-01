@@ -198,7 +198,7 @@ impl TelegramBot {
                         .await?
                 }
             }
-            "/validatorinfo" => {
+            "/validatorinfo" | "vi" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.process_validators_command(chat_id, QueryType::ValidatorInfo)
                     .await?
@@ -210,8 +210,25 @@ impl TelegramBot {
             }
             "/settings" => {
                 crate::metrics::command_call_counter(command).inc();
-                self.messenger
+                // close last settings message
+                if let Some(settings_message_id) = self
+                    .network_postgres
+                    .get_chat_settings_message_id(chat_id)
+                    .await?
+                {
+                    let _ = self
+                        .messenger
+                        .delete_message(chat_id, settings_message_id)
+                        .await;
+                }
+                let settings_message_id = self
+                    .messenger
                     .send_message(chat_id, MessageType::Settings)
+                    .await?
+                    .result
+                    .message_id;
+                self.network_postgres
+                    .set_chat_settings_message_id(chat_id, Some(settings_message_id))
                     .await?;
             }
             "/broadcasttest" => {

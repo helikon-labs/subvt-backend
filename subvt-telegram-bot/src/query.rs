@@ -14,6 +14,14 @@ pub enum QueryType {
     RemoveValidator,
     #[serde(rename = "CB")]
     ConfirmBroadcast,
+    #[serde(rename = "SVA")]
+    SettingsValidatorActivity,
+    #[serde(rename = "SN")]
+    SettingsNominations,
+    #[serde(rename = "SKV")]
+    SettingsOneKV,
+    #[serde(rename = "SD")]
+    SettingsDemocracy,
     #[serde(rename = "X")]
     Cancel,
 }
@@ -26,6 +34,10 @@ impl Display for QueryType {
             Self::NominationDetails => "NominationDetails",
             Self::RemoveValidator => "RemoveValidator",
             Self::ConfirmBroadcast => "ConfirmBroadcast",
+            Self::SettingsValidatorActivity => "SettingsValidatorActivity",
+            Self::SettingsNominations => "SettingsNominations",
+            Self::SettingsOneKV => "SettingsOneKV",
+            Self::SettingsDemocracy => "SettingsDemocracy",
             Self::Cancel => "Cancel",
         };
         write!(f, "{}", display)
@@ -281,6 +293,10 @@ impl TelegramBot {
                     }
                 }
             }
+            QueryType::SettingsValidatorActivity => (),
+            QueryType::SettingsNominations => (),
+            QueryType::SettingsOneKV => (),
+            QueryType::SettingsDemocracy => (),
             QueryType::Cancel => (),
         }
         Ok(())

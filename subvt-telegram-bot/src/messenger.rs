@@ -486,12 +486,85 @@ impl Messenger {
         }
     }
 
-    fn get_settings_keyboard(&self) -> ReplyMarkup {
-        let rows = vec![];
-
-        ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+    fn get_settings_keyboard(&self) -> anyhow::Result<ReplyMarkup> {
+        let rows = vec![
+            vec![InlineKeyboardButton {
+                text: self
+                    .renderer
+                    .render("settings_validator_activity.html", &Context::new())?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::SettingsValidatorActivity,
+                    parameter: None,
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }],
+            vec![InlineKeyboardButton {
+                text: self
+                    .renderer
+                    .render("settings_nominations.html", &Context::new())?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::SettingsNominations,
+                    parameter: None,
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }],
+            vec![InlineKeyboardButton {
+                text: self
+                    .renderer
+                    .render("settings_onekv.html", &Context::new())?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::SettingsOneKV,
+                    parameter: None,
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }],
+            vec![InlineKeyboardButton {
+                text: self
+                    .renderer
+                    .render("settings_democracy.html", &Context::new())?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::SettingsDemocracy,
+                    parameter: None,
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }],
+            vec![InlineKeyboardButton {
+                text: self.renderer.render("cancel.html", &Context::new())?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::Cancel,
+                    parameter: None,
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }],
+        ];
+        Ok(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
             inline_keyboard: rows,
-        })
+        }))
     }
 
     pub async fn send_message(
@@ -604,7 +677,7 @@ impl Messenger {
                     }))
                 }
             }
-            MessageType::Settings => Some(self.get_settings_keyboard()),
+            MessageType::Settings => Some(self.get_settings_keyboard()?),
             _ => None,
         };
         let params = SendMessageParams {
