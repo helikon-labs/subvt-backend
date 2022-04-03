@@ -582,7 +582,7 @@ impl StakingEvent {
                 account_id: get_argument_primitive!(&arguments[0], AccountId),
                 balance: get_argument_primitive!(&arguments[1], Balance),
             })),
-            "Chilled" => Some(SubstrateEvent::Staking(StakingEvent::Chilled {
+            "Chilled" | "Chill" => Some(SubstrateEvent::Staking(StakingEvent::Chilled {
                 extrinsic_index,
                 stash_account_id: get_argument_primitive!(&arguments[0], AccountId),
             })),
