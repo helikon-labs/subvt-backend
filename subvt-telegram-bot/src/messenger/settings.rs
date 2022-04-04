@@ -50,11 +50,11 @@ impl Messenger {
         edit_type: SettingsEditQueryType,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<Option<Vec<InlineKeyboardButton>>> {
-        if let Some(active_rule) = notification_rules
+        if let Some(rule) = notification_rules
             .iter()
             .find(|rule| rule.notification_type.code == notification_type_code.to_string())
         {
-            let is_on = active_rule.period_type == NotificationPeriodType::Immediate;
+            let is_on = rule.period_type == NotificationPeriodType::Immediate;
             let mut context = Context::new();
             context.insert("is_on", &is_on);
             Ok(Some(vec![InlineKeyboardButton {
@@ -75,11 +75,52 @@ impl Messenger {
         }
     }
 
+    fn get_notification_period_button(
+        &self,
+        notification_type_code: NotificationTypeCode,
+        edit_type: SettingsEditQueryType,
+        period_type: NotificationPeriodType,
+        period: u16,
+        notification_rules: &[UserNotificationRule],
+    ) -> anyhow::Result<Option<Vec<InlineKeyboardButton>>> {
+        if let Some(rule) = notification_rules
+            .iter()
+            .find(|rule| rule.notification_type.code == notification_type_code.to_string())
+        {
+            let is_selected = rule.period_type == period_type && rule.period == period;
+            let mut context = Context::new();
+            context.insert("is_selected", &is_selected);
+            context.insert("period_type", &period_type.to_string());
+            context.insert("period", &period);
+            let parameter = (period_type, period);
+            Ok(Some(vec![InlineKeyboardButton {
+                text: self
+                    .renderer
+                    .render("settings_item_notification_period.html", &context)?,
+                url: None,
+                login_url: None,
+                callback_data: Some(serde_json::to_string(&Query {
+                    query_type: QueryType::SettingsEdit(edit_type),
+                    parameter: Some(serde_json::to_string(&parameter)?),
+                })?),
+                switch_inline_query: None,
+                switch_inline_query_current_chat: None,
+                callback_game: None,
+                pay: None,
+            }]))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn get_validator_activity_settings_keyboard(
         &self,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
-        let mut rows = vec![];
+        let mut rows = vec![self.get_settings_button(
+            "settings_item_block_authorship.html",
+            QueryType::SettingsNavigate(SettingsSubSection::BlockAuthorship),
+        )?];
         if let Some(item) = self.get_notification_rule_button(
             NotificationTypeCode::ChainValidatorChilled,
             "settings_item_chilled.html",
@@ -172,7 +213,77 @@ impl Messenger {
 
         rows.push(self.get_settings_button(
             "back.html",
-            QueryType::SettingsBack(SettingsSubSection::Root),
+            QueryType::SettingsNavigate(SettingsSubSection::Root),
+        )?);
+        rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
+        Ok(InlineKeyboardMarkup {
+            inline_keyboard: rows,
+        })
+    }
+
+    pub fn get_block_authorship_settings_keyboard(
+        &self,
+        notification_rules: &[UserNotificationRule],
+    ) -> anyhow::Result<InlineKeyboardMarkup> {
+        let mut rows = vec![];
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Off,
+            0,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Immediate,
+            0,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Hour,
+            1,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Hour,
+            2,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Epoch,
+            3,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+        if let Some(button) = self.get_notification_period_button(
+            NotificationTypeCode::ChainValidatorBlockAuthorship,
+            SettingsEditQueryType::BlockAuthorship,
+            NotificationPeriodType::Era,
+            1,
+            notification_rules,
+        )? {
+            rows.push(button);
+        };
+
+        rows.push(self.get_settings_button(
+            "back.html",
+            QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
         )?);
         rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
         Ok(InlineKeyboardMarkup {
@@ -260,7 +371,7 @@ impl Messenger {
 
         rows.push(self.get_settings_button(
             "back.html",
-            QueryType::SettingsBack(SettingsSubSection::Root),
+            QueryType::SettingsNavigate(SettingsSubSection::Root),
         )?);
         rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
         Ok(InlineKeyboardMarkup {
@@ -308,7 +419,7 @@ impl Messenger {
 
         rows.push(self.get_settings_button(
             "back.html",
-            QueryType::SettingsBack(SettingsSubSection::Root),
+            QueryType::SettingsNavigate(SettingsSubSection::Root),
         )?);
         rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
         Ok(InlineKeyboardMarkup {

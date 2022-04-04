@@ -1,0 +1,1 @@
+{% if is_selected %}🟢{% else %}⚪️{% endif %} {% if period_type == "off" %}Off{% elif period_type == "immediate" %}Immediately{% else %}Every {% if period != 1 %}{{ period }} {% endif %}{{ period_type}}{% if period != 1 %}s{% endif %}{% endif %}

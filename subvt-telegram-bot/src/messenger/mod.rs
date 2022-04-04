@@ -635,6 +635,7 @@ impl Messenger {
         let template_name = match sub_type {
             SettingsSubSection::Root => "settings_title.html",
             SettingsSubSection::ValidatorActivity => "settings_validator_activity_text.html",
+            SettingsSubSection::BlockAuthorship => "settings_block_authorship_text.html",
             SettingsSubSection::OneKV => "settings_onekv_text.html",
             SettingsSubSection::Democracy => "settings_democracy_text.html",
         };
@@ -654,6 +655,9 @@ impl Messenger {
             SettingsSubSection::Root => self.get_settings_keyboard()?,
             SettingsSubSection::ValidatorActivity => {
                 self.get_validator_activity_settings_keyboard(notification_rules)?
+            }
+            SettingsSubSection::BlockAuthorship => {
+                self.get_block_authorship_settings_keyboard(notification_rules)?
             }
             SettingsSubSection::Democracy => {
                 self.get_democracy_settings_keyboard(notification_rules)?

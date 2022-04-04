@@ -26,7 +26,7 @@ pub enum QueryType {
     #[serde(rename = "SE")]
     SettingsEdit(SettingsEditQueryType),
     #[serde(rename = "SB")]
-    SettingsBack(SettingsSubSection),
+    SettingsNavigate(SettingsSubSection),
     #[serde(rename = "X")]
     Cancel,
 }
@@ -37,6 +37,8 @@ pub enum SettingsSubSection {
     Root,
     #[serde(rename = "VA")]
     ValidatorActivity,
+    #[serde(rename = "BA")]
+    BlockAuthorship,
     #[serde(rename = "D")]
     Democracy,
     #[serde(rename = "OKV")]
@@ -45,6 +47,8 @@ pub enum SettingsSubSection {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum SettingsEditQueryType {
+    #[serde(rename = "BA")]
+    BlockAuthorship,
     #[serde(rename = "A")]
     Active,
     #[serde(rename = "ANS")]
@@ -108,7 +112,7 @@ impl Display for QueryType {
             Self::SettingsOneKV => "SettingsOneKV",
             Self::SettingsDemocracy => "SettingsDemocracy",
             Self::SettingsEdit(_) => "SettingsEdit",
-            Self::SettingsBack(_) => "SettingsBack",
+            Self::SettingsNavigate(_) => "SettingsNavigate",
             Self::Cancel => "Cancel",
         };
         write!(f, "{}", display)
@@ -527,6 +531,22 @@ impl TelegramBot {
                             )
                             .await?;
                         SettingsSubSection::ValidatorActivity
+                    }
+                    SettingsEditQueryType::BlockAuthorship => {
+                        let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
+                            query.parameter.as_ref().unwrap_or_else(||
+                                panic!("Expecting period type and period param for block authorship notification setting action.")
+                            )
+                        )?;
+                        self.app_postgres
+                            .update_user_notification_rule_period(
+                                user_id,
+                                &NotificationTypeCode::ChainValidatorBlockAuthorship,
+                                &period_data.0,
+                                period_data.1,
+                            )
+                            .await?;
+                        SettingsSubSection::BlockAuthorship
                     }
                     SettingsEditQueryType::Chilled => {
                         let on: bool = serde_json::from_str(
@@ -948,7 +968,7 @@ impl TelegramBot {
                         .await?;
                 }
             }
-            QueryType::SettingsBack(ref sub_type) => {
+            QueryType::SettingsNavigate(ref sub_section) => {
                 if let Some(settings_message_id) = self
                     .network_postgres
                     .get_chat_settings_message_id(chat_id)
@@ -963,7 +983,7 @@ impl TelegramBot {
                         .update_settings_message(
                             chat_id,
                             settings_message_id,
-                            sub_type,
+                            sub_section,
                             &notification_rules,
                         )
                         .await?;
