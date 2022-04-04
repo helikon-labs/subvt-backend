@@ -1284,6 +1284,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "email-encoding"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6690291166824e467790ac08ba42f241791567e8337bbf00c5a6e87889629f98"
+dependencies = [
+ "base64 0.13.0",
+]
+
+[[package]]
 name = "encoding"
 version = "0.2.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2593,12 +2602,13 @@ dependencies = [
 
 [[package]]
 name = "lettre"
-version = "0.10.0-rc.4"
+version = "0.10.0-rc.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71d8da8f34d086b081c9cc3b57d3bb3b51d16fc06b5c848a188e2f14d58ac2a5"
+checksum = "5144148f337be14dabfc0f0d85b691a68ac6c77ef22a5c47c5504b70a7c9fcf3"
 dependencies = [
  "async-trait",
  "base64 0.13.0",
+ "email-encoding",
  "fastrand",
  "futures-io",
  "futures-util",
@@ -6360,7 +6370,7 @@ dependencies = [
  "itertools",
  "job_scheduler",
  "lazy_static",
- "lettre 0.10.0-rc.4",
+ "lettre 0.10.0-rc.5",
  "lettre_email",
  "log",
  "once_cell",
