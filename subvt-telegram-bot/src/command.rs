@@ -21,7 +21,7 @@ impl TelegramBot {
                 query_type,
                 parameter: Some(validators.get(0).unwrap().id.to_string()),
             };
-            self.process_query(chat_id, &query).await?;
+            self.process_query(chat_id, None, &query).await?;
         } else {
             log::info!("Send validator list for query: {}", query_type);
             validators.sort_by(|v1, v2| {
@@ -119,7 +119,7 @@ impl TelegramBot {
                                 query_type: QueryType::ValidatorInfo,
                                 parameter: Some(id.to_string()),
                             };
-                            self.process_query(chat_id, &query).await?;
+                            self.process_query(chat_id, None, &query).await?;
                             self.messenger
                                 .send_message(chat_id, MessageType::ValidatorAdded)
                                 .await?;
@@ -183,6 +183,7 @@ impl TelegramBot {
                     {
                         self.process_query(
                             chat_id,
+                            None,
                             &Query {
                                 query_type: QueryType::RemoveValidator,
                                 parameter: Some(chat_validator.id.to_string()),

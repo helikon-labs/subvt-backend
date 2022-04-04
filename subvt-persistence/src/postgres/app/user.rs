@@ -6,8 +6,8 @@ use subvt_types::app::db::{
     PostgresUserNotificationChannel, PostgresUserNotificationRule, PostgresUserValidator,
 };
 use subvt_types::app::{
-    NotificationPeriodType, User, UserNotificationChannel, UserNotificationRule,
-    UserNotificationRuleParameter, UserValidator,
+    NotificationPeriodType, NotificationTypeCode, User, UserNotificationChannel,
+    UserNotificationRule, UserNotificationRuleParameter, UserValidator,
 };
 use subvt_types::crypto::AccountId;
 
@@ -559,6 +559,30 @@ impl PostgreSQLAppStorage {
             "#,
         )
         .bind(user_id as i32)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_user_notification_rule_period(
+        &self,
+        user_id: u32,
+        type_code: &NotificationTypeCode,
+        period_type: &NotificationPeriodType,
+        period: u16,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE app_user_notification_rule
+            SET period_type = $1, period = $2
+            WHERE user_id = $3
+            AND notification_type_code = $4
+            "#,
+        )
+        .bind(period_type)
+        .bind(period as i32)
+        .bind(user_id as i32)
+        .bind(type_code.to_string())
         .execute(&self.connection_pool)
         .await?;
         Ok(())

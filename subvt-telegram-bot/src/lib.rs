@@ -20,7 +20,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 mod command;
-mod messenger;
+pub(crate) mod messenger;
 mod metrics;
 mod query;
 
@@ -420,13 +420,13 @@ impl Service for TelegramBot {
                                             return log::error!("Unknown query: {}", callback_data);
                                         };
                                         if let Err(error) = tokio::try_join!(
-                                            self.messenger.delete_message(
+                                            self.process_query(
                                                 message.chat.id,
-                                                message.message_id
+                                                Some(message.message_id),
+                                                &query
                                             ),
                                             self.messenger
                                                 .answer_callback_query(&callback_query.id, None),
-                                            self.process_query(message.chat.id, &query),
                                         ) {
                                             log::error!(
                                                 "Error while processing message #{}: {:?}",

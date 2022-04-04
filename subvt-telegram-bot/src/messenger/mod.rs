@@ -1,13 +1,15 @@
+use crate::query::SettingsSubSection;
 use crate::query::{Query, QueryType};
 use crate::{TelegramBotError, CONFIG};
 use chrono::{TimeZone, Utc};
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    InlineKeyboardButton, InlineKeyboardMarkup, Message, MethodResponse, ReplyMarkup,
-    SendMessageParams,
+    EditMessageResponse, EditMessageTextParams, InlineKeyboardButton, InlineKeyboardMarkup,
+    Message, MethodResponse, ReplyMarkup, SendMessageParams,
 };
 use itertools::Itertools;
 use subvt_config::Config;
+use subvt_types::app::UserNotificationRule;
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::substrate::Balance;
@@ -16,6 +18,8 @@ use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
 use tera::{Context, Tera};
+
+pub mod settings;
 
 pub enum MessageType {
     Intro,
@@ -428,7 +432,7 @@ impl MessageType {
                 context.insert("display", &display);
                 "validator_removed.html"
             }
-            Self::Settings => "settings.html",
+            Self::Settings => "settings_title.html",
         };
         renderer.render(template_name, &context).unwrap()
     }
@@ -484,87 +488,6 @@ impl Messenger {
             Ok(response) => Ok(response),
             Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
         }
-    }
-
-    fn get_settings_keyboard(&self) -> anyhow::Result<ReplyMarkup> {
-        let rows = vec![
-            vec![InlineKeyboardButton {
-                text: self
-                    .renderer
-                    .render("settings_validator_activity.html", &Context::new())?,
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&Query {
-                    query_type: QueryType::SettingsValidatorActivity,
-                    parameter: None,
-                })?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }],
-            vec![InlineKeyboardButton {
-                text: self
-                    .renderer
-                    .render("settings_nominations.html", &Context::new())?,
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&Query {
-                    query_type: QueryType::SettingsNominations,
-                    parameter: None,
-                })?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }],
-            vec![InlineKeyboardButton {
-                text: self
-                    .renderer
-                    .render("settings_onekv.html", &Context::new())?,
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&Query {
-                    query_type: QueryType::SettingsOneKV,
-                    parameter: None,
-                })?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }],
-            vec![InlineKeyboardButton {
-                text: self
-                    .renderer
-                    .render("settings_democracy.html", &Context::new())?,
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&Query {
-                    query_type: QueryType::SettingsDemocracy,
-                    parameter: None,
-                })?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }],
-            vec![InlineKeyboardButton {
-                text: self.renderer.render("cancel.html", &Context::new())?,
-                url: None,
-                login_url: None,
-                callback_data: Some(serde_json::to_string(&Query {
-                    query_type: QueryType::Cancel,
-                    parameter: None,
-                })?),
-                switch_inline_query: None,
-                switch_inline_query_current_chat: None,
-                callback_game: None,
-                pay: None,
-            }],
-        ];
-        Ok(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-            inline_keyboard: rows,
-        }))
     }
 
     pub async fn send_message(
@@ -638,7 +561,10 @@ impl Messenger {
                         text: self.renderer.render("cancel.html", &Context::new())?,
                         url: None,
                         login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query::get_cancel_query())?),
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::Cancel,
+                            parameter: None,
+                        })?),
                         switch_inline_query: None,
                         switch_inline_query_current_chat: None,
                         callback_game: None,
@@ -677,7 +603,9 @@ impl Messenger {
                     }))
                 }
             }
-            MessageType::Settings => Some(self.get_settings_keyboard()?),
+            MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
+                self.get_settings_keyboard()?,
+            )),
             _ => None,
         };
         let params = SendMessageParams {
@@ -698,6 +626,51 @@ impl Messenger {
             params.text.replace('\n', ""),
         );
         match self.api.send_message(&params).await {
+            Ok(response) => Ok(response),
+            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+        }
+    }
+
+    fn get_settings_sub_section_text(&self, sub_type: &SettingsSubSection) -> String {
+        let template_name = match sub_type {
+            SettingsSubSection::Root => "settings_title.html",
+            SettingsSubSection::ValidatorActivity => "settings_validator_activity_text.html",
+            SettingsSubSection::OneKV => "settings_onekv_text.html",
+            SettingsSubSection::Democracy => "settings_democracy_text.html",
+        };
+        self.renderer
+            .render(template_name, &Context::new())
+            .unwrap()
+    }
+
+    pub async fn update_settings_message(
+        &self,
+        chat_id: i64,
+        settings_message_id: i32,
+        sub_section: &SettingsSubSection,
+        notification_rules: &[UserNotificationRule],
+    ) -> anyhow::Result<EditMessageResponse> {
+        let inline_keyboard = match sub_section {
+            SettingsSubSection::Root => self.get_settings_keyboard()?,
+            SettingsSubSection::ValidatorActivity => {
+                self.get_validator_activity_settings_keyboard(notification_rules)?
+            }
+            SettingsSubSection::Democracy => {
+                self.get_democracy_settings_keyboard(notification_rules)?
+            }
+            SettingsSubSection::OneKV => self.get_onekv_settings_keyboard(notification_rules)?,
+        };
+        let params = EditMessageTextParams {
+            chat_id: Some(ChatId::Integer(chat_id)),
+            message_id: Some(settings_message_id),
+            inline_message_id: None,
+            text: self.get_settings_sub_section_text(sub_section),
+            parse_mode: Some(frankenstein::ParseMode::Html),
+            entities: None,
+            disable_web_page_preview: Some(true),
+            reply_markup: Some(inline_keyboard),
+        };
+        match self.api.edit_message_text(&params).await {
             Ok(response) => Ok(response),
             Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
         }

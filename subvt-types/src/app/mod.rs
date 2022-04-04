@@ -465,7 +465,7 @@ impl UserNotificationRuleParameter {
     }
 }
 
-#[derive(Clone, Copy, Debug, sqlx::Type, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, sqlx::Type, Serialize, Deserialize, Eq, PartialEq)]
 #[sqlx(type_name = "app_notification_period_type", rename_all = "lowercase")]
 #[serde(rename_all = "lowercase")]
 pub enum NotificationPeriodType {
