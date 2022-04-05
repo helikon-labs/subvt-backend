@@ -11,7 +11,7 @@ anyhow = "1.0.56"
 async-trait = "0.1.53"
 bus = "2.2.3"
 futures-util = "0.3.21"
-jsonrpsee = { version = "0.9.0", features = ["full"] }
+jsonrpsee = { version = "0.10.0", features = ["full"] }
 jsonrpsee-core = "0.9.0"
 lazy_static = "1.4.0"
 log = "0.4.16"
