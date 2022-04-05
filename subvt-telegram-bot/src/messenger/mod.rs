@@ -1,5 +1,5 @@
-use crate::query::SettingsSubSection;
 use crate::query::{Query, QueryType};
+use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use chrono::{TimeZone, Utc};
 use frankenstein::{
@@ -9,7 +9,7 @@ use frankenstein::{
 };
 use itertools::Itertools;
 use subvt_config::Config;
-use subvt_types::app::UserNotificationRule;
+use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
 use subvt_types::crypto::AccountId;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::substrate::Balance;
@@ -493,9 +493,9 @@ impl Messenger {
     pub async fn send_message(
         &self,
         chat_id: i64,
-        message_type: MessageType,
+        message_type: Box<MessageType>,
     ) -> anyhow::Result<MethodResponse<Message>> {
-        let inline_keyboard = match &message_type {
+        let inline_keyboard = match &*message_type {
             MessageType::BroadcastConfirm => {
                 let rows = vec![
                     vec![InlineKeyboardButton {
@@ -539,7 +539,7 @@ impl Messenger {
                     let mut rows = vec![];
                     for validator in validators {
                         let query = Query {
-                            query_type: query_type.clone(),
+                            query_type: *query_type,
                             parameter: Some(validator.id.to_string()),
                         };
                         rows.push(vec![InlineKeyboardButton {
@@ -638,6 +638,9 @@ impl Messenger {
             SettingsSubSection::BlockAuthorship => "settings_block_authorship_text.html",
             SettingsSubSection::OneKV => "settings_onekv_text.html",
             SettingsSubSection::Democracy => "settings_democracy_text.html",
+            SettingsSubSection::Nominations => "settings_nominations_text.html",
+            SettingsSubSection::NewNomination => "settings_new_nomination_text.html",
+            SettingsSubSection::LostNomination => "settings_lost_nomination_text.html",
         };
         self.renderer
             .render(template_name, &Context::new())
@@ -656,13 +659,29 @@ impl Messenger {
             SettingsSubSection::ValidatorActivity => {
                 self.get_validator_activity_settings_keyboard(notification_rules)?
             }
-            SettingsSubSection::BlockAuthorship => {
-                self.get_block_authorship_settings_keyboard(notification_rules)?
-            }
+            SettingsSubSection::BlockAuthorship => self.get_period_settings_keyboard(
+                SettingsEditQueryType::BlockAuthorship,
+                NotificationTypeCode::ChainValidatorBlockAuthorship,
+                SettingsSubSection::ValidatorActivity,
+                notification_rules,
+            )?,
             SettingsSubSection::Democracy => {
                 self.get_democracy_settings_keyboard(notification_rules)?
             }
             SettingsSubSection::OneKV => self.get_onekv_settings_keyboard(notification_rules)?,
+            SettingsSubSection::Nominations => self.get_nomination_settings_keyboard()?,
+            SettingsSubSection::NewNomination => self.get_period_settings_keyboard(
+                SettingsEditQueryType::NewNomination,
+                NotificationTypeCode::ChainValidatorNewNomination,
+                SettingsSubSection::Nominations,
+                notification_rules,
+            )?,
+            SettingsSubSection::LostNomination => self.get_period_settings_keyboard(
+                SettingsEditQueryType::LostNomination,
+                NotificationTypeCode::ChainValidatorLostNomination,
+                SettingsSubSection::Nominations,
+                notification_rules,
+            )?,
         };
         let params = EditMessageTextParams {
             chat_id: Some(ChatId::Integer(chat_id)),

@@ -94,6 +94,7 @@ impl From<&str> for NotificationChannel {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
 pub enum NotificationTypeCode {
     ChainValidateExtrinsic,
     ChainValidatorActive,

@@ -29,11 +29,20 @@ impl Messenger {
         let rows = vec![
             self.get_settings_button(
                 "settings_validator_activity.html",
-                QueryType::SettingsValidatorActivity,
+                QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
             )?,
-            self.get_settings_button("settings_nominations.html", QueryType::SettingsNominations)?,
-            self.get_settings_button("settings_democracy.html", QueryType::SettingsDemocracy)?,
-            self.get_settings_button("settings_onekv.html", QueryType::SettingsOneKV)?,
+            self.get_settings_button(
+                "settings_nominations.html",
+                QueryType::SettingsNavigate(SettingsSubSection::Nominations),
+            )?,
+            self.get_settings_button(
+                "settings_democracy.html",
+                QueryType::SettingsNavigate(SettingsSubSection::Democracy),
+            )?,
+            self.get_settings_button(
+                "settings_onekv.html",
+                QueryType::SettingsNavigate(SettingsSubSection::OneKV),
+            )?,
             self.get_settings_button("cancel.html", QueryType::Cancel)?,
         ];
         Ok(InlineKeyboardMarkup {
@@ -43,7 +52,7 @@ impl Messenger {
 }
 
 impl Messenger {
-    fn get_notification_rule_button(
+    fn get_notification_on_off_button(
         &self,
         notification_type_code: NotificationTypeCode,
         template_file_name: &str,
@@ -121,7 +130,7 @@ impl Messenger {
             "settings_item_block_authorship.html",
             QueryType::SettingsNavigate(SettingsSubSection::BlockAuthorship),
         )?];
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorChilled,
             "settings_item_chilled.html",
             SettingsEditQueryType::Chilled,
@@ -129,7 +138,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorSetController,
             "settings_item_set_controller.html",
             SettingsEditQueryType::SetController,
@@ -137,7 +146,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorIdentityChanged,
             "settings_item_id_changed.html",
             SettingsEditQueryType::IdentityChanged,
@@ -145,7 +154,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorActive,
             "settings_item_active.html",
             SettingsEditQueryType::Active,
@@ -153,7 +162,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorActiveNextSession,
             "settings_item_active_next_session.html",
             SettingsEditQueryType::ActiveNextSession,
@@ -161,7 +170,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorInactive,
             "settings_item_inactive.html",
             SettingsEditQueryType::Inactive,
@@ -169,7 +178,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorInactiveNextSession,
             "settings_item_inactive_next_session.html",
             SettingsEditQueryType::InactiveNextSession,
@@ -178,7 +187,7 @@ impl Messenger {
             rows.push(item);
         }
 
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorOfflineOffence,
             "settings_item_offline_offence.html",
             SettingsEditQueryType::OfflineOffence,
@@ -186,7 +195,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorPayoutStakers,
             "settings_item_payout_stakers.html",
             SettingsEditQueryType::PayoutStakers,
@@ -194,7 +203,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorSessionKeysChanged,
             "settings_item_session_keys_changed.html",
             SettingsEditQueryType::SessionKeysChanged,
@@ -202,7 +211,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorUnclaimedPayout,
             "settings_item_unclaimed_payout.html",
             SettingsEditQueryType::UnclaimedPayout,
@@ -221,14 +230,17 @@ impl Messenger {
         })
     }
 
-    pub fn get_block_authorship_settings_keyboard(
+    pub fn get_period_settings_keyboard(
         &self,
+        edit_type: SettingsEditQueryType,
+        notification_type_code: NotificationTypeCode,
+        back_target: SettingsSubSection,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
         let mut rows = vec![];
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Off,
             0,
             notification_rules,
@@ -236,8 +248,8 @@ impl Messenger {
             rows.push(button);
         };
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Immediate,
             0,
             notification_rules,
@@ -245,8 +257,8 @@ impl Messenger {
             rows.push(button);
         };
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Hour,
             1,
             notification_rules,
@@ -254,8 +266,8 @@ impl Messenger {
             rows.push(button);
         };
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Hour,
             2,
             notification_rules,
@@ -263,8 +275,8 @@ impl Messenger {
             rows.push(button);
         };
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Epoch,
             3,
             notification_rules,
@@ -272,8 +284,8 @@ impl Messenger {
             rows.push(button);
         };
         if let Some(button) = self.get_notification_period_button(
-            NotificationTypeCode::ChainValidatorBlockAuthorship,
-            SettingsEditQueryType::BlockAuthorship,
+            notification_type_code,
+            edit_type,
             NotificationPeriodType::Era,
             1,
             notification_rules,
@@ -281,11 +293,29 @@ impl Messenger {
             rows.push(button);
         };
 
-        rows.push(self.get_settings_button(
-            "back.html",
-            QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
-        )?);
+        rows.push(self.get_settings_button("back.html", QueryType::SettingsNavigate(back_target))?);
         rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
+        Ok(InlineKeyboardMarkup {
+            inline_keyboard: rows,
+        })
+    }
+
+    pub fn get_nomination_settings_keyboard(&self) -> anyhow::Result<InlineKeyboardMarkup> {
+        let rows = vec![
+            self.get_settings_button(
+                "settings_new_nomination.html",
+                QueryType::SettingsNavigate(SettingsSubSection::NewNomination),
+            )?,
+            self.get_settings_button(
+                "settings_lost_nomination.html",
+                QueryType::SettingsNavigate(SettingsSubSection::LostNomination),
+            )?,
+            self.get_settings_button(
+                "back.html",
+                QueryType::SettingsNavigate(SettingsSubSection::Root),
+            )?,
+            self.get_settings_button("cancel.html", QueryType::Cancel)?,
+        ];
         Ok(InlineKeyboardMarkup {
             inline_keyboard: rows,
         })
@@ -296,7 +326,7 @@ impl Messenger {
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
         let mut rows = vec![];
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyProposed,
             "settings_item_democracy_proposed.html",
             SettingsEditQueryType::DemocracyProposed,
@@ -304,7 +334,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracySeconded,
             "settings_item_democracy_seconded.html",
             SettingsEditQueryType::DemocracySeconded,
@@ -312,7 +342,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyStarted,
             "settings_item_democracy_started.html",
             SettingsEditQueryType::DemocracyStarted,
@@ -320,7 +350,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyCancelled,
             "settings_item_democracy_cancelled.html",
             SettingsEditQueryType::DemocracyCancelled,
@@ -328,7 +358,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyPassed,
             "settings_item_democracy_passed.html",
             SettingsEditQueryType::DemocracyPassed,
@@ -336,7 +366,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyNotPassed,
             "settings_item_democracy_not_passed.html",
             SettingsEditQueryType::DemocracyNotPassed,
@@ -344,7 +374,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyVoted,
             "settings_item_democracy_voted.html",
             SettingsEditQueryType::DemocracyVoted,
@@ -352,7 +382,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyDelegated,
             "settings_item_democracy_delegated.html",
             SettingsEditQueryType::DemocracyDelegated,
@@ -360,7 +390,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyUndelegated,
             "settings_item_democracy_undelegated.html",
             SettingsEditQueryType::DemocracyUndelegated,
@@ -384,7 +414,7 @@ impl Messenger {
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
         let mut rows = vec![];
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorRankChange,
             "settings_item_onekv_rank_change.html",
             SettingsEditQueryType::OneKVRankChange,
@@ -392,7 +422,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorBinaryVersionChange,
             "settings_item_onekv_binary_version_change.html",
             SettingsEditQueryType::OneKVBinaryVersionChange,
@@ -400,7 +430,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorValidityChange,
             "settings_item_onekv_validity_change.html",
             SettingsEditQueryType::OneKVValidityChange,
@@ -408,7 +438,7 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_rule_button(
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorLocationChange,
             "settings_item_onekv_location_change.html",
             SettingsEditQueryType::OneKVLocationChange,

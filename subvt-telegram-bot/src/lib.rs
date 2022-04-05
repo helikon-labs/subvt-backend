@@ -298,7 +298,7 @@ impl TelegramBot {
         if let Some(group_chat_created) = message.group_chat_created {
             if group_chat_created {
                 self.messenger
-                    .send_message(message.chat.id, MessageType::Intro)
+                    .send_message(message.chat.id, Box::new(MessageType::Intro))
                     .await?;
                 self.update_metrics_chat_count().await?;
                 return Ok(());
@@ -340,7 +340,9 @@ impl TelegramBot {
                                 self.messenger
                                     .send_message(
                                         message.chat.id,
-                                        MessageType::InvalidAddressTryAgain(text.to_string()),
+                                        Box::new(MessageType::InvalidAddressTryAgain(
+                                            text.to_string(),
+                                        )),
                                     )
                                     .await?;
                             }
@@ -348,20 +350,23 @@ impl TelegramBot {
                         _ => {
                             if message.chat.type_field == ChatType::Private {
                                 self.messenger
-                                    .send_message(message.chat.id, MessageType::BadRequest)
+                                    .send_message(
+                                        message.chat.id,
+                                        Box::new(MessageType::BadRequest),
+                                    )
                                     .await?;
                             }
                         }
                     }
                 } else if message.chat.type_field == ChatType::Private {
                     self.messenger
-                        .send_message(message.chat.id, MessageType::BadRequest)
+                        .send_message(message.chat.id, Box::new(MessageType::BadRequest))
                         .await?;
                 }
             }
         } else {
             self.messenger
-                .send_message(message.chat.id, MessageType::BadRequest)
+                .send_message(message.chat.id, Box::new(MessageType::BadRequest))
                 .await?;
         }
         Ok(())
@@ -403,7 +408,10 @@ impl Service for TelegramBot {
                                     );
                                     let _ = self
                                         .messenger
-                                        .send_message(message.chat.id, MessageType::GenericError)
+                                        .send_message(
+                                            message.chat.id,
+                                            Box::new(MessageType::GenericError),
+                                        )
                                         .await;
                                 }
                             });
@@ -437,7 +445,7 @@ impl Service for TelegramBot {
                                                 .messenger
                                                 .send_message(
                                                     message.chat.id,
-                                                    MessageType::GenericError,
+                                                    Box::new(MessageType::GenericError),
                                                 )
                                                 .await;
                                         }

@@ -52,7 +52,17 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
         )
         .unwrap()
     });
-    METER.with_label_values(&[query.to_string().as_str()])
+    let label = match query {
+        QueryType::ValidatorInfo => "ValidatorInfo",
+        QueryType::NominationSummary => "NominationSummary",
+        QueryType::NominationDetails => "NominationDetails",
+        QueryType::RemoveValidator => "RemoveValidator",
+        QueryType::ConfirmBroadcast => "ConfirmBroadcast",
+        QueryType::SettingsEdit(_) => "SettingsEdit",
+        QueryType::SettingsNavigate(_) => "SettingsNavigate",
+        QueryType::Cancel => "Cancel",
+    };
+    METER.with_label_values(&[label])
 }
 
 impl TelegramBot {

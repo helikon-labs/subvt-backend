@@ -14,7 +14,7 @@ impl TelegramBot {
         let mut validators = self.network_postgres.get_chat_validators(chat_id).await?;
         if validators.is_empty() {
             self.messenger
-                .send_message(chat_id, MessageType::NoValidatorsOnChat)
+                .send_message(chat_id, Box::new(MessageType::NoValidatorsOnChat))
                 .await?;
         } else if validators.len() == 1 {
             let query = Query {
@@ -23,7 +23,7 @@ impl TelegramBot {
             };
             self.process_query(chat_id, None, &query).await?;
         } else {
-            log::info!("Send validator list for query: {}", query_type);
+            log::info!("Send validator list for query: {:?}", query_type);
             validators.sort_by(|v1, v2| {
                 if let Some(v1_display) = &v1.display {
                     if let Some(v2_display) = &v2.display {
@@ -40,10 +40,10 @@ impl TelegramBot {
             self.messenger
                 .send_message(
                     chat_id,
-                    MessageType::ValidatorList {
+                    Box::new(MessageType::ValidatorList {
                         validators,
                         query_type,
-                    },
+                    }),
                 )
                 .await?;
         }
@@ -57,7 +57,7 @@ impl TelegramBot {
             .await?;
         if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
             self.messenger
-                .send_message(chat_id, MessageType::TooManyValidatorsOnChat)
+                .send_message(chat_id, Box::new(MessageType::TooManyValidatorsOnChat))
                 .await?;
         }
         if args.is_empty() {
@@ -65,7 +65,7 @@ impl TelegramBot {
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)
                 .await?;
             self.messenger
-                .send_message(chat_id, MessageType::AddValidator)
+                .send_message(chat_id, Box::new(MessageType::AddValidator))
                 .await?;
             return Ok(());
         }
@@ -82,9 +82,9 @@ impl TelegramBot {
                             self.messenger
                                 .send_message(
                                     chat_id,
-                                    MessageType::ValidatorExistsOnChat(
+                                    Box::new(MessageType::ValidatorExistsOnChat(
                                         validator.account.get_display_or_condensed_address(None),
-                                    ),
+                                    )),
                                 )
                                 .await?;
                         } else {
@@ -121,21 +121,24 @@ impl TelegramBot {
                             };
                             self.process_query(chat_id, None, &query).await?;
                             self.messenger
-                                .send_message(chat_id, MessageType::ValidatorAdded)
+                                .send_message(chat_id, Box::new(MessageType::ValidatorAdded))
                                 .await?;
                         }
                     } else {
                         self.messenger
                             .send_message(
                                 chat_id,
-                                MessageType::AddValidatorNotFound(address.clone()),
+                                Box::new(MessageType::AddValidatorNotFound(address.clone())),
                             )
                             .await?;
                     }
                 }
                 Err(_) => {
                     self.messenger
-                        .send_message(chat_id, MessageType::InvalidAddress(address.clone()))
+                        .send_message(
+                            chat_id,
+                            Box::new(MessageType::InvalidAddress(address.clone())),
+                        )
                         .await?;
                 }
             }
@@ -159,7 +162,7 @@ impl TelegramBot {
             "/start" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.messenger
-                    .send_message(chat_id, MessageType::Intro)
+                    .send_message(chat_id, Box::new(MessageType::Intro))
                     .await?;
             }
             "/add" => {
@@ -170,7 +173,7 @@ impl TelegramBot {
                 crate::metrics::command_call_counter(command).inc();
                 self.reset_chat_state(chat_id).await?;
                 self.messenger
-                    .send_message(chat_id, MessageType::Ok)
+                    .send_message(chat_id, Box::new(MessageType::Ok))
                     .await?;
             }
             "/remove" => {
@@ -224,7 +227,7 @@ impl TelegramBot {
                 }
                 let settings_message_id = self
                     .messenger
-                    .send_message(chat_id, MessageType::Settings)
+                    .send_message(chat_id, Box::new(MessageType::Settings))
                     .await?
                     .result
                     .message_id;
@@ -236,11 +239,14 @@ impl TelegramBot {
                 crate::metrics::command_call_counter(command).inc();
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
-                        .send_message(chat_id, MessageType::Broadcast)
+                        .send_message(chat_id, Box::new(MessageType::Broadcast))
                         .await?;
                 } else {
                     self.messenger
-                        .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
+                        .send_message(
+                            chat_id,
+                            Box::new(MessageType::UnknownCommand(command.to_string())),
+                        )
                         .await?;
                 }
             }
@@ -248,18 +254,24 @@ impl TelegramBot {
                 crate::metrics::command_call_counter(command).inc();
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
-                        .send_message(chat_id, MessageType::BroadcastConfirm)
+                        .send_message(chat_id, Box::new(MessageType::BroadcastConfirm))
                         .await?;
                 } else {
                     self.messenger
-                        .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
+                        .send_message(
+                            chat_id,
+                            Box::new(MessageType::UnknownCommand(command.to_string())),
+                        )
                         .await?;
                 }
             }
             _ => {
                 crate::metrics::command_call_counter("invalid").inc();
                 self.messenger
-                    .send_message(chat_id, MessageType::UnknownCommand(command.to_string()))
+                    .send_message(
+                        chat_id,
+                        Box::new(MessageType::UnknownCommand(command.to_string())),
+                    )
                     .await?;
             }
         }
