@@ -23,14 +23,14 @@ impl NotificationGenerator {
                 .get_notification_rules_for_validator(
                     &NotificationTypeCode::ChainValidatorPayoutStakers.to_string(),
                     CONFIG.substrate.network_id,
-                    &extrinsic.caller_account_id,
+                    &extrinsic.validator_account_id,
                 )
                 .await?;
             self.generate_notifications(
                 app_postgres.clone(),
                 &rules,
                 block.number,
-                &Some(extrinsic.caller_account_id),
+                &Some(extrinsic.validator_account_id),
                 Some(&extrinsic.clone()),
             )
             .await?;
