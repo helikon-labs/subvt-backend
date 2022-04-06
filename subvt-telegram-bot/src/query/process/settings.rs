@@ -3,11 +3,11 @@ use crate::TelegramBot;
 use subvt_types::app::{NotificationPeriodType, NotificationTypeCode};
 
 impl TelegramBot {
-    async fn edit_notification_setting(
+    async fn process_notification_on_off_setting_query(
         &self,
         user_id: u32,
         query: &Query,
-        type_code: &NotificationTypeCode,
+        type_code: NotificationTypeCode,
     ) -> anyhow::Result<()> {
         let on: bool = serde_json::from_str(query.parameter.as_ref().unwrap_or_else(|| {
             panic!(
@@ -20,11 +20,48 @@ impl TelegramBot {
                 user_id,
                 type_code,
                 if on {
-                    &NotificationPeriodType::Immediate
+                    NotificationPeriodType::Immediate
                 } else {
-                    &NotificationPeriodType::Off
+                    NotificationPeriodType::Off
                 },
                 0,
+            )
+            .await?;
+        self.app_postgres
+            .update_user_pending_notifications_period_by_type(
+                user_id,
+                type_code,
+                if on {
+                    NotificationPeriodType::Immediate
+                } else {
+                    NotificationPeriodType::Off
+                },
+                0,
+            )
+            .await?;
+        Ok(())
+    }
+
+    async fn process_notification_period_setting_query(
+        &self,
+        user_id: u32,
+        query: &Query,
+        type_code: NotificationTypeCode,
+    ) -> anyhow::Result<()> {
+        let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
+            query.parameter.as_ref().unwrap_or_else(||
+                panic!("Expecting period type and period param for block authorship notification setting action.")
+            )
+        )?;
+        self.app_postgres
+            .update_user_notification_rule_period(user_id, type_code, period_data.0, period_data.1)
+            .await?;
+        self.app_postgres
+            .update_user_pending_notifications_period_by_type(
+                user_id,
+                type_code,
+                period_data.0,
+                period_data.1,
             )
             .await?;
         Ok(())
@@ -39,265 +76,244 @@ impl TelegramBot {
         let user_id = self.network_postgres.get_chat_app_user_id(chat_id).await?;
         let sub_section = match edit_query_type {
             SettingsEditQueryType::Active => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorActive,
+                    NotificationTypeCode::ChainValidatorActive,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::ActiveNextSession => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorActiveNextSession,
+                    NotificationTypeCode::ChainValidatorActiveNextSession,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::Inactive => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorInactive,
+                    NotificationTypeCode::ChainValidatorInactive,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::InactiveNextSession => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorInactiveNextSession,
+                    NotificationTypeCode::ChainValidatorInactiveNextSession,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::BlockAuthorship => {
-                let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
-                    query.parameter.as_ref().unwrap_or_else(||
-                        panic!("Expecting period type and period param for block authorship notification setting action.")
-                    )
-                )?;
-                self.app_postgres
-                    .update_user_notification_rule_period(
-                        user_id,
-                        &NotificationTypeCode::ChainValidatorBlockAuthorship,
-                        &period_data.0,
-                        period_data.1,
-                    )
-                    .await?;
+                self.process_notification_period_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ChainValidatorBlockAuthorship,
+                )
+                .await?;
                 SettingsSubSection::BlockAuthorship
             }
             SettingsEditQueryType::Chilled => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorChilled,
+                    NotificationTypeCode::ChainValidatorChilled,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::IdentityChanged => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorIdentityChanged,
+                    NotificationTypeCode::ChainValidatorIdentityChanged,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::OfflineOffence => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorOfflineOffence,
+                    NotificationTypeCode::ChainValidatorOfflineOffence,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::PayoutStakers => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorPayoutStakers,
+                    NotificationTypeCode::ChainValidatorPayoutStakers,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::SessionKeysChanged => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorSessionKeysChanged,
+                    NotificationTypeCode::ChainValidatorSessionKeysChanged,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::SetController => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorSetController,
+                    NotificationTypeCode::ChainValidatorSetController,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::UnclaimedPayout => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::ChainValidatorUnclaimedPayout,
+                    NotificationTypeCode::ChainValidatorUnclaimedPayout,
                 )
                 .await?;
                 SettingsSubSection::ValidatorActivity
             }
             SettingsEditQueryType::NewNomination => {
-                let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
-                    query.parameter.as_ref().unwrap_or_else(||
-                        panic!("Expecting period type and period param for new nomination notification setting action.")
-                    )
-                )?;
-                self.app_postgres
-                    .update_user_notification_rule_period(
-                        user_id,
-                        &NotificationTypeCode::ChainValidatorNewNomination,
-                        &period_data.0,
-                        period_data.1,
-                    )
-                    .await?;
+                self.process_notification_period_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ChainValidatorNewNomination,
+                )
+                .await?;
                 SettingsSubSection::NewNomination
             }
             SettingsEditQueryType::LostNomination => {
-                let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
-                    query.parameter.as_ref().unwrap_or_else(||
-                        panic!("Expecting period type and period param for lost nomination notification setting action.")
-                    )
-                )?;
-                self.app_postgres
-                    .update_user_notification_rule_period(
-                        user_id,
-                        &NotificationTypeCode::ChainValidatorLostNomination,
-                        &period_data.0,
-                        period_data.1,
-                    )
-                    .await?;
+                self.process_notification_period_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ChainValidatorLostNomination,
+                )
+                .await?;
                 SettingsSubSection::LostNomination
             }
             SettingsEditQueryType::DemocracyCancelled => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyCancelled,
+                    NotificationTypeCode::DemocracyCancelled,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyDelegated => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyDelegated,
+                    NotificationTypeCode::DemocracyDelegated,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyNotPassed => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyNotPassed,
+                    NotificationTypeCode::DemocracyNotPassed,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyPassed => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyPassed,
+                    NotificationTypeCode::DemocracyPassed,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyProposed => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyProposed,
+                    NotificationTypeCode::DemocracyProposed,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracySeconded => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracySeconded,
+                    NotificationTypeCode::DemocracySeconded,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyStarted => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyStarted,
+                    NotificationTypeCode::DemocracyStarted,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyUndelegated => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyUndelegated,
+                    NotificationTypeCode::DemocracyUndelegated,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::DemocracyVoted => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::DemocracyVoted,
+                    NotificationTypeCode::DemocracyVoted,
                 )
                 .await?;
                 SettingsSubSection::Democracy
             }
             SettingsEditQueryType::OneKVRankChange => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::OneKVValidatorRankChange,
+                    NotificationTypeCode::OneKVValidatorRankChange,
                 )
                 .await?;
                 SettingsSubSection::OneKV
             }
             SettingsEditQueryType::OneKVBinaryVersionChange => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::OneKVValidatorBinaryVersionChange,
+                    NotificationTypeCode::OneKVValidatorBinaryVersionChange,
                 )
                 .await?;
                 SettingsSubSection::OneKV
             }
             SettingsEditQueryType::OneKVValidityChange => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::OneKVValidatorValidityChange,
+                    NotificationTypeCode::OneKVValidatorValidityChange,
                 )
                 .await?;
                 SettingsSubSection::OneKV
             }
             SettingsEditQueryType::OneKVLocationChange => {
-                self.edit_notification_setting(
+                self.process_notification_on_off_setting_query(
                     user_id,
                     query,
-                    &NotificationTypeCode::OneKVValidatorLocationChange,
+                    NotificationTypeCode::OneKVValidatorLocationChange,
                 )
                 .await?;
                 SettingsSubSection::OneKV

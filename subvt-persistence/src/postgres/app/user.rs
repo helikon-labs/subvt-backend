@@ -567,8 +567,8 @@ impl PostgreSQLAppStorage {
     pub async fn update_user_notification_rule_period(
         &self,
         user_id: u32,
-        type_code: &NotificationTypeCode,
-        period_type: &NotificationPeriodType,
+        type_code: NotificationTypeCode,
+        period_type: NotificationPeriodType,
         period: u16,
     ) -> anyhow::Result<()> {
         sqlx::query(
@@ -577,6 +577,34 @@ impl PostgreSQLAppStorage {
             SET period_type = $1, period = $2
             WHERE user_id = $3
             AND notification_type_code = $4
+            "#,
+        )
+        .bind(period_type)
+        .bind(period as i32)
+        .bind(user_id as i32)
+        .bind(type_code.to_string())
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn update_user_pending_notifications_period_by_type(
+        &self,
+        user_id: u32,
+        type_code: NotificationTypeCode,
+        period_type: NotificationPeriodType,
+        period: u16,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE app_notification
+            SET period_type = $1, period = $2
+            WHERE user_id = $3
+            AND notification_type_code = $4
+            AND period_type != 'off'
+            AND processing_started_at IS NULL
+            AND sent_at IS NULL
+            AND failed_at IS NULL
             "#,
         )
         .bind(period_type)

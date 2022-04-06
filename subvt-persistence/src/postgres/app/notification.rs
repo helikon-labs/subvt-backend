@@ -79,6 +79,7 @@ impl PostgreSQLAppStorage {
             SELECT "id"
             FROM app_user_notification_rule UNR
             WHERE UNR.notification_type_code = $1
+            AND UNR.period_type != 'off'
             AND UNR.deleted_at IS NULL
             AND (UNR.network_id IS NULL OR UNR.network_id = $2)
             AND (
@@ -88,6 +89,7 @@ impl PostgreSQLAppStorage {
                         SELECT DISTINCT "id"
                         FROM app_user_validator UV1
                         WHERE UV1.network_id = $2
+                        AND UV1.user_id = UNR.user_id
                         AND UV1.validator_account_id = $3
                         AND UV1.deleted_at IS NULL
                     )
@@ -102,6 +104,7 @@ impl PostgreSQLAppStorage {
                             SELECT DISTINCT "id"
                             FROM app_user_validator UV2
                             WHERE UV2.network_id = $2
+                            AND UV2.user_id = UNR.user_id
                             AND UV2.validator_account_id = $3
                             AND UV2.id = UNRV.user_validator_id
                             AND UV2.deleted_at IS NULL
