@@ -12,6 +12,9 @@ impl TelegramBot {
     ) -> anyhow::Result<()> {
         log::info!("Process query: {:?}", query);
         crate::metrics::query_call_counter(&query.query_type).inc();
+        self.network_postgres
+            .save_chat_query_log(chat_id, &format!("{:?}", query))
+            .await?;
         match &query.query_type {
             QueryType::ConfirmBroadcast => {
                 if let Some(message_id) = original_message_id {

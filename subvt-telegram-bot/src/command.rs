@@ -161,16 +161,25 @@ impl TelegramBot {
         match command {
             "/start" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.messenger
                     .send_message(chat_id, Box::new(MessageType::Intro))
                     .await?;
             }
             "/add" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.process_add_command(chat_id, args).await?
             }
             "/cancel" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.reset_chat_state(chat_id).await?;
                 self.messenger
                     .send_message(chat_id, Box::new(MessageType::Ok))
@@ -178,6 +187,9 @@ impl TelegramBot {
             }
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 if let Some(validator_address) = args.get(0) {
                     if let Some(chat_validator) = self
                         .network_postgres
@@ -202,18 +214,27 @@ impl TelegramBot {
                         .await?
                 }
             }
-            "/validatorinfo" | "vi" => {
+            "/validatorinfo" | "/vi" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.process_validators_command(chat_id, QueryType::ValidatorInfo)
                     .await?
             }
-            "/nominations" => {
+            "/nominations" | "/n" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.process_validators_command(chat_id, QueryType::NominationSummary)
                     .await?
             }
-            "/settings" => {
+            "/settings" | "/s" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 // close last settings message
                 if let Some(settings_message_id) = self
                     .network_postgres
@@ -237,6 +258,9 @@ impl TelegramBot {
             }
             "/broadcasttest" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
                         .send_message(chat_id, Box::new(MessageType::Broadcast))
@@ -252,6 +276,9 @@ impl TelegramBot {
             }
             "/broadcast" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 if CONFIG.telegram_bot.admin_chat_id == chat_id {
                     self.messenger
                         .send_message(chat_id, Box::new(MessageType::BroadcastConfirm))
@@ -267,6 +294,9 @@ impl TelegramBot {
             }
             _ => {
                 crate::metrics::command_call_counter("invalid").inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, "invalid")
+                    .await?;
                 self.messenger
                     .send_message(
                         chat_id,

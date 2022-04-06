@@ -409,4 +409,42 @@ impl PostgreSQLNetworkStorage {
 
         Ok(settings_message_id.0)
     }
+
+    pub async fn save_chat_command_log(
+        &self,
+        telegram_chat_id: i64,
+        command: &str,
+    ) -> anyhow::Result<u64> {
+        let id: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO sub_telegram_chat_activity_log (telegram_chat_id, command)
+            VALUES ($1, $2)
+            RETURNING id
+            "#,
+        )
+        .bind(telegram_chat_id as i64)
+        .bind(command)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(id.0 as u64)
+    }
+
+    pub async fn save_chat_query_log(
+        &self,
+        telegram_chat_id: i64,
+        query: &str,
+    ) -> anyhow::Result<u64> {
+        let id: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO sub_telegram_chat_activity_log (telegram_chat_id, query)
+            VALUES ($1, $2)
+            RETURNING id
+            "#,
+        )
+        .bind(telegram_chat_id as i64)
+        .bind(query)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(id.0 as u64)
+    }
 }
