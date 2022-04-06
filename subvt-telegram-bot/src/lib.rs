@@ -47,8 +47,8 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::ChainValidatorBlockAuthorship,
-            NotificationPeriodType::Immediate,
-            0,
+            NotificationPeriodType::Hour,
+            1,
         ),
         (
             NotificationTypeCode::ChainValidatorChilled,
@@ -128,12 +128,12 @@ lazy_static! {
         // democracy
         (
             NotificationTypeCode::DemocracyCancelled,
-            NotificationPeriodType::Immediate,
+            NotificationPeriodType::Off,
             0,
         ),
         (
             NotificationTypeCode::DemocracyDelegated,
-            NotificationPeriodType::Immediate,
+            NotificationPeriodType::Off,
             0,
         ),
         (
@@ -148,7 +148,7 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracyProposed,
-            NotificationPeriodType::Immediate,
+            NotificationPeriodType::Off,
             0,
         ),
         (
@@ -163,7 +163,7 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracyUndelegated,
-            NotificationPeriodType::Immediate,
+            NotificationPeriodType::Off,
             0,
         ),
         (
