@@ -1,1 +1,1 @@
-⛓ {{ validator_display }} has authored new blocks
+⛓ {{ validator_display }} authored new blocks

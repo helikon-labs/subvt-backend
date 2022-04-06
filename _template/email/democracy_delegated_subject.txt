@@ -1,1 +1,1 @@
-🗳🔗️ {{ validator_display }} has delegated votes
+🗳🔗️ {{ validator_display }} has delegated its votes

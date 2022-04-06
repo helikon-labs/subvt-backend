@@ -1,1 +1,1 @@
-🆘 {{ validator_display }} was offline
+🆘 {{ validator_display }} was found offline

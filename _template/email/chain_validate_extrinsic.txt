@@ -1,5 +1,5 @@
 {{ validator_display }}
-🥁 has declared a new intention to validate{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period_type }}{% if notification_period > 1 %}s{% endif %}{% endif %}!
+🥁 declared a new intention to validate{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period_type }}{% if notification_period > 1 %}s{% endif %}{% endif %}!
 ⚓️ Controller {{ controller_display }}.
 💷 {{ commission }}% commission.
 {% if blocks_nominations %}⛔️ Blocks nominations{% else %}🙌 Does not block nominations{% endif %}.

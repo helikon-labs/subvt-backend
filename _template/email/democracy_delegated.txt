@@ -1,2 +1,2 @@
 {{ validator_display }}
-🗳🔗️ has delegated its democracy votes to {{ delegate_display }}.
+🗳🔗️ delegated its democracy votes to {{ delegate_display }}.

@@ -1,5 +1,5 @@
 {{ validator_display }}{% if aye_balance and nay_balance %}
-🗳 has cast a split vote for referendum #{{ referendum_index }} with {{ aye_balance }} {{ token_ticker }} for aye and {{ nay_balance }} {{ token_ticker }} for nay.{% elif aye_balance %}
-🗳✅ has voted aye for referendum #{{ referendum_index }} with {{ aye_balance }} {{ token_ticker }} and {% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction.{% elif nay_balance %}
-🗳✅ has voted nay for referendum #{{ referendum_index }} with {{ nay_balance }} {{ token_ticker }} and {% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction.{% else %}
-🗳 has cast a vote for referendum #{{ referendum_index }}.{% endif %}
+🗳 cast a split vote for referendum #{{ referendum_index }} with {{ aye_balance }} {{ token_ticker }} for aye and {{ nay_balance }} {{ token_ticker }} for nay.{% elif aye_balance %}
+🗳👍 voted aye for referendum #{{ referendum_index }} with {{ aye_balance }} {{ token_ticker }} and {% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction.{% elif nay_balance %}
+🗳👎 voted nay for referendum #{{ referendum_index }} with {{ nay_balance }} {{ token_ticker }} and {% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction.{% else %}
+🗳 cast a vote for referendum #{{ referendum_index }}.{% endif %}

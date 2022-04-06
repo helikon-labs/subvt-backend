@@ -1,2 +1,2 @@
 {{ validator_display }}
-⚓️ has declared a new controller: {{ controller_display }}
+⚓️ declared a new controller: {{ controller_display }}
