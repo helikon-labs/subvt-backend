@@ -23,6 +23,7 @@ mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
+    static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
 const HISTORY_BLOCK_DEPTH: u64 = 3;
@@ -246,9 +247,7 @@ impl ValidatorListUpdater {
         Ok(validators)
     }
 
-    async fn store_processed_block_numbers(
-        processed_block_numbers: &Vec<u64>,
-    ) -> anyhow::Result<()> {
+    async fn store_processed_block_numbers(processed_block_numbers: &[u64]) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
         let mut redis_connection = redis_client.get_async_connection().await.context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -305,12 +304,20 @@ impl Service for ValidatorListUpdater {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
+            if IS_BUSY.load(Ordering::SeqCst) {
+                let delay_seconds = CONFIG.common.recovery_retry_seconds;
+                log::warn!(
+                    "Busy processing past state. Hold re-instantiation for {} seconds.",
+                    delay_seconds
+                );
+                tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
+                continue;
+            }
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
             let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-            let is_busy = Arc::new(AtomicBool::new(false));
             let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(
                 ValidatorListUpdater::fetch_processed_block_numbers().await?,
             ));
@@ -329,15 +336,14 @@ impl Service for ValidatorListUpdater {
                         }
                     };
                     metrics::target_finalized_block_number().set(finalized_block_number as i64);
-                    if is_busy.load(Ordering::SeqCst) {
+                    if IS_BUSY.load(Ordering::SeqCst) {
                         log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
                         return Ok(());
                     }
-                    is_busy.store(true, Ordering::SeqCst);
+                    IS_BUSY.store(true, Ordering::SeqCst);
                     let processed_block_numbers = processed_block_numbers.clone();
                     let substrate_client = Arc::clone(&substrate_client);
                     let postgres = postgres.clone();
-                    let is_busy = Arc::clone(&is_busy);
                     tokio::spawn(async move {
                         let start = std::time::Instant::now();
                         let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
@@ -357,7 +363,7 @@ impl Service for ValidatorListUpdater {
                             metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             metrics::processed_finalized_block_number().set(finalized_block_number as i64);
                         }
-                        is_busy.store(false, Ordering::SeqCst);
+                        IS_BUSY.store(false, Ordering::SeqCst);
                     });
                     Ok(())
             }).await;
@@ -366,7 +372,7 @@ impl Service for ValidatorListUpdater {
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

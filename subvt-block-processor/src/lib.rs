@@ -26,6 +26,7 @@ mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
+    static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
 #[derive(Default)]
@@ -359,6 +360,15 @@ impl Service for BlockProcessor {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
+            if IS_BUSY.load(Ordering::SeqCst) {
+                let delay_seconds = CONFIG.common.recovery_retry_seconds;
+                log::warn!(
+                    "Busy processing past blocks. Hold re-instantiation for {} seconds.",
+                    delay_seconds
+                );
+                tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
+                continue;
+            }
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             let block_subscription_substrate_client = SubstrateClient::new(&CONFIG).await?;
             let block_processor_substrate_client =
@@ -367,7 +377,6 @@ impl Service for BlockProcessor {
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
-            let is_indexing_past_blocks = Arc::new(AtomicBool::new(false));
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,
@@ -384,14 +393,15 @@ impl Service for BlockProcessor {
                         }
                     };
                     metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    if IS_BUSY.load(Ordering::SeqCst) {
+                        log::debug!("Busy processing past blocks. Skip block #{} for now.", finalized_block_number);
+                        return Ok(());
+                    }
+
                     let block_processor_substrate_client = block_processor_substrate_client.clone();
                     let runtime_information = runtime_information.clone();
                     let postgres = postgres.clone();
-                    if is_indexing_past_blocks.load(Ordering::SeqCst) {
-                        log::debug!("Busy indexing past blocks. Skip block #{} for now.", finalized_block_number);
-                        return Ok(());
-                    }
-                    let is_indexing_past_blocks = Arc::clone(&is_indexing_past_blocks);
+                    IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
                         let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
                         let processed_block_height = match postgres.get_processed_block_height().await {
@@ -399,11 +409,11 @@ impl Service for BlockProcessor {
                             Err(error) => {
                                 log::error!("Cannot get processed block height from the database: {:?}", error);
                                 let _ = error_cell.set(error);
+                                IS_BUSY.store(false, Ordering::SeqCst);
                                 return;
                             }
                         };
                         if processed_block_height < (finalized_block_number - 1) {
-                            is_indexing_past_blocks.store(true, Ordering::SeqCst);
                             let mut block_number = std::cmp::max(
                                 processed_block_height,
                                 CONFIG.block_processor.start_block_number
@@ -415,7 +425,7 @@ impl Service for BlockProcessor {
                                     finalized_block_number
                                 );
                                 let start = std::time::Instant::now();
-                                let update_result = self.process_block(
+                                let process_result = self.process_block(
                                     &mut block_processor_substrate_client,
                                     &runtime_information,
                                     &postgres,
@@ -423,7 +433,7 @@ impl Service for BlockProcessor {
                                     false,
                                 ).await;
                                 metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
-                                match update_result {
+                                match process_result {
                                     Ok(_) => {
                                         metrics::processed_finalized_block_number().set(block_number as i64);
                                         block_number += 1
@@ -434,13 +444,11 @@ impl Service for BlockProcessor {
                                             "History block processing failed for block #{}.",
                                             block_number,
                                         );
-                                        is_indexing_past_blocks.store(false, Ordering::SeqCst);
                                         let _ = error_cell.set(error);
-                                        return;
+                                        break;
                                     }
                                 }
                             }
-                            is_indexing_past_blocks.store(false, Ordering::SeqCst);
                         } else {
                             // update current era reward points every 3 minutes
                             let blocks_per_3_minutes = 3 * 60 * 1000
@@ -472,6 +480,7 @@ impl Service for BlockProcessor {
                                 }
                             }
                         }
+                        IS_BUSY.store(false, Ordering::SeqCst);
                     });
                     Ok(())
             }).await;
@@ -480,7 +489,7 @@ impl Service for BlockProcessor {
                 "Finalized block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

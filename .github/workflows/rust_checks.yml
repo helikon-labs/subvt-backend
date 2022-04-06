@@ -33,9 +33,9 @@ jobs:
           components: clippy, rustfmt
           override: true
       - run: rustup update
-      - run: rustup update nightly-2022-03-14
-      - run: rustup default nightly-2022-03-14
-      - run: rustup target add wasm32-unknown-unknown --toolchain nightly-2022-03-14
+      - run: rustup update nightly #-2022-03-14
+      - run: rustup default nightly #-2022-03-14
+      - run: rustup target add wasm32-unknown-unknown --toolchain nightly #-2022-03-14
       - run: rustup default stable
       - name: Format
         uses: actions-rs/cargo@v1
@@ -45,7 +45,7 @@ jobs:
       - name: Clippy
         uses: actions-rs/cargo@v1
         with:
-          toolchain: nightly-2022-03-14
+          toolchain: nightly #-2022-03-14
           command: clippy
           args: --all-targets -- -D warnings -W clippy::cognitive_complexity
       - name: Test

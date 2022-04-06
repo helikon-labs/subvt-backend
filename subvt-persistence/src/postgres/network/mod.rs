@@ -272,7 +272,7 @@ impl PostgreSQLNetworkStorage {
         &self,
         era_index: u32,
         session_index: u64,
-        validator_account_ids: &Vec<&AccountId>,
+        validator_account_ids: &[&AccountId],
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
         for validator_account_id in validator_account_ids {
