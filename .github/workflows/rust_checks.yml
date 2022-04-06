@@ -29,7 +29,7 @@ jobs:
       - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly-2022-03-14
+          toolchain: nightly #-2022-03-14
           components: clippy, rustfmt
           override: true
       - run: rustup update
