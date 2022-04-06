@@ -40,6 +40,9 @@ impl NotificationGenerator {
                         &current.account.id,
                     )
                     .await?;
+                let is_onekv = network_postgres
+                    .is_onekv_nominator_account_id(&prev_nomination.stash_account.id)
+                    .await?;
                 let event = app_event::NominationAmountChange {
                     validator_account_id: current.account.id,
                     discovered_block_number: finalized_block_number,
@@ -50,6 +53,7 @@ impl NotificationGenerator {
                     active_amount: current_nomination.stake.active_amount,
                     total_amount: current_nomination.stake.total_amount,
                     nominee_count: current_nomination.target_account_ids.len() as u64,
+                    is_onekv,
                 };
                 self.generate_notifications(
                     app_postgres.clone(),

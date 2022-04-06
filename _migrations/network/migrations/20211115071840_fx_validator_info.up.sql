@@ -54,6 +54,7 @@ BEGIN
     AND EV.validator_account_id = account_id_param
     AND EV.is_active = true
     AND E.end_timestamp < (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000)
+    AND E.start_timestamp > (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000 - (100::bigint * 24 * 60 * 60 * 1000))
     AND NOT EXISTS(
         SELECT 1
         FROM sub_extrinsic_payout_stakers EPS

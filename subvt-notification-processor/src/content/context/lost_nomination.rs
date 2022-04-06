@@ -67,6 +67,7 @@ pub(crate) fn set_lost_nomination_context(
                 ),
             );
             context.insert("nominee_count", &lost_nomination.nominee_count);
+            context.insert("is_onekv", &lost_nomination.is_onekv);
         } else {
             log::error!(
                 "Cannot deserialize lost nomination notification data for notification #{}.",

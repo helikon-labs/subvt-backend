@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS sub_app_event_new_nomination
     active_amount               VARCHAR(128) NOT NULL,
     total_amount                VARCHAR(128) NOT NULL,
     nominee_count               bigint NOT NULL,
+    is_onekv                    boolean NOT NULL,
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 

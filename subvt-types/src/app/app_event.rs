@@ -12,6 +12,7 @@ pub struct NewNomination {
     pub active_amount: Balance,
     pub total_amount: Balance,
     pub nominee_count: u64,
+    pub is_onekv: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -22,6 +23,7 @@ pub struct LostNomination {
     pub active_amount: Balance,
     pub total_amount: Balance,
     pub nominee_count: u64,
+    pub is_onekv: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -35,6 +37,7 @@ pub struct NominationAmountChange {
     pub active_amount: Balance,
     pub total_amount: Balance,
     pub nominee_count: u64,
+    pub is_onekv: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

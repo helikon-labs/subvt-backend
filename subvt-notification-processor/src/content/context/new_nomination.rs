@@ -67,6 +67,7 @@ pub(crate) fn set_new_nomination_context(
                 ),
             );
             context.insert("nominee_count", &new_nomination.nominee_count);
+            context.insert("is_onekv", &new_nomination.is_onekv);
         } else {
             log::error!(
                 "Cannot deserialize new nomination notification data for notification #{}.",

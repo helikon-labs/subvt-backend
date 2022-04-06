@@ -349,4 +349,21 @@ impl PostgreSQLNetworkStorage {
             .filter_map(|db_account_id| AccountId::from_str(&db_account_id.0).ok())
             .collect())
     }
+
+    pub async fn is_onekv_nominator_account_id(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<bool> {
+        let count: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*)
+            FROM sub_onekv_nominator
+            WHERE stash_account_id = $1
+            "#,
+        )
+        .bind(account_id.to_string())
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(count.0 > 0)
+    }
 }
