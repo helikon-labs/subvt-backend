@@ -12,6 +12,8 @@ pub struct Query {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum QueryType {
+    #[serde(rename = "NOP")]
+    NoOp,
     #[serde(rename = "VI")]
     ValidatorInfo,
     #[serde(rename = "NS")]
@@ -42,6 +44,8 @@ pub enum SettingsSubSection {
     NewNomination,
     #[serde(rename = "LN")]
     LostNomination,
+    #[serde(rename = "AI")]
+    ActiveInactive,
     #[serde(rename = "BA")]
     BlockAuthorship,
     #[serde(rename = "D")]

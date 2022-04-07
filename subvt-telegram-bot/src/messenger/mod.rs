@@ -432,7 +432,7 @@ impl MessageType {
                 context.insert("display", &display);
                 "validator_removed.html"
             }
-            Self::Settings => "settings_title.html",
+            Self::Settings => "settings_prompt.html",
         };
         renderer.render(template_name, &context).unwrap()
     }
@@ -631,22 +631,6 @@ impl Messenger {
         }
     }
 
-    fn get_settings_sub_section_text(&self, sub_type: &SettingsSubSection) -> String {
-        let template_name = match sub_type {
-            SettingsSubSection::Root => "settings_title.html",
-            SettingsSubSection::ValidatorActivity => "settings_validator_activity_text.html",
-            SettingsSubSection::BlockAuthorship => "settings_block_authorship_text.html",
-            SettingsSubSection::OneKV => "settings_onekv_text.html",
-            SettingsSubSection::Democracy => "settings_democracy_text.html",
-            SettingsSubSection::Nominations => "settings_nominations_text.html",
-            SettingsSubSection::NewNomination => "settings_new_nomination_text.html",
-            SettingsSubSection::LostNomination => "settings_lost_nomination_text.html",
-        };
-        self.renderer
-            .render(template_name, &Context::new())
-            .unwrap()
-    }
-
     pub async fn update_settings_message(
         &self,
         chat_id: i64,
@@ -658,6 +642,9 @@ impl Messenger {
             SettingsSubSection::Root => self.get_settings_keyboard()?,
             SettingsSubSection::ValidatorActivity => {
                 self.get_validator_activity_settings_keyboard(notification_rules)?
+            }
+            SettingsSubSection::ActiveInactive => {
+                self.get_active_inactive_settings_keyboard(notification_rules)?
             }
             SettingsSubSection::BlockAuthorship => self.get_period_settings_keyboard(
                 SettingsEditQueryType::BlockAuthorship,
@@ -687,7 +674,9 @@ impl Messenger {
             chat_id: Some(ChatId::Integer(chat_id)),
             message_id: Some(settings_message_id),
             inline_message_id: None,
-            text: self.get_settings_sub_section_text(sub_section),
+            text: self
+                .renderer
+                .render("settings_prompt.html", &Context::new())?,
             parse_mode: Some(frankenstein::ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),

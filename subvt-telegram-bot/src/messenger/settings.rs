@@ -27,6 +27,7 @@ impl Messenger {
 
     pub fn get_settings_keyboard(&self) -> anyhow::Result<InlineKeyboardMarkup> {
         let rows = vec![
+            self.get_settings_button("settings_root_title.html", QueryType::NoOp)?,
             self.get_settings_button(
                 "settings_validator_activity.html",
                 QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
@@ -126,10 +127,17 @@ impl Messenger {
         &self,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
-        let mut rows = vec![self.get_settings_button(
-            "settings_item_block_authorship.html",
-            QueryType::SettingsNavigate(SettingsSubSection::BlockAuthorship),
-        )?];
+        let mut rows = vec![
+            self.get_settings_button("settings_validator_activity_title.html", QueryType::NoOp)?,
+            self.get_settings_button(
+                "settings_active_inactive.html",
+                QueryType::SettingsNavigate(SettingsSubSection::ActiveInactive),
+            )?,
+            self.get_settings_button(
+                "settings_item_block_authorship.html",
+                QueryType::SettingsNavigate(SettingsSubSection::BlockAuthorship),
+            )?,
+        ];
         if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorChilled,
             "settings_item_chilled.html",
@@ -154,39 +162,6 @@ impl Messenger {
         )? {
             rows.push(item);
         }
-        if let Some(item) = self.get_notification_on_off_button(
-            NotificationTypeCode::ChainValidatorActive,
-            "settings_item_active.html",
-            SettingsEditQueryType::Active,
-            notification_rules,
-        )? {
-            rows.push(item);
-        }
-        if let Some(item) = self.get_notification_on_off_button(
-            NotificationTypeCode::ChainValidatorActiveNextSession,
-            "settings_item_active_next_session.html",
-            SettingsEditQueryType::ActiveNextSession,
-            notification_rules,
-        )? {
-            rows.push(item);
-        }
-        if let Some(item) = self.get_notification_on_off_button(
-            NotificationTypeCode::ChainValidatorInactive,
-            "settings_item_inactive.html",
-            SettingsEditQueryType::Inactive,
-            notification_rules,
-        )? {
-            rows.push(item);
-        }
-        if let Some(item) = self.get_notification_on_off_button(
-            NotificationTypeCode::ChainValidatorInactiveNextSession,
-            "settings_item_inactive_next_session.html",
-            SettingsEditQueryType::InactiveNextSession,
-            notification_rules,
-        )? {
-            rows.push(item);
-        }
-
         if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::ChainValidatorOfflineOffence,
             "settings_item_offline_offence.html",
@@ -237,7 +212,18 @@ impl Messenger {
         back_target: SettingsSubSection,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
-        let mut rows = vec![];
+        let mut rows = vec![self.get_settings_button(
+            match edit_type {
+                SettingsEditQueryType::BlockAuthorship => "settings_block_authorship_title.html",
+                SettingsEditQueryType::NewNomination => "settings_new_nominations_title.html",
+                SettingsEditQueryType::LostNomination => "settings_lost_nominations_title.html",
+                _ => panic!(
+                    "Period settings keyboard not implemented for edit query type {:?}.",
+                    edit_type
+                ),
+            },
+            QueryType::NoOp,
+        )?];
         if let Some(button) = self.get_notification_period_button(
             notification_type_code,
             edit_type,
@@ -300,14 +286,63 @@ impl Messenger {
         })
     }
 
+    pub fn get_active_inactive_settings_keyboard(
+        &self,
+        notification_rules: &[UserNotificationRule],
+    ) -> anyhow::Result<InlineKeyboardMarkup> {
+        let mut rows =
+            vec![self.get_settings_button("settings_active_inactive_title.html", QueryType::NoOp)?];
+        if let Some(item) = self.get_notification_on_off_button(
+            NotificationTypeCode::ChainValidatorActive,
+            "settings_item_active.html",
+            SettingsEditQueryType::Active,
+            notification_rules,
+        )? {
+            rows.push(item);
+        }
+        if let Some(item) = self.get_notification_on_off_button(
+            NotificationTypeCode::ChainValidatorActiveNextSession,
+            "settings_item_active_next_session.html",
+            SettingsEditQueryType::ActiveNextSession,
+            notification_rules,
+        )? {
+            rows.push(item);
+        }
+        if let Some(item) = self.get_notification_on_off_button(
+            NotificationTypeCode::ChainValidatorInactive,
+            "settings_item_inactive.html",
+            SettingsEditQueryType::Inactive,
+            notification_rules,
+        )? {
+            rows.push(item);
+        }
+        if let Some(item) = self.get_notification_on_off_button(
+            NotificationTypeCode::ChainValidatorInactiveNextSession,
+            "settings_item_inactive_next_session.html",
+            SettingsEditQueryType::InactiveNextSession,
+            notification_rules,
+        )? {
+            rows.push(item);
+        }
+        rows.push(self.get_settings_button(
+            "back.html",
+            QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
+        )?);
+        rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
+        Ok(InlineKeyboardMarkup {
+            inline_keyboard: rows,
+        })
+    }
+
     pub fn get_nomination_settings_keyboard(&self) -> anyhow::Result<InlineKeyboardMarkup> {
         let rows = vec![
+            self.get_settings_button("settings_nominations_title.html", QueryType::NoOp)?,
             self.get_settings_button(
-                "settings_new_nomination.html",
+                "settings_new_nominations.html",
                 QueryType::SettingsNavigate(SettingsSubSection::NewNomination),
             )?,
             self.get_settings_button(
-                "settings_lost_nomination.html",
+                "settings_lost_nominations.html",
                 QueryType::SettingsNavigate(SettingsSubSection::LostNomination),
             )?,
             self.get_settings_button(
@@ -325,7 +360,8 @@ impl Messenger {
         &self,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
-        let mut rows = vec![];
+        let mut rows =
+            vec![self.get_settings_button("settings_democracy_title.html", QueryType::NoOp)?];
         if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::DemocracyProposed,
             "settings_item_democracy_proposed.html",
@@ -413,7 +449,8 @@ impl Messenger {
         &self,
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<InlineKeyboardMarkup> {
-        let mut rows = vec![];
+        let mut rows =
+            vec![self.get_settings_button("settings_onekv_title.html", QueryType::NoOp)?];
         if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorRankChange,
             "settings_item_onekv_rank_change.html",

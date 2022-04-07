@@ -16,6 +16,7 @@ impl TelegramBot {
             .save_chat_query_log(chat_id, &format!("{:?}", query))
             .await?;
         match &query.query_type {
+            QueryType::NoOp => (),
             QueryType::ConfirmBroadcast => {
                 if let Some(message_id) = original_message_id {
                     self.messenger.delete_message(chat_id, message_id).await?;

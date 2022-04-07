@@ -53,6 +53,7 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
         .unwrap()
     });
     let label = match query {
+        QueryType::NoOp => "NoOp",
         QueryType::ValidatorInfo => "ValidatorInfo",
         QueryType::NominationSummary => "NominationSummary",
         QueryType::NominationDetails => "NominationDetails",

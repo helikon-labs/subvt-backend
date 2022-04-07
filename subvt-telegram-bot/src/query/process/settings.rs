@@ -82,7 +82,7 @@ impl TelegramBot {
                     NotificationTypeCode::ChainValidatorActive,
                 )
                 .await?;
-                SettingsSubSection::ValidatorActivity
+                SettingsSubSection::ActiveInactive
             }
             SettingsEditQueryType::ActiveNextSession => {
                 self.process_notification_on_off_setting_query(
@@ -91,7 +91,7 @@ impl TelegramBot {
                     NotificationTypeCode::ChainValidatorActiveNextSession,
                 )
                 .await?;
-                SettingsSubSection::ValidatorActivity
+                SettingsSubSection::ActiveInactive
             }
             SettingsEditQueryType::Inactive => {
                 self.process_notification_on_off_setting_query(
@@ -100,7 +100,7 @@ impl TelegramBot {
                     NotificationTypeCode::ChainValidatorInactive,
                 )
                 .await?;
-                SettingsSubSection::ValidatorActivity
+                SettingsSubSection::ActiveInactive
             }
             SettingsEditQueryType::InactiveNextSession => {
                 self.process_notification_on_off_setting_query(
@@ -109,7 +109,7 @@ impl TelegramBot {
                     NotificationTypeCode::ChainValidatorInactiveNextSession,
                 )
                 .await?;
-                SettingsSubSection::ValidatorActivity
+                SettingsSubSection::ActiveInactive
             }
             SettingsEditQueryType::BlockAuthorship => {
                 self.process_notification_period_setting_query(
