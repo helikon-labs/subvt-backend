@@ -146,6 +146,18 @@ impl TelegramBot {
         Ok(())
     }
 
+    async fn process_network_status_command(&self, chat_id: i64) -> anyhow::Result<()> {
+        self.messenger
+            .send_message(
+                chat_id,
+                Box::new(MessageType::NetworkStatus(
+                    self.redis.get_current_network_status().await?,
+                )),
+            )
+            .await?;
+        Ok(())
+    }
+
     pub async fn process_command(
         &self,
         chat_id: i64,
@@ -213,6 +225,10 @@ impl TelegramBot {
                     self.process_validators_command(chat_id, QueryType::RemoveValidator)
                         .await?
                 }
+            }
+            "/networkstatus" | "/network" | "/netstat" | "/ns" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.process_network_status_command(chat_id).await?;
             }
             "/validatorinfo" | "/vi" => {
                 crate::metrics::command_call_counter(command).inc();

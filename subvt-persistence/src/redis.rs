@@ -1,8 +1,9 @@
+use anyhow::Context;
 use lazy_static::lazy_static;
 use redis::{Client, RedisResult};
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
-use subvt_types::subvt::ValidatorDetails;
+use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -106,5 +107,18 @@ impl Redis {
             }
         };
         Ok(Some(serde_json::from_str(&validator_json_string)?))
+    }
+
+    pub async fn get_current_network_status(&self) -> anyhow::Result<NetworkStatus> {
+        let mut connection = self.client.get_async_connection().await?;
+        let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
+        let status_json_string: String = redis::cmd("GET")
+            .arg(key)
+            .query_async(&mut connection)
+            .await
+            .context("Can't read network status from Redis.")?;
+        let status: NetworkStatus = serde_json::from_str(&status_json_string)
+            .context("Can't deserialize network status json.")?;
+        Ok(status)
     }
 }
