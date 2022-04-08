@@ -5,18 +5,20 @@
 <strong>ERA {{ active_era_index }}</strong>
 ▶️ {{ active_era_start }}
 🏁 {{ active_era_end }}
-<i>Ends in {% if hours_until_active_era_end > 0 %}{{ hours_until_active_era_end }} hour{% if hours_until_active_era_end != 1 %}s{% endif %}, {% endif %}{{ minutes_until_active_era_end }} minute{% if minutes_until_active_era_end != 1 %}s{% endif %}</i>
+<i>Ends in {% if hours_until_active_era_end > 0 %}{{ hours_until_active_era_end }} hour{% if hours_until_active_era_end != 1 %}s{% endif %} {% endif %}{{ minutes_until_active_era_end }} minute{% if minutes_until_active_era_end != 1 %}s{% endif %}</i>
 
 <strong>EPOCH {{ current_epoch_index }}</strong>
 ▶️ {{ current_epoch_start }}
 🏁 {{ current_epoch_end }}
-<i>Ends in {% if hours_until_current_epoch_end > 0 %}{{ hours_until_current_epoch_end }} hour{% if hours_until_current_epoch_end != 1 %}s{% endif %}, {% endif %}{{ minutes_until_current_epoch_end }} minute{% if minutes_until_current_epoch_end != 1 %}s{% endif %}</i>
+<i>Ends in {% if hours_until_current_epoch_end > 0 %}{{ hours_until_current_epoch_end }} hour{% if hours_until_current_epoch_end != 1 %}s{% endif %} {% endif %}{{ minutes_until_current_epoch_end }} minute{% if minutes_until_current_epoch_end != 1 %}s{% endif %}</i>
 
 <strong>STAKING</strong>
 🟢 <strong>{{ active_validator_count }}</strong> Active Validators
 ⚪️ <strong>{{ inactive_validator_count }}</strong> Inactive Validators
 <pre>{{ return_rate_per_cent }}%</pre> Return Rate
-<pre>{{ total_stake }} {{ token_ticker }}</pre> Total Stake
-<pre>{{ max_stake }} {{ token_ticker }}</pre> Max. Stake
-<pre>{{ average_stake }} {{ token_ticker }}</pre> Avg. Stake
-<pre>{{ min_stake }} {{ token_ticker }}</pre> Min. Stake
+<pre>{{ total_stake }}</pre> Total Stake
+<pre>{{ max_stake }}</pre> Max. Stake
+<pre>{{ average_stake }}</pre> Avg. Stake
+<pre>{{ min_stake }}</pre> Min. Stake
+
+<i>ℹ️ All amounts in {{ token_ticker }}.</i>

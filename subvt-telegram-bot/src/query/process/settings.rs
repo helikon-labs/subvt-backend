@@ -332,7 +332,7 @@ impl TelegramBot {
                 .update_settings_message(
                     chat_id,
                     settings_message_id,
-                    &sub_section,
+                    sub_section,
                     &notification_rules,
                 )
                 .await?;

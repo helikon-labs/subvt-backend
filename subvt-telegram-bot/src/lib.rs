@@ -1,6 +1,6 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
-use crate::messenger::{MessageType, Messenger};
+use crate::messenger::{message::MessageType, Messenger};
 use crate::query::Query;
 use async_trait::async_trait;
 use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
@@ -20,7 +20,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 mod command;
-pub(crate) mod messenger;
+mod messenger;
 mod metrics;
 mod query;
 
