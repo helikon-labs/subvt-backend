@@ -17,6 +17,8 @@ impl PostgreSQLAppStorage {
             r#"
             INSERT INTO app_user (public_key_hex)
             VALUES ($1)
+            ON CONFLICT(public_key_hex)
+            DO UPDATE SET deleted_at = NULL, updated_at = now()
             RETURNING id
             "#,
         )
@@ -26,11 +28,42 @@ impl PostgreSQLAppStorage {
         Ok(result.0 as u32)
     }
 
+    pub async fn delete_user(&self, user_id: u32) -> anyhow::Result<bool> {
+        let maybe_id: Option<(i32,)> = sqlx::query_as(
+            r#"
+            UPDATE app_user
+            SET deleted_at = now(), updated_at = now()
+            WHERE id = $1
+            RETURNING id
+            "#,
+        )
+        .bind(user_id as i32)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_id.is_some() && maybe_id.unwrap().0 == user_id as i32)
+    }
+
+    pub async fn undelete_user(&self, user_id: u32) -> anyhow::Result<bool> {
+        let maybe_id: Option<(i32,)> = sqlx::query_as(
+            r#"
+            UPDATE app_user
+            SET deleted_at = NULL, updated_at = now()
+            WHERE id = $1
+            RETURNING id
+            "#,
+        )
+        .bind(user_id as i32)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_id.is_some() && maybe_id.unwrap().0 == user_id as i32)
+    }
+
     pub async fn user_exists_by_public_key(&self, public_key_hex: &str) -> anyhow::Result<bool> {
         let record_count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user
             WHERE public_key_hex = $1
+            AND deleted_at IS NULL
             "#,
         )
         .bind(public_key_hex)
@@ -48,6 +81,7 @@ impl PostgreSQLAppStorage {
             SELECT id, public_key_hex
             FROM app_user
             WHERE public_key_hex = $1
+            AND deleted_at IS NULL
             "#,
         )
         .bind(public_key_hex)
@@ -68,6 +102,7 @@ impl PostgreSQLAppStorage {
             r#"
             SELECT COUNT(DISTINCT id) FROM app_user
             WHERE id = $1
+            AND deleted_at IS NULL
             "#,
         )
         .bind(id as i32)

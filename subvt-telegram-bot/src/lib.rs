@@ -273,6 +273,11 @@ impl TelegramBot {
                 .chat_is_deleted(message.chat.id)
                 .await?
             {
+                let app_user_id = self
+                    .network_postgres
+                    .get_chat_app_user_id(message.chat.id)
+                    .await?;
+                self.app_postgres.undelete_user(app_user_id).await?;
                 self.network_postgres.undelete_chat(message.chat.id).await?;
                 let app_user_id = self
                     .network_postgres
@@ -299,6 +304,7 @@ impl TelegramBot {
             if group_chat_created {
                 self.messenger
                     .send_message(
+                        &self.app_postgres,
                         &self.network_postgres,
                         message.chat.id,
                         Box::new(MessageType::Intro),
@@ -343,6 +349,7 @@ impl TelegramBot {
                             } else {
                                 self.messenger
                                     .send_message(
+                                        &self.app_postgres,
                                         &self.network_postgres,
                                         message.chat.id,
                                         Box::new(MessageType::InvalidAddressTryAgain(
@@ -356,6 +363,7 @@ impl TelegramBot {
                             if message.chat.type_field == ChatType::Private {
                                 self.messenger
                                     .send_message(
+                                        &self.app_postgres,
                                         &self.network_postgres,
                                         message.chat.id,
                                         Box::new(MessageType::BadRequest),
@@ -367,6 +375,7 @@ impl TelegramBot {
                 } else if message.chat.type_field == ChatType::Private {
                     self.messenger
                         .send_message(
+                            &self.app_postgres,
                             &self.network_postgres,
                             message.chat.id,
                             Box::new(MessageType::BadRequest),
@@ -377,6 +386,7 @@ impl TelegramBot {
         } else {
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     message.chat.id,
                     Box::new(MessageType::BadRequest),
@@ -423,6 +433,7 @@ impl Service for TelegramBot {
                                     let _ = self
                                         .messenger
                                         .send_message(
+                                            &self.app_postgres,
                                             &self.network_postgres,
                                             message.chat.id,
                                             Box::new(MessageType::GenericError),
@@ -459,6 +470,7 @@ impl Service for TelegramBot {
                                             let _ = self
                                                 .messenger
                                                 .send_message(
+                                                    &self.app_postgres,
                                                     &self.network_postgres,
                                                     message.chat.id,
                                                     Box::new(MessageType::GenericError),

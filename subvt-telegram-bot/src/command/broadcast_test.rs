@@ -9,6 +9,7 @@ impl TelegramBot {
         if CONFIG.telegram_bot.admin_chat_id == chat_id {
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::Broadcast),
@@ -17,6 +18,7 @@ impl TelegramBot {
         } else {
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::UnknownCommand(command.to_string())),

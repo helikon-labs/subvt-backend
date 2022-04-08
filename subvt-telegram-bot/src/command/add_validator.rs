@@ -20,6 +20,7 @@ impl TelegramBot {
         if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::TooManyValidatorsOnChat),
@@ -32,6 +33,7 @@ impl TelegramBot {
                 .await?;
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::AddValidator),
@@ -51,6 +53,7 @@ impl TelegramBot {
                         {
                             self.messenger
                                 .send_message(
+                                    &self.app_postgres,
                                     &self.network_postgres,
                                     chat_id,
                                     Box::new(MessageType::ValidatorExistsOnChat(
@@ -93,6 +96,7 @@ impl TelegramBot {
                             self.process_query(chat_id, None, &query).await?;
                             self.messenger
                                 .send_message(
+                                    &self.app_postgres,
                                     &self.network_postgres,
                                     chat_id,
                                     Box::new(MessageType::ValidatorAdded),
@@ -102,6 +106,7 @@ impl TelegramBot {
                     } else {
                         self.messenger
                             .send_message(
+                                &self.app_postgres,
                                 &self.network_postgres,
                                 chat_id,
                                 Box::new(MessageType::AddValidatorNotFound(address.clone())),
@@ -112,6 +117,7 @@ impl TelegramBot {
                 Err(_) => {
                     self.messenger
                         .send_message(
+                            &self.app_postgres,
                             &self.network_postgres,
                             chat_id,
                             Box::new(MessageType::InvalidAddress(address.clone())),

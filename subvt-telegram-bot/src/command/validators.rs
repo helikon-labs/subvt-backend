@@ -12,6 +12,7 @@ impl TelegramBot {
         if validators.is_empty() {
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::NoValidatorsOnChat),
@@ -40,6 +41,7 @@ impl TelegramBot {
             });
             self.messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::ValidatorList {

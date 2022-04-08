@@ -8,6 +8,7 @@ use frankenstein::{
 };
 use message::MessageType;
 use subvt_config::Config;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
 use subvt_utility::text::get_condensed_address;
@@ -72,6 +73,7 @@ impl Messenger {
 
     pub async fn send_message(
         &self,
+        app_postgres: &PostgreSQLAppStorage,
         network_postgres: &PostgreSQLNetworkStorage,
         chat_id: i64,
         message_type: Box<MessageType>,
@@ -211,7 +213,9 @@ impl Messenger {
             Err(error) => {
                 if let Error::ApiError(ref api_error) = error {
                     if api_error.error_code == FORBIDDEN_ERROR_CODE {
-                        // chat blocked, delete chat
+                        // chat blocked, delete app user and chat
+                        let app_user_id = network_postgres.get_chat_app_user_id(chat_id).await?;
+                        app_postgres.delete_user(app_user_id).await?;
                         network_postgres.delete_chat(chat_id).await?;
                     }
                 }

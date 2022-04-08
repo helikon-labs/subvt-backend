@@ -14,6 +14,7 @@ impl TelegramBot {
             match self
                 .messenger
                 .send_message(
+                    &self.app_postgres,
                     &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::Broadcast),
