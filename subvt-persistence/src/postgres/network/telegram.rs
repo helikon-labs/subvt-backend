@@ -187,6 +187,20 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
+    pub async fn delete_chat(&self, telegram_chat_id: i64) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_telegram_chat
+            SET deleted_at = now()
+            WHERE telegram_chat_id = $1
+            "#,
+        )
+        .bind(telegram_chat_id)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
     pub async fn undelete_chat(&self, telegram_chat_id: i64) -> anyhow::Result<()> {
         sqlx::query(
             r#"

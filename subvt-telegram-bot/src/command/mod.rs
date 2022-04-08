@@ -28,7 +28,11 @@ impl TelegramBot {
                     .save_chat_command_log(chat_id, command)
                     .await?;
                 self.messenger
-                    .send_message(chat_id, Box::new(MessageType::Intro))
+                    .send_message(
+                        &self.network_postgres,
+                        chat_id,
+                        Box::new(MessageType::Intro),
+                    )
                     .await?;
             }
             "/add" => {
@@ -45,7 +49,7 @@ impl TelegramBot {
                     .await?;
                 self.reset_chat_state(chat_id).await?;
                 self.messenger
-                    .send_message(chat_id, Box::new(MessageType::Ok))
+                    .send_message(&self.network_postgres, chat_id, Box::new(MessageType::Ok))
                     .await?;
             }
             "/remove" => {
@@ -112,6 +116,7 @@ impl TelegramBot {
                     .await?;
                 self.messenger
                     .send_message(
+                        &self.network_postgres,
                         chat_id,
                         Box::new(MessageType::UnknownCommand(command.to_string())),
                     )

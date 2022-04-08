@@ -11,7 +11,11 @@ impl TelegramBot {
         let mut validators = self.network_postgres.get_chat_validators(chat_id).await?;
         if validators.is_empty() {
             self.messenger
-                .send_message(chat_id, Box::new(MessageType::NoValidatorsOnChat))
+                .send_message(
+                    &self.network_postgres,
+                    chat_id,
+                    Box::new(MessageType::NoValidatorsOnChat),
+                )
                 .await?;
         } else if validators.len() == 1 {
             let query = Query {
@@ -36,6 +40,7 @@ impl TelegramBot {
             });
             self.messenger
                 .send_message(
+                    &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::ValidatorList {
                         validators,

@@ -32,6 +32,7 @@ impl TelegramBot {
                         .await?;
                     self.messenger
                         .send_message(
+                            &self.network_postgres,
                             chat_id,
                             Box::new(MessageType::NominationDetails {
                                 validator_details,
@@ -46,6 +47,7 @@ impl TelegramBot {
                     );
                     self.messenger
                         .send_message(
+                            &self.network_postgres,
                             chat_id,
                             Box::new(MessageType::ValidatorNotFound {
                                 maybe_address: None,
@@ -56,6 +58,7 @@ impl TelegramBot {
             } else {
                 self.messenger
                     .send_message(
+                        &self.network_postgres,
                         chat_id,
                         Box::new(MessageType::ValidatorNotFound {
                             maybe_address: None,

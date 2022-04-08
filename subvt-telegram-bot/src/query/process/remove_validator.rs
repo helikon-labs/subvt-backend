@@ -35,16 +35,25 @@ impl TelegramBot {
                         )
                         .await?;
                     self.messenger
-                        .send_message(chat_id, Box::new(MessageType::ValidatorRemoved(validator)))
+                        .send_message(
+                            &self.network_postgres,
+                            chat_id,
+                            Box::new(MessageType::ValidatorRemoved(validator)),
+                        )
                         .await?;
                 } else {
                     self.messenger
-                        .send_message(chat_id, Box::new(MessageType::GenericError))
+                        .send_message(
+                            &self.network_postgres,
+                            chat_id,
+                            Box::new(MessageType::GenericError),
+                        )
                         .await?;
                 }
             } else {
                 self.messenger
                     .send_message(
+                        &self.network_postgres,
                         chat_id,
                         Box::new(MessageType::ValidatorNotFound {
                             maybe_address: None,

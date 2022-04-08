@@ -19,7 +19,11 @@ impl TelegramBot {
             .await?;
         if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
             self.messenger
-                .send_message(chat_id, Box::new(MessageType::TooManyValidatorsOnChat))
+                .send_message(
+                    &self.network_postgres,
+                    chat_id,
+                    Box::new(MessageType::TooManyValidatorsOnChat),
+                )
                 .await?;
         }
         if args.is_empty() {
@@ -27,7 +31,11 @@ impl TelegramBot {
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)
                 .await?;
             self.messenger
-                .send_message(chat_id, Box::new(MessageType::AddValidator))
+                .send_message(
+                    &self.network_postgres,
+                    chat_id,
+                    Box::new(MessageType::AddValidator),
+                )
                 .await?;
             return Ok(());
         }
@@ -43,6 +51,7 @@ impl TelegramBot {
                         {
                             self.messenger
                                 .send_message(
+                                    &self.network_postgres,
                                     chat_id,
                                     Box::new(MessageType::ValidatorExistsOnChat(
                                         validator.account.get_display_or_condensed_address(None),
@@ -83,12 +92,17 @@ impl TelegramBot {
                             };
                             self.process_query(chat_id, None, &query).await?;
                             self.messenger
-                                .send_message(chat_id, Box::new(MessageType::ValidatorAdded))
+                                .send_message(
+                                    &self.network_postgres,
+                                    chat_id,
+                                    Box::new(MessageType::ValidatorAdded),
+                                )
                                 .await?;
                         }
                     } else {
                         self.messenger
                             .send_message(
+                                &self.network_postgres,
                                 chat_id,
                                 Box::new(MessageType::AddValidatorNotFound(address.clone())),
                             )
@@ -98,6 +112,7 @@ impl TelegramBot {
                 Err(_) => {
                     self.messenger
                         .send_message(
+                            &self.network_postgres,
                             chat_id,
                             Box::new(MessageType::InvalidAddress(address.clone())),
                         )

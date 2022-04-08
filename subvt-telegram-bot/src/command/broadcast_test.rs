@@ -8,11 +8,16 @@ impl TelegramBot {
     ) -> anyhow::Result<()> {
         if CONFIG.telegram_bot.admin_chat_id == chat_id {
             self.messenger
-                .send_message(chat_id, Box::new(MessageType::Broadcast))
+                .send_message(
+                    &self.network_postgres,
+                    chat_id,
+                    Box::new(MessageType::Broadcast),
+                )
                 .await?;
         } else {
             self.messenger
                 .send_message(
+                    &self.network_postgres,
                     chat_id,
                     Box::new(MessageType::UnknownCommand(command.to_string())),
                 )

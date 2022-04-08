@@ -176,7 +176,7 @@ lazy_static! {
 
 #[derive(thiserror::Error, Clone, Debug)]
 pub enum TelegramBotError {
-    #[error("Telegram bot error: {0}")]
+    #[error("{0}")]
     Error(String),
 }
 
@@ -298,7 +298,11 @@ impl TelegramBot {
         if let Some(group_chat_created) = message.group_chat_created {
             if group_chat_created {
                 self.messenger
-                    .send_message(message.chat.id, Box::new(MessageType::Intro))
+                    .send_message(
+                        &self.network_postgres,
+                        message.chat.id,
+                        Box::new(MessageType::Intro),
+                    )
                     .await?;
                 self.update_metrics_chat_count().await?;
                 return Ok(());
@@ -339,6 +343,7 @@ impl TelegramBot {
                             } else {
                                 self.messenger
                                     .send_message(
+                                        &self.network_postgres,
                                         message.chat.id,
                                         Box::new(MessageType::InvalidAddressTryAgain(
                                             text.to_string(),
@@ -351,6 +356,7 @@ impl TelegramBot {
                             if message.chat.type_field == ChatType::Private {
                                 self.messenger
                                     .send_message(
+                                        &self.network_postgres,
                                         message.chat.id,
                                         Box::new(MessageType::BadRequest),
                                     )
@@ -360,13 +366,21 @@ impl TelegramBot {
                     }
                 } else if message.chat.type_field == ChatType::Private {
                     self.messenger
-                        .send_message(message.chat.id, Box::new(MessageType::BadRequest))
+                        .send_message(
+                            &self.network_postgres,
+                            message.chat.id,
+                            Box::new(MessageType::BadRequest),
+                        )
                         .await?;
                 }
             }
         } else {
             self.messenger
-                .send_message(message.chat.id, Box::new(MessageType::BadRequest))
+                .send_message(
+                    &self.network_postgres,
+                    message.chat.id,
+                    Box::new(MessageType::BadRequest),
+                )
                 .await?;
         }
         Ok(())
@@ -409,6 +423,7 @@ impl Service for TelegramBot {
                                     let _ = self
                                         .messenger
                                         .send_message(
+                                            &self.network_postgres,
                                             message.chat.id,
                                             Box::new(MessageType::GenericError),
                                         )
@@ -444,6 +459,7 @@ impl Service for TelegramBot {
                                             let _ = self
                                                 .messenger
                                                 .send_message(
+                                                    &self.network_postgres,
                                                     message.chat.id,
                                                     Box::new(MessageType::GenericError),
                                                 )

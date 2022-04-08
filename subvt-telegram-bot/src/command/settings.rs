@@ -15,7 +15,11 @@ impl TelegramBot {
         }
         let settings_message_id = self
             .messenger
-            .send_message(chat_id, Box::new(MessageType::Settings))
+            .send_message(
+                &self.network_postgres,
+                chat_id,
+                Box::new(MessageType::Settings),
+            )
             .await?
             .result
             .message_id;

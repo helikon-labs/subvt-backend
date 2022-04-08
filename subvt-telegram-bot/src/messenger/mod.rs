@@ -3,17 +3,20 @@ use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::TelegramBotError;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    EditMessageResponse, EditMessageTextParams, InlineKeyboardButton, InlineKeyboardMarkup,
+    EditMessageResponse, EditMessageTextParams, Error, InlineKeyboardButton, InlineKeyboardMarkup,
     Message as TelegramMessage, MethodResponse, ReplyMarkup, SendMessageParams,
 };
 use message::MessageType;
 use subvt_config::Config;
+use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
 use subvt_utility::text::get_condensed_address;
 use tera::{Context, Tera};
 
 pub mod message;
 pub mod settings;
+
+const FORBIDDEN_ERROR_CODE: u64 = 403;
 
 pub struct Messenger {
     api: AsyncApi,
@@ -69,6 +72,7 @@ impl Messenger {
 
     pub async fn send_message(
         &self,
+        network_postgres: &PostgreSQLNetworkStorage,
         chat_id: i64,
         message_type: Box<MessageType>,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
@@ -204,7 +208,15 @@ impl Messenger {
         );
         match self.api.send_message(&params).await {
             Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+            Err(error) => {
+                if let Error::ApiError(ref api_error) = error {
+                    if api_error.error_code == FORBIDDEN_ERROR_CODE {
+                        // chat blocked, delete chat
+                        network_postgres.delete_chat(chat_id).await?;
+                    }
+                }
+                Err(TelegramBotError::Error(format!("{:?}", error)).into())
+            }
         }
     }
 

@@ -13,7 +13,11 @@ impl TelegramBot {
         for chat_id in self.network_postgres.get_chat_ids().await? {
             match self
                 .messenger
-                .send_message(chat_id, Box::new(MessageType::Broadcast))
+                .send_message(
+                    &self.network_postgres,
+                    chat_id,
+                    Box::new(MessageType::Broadcast),
+                )
                 .await
             {
                 Ok(_) => log::info!("Broadcast sent to chat {}.", chat_id),
