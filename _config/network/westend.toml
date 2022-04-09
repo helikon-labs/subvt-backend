@@ -2,6 +2,7 @@
 chain = "westend"
 chain_display = "Westend"
 chain_genesis_hash = "0xE143F23803AC50E8F6F8E62695D1CE9E4E1D68AA36C1CD2CFD15340213F3423E"
+epochs_per_era = 6
 rpc_url = "wss://westend-rpc.polkadot.io:443"
 # for internal use, 1 for Kusama, 2 for Polkadot, 3 for Westend
 network_id = 3

@@ -52,6 +52,8 @@ pub struct SubstrateConfig {
     pub chain_display: String,
     /// Hash of the genesis block of the chain.
     pub chain_genesis_hash: String,
+    /// Number of epochs per era on the chain.
+    pub epochs_per_era: u16,
     /// Node WebSocket RPC URL (e.g. `wss://kusama-rpc.polkadot.io` for Kusama).
     pub rpc_url: String,
     /// RPC connection timeout in seconds.

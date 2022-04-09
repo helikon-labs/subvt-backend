@@ -53,16 +53,19 @@ impl NotificationProcessor {
             );
             // process epoch notifications if epoch has changed
             if current_epoch_index != status.current_epoch.index {
+                let epoch_number_in_era =
+                    (status.current_epoch.index % CONFIG.substrate.epochs_per_era as u64) + 1;
                 log::info!(
-                    "New {} epoch #{}. Check for notifications.",
+                    "New {} epoch index {}. Epoch number {} in era. Check for notifications.",
                     network.display,
                     status.current_epoch.index,
+                    epoch_number_in_era,
                 );
                 match self
                     .process_notifications(
                         Some(network.id),
                         NotificationPeriodType::Epoch,
-                        status.current_epoch.index as u32,
+                        epoch_number_in_era as u32,
                     )
                     .await
                 {

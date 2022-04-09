@@ -1,5 +1,6 @@
 use super::super::Messenger;
 use crate::query::{Query, QueryType, SettingsEditQueryType};
+use crate::CONFIG;
 use frankenstein::InlineKeyboardButton;
 use subvt_types::app::{NotificationPeriodType, NotificationTypeCode, UserNotificationRule};
 use tera::Context;
@@ -74,6 +75,7 @@ impl Messenger {
             context.insert("is_selected", &is_selected);
             context.insert("period_type", &period_type.to_string());
             context.insert("period", &period);
+            context.insert("epochs_per_era", &CONFIG.substrate.epochs_per_era);
             let parameter = (period_type, period);
             Ok(Some(vec![InlineKeyboardButton {
                 text: self

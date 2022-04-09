@@ -34,6 +34,8 @@ CREATE INDEX sub_block_idx_era_index
     ON sub_block (era_index);
 CREATE INDEX sub_block_idx_number
     ON sub_block (number);
+CREATE INDEX sub_block_idx_timestamp
+    ON sub_block (timestamp);
 CREATE INDEX sub_block_idx_hash_epoch_index
     ON sub_block (hash, epoch_index);
 CREATE INDEX sub_block_idx_author_account_id
