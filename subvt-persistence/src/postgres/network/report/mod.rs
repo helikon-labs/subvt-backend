@@ -4,6 +4,8 @@ use std::str::FromStr;
 use subvt_types::report::{EraReport, EraValidatorReport};
 use subvt_types::substrate::Era;
 
+pub mod rewards;
+
 type PostgresEraValidatorReport = (
     Option<i64>,
     Option<i64>,

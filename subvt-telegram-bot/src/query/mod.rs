@@ -20,8 +20,12 @@ pub enum QueryType {
     NominationSummary,
     #[serde(rename = "ND")]
     NominationDetails,
+    #[serde(rename = "PA")]
+    Payouts,
     #[serde(rename = "RV")]
     RemoveValidator,
+    #[serde(rename = "RW")]
+    Rewards,
     #[serde(rename = "CB")]
     ConfirmBroadcast,
     #[serde(rename = "SE")]

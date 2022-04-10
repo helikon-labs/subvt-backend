@@ -4,7 +4,9 @@ use crate::TelegramBot;
 mod broadcast;
 mod nomination_details;
 mod nomination_summary;
+mod payouts;
 mod remove_validator;
+mod rewards;
 mod settings;
 mod settings_navigate;
 mod validator_info;
@@ -39,8 +41,16 @@ impl TelegramBot {
                 self.process_nomination_details_query(chat_id, original_message_id, query)
                     .await?;
             }
+            QueryType::Payouts => {
+                self.process_payouts_query(chat_id, original_message_id, query)
+                    .await?;
+            }
             QueryType::RemoveValidator => {
                 self.process_remove_validator_query(chat_id, original_message_id, query)
+                    .await?;
+            }
+            QueryType::Rewards => {
+                self.process_rewards_query(chat_id, original_message_id, query)
                     .await?;
             }
             QueryType::SettingsEdit(edit_query_type) => {

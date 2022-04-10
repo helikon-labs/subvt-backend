@@ -53,15 +53,17 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
         .unwrap()
     });
     let label = match query {
-        QueryType::NoOp => "NoOp",
-        QueryType::ValidatorInfo => "ValidatorInfo",
-        QueryType::NominationSummary => "NominationSummary",
-        QueryType::NominationDetails => "NominationDetails",
-        QueryType::RemoveValidator => "RemoveValidator",
+        QueryType::Cancel => "Cancel",
         QueryType::ConfirmBroadcast => "ConfirmBroadcast",
+        QueryType::NominationDetails => "NominationDetails",
+        QueryType::NominationSummary => "NominationSummary",
+        QueryType::NoOp => "NoOp",
+        QueryType::Payouts => "Rewards",
+        QueryType::RemoveValidator => "RemoveValidator",
+        QueryType::Rewards => "Rewards",
         QueryType::SettingsEdit(_) => "SettingsEdit",
         QueryType::SettingsNavigate(_) => "SettingsNavigate",
-        QueryType::Cancel => "Cancel",
+        QueryType::ValidatorInfo => "ValidatorInfo",
     };
     METER.with_label_values(&[label])
 }

@@ -4,7 +4,9 @@ mod add_validator;
 mod broadcast;
 mod broadcast_test;
 mod network_status;
+mod payouts;
 mod remove_validator;
+mod rewards;
 mod settings;
 mod validators;
 
@@ -58,13 +60,6 @@ impl TelegramBot {
                     )
                     .await?;
             }
-            "/remove" => {
-                crate::metrics::command_call_counter(command).inc();
-                self.network_postgres
-                    .save_chat_command_log(chat_id, command)
-                    .await?;
-                self.process_remove_validator_command(chat_id, args).await?;
-            }
             "/networkstatus" | "/network" | "/netstat" | "/ns" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.process_network_status_command(chat_id).await?;
@@ -92,6 +87,27 @@ impl TelegramBot {
                     .await?;
                 self.process_validators_command(chat_id, QueryType::NominationDetails)
                     .await?;
+            }
+            "/payouts" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_payouts_command(chat_id, args).await?;
+            }
+            "/remove" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_remove_validator_command(chat_id, args).await?;
+            }
+            "/rewards" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_rewards_command(chat_id, args).await?;
             }
             "/settings" | "/s" => {
                 crate::metrics::command_call_counter(command).inc();
