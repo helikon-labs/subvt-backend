@@ -723,6 +723,7 @@ pub enum ProxyType {
     IdentityJudgement,
     CancelProxy,
     Auction,
+    Society,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
