@@ -4,9 +4,11 @@ use crate::TelegramBotError;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
     EditMessageResponse, EditMessageTextParams, Error, InlineKeyboardButton, InlineKeyboardMarkup,
-    Message as TelegramMessage, MethodResponse, ReplyMarkup, SendMessageParams,
+    InputFile, Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup,
+    SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
+use std::path::PathBuf;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -68,6 +70,43 @@ impl Messenger {
         match self.api.delete_message(&params).await {
             Ok(response) => Ok(response),
             Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+        }
+    }
+
+    pub async fn send_image(
+        &self,
+        app_postgres: &PostgreSQLAppStorage,
+        network_postgres: &PostgreSQLNetworkStorage,
+        chat_id: i64,
+        path: &str,
+    ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
+        let params = SendPhotoParams {
+            chat_id: ChatId::Integer(chat_id),
+            photo: frankenstein::api_params::File::InputFile(InputFile {
+                path: PathBuf::from(path.to_string()),
+            }),
+            caption: None,
+            parse_mode: Some(ParseMode::Html),
+            caption_entities: None,
+            disable_notification: None,
+            protect_content: None,
+            reply_to_message_id: None,
+            allow_sending_without_reply: None,
+            reply_markup: None,
+        };
+        match self.api.send_photo(&params).await {
+            Ok(response) => Ok(response),
+            Err(error) => {
+                if let Error::ApiError(ref api_error) = error {
+                    if api_error.error_code == FORBIDDEN_ERROR_CODE {
+                        // chat blocked, delete app user and chat
+                        let app_user_id = network_postgres.get_chat_app_user_id(chat_id).await?;
+                        app_postgres.delete_user(app_user_id).await?;
+                        network_postgres.delete_chat(chat_id).await?;
+                    }
+                }
+                Err(TelegramBotError::Error(format!("{:?}", error)).into())
+            }
         }
     }
 

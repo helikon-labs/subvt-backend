@@ -41,21 +41,15 @@ impl TelegramBot {
                             monthly_rewards.push((month, year, reward));
                         }
                     }
-                    let mut total = 0;
-                    for monthly_reward in monthly_rewards {
-                        println!(
-                            "{}.{} :: {}",
-                            monthly_reward.0, monthly_reward.1, monthly_reward.2
-                        );
-                        total += monthly_reward.2;
-                    }
-                    println!("TOTAL {}", total)
-                    /*
-                    prepare data structure
-                    prepare rewards report
-                    generate plot image, return the path/file
-                    send the image file
-                    */
+                    subvt_plotter::plot_validator_monthly_rewards(&monthly_rewards);
+                    self.messenger
+                        .send_image(
+                            &self.app_postgres,
+                            &self.network_postgres,
+                            chat_id,
+                            "/Users/kukabi/Desktop/vertical-bar-chart.png",
+                        )
+                        .await?;
                 }
             } else {
                 self.messenger
