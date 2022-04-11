@@ -11,6 +11,7 @@ members = [
     "subvt-notification-processor",
     "subvt-onekv-updater",
     "subvt-persistence",
+    "subvt-plotter",
     "subvt-proc-macro",
     "subvt-report-service",
     "subvt-service-common",
