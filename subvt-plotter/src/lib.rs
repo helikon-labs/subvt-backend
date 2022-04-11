@@ -1,8 +1,10 @@
-use charts::{AxisPosition, Chart, ScaleBand, ScaleLinear, VerticalBarView};
 use lazy_static::lazy_static;
+use plotlib::{AxisPosition, Chart, ScaleBand, ScaleLinear, VerticalBarView};
 use subvt_config::Config;
 use subvt_types::substrate::Balance;
 use subvt_utility::numeric::format_decimal;
+
+mod plotlib;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -76,7 +78,7 @@ pub fn plot_validator_monthly_rewards(rewards: &[(u8, u32, Balance)]) {
         .load_data(&data)
         .unwrap();
 
-    let path = "/Users/user/Desktop/chart.svg";
+    let path = "/Users/kukabi/Desktop/chart.svg";
     // Generate and save the chart.
     Chart::new()
         .set_width(width)
@@ -113,7 +115,5 @@ pub fn plot_validator_monthly_rewards(rewards: &[(u8, u32, Balance)]) {
         pixmap.as_mut(),
     )
     .unwrap();
-    pixmap
-        .save_png("/Users/user/Desktop/Images/chart.png")
-        .unwrap();
+    pixmap.save_png("/Users/kukabi/Desktop/chart.png").unwrap();
 }

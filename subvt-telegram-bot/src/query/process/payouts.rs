@@ -47,7 +47,7 @@ impl TelegramBot {
                             &self.app_postgres,
                             &self.network_postgres,
                             chat_id,
-                            "/Users/user/Desktop/chart.png",
+                            "/Users/kukabi/Desktop/chart.png",
                         )
                         .await?;
                 }
