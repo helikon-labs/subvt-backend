@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_started
 );
 
 ALTER TABLE sub_event_democracy_started
+    ADD CONSTRAINT sub_event_democracy_started_u_event
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_democracy_started
     ADD CONSTRAINT sub_event_democracy_started_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

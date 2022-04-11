@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS sub_event_chilled
 );
 
 ALTER TABLE sub_event_chilled
+    ADD CONSTRAINT sub_event_chilled_u_extrinsic
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_chilled
     ADD CONSTRAINT sub_event_chilled_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

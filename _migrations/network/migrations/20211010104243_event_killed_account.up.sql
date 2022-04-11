@@ -9,6 +9,10 @@ CREATE TABLE IF NOT EXISTS sub_event_killed_account
 );
 
 ALTER TABLE sub_event_killed_account
+    ADD CONSTRAINT sub_event_killed_account_u_event
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_killed_account
     ADD CONSTRAINT event_killed_account_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

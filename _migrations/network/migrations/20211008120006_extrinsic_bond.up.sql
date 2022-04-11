@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
 );
 
 ALTER TABLE sub_extrinsic_bond
+    ADD CONSTRAINT sub_extrinsic_bond_u_extrinsic
+    UNIQUE (block_hash, extrinsic_index);
+
+ALTER TABLE sub_extrinsic_bond
     ADD CONSTRAINT sub_extrinsic_bond_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

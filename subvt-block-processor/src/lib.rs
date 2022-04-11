@@ -307,38 +307,56 @@ impl BlockProcessor {
         let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
         let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
         for (index, event) in events.iter().enumerate() {
-            self.process_event(
-                substrate_client,
-                postgres,
-                current_epoch_index,
-                &block_hash,
-                block_number,
-                block_timestamp,
-                &mut successful_extrinsic_indices,
-                &mut failed_extrinsic_indices,
-                index,
-                event,
-            )
-            .await?;
+            if let Err(error) = self
+                .process_event(
+                    substrate_client,
+                    postgres,
+                    current_epoch_index,
+                    &block_hash,
+                    block_number,
+                    block_timestamp,
+                    &mut successful_extrinsic_indices,
+                    &mut failed_extrinsic_indices,
+                    index,
+                    event,
+                )
+                .await
+            {
+                log::error!(
+                    "Error while processing event #{} of block #{}: {:?}",
+                    index,
+                    block_number,
+                    error,
+                );
+            }
         }
         // persist extrinsics
         for (index, extrinsic) in extrinsics.iter().enumerate() {
             // check events for batch & batch_all
             let is_successful = successful_extrinsic_indices.contains(&(index as u32));
-            self.process_extrinsic(
-                substrate_client,
-                postgres,
-                block_hash.clone(),
-                block_number,
-                &active_validator_account_ids,
-                index,
-                false,
-                None,
-                None,
-                is_successful,
-                extrinsic,
-            )
-            .await?
+            if let Err(error) = self
+                .process_extrinsic(
+                    substrate_client,
+                    postgres,
+                    block_hash.clone(),
+                    block_number,
+                    &active_validator_account_ids,
+                    index,
+                    false,
+                    None,
+                    None,
+                    is_successful,
+                    extrinsic,
+                )
+                .await
+            {
+                log::error!(
+                    "Error while processing extrinsic #{} of block #{}: {:?}",
+                    index,
+                    block_number,
+                    error,
+                );
+            }
         }
         // notify
         postgres

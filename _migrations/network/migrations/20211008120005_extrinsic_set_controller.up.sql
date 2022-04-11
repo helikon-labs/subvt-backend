@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
 );
 
 ALTER TABLE sub_extrinsic_set_controller
+    ADD CONSTRAINT sub_extrinsic_set_controller_u_extrinsic
+    UNIQUE (block_hash, extrinsic_index);
+
+ALTER TABLE sub_extrinsic_set_controller
     ADD CONSTRAINT sub_extrinsic_set_controller_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

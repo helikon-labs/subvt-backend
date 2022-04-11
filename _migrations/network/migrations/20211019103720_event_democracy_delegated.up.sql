@@ -10,19 +10,21 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_delegated
 );
 
 ALTER TABLE sub_event_democracy_delegated
+    ADD CONSTRAINT sub_event_democracy_delegated_u_event
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_democracy_delegated
     ADD CONSTRAINT sub_event_democracy_delegated_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)
         ON DELETE CASCADE
         ON UPDATE CASCADE;
-
 ALTER TABLE sub_event_democracy_delegated
     ADD CONSTRAINT sub_event_democracy_delegated_fk_original_account
     FOREIGN KEY (original_account_id)
         REFERENCES sub_account (id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
-
 ALTER TABLE sub_event_democracy_delegated
     ADD CONSTRAINT sub_event_democracy_delegated_fk_delegate_account
     FOREIGN KEY (delegate_account_id)

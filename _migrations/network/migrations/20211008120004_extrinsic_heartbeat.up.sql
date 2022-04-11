@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_heartbeat
 );
 
 ALTER TABLE sub_extrinsic_heartbeat
+    ADD CONSTRAINT sub_extrinsic_heartbeat_u_extrinsic
+    UNIQUE (block_hash, extrinsic_index);
+
+ALTER TABLE sub_extrinsic_heartbeat
     ADD CONSTRAINT sub_extrinsic_heartbeat_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

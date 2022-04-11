@@ -8,6 +8,10 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
 );
 
 ALTER TABLE sub_event_validator_offline
+    ADD CONSTRAINT sub_event_validator_offline_u_extrinsic
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_validator_offline
     ADD CONSTRAINT sub_event_validator_offline_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

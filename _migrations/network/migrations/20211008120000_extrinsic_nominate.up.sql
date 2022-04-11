@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_nominate
 );
 
 ALTER TABLE sub_extrinsic_nominate
+    ADD CONSTRAINT sub_extrinsic_nominate_u_extrinsic
+    UNIQUE (block_hash, extrinsic_index);
+
+ALTER TABLE sub_extrinsic_nominate
     ADD CONSTRAINT sub_extrinsic_nominate_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

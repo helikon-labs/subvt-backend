@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS sub_event_nominator_kicked
 );
 
 ALTER TABLE sub_event_nominator_kicked
+    ADD CONSTRAINT sub_event_nominator_kicked_u_extrinsic
+    UNIQUE (block_hash, event_index);
+
+ALTER TABLE sub_event_nominator_kicked
     ADD CONSTRAINT sub_event_nominator_kicked_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)
