@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_payout_stakers
 );
 
 ALTER TABLE sub_extrinsic_payout_stakers
+    ADD CONSTRAINT sub_extrinsic_payout_stakers_u_extrinsic
+    UNIQUE (block_hash, extrinsic_index);
+
+ALTER TABLE sub_extrinsic_payout_stakers
     ADD CONSTRAINT sub_extrinsic_payout_stakers_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

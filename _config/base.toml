@@ -51,7 +51,7 @@ connection_timeout_seconds = 3
 
 [network_postgres]
 host = "127.0.0.1"
-port = 5432
+port = 5433
 username = "subvt"
 password = "subvt"
 database_name = "subvt_network"

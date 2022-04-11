@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS sub_event_rewarded
 );
 
 ALTER TABLE sub_event_rewarded
+    ADD CONSTRAINT sub_event_rewarded_u_event
+    UNIQUE (block_hash, extrinsic_index, event_index);
+
+ALTER TABLE sub_event_rewarded
     ADD CONSTRAINT sub_event_rewarded_fk_block
     FOREIGN KEY (block_hash)
         REFERENCES sub_block (hash)

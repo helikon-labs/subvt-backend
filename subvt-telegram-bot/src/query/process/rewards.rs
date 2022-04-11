@@ -1,5 +1,7 @@
 use crate::query::Query;
 use crate::{messenger::message::MessageType, TelegramBot};
+use chrono::Datelike;
+use subvt_types::substrate::Balance;
 
 impl TelegramBot {
     pub(crate) async fn process_rewards_query(
@@ -26,6 +28,28 @@ impl TelegramBot {
                     println!("no rewards for {}", validator.address);
                 } else {
                     println!("send rewards report for {}", validator.address);
+                    // (month, year, reward)
+                    let mut monthly_rewards: Vec<(u8, u32, Balance)> = Vec::new();
+                    for (era, reward) in era_rewards {
+                        let month = era.get_start_date_time().month() as u8;
+                        let year = era.get_start_date_time().year() as u32;
+                        let last = monthly_rewards.last().unwrap_or(&(0, 0, 0));
+                        if last.0 == month && last.1 == year {
+                            let last_index = monthly_rewards.len() - 1;
+                            monthly_rewards[last_index] = (last.0, last.1, last.2 + reward);
+                        } else {
+                            monthly_rewards.push((month, year, reward));
+                        }
+                    }
+                    let mut total = 0;
+                    for monthly_reward in monthly_rewards {
+                        println!(
+                            "{}.{} :: {}",
+                            monthly_reward.0, monthly_reward.1, monthly_reward.2
+                        );
+                        total += monthly_reward.2;
+                    }
+                    println!("TOTAL {}", total)
                     /*
                     prepare data structure
                     prepare rewards report

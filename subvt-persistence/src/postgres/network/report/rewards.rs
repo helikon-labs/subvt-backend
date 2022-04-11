@@ -16,6 +16,7 @@ impl PostgreSQLNetworkStorage {
             AND EV.extrinsic_index = EX.extrinsic_index
             AND EX.validator_account_id = $1
             AND EV.rewardee_account_id = $1
+            AND EX.is_successful = true
             GROUP BY E.index
             ORDER BY E.index ASC;
             "#,
