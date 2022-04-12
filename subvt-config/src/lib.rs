@@ -216,7 +216,9 @@ pub struct MetricsConfig {
 /// Plotter config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct PlotterConfig {
-    pub temp_dir_path: String,
+    pub tmp_dir_path: String,
+    pub font_dir_path: String,
+    pub font_sans_serif_family: String,
 }
 
 /// Whole configuration.

@@ -78,7 +78,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
     // save svg
     let svg_path = format!(
         "{}{}{}.svg",
-        CONFIG.plotter.temp_dir_path,
+        CONFIG.plotter.tmp_dir_path,
         std::path::MAIN_SEPARATOR,
         millis,
     );
@@ -105,7 +105,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
     // save png
     let png_path = format!(
         "{}{}{}.png",
-        CONFIG.plotter.temp_dir_path,
+        CONFIG.plotter.tmp_dir_path,
         std::path::MAIN_SEPARATOR,
         millis,
     );
@@ -115,7 +115,9 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
             .and_then(|p| p.parent().map(|p| p.to_path_buf())),
         ..Default::default()
     };
-    opt.fontdb.load_system_fonts();
+    opt.fontdb.load_fonts_dir(&CONFIG.plotter.font_dir_path);
+    opt.fontdb
+        .set_sans_serif_family(&CONFIG.plotter.font_sans_serif_family);
     let svg_data = std::fs::read(&svg_path).unwrap();
     let rtree = usvg::Tree::from_data(&svg_data, &opt.to_ref()).unwrap();
     let pixmap_size = rtree.svg_node().size.to_screen_size();

@@ -51,7 +51,7 @@ connection_timeout_seconds = 3
 
 [network_postgres]
 host = "127.0.0.1"
-port = 5433
+port = 5432
 username = "subvt"
 password = "subvt"
 database_name = "subvt_network"
@@ -78,7 +78,9 @@ request_timeout_seconds = 60
 max_era_index_range = 100
 
 [plotter]
-temp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_tmp"
+tmp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_tmp"
+font_dir_path = "/Users/kukabi/Documents/Development/subvt/subvt-backend/_fonts"
+font_sans_serif_family = "DejaVu Sans"
 
 [telemetry]
 # W3F       wss://telemetry-backend.w3f.community/feed
