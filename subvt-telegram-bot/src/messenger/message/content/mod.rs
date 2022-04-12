@@ -99,6 +99,8 @@ impl MessageType {
                 self.fill_network_status_context(&mut context, network_status);
                 "network_status.html"
             }
+            Self::NoPayoutsFound => "no_payouts_found.html",
+            Self::NoRewardsFound => "no_rewards_found.html",
         };
         renderer.render(template_name, &context).unwrap()
     }

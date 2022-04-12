@@ -4,7 +4,7 @@ services:
   subvt_kusama_block_processor:
     container_name: subvt_kusama_block_processor
     restart: unless-stopped
-    image: "helikon/subvt-block-processor:0.1.3"
+    image: "helikon/subvt-block-processor:0.1.5"
     networks:
       - subvt_kusama
     environment:
@@ -24,7 +24,7 @@ services:
   subvt_kusama_validator_list_updater:
     container_name: subvt_kusama_validator_list_updater
     restart: unless-stopped
-    image: "helikon/subvt-validator-list-updater:0.1.3"
+    image: "helikon/subvt-validator-list-updater:0.1.5"
     depends_on:
       - subvt_kusama_block_processor
     networks:
@@ -46,7 +46,7 @@ services:
   subvt_kusama_active_validator_list_server:
     container_name: subvt_kusama_active_validator_list_server
     restart: unless-stopped
-    image: "helikon/subvt-active-validator-list-server:0.1.3"
+    image: "helikon/subvt-active-validator-list-server:0.1.5"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
@@ -66,7 +66,7 @@ services:
   subvt_kusama_inactive_validator_list_server:
     container_name: subvt_kusama_inactive_validator_list_server
     restart: unless-stopped
-    image: "helikon/subvt-inactive-validator-list-server:0.1.3"
+    image: "helikon/subvt-inactive-validator-list-server:0.1.5"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
@@ -86,7 +86,7 @@ services:
   subvt_kusama_validator_details_server:
     container_name: subvt_kusama_validator_details_server
     restart: unless-stopped
-    image: "helikon/subvt-validator-details-server:0.1.3"
+    image: "helikon/subvt-validator-details-server:0.1.5"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
@@ -106,7 +106,7 @@ services:
   subvt_kusama_network_status_updater:
     container_name: subvt_kusama_network_status_updater
     restart: unless-stopped
-    image: "helikon/subvt-network-status-updater:0.1.3"
+    image: "helikon/subvt-network-status-updater:0.1.5"
     networks:
       - subvt_kusama
     environment:
@@ -124,7 +124,7 @@ services:
   subvt_kusama_network_status_server:
     container_name: subvt_kusama_network_status_server
     restart: unless-stopped
-    image: "helikon/subvt-network-status-server:0.1.3"
+    image: "helikon/subvt-network-status-server:0.1.5"
     depends_on:
       - subvt_kusama_network_status_updater
     networks:
@@ -144,7 +144,7 @@ services:
   subvt_kusama_onekv_updater:
     container_name: subvt_kusama_onekv_updater
     restart: unless-stopped
-    image: "helikon/subvt-onekv-updater:0.1.3"
+    image: "helikon/subvt-onekv-updater:0.1.5"
     networks:
       - subvt_kusama
     environment:
@@ -160,7 +160,7 @@ services:
   subvt_kusama_telemetry_processor:
     container_name: subvt_kusama_telemetry_processor
     restart: unless-stopped
-    image: "helikon/subvt-telemetry-processor:0.1.3"
+    image: "helikon/subvt-telemetry-processor:0.1.5"
     networks:
       - subvt_kusama
     environment:
@@ -176,7 +176,7 @@ services:
   subvt_kusama_notification_generator:
     container_name: subvt_kusama_notification_generator
     restart: unless-stopped
-    image: "helikon/subvt-notification-generator:0.1.3"
+    image: "helikon/subvt-notification-generator:0.1.5"
     depends_on:
       - subvt_kusama_validator_list_updater
       - subvt_kusama_network_status_updater
@@ -200,7 +200,7 @@ services:
   subvt_kusama_report_service:
     container_name: subvt_kusama_report_service
     restart: unless-stopped
-    image: "helikon/subvt-report-service:0.1.3"
+    image: "helikon/subvt-report-service:0.1.5"
     networks:
       - subvt_kusama
     ports:
@@ -218,12 +218,13 @@ services:
   subvt_kusama_telegram_bot:
     container_name: subvt_kusama_telegram_bot
     restart: unless-stopped
-    image: "helikon/subvt-telegram-bot:0.1.3"
+    image: "helikon/subvt-telegram-bot:0.1.5"
     networks:
       - subvt_app
       - subvt_kusama
     volumes:
       - /Users/kukabi/Documents/Development/subvt/subvt-backend/_template:/subvt/template
+      - /Users/kukabi/Desktop/subvt_plotter_tmp:/subvt/tmp
     environment:
       - SUBVT_ENV=production
       - SUBVT_NETWORK=kusama
@@ -243,6 +244,8 @@ services:
       # telegram
       - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=TELEGRAM_TOKEN
       - SUBVT__TELEGRAM_BOT__ADMIN_CHAT_ID=1130952914
+      # plotter
+      - SUBVT__PLOTTER__TEMP_DIR_PATH=/subvt/tmp
 networks:
   subvt_kusama:
     name: subvt_kusama

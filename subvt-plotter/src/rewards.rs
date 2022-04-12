@@ -1,4 +1,4 @@
-use crate::plotlib::{AxisPosition, Chart, ScaleBand, ScaleLinear, VerticalBarView};
+use crate::plotlib::{Chart, ScaleBand, ScaleLinear, VerticalBarView};
 use crate::{PlotterError, CONFIG};
 use chrono::Datelike;
 use itertools::Itertools;
@@ -18,7 +18,7 @@ fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32
         let acc = *monthly_rewards.get(&month_index).unwrap_or(&0);
         monthly_rewards.insert(month_index, acc + reward.1);
     }
-    // fill the missing months
+    // fill in the missing months
     let min_month_index = *monthly_rewards.keys().min().unwrap();
     let max_month_index = *monthly_rewards.keys().max().unwrap();
     for i in min_month_index..=max_month_index {
@@ -44,13 +44,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         let reward = *monthly_rewards.get(month_index).unwrap();
         let tick = format!("{} {}", months[month as usize], year % 100);
         domain.push(tick.clone());
-        let amount: f32 = format_decimal(
-            reward,
-            CONFIG.substrate.token_decimals,
-            CONFIG.substrate.token_format_decimal_points,
-        )
-        .parse()
-        .unwrap();
+        let amount = reward as f32 / 10u128.pow(CONFIG.substrate.token_decimals as u32) as f32;
         data.push((tick, amount));
         total += reward;
     }
@@ -59,15 +53,9 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         CONFIG.substrate.token_decimals,
         CONFIG.substrate.token_format_decimal_points,
     );
-    let max = (format_decimal(
-        *monthly_rewards.values().max().unwrap(),
-        CONFIG.substrate.token_decimals,
-        CONFIG.substrate.token_format_decimal_points,
-    )
-    .parse::<f32>()
-    .unwrap()
-        * 1.2)
-        .ceil();
+    let max_reward = *monthly_rewards.values().max().unwrap() as f32
+        / 10u128.pow(CONFIG.substrate.token_decimals as u32) as f32;
+    let y_max = (max_reward * 1.2).ceil();
 
     let width = 1200;
     let height = 600;
@@ -78,15 +66,12 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         .set_inner_padding(0.1)
         .set_outer_padding(0.1);
     let y = ScaleLinear::new()
-        .set_domain(vec![0.0, max])
+        .set_domain(vec![0.0, y_max])
         .set_range(vec![height - top - bottom, 0]);
     let view = VerticalBarView::new()
         .set_x_scale(&x)
         .set_y_scale(&y)
-        .set_custom_data_label(format!(
-            "Total: {} {}",
-            total_formatted, CONFIG.substrate.token_ticker
-        ))
+        .set_label_rounding_precision(4)
         .load_data(&data)
         .unwrap();
     let millis = chrono::Utc::now().timestamp_millis();
@@ -102,7 +87,11 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         .set_height(height)
         .set_margins(top, right, bottom, left)
         .add_title(title.to_string())
-        .add_legend_at(AxisPosition::Top)
+        .add_subtitle("• Last 400 days •".to_string())
+        .set_summary(format!(
+            "Total: {} {}",
+            total_formatted, CONFIG.substrate.token_ticker,
+        ))
         .add_view(&view)
         .add_axis_bottom(&x)
         .add_axis_left(&y)

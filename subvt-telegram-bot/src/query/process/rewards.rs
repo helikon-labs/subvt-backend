@@ -24,7 +24,14 @@ impl TelegramBot {
                     .get_validator_era_rewards(&validator.account_id)
                     .await?;
                 if era_rewards.is_empty() {
-                    println!("no rewards for {}", validator.address);
+                    self.messenger
+                        .send_message(
+                            &self.app_postgres,
+                            &self.network_postgres,
+                            chat_id,
+                            Box::new(MessageType::NoRewardsFound),
+                        )
+                        .await?;
                 } else {
                     let title = format!(
                         "Monthly Staking Rewards for {}",
@@ -32,8 +39,11 @@ impl TelegramBot {
                     );
                     let path = subvt_plotter::rewards::plot_era_rewards(&title, &era_rewards)?;
                     self.messenger
-                        .send_image(&self.app_postgres, &self.network_postgres, chat_id, path)
+                        .send_image(&self.app_postgres, &self.network_postgres, chat_id, &path)
                         .await?;
+                    if let Err(error) = std::fs::remove_file(&path) {
+                        log::error!("Error while removing payout report PNG file: {:?}", error);
+                    }
                 }
             } else {
                 self.messenger

@@ -45,4 +45,6 @@ pub enum MessageType {
     ValidatorRemoved(TelegramChatValidator),
     Settings,
     NetworkStatus(NetworkStatus),
+    NoPayoutsFound,
+    NoRewardsFound,
 }

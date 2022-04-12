@@ -78,7 +78,7 @@ request_timeout_seconds = 60
 max_era_index_range = 100
 
 [plotter]
-temp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_temp"
+temp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_tmp"
 
 [telemetry]
 # W3F       wss://telemetry-backend.w3f.community/feed

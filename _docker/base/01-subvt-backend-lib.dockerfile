@@ -1,4 +1,4 @@
-FROM rust:1.59 as builder
+FROM rust:1.60 as builder
 RUN mkdir -p /subvt/bin \
     && mkdir -p /subvt/src
 WORKDIR /subvt/src

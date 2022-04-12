@@ -34,6 +34,8 @@ pub struct Chart<'a> {
     legend_position: Option<AxisPosition>,
     views: Vec<&'a dyn View<'a>>,
     title: String,
+    subtitle: String,
+    summary: Option<String>,
 }
 
 impl<'a> Chart<'a> {
@@ -53,6 +55,8 @@ impl<'a> Chart<'a> {
             legend_position: None,
             views: Vec::new(),
             title: String::new(),
+            subtitle: String::new(),
+            summary: None,
         }
     }
 
@@ -71,6 +75,18 @@ impl<'a> Chart<'a> {
     /// Add chart title.
     pub fn add_title(mut self, title: String) -> Self {
         self.title = title;
+        self
+    }
+
+    /// Add chart subtitle.
+    pub fn add_subtitle(mut self, subtitle: String) -> Self {
+        self.subtitle = subtitle;
+        self
+    }
+
+    /// Add chart summary text.
+    pub fn set_summary(mut self, summary: String) -> Self {
+        self.summary = Some(summary);
         self
     }
 
@@ -285,13 +301,57 @@ impl<'a> Chart<'a> {
                         .set("x", 0)
                         .set("y", 0)
                         .set("dy", ".35em")
-                        .set("fill", "#333")
+                        .set("fill", "#222")
                         .set("text-anchor", "middle")
                         .set("font-size", "17px")
                         .set("font-family", "sans-serif")
+                        .set("font-stype", "bold")
                         .add(TextNode::new(&self.title)),
                 );
             group.append(title_group);
+        }
+
+        // Add chart subtitle
+        if !self.subtitle.is_empty() {
+            let subtitle_group = Group::new()
+                .set("class", "g-subtitle")
+                .set("transform", format!("translate({},{})", self.width / 2, 64))
+                .add(
+                    Text::new()
+                        .set("x", 0)
+                        .set("y", 0)
+                        .set("dy", ".35em")
+                        .set("fill", "#333")
+                        .set("text-anchor", "middle")
+                        .set("font-size", "14px")
+                        .set("font-family", "sans-serif")
+                        .set("font-style", "italic")
+                        .add(TextNode::new(&self.subtitle)),
+                );
+            group.append(subtitle_group);
+        }
+
+        // Add chart subtitle
+        if let Some(summary) = &self.summary {
+            let summary_group = Group::new()
+                .set("class", "g-summary")
+                .set(
+                    "transform",
+                    format!("translate({},{})", self.width - 120, 40),
+                )
+                .add(
+                    Text::new()
+                        .set("x", 0)
+                        .set("y", 0)
+                        .set("dy", ".35em")
+                        .set("fill", "#222")
+                        .set("text-anchor", "middle")
+                        .set("font-size", "15px")
+                        .set("font-family", "sans-serif")
+                        .set("font-style", "bold")
+                        .add(TextNode::new(summary)),
+                );
+            group.append(summary_group);
         }
 
         if let Some(ref axis) = self.x_axis_top {
@@ -432,6 +492,8 @@ impl<'a> Chart<'a> {
 
             group.append(legend_group);
         }
+
+        // total
 
         Ok(group)
     }

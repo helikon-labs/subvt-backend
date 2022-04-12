@@ -4,11 +4,11 @@ use crate::TelegramBotError;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
     EditMessageResponse, EditMessageTextParams, Error, InlineKeyboardButton, InlineKeyboardMarkup,
-    InputFile, Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup,
-    SendMessageParams, SendPhotoParams,
+    Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup, SendMessageParams,
+    SendPhotoParams,
 };
 use message::MessageType;
-use std::path::PathBuf;
+use std::path::Path;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -78,11 +78,13 @@ impl Messenger {
         app_postgres: &PostgreSQLAppStorage,
         network_postgres: &PostgreSQLNetworkStorage,
         chat_id: i64,
-        path: PathBuf,
+        path: &Path,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
         let params = SendPhotoParams {
             chat_id: ChatId::Integer(chat_id),
-            photo: frankenstein::api_params::File::InputFile(InputFile { path }),
+            photo: frankenstein::api_params::File::InputFile(frankenstein::InputFile {
+                path: path.into(),
+            }),
             caption: None,
             parse_mode: Some(ParseMode::Html),
             caption_entities: None,
