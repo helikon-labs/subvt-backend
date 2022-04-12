@@ -28,7 +28,7 @@ impl AxisLine {
             .set("y2", self.y2)
             .set("shape-rendering", "crispEdges")
             .set("stroke-width", 1)
-            .set("stroke", "#bbbbbb");
+            .set("stroke", "#333");
 
         Ok(line)
     }
@@ -129,7 +129,7 @@ impl AxisTick {
             .set("x2", tick_line_p2.0)
             .set("y2", tick_line_p2.1)
             .set("shape-rendering", "crispEdges")
-            .set("stroke", "#bbbbbb")
+            .set("stroke", "#333")
             .set("stroke-width", "1px");
 
         let tick_label = Text::new()
@@ -146,7 +146,7 @@ impl AxisTick {
             .set("text-anchor", tick_label_text_anchor)
             .set("font-size", "12px")
             .set("font-family", "sans-serif")
-            .set("fill", "#777")
+            .set("fill", "#111")
             .add(TextNode::new(formatted_label));
 
         group.append(tick_line);

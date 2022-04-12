@@ -6594,8 +6594,11 @@ dependencies = [
 name = "subvt-plotter"
 version = "0.1.3"
 dependencies = [
+ "anyhow",
+ "chrono",
  "env_logger 0.9.0",
  "format_num",
+ "itertools",
  "lazy_static",
  "log",
  "resvg",
@@ -6603,6 +6606,7 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "svg",
+ "thiserror",
  "tiny-skia",
  "usvg",
 ]

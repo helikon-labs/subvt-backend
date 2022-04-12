@@ -132,7 +132,7 @@ impl DatumRepresentation for Bar {
                         (block.1 + 12_f32, "start")
                     }
                     BarLabelPosition::EndOutside if self.orientation == Orientation::Vertical => {
-                        (block.0 - 16_f32, "middle")
+                        (block.0 - 12_f32, "middle")
                     }
                     _ => (0_f32, "middle"), // this is needed to get rid of compiler warning of exhaustively covering match pattern.
                 };
@@ -152,8 +152,8 @@ impl DatumRepresentation for Bar {
                     .set("text-anchor", text_anchor)
                     .set("dy", ".35em")
                     .set("font-family", "sans-serif")
-                    .set("fill", "#333")
-                    .set("font-size", "14px")
+                    .set("fill", "#000")
+                    .set("font-size", "13px")
                     .add(TextNode::new(label_text));
 
                 group.append(label);

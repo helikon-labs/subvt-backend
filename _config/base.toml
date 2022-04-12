@@ -51,7 +51,7 @@ connection_timeout_seconds = 3
 
 [network_postgres]
 host = "127.0.0.1"
-port = 5432
+port = 5433
 username = "subvt"
 password = "subvt"
 database_name = "subvt_network"
@@ -76,6 +76,9 @@ request_timeout_seconds = 60
 
 [report]
 max_era_index_range = 100
+
+[plotter]
+temp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_temp"
 
 [telemetry]
 # W3F       wss://telemetry-backend.w3f.community/feed

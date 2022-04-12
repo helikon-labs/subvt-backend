@@ -279,15 +279,15 @@ impl<'a> Chart<'a> {
         if !self.title.is_empty() {
             let title_group = Group::new()
                 .set("class", "g-title")
-                .set("transform", format!("translate({},{})", self.width / 2, 25))
+                .set("transform", format!("translate({},{})", self.width / 2, 40))
                 .add(
                     Text::new()
                         .set("x", 0)
                         .set("y", 0)
                         .set("dy", ".35em")
-                        .set("fill", "#777")
+                        .set("fill", "#333")
                         .set("text-anchor", "middle")
-                        .set("font-size", "24px")
+                        .set("font-size", "17px")
                         .set("font-family", "sans-serif")
                         .add(TextNode::new(&self.title)),
                 );

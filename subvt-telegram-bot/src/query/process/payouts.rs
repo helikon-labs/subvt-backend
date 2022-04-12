@@ -1,7 +1,6 @@
 use crate::query::Query;
 use crate::{messenger::message::MessageType, TelegramBot};
-use chrono::Datelike;
-use subvt_types::substrate::Balance;
+use subvt_utility::text::get_condensed_address;
 
 impl TelegramBot {
     pub(crate) async fn process_payouts_query(
@@ -20,35 +19,20 @@ impl TelegramBot {
                 .get_chat_validator_by_id(chat_id, id_str.parse()?)
                 .await?
             {
-                let payouts = self
+                let era_payouts = self
                     .network_postgres
-                    .get_validator_payouts(&validator.account_id)
+                    .get_validator_era_payouts(&validator.account_id)
                     .await?;
-                if payouts.is_empty() {
+                if era_payouts.is_empty() {
                     println!("no payouts for {}", validator.address);
                 } else {
-                    println!("send payout report for {}", validator.address);
-                    // (month, year, reward)
-                    let mut monthly_rewards: Vec<(u8, u32, Balance)> = Vec::new();
-                    for (era, reward) in payouts {
-                        let month = era.get_start_date_time().month() as u8;
-                        let year = era.get_start_date_time().year() as u32;
-                        let last = monthly_rewards.last().unwrap_or(&(0, 0, 0));
-                        if last.0 == month && last.1 == year {
-                            let last_index = monthly_rewards.len() - 1;
-                            monthly_rewards[last_index] = (last.0, last.1, last.2 + reward);
-                        } else {
-                            monthly_rewards.push((month, year, reward));
-                        }
-                    }
-                    subvt_plotter::plot_validator_monthly_rewards(&monthly_rewards);
+                    let title = format!(
+                        "Monthly Nominator Payouts from {}",
+                        get_condensed_address(&validator.address, Some(3)),
+                    );
+                    let path = subvt_plotter::rewards::plot_era_rewards(&title, &era_payouts)?;
                     self.messenger
-                        .send_image(
-                            &self.app_postgres,
-                            &self.network_postgres,
-                            chat_id,
-                            "/Users/kukabi/Desktop/chart.png",
-                        )
+                        .send_image(&self.app_postgres, &self.network_postgres, chat_id, path)
                         .await?;
                 }
             } else {

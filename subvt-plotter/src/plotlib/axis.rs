@@ -123,7 +123,7 @@ impl Axis {
             let (x, y, rotate) = match self.position {
                 AxisPosition::Top => ((self.length / 2) as i32, -32, 0),
                 AxisPosition::Bottom => ((self.length / 2) as i32, 42, 0),
-                AxisPosition::Left => (-(self.length as i32 / 2), -42, -90),
+                AxisPosition::Left => (-(self.length as i32 / 2), -32, -90),
                 AxisPosition::Right => ((self.length as i32 / 2), -42, 90),
             };
             let axis_label = Text::new()
@@ -132,7 +132,7 @@ impl Axis {
                 .set("text-anchor", "middle")
                 .set("font-size", "14px")
                 .set("font-family", "sans-serif")
-                .set("fill", "#777")
+                .set("fill", "#444")
                 .set("transform", format!("rotate({})", rotate))
                 .add(TextNode::new(&self.label));
             group.append(axis_label);
@@ -146,7 +146,7 @@ impl Axis {
         let mut ticks = Vec::new();
         let label_offset = {
             if position == AxisPosition::Top || position == AxisPosition::Bottom {
-                16
+                24
             } else {
                 12
             }

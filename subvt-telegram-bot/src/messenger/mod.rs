@@ -78,13 +78,11 @@ impl Messenger {
         app_postgres: &PostgreSQLAppStorage,
         network_postgres: &PostgreSQLNetworkStorage,
         chat_id: i64,
-        path: &str,
+        path: PathBuf,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
         let params = SendPhotoParams {
             chat_id: ChatId::Integer(chat_id),
-            photo: frankenstein::api_params::File::InputFile(InputFile {
-                path: PathBuf::from(path.to_string()),
-            }),
+            photo: frankenstein::api_params::File::InputFile(InputFile { path }),
             caption: None,
             parse_mode: Some(ParseMode::Html),
             caption_entities: None,

@@ -213,6 +213,12 @@ pub struct MetricsConfig {
     pub app_service_port: u16,
 }
 
+/// Plotter config.
+#[derive(Clone, Debug, Deserialize)]
+pub struct PlotterConfig {
+    pub temp_dir_path: String,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -233,6 +239,7 @@ pub struct Config {
     pub notification_processor: NotificationProcessorConfig,
     pub telegram_bot: TelegramBotConfig,
     pub metrics: MetricsConfig,
+    pub plotter: PlotterConfig,
 }
 
 impl Config {
