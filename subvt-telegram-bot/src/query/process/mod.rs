@@ -5,6 +5,7 @@ mod broadcast;
 mod nomination_details;
 mod nomination_summary;
 mod payouts;
+mod referendum_details;
 mod remove_validator;
 mod rewards;
 mod settings;
@@ -65,6 +66,10 @@ impl TelegramBot {
                 if let Some(message_id) = original_message_id {
                     self.messenger.delete_message(chat_id, message_id).await?;
                 }
+            }
+            QueryType::ReferendumDetails => {
+                self.process_referendum_details_query(chat_id, original_message_id, query)
+                    .await?;
             }
         }
         Ok(())

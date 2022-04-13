@@ -228,6 +228,53 @@ impl Messenger {
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
                 self.get_settings_keyboard()?,
             )),
+            MessageType::RefererendumList(posts) => {
+                if posts.is_empty() {
+                    None
+                } else {
+                    let mut rows = vec![];
+                    for post in posts {
+                        let query = Query {
+                            query_type: QueryType::ReferendumDetails,
+                            parameter: Some(post.onchain_link.onchain_referendum_id.to_string()),
+                        };
+                        rows.push(vec![InlineKeyboardButton {
+                            text: format!(
+                                "#{} - {}",
+                                post.onchain_link.onchain_referendum_id,
+                                if let Some(title) = &post.maybe_title {
+                                    title
+                                } else {
+                                    "No title"
+                                },
+                            ),
+                            url: None,
+                            login_url: None,
+                            callback_data: Some(serde_json::to_string(&query)?),
+                            switch_inline_query: None,
+                            switch_inline_query_current_chat: None,
+                            callback_game: None,
+                            pay: None,
+                        }]);
+                    }
+                    rows.push(vec![InlineKeyboardButton {
+                        text: self.renderer.render("cancel.html", &Context::new())?,
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::Cancel,
+                            parameter: None,
+                        })?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    }]);
+                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                        inline_keyboard: rows,
+                    }))
+                }
+            }
             _ => None,
         };
         let params = SendMessageParams {

@@ -170,7 +170,7 @@ impl Service for ReportService {
         .disable_signals()
         .bind(format!(
             "{}:{}",
-            CONFIG.http.host, CONFIG.http.report_service_port,
+            CONFIG.http.service_host, CONFIG.http.report_service_port,
         ))?
         .run();
         let (server_result, _) = tokio::join!(server, on_server_ready());

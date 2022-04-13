@@ -9,5 +9,6 @@ anyhow = "1.0.56"
 lazy_static = "1.4.0"
 log = "0.4.16"
 reqwest = { version = "0.11.10", features = ["blocking", "json", "gzip", "brotli"] }
+serde_json = "1.0.79"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }

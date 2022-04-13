@@ -6,6 +6,7 @@ use tera::{Context, Tera};
 mod network_status;
 mod nomination_details;
 mod nomination_summary;
+mod referendum_details;
 mod validator_info;
 
 impl MessageType {
@@ -101,6 +102,19 @@ impl MessageType {
             }
             Self::NoPayoutsFound => "no_payouts_found.html",
             Self::NoRewardsFound => "no_rewards_found.html",
+            Self::NoOpenReferendaFound => {
+                context.insert("chain", &CONFIG.substrate.chain);
+                "no_referenda_found.html"
+            }
+            Self::RefererendumList(_) => "select_referendum.html",
+            Self::ReferendumNotFound(id) => {
+                context.insert("referendum_id", &id);
+                "referendum_not_found.html"
+            }
+            Self::ReferendumDetails(post) => {
+                self.fill_referendum_details_context(&mut context, post);
+                "referendum_details.html"
+            }
         };
         renderer.render(template_name, &context).unwrap()
     }

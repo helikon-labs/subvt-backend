@@ -23,7 +23,7 @@ impl Default for OneKVUpdater {
             .gzip(true)
             .brotli(true)
             .timeout(std::time::Duration::from_secs(
-                CONFIG.onekv.request_timeout_seconds,
+                CONFIG.http.request_timeout_seconds,
             ))
             .build()
             .unwrap();

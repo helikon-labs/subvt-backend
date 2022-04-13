@@ -479,7 +479,7 @@ impl Service for AppService {
         .disable_signals()
         .bind(format!(
             "{}:{}",
-            CONFIG.http.host, CONFIG.http.app_service_port,
+            CONFIG.http.service_host, CONFIG.http.app_service_port,
         ))?
         .run();
         let (server_result, _) = tokio::join!(server, on_server_ready());

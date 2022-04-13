@@ -1,12 +1,40 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct AllReferendaQueryResponse {
-    pub data: AllReferendaQueryResponseData,
+#[derive(Clone, Debug, Serialize)]
+pub enum GraphQLOperation {
+    #[serde(rename(serialize = "AllReferendaPosts"))]
+    ReferendumList,
+    #[serde(rename(serialize = "ReferendumPostAndComments"))]
+    ReferendumDetails,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphQLQueryVariables {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub post_type: Option<u32>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GraphQLQuery {
+    #[serde(rename(serialize = "operationName"))]
+    pub operation: GraphQLOperation,
+    pub variables: GraphQLQueryVariables,
+    pub query: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]
-pub struct AllReferendaQueryResponseData {
+pub struct ReferendaQueryResponse {
+    pub data: ReferendaQueryResponseData,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct ReferendaQueryResponseData {
     pub posts: Vec<ReferendumPost>,
 }
 
@@ -14,7 +42,10 @@ pub struct AllReferendaQueryResponseData {
 pub struct ReferendumPost {
     pub id: u32,
     pub author: Author,
-    pub title: Option<String>,
+    #[serde(rename = "title")]
+    pub maybe_title: Option<String>,
+    #[serde(rename = "content")]
+    pub maybe_content: Option<String>,
     pub created_at: chrono::DateTime<chrono::Utc>,
     pub updated_at: chrono::DateTime<chrono::Utc>,
     pub onchain_link: OnchainReferendumLink,
@@ -37,11 +68,13 @@ pub struct OnchainReferendumLink {
 }
 
 #[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct OnchainReferendum {
     pub id: u32,
-    pub end: u64,
-    #[serde(rename = "referendumStatus")]
+    #[serde(rename = "end")]
+    pub end_block_number: u64,
     pub referendum_status: Vec<OnchainReferendumStatus>,
+    pub vote_threshold: String,
 }
 
 #[derive(Clone, Debug, Deserialize)]

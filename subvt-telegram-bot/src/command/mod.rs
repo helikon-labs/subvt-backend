@@ -1,4 +1,5 @@
 use crate::{query::QueryType, MessageType, TelegramBot};
+use subvt_governance::polkassembly;
 
 mod add_validator;
 mod broadcast;
@@ -100,8 +101,26 @@ impl TelegramBot {
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
                     .await?;
-                let posts = subvt_governance::fetch_open_referendum_list().await?;
-                println!("fetched posts :: {}", posts.len());
+                let posts = polkassembly::fetch_open_referendum_list().await?;
+                if posts.is_empty() {
+                    self.messenger
+                        .send_message(
+                            &self.app_postgres,
+                            &self.network_postgres,
+                            chat_id,
+                            Box::new(MessageType::NoOpenReferendaFound),
+                        )
+                        .await?;
+                } else {
+                    self.messenger
+                        .send_message(
+                            &self.app_postgres,
+                            &self.network_postgres,
+                            chat_id,
+                            Box::new(MessageType::RefererendumList(posts)),
+                        )
+                        .await?;
+                }
             }
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();

@@ -96,7 +96,8 @@ pub struct RPCConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct HTTPConfig {
-    pub host: String,
+    pub request_timeout_seconds: u64,
+    pub service_host: String,
     /// Report REST service TCP port.
     pub report_service_port: u16,
     /// Application REST service TCP port.
@@ -141,7 +142,6 @@ pub struct OneKVConfig {
     pub candidate_details_endpoint: String,
     pub nominator_list_endpoint: String,
     pub refresh_seconds: u64,
-    pub request_timeout_seconds: u64,
 }
 
 /// Report service configuration.

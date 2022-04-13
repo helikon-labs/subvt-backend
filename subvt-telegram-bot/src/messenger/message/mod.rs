@@ -1,5 +1,6 @@
 use crate::query::QueryType;
 use subvt_types::crypto::AccountId;
+use subvt_types::governance::polkassembly::ReferendumPost;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
 use subvt_types::telegram::TelegramChatValidator;
@@ -47,4 +48,8 @@ pub enum MessageType {
     NetworkStatus(NetworkStatus),
     NoPayoutsFound,
     NoRewardsFound,
+    NoOpenReferendaFound,
+    RefererendumList(Vec<ReferendumPost>),
+    ReferendumNotFound(u32),
+    ReferendumDetails(ReferendumPost),
 }

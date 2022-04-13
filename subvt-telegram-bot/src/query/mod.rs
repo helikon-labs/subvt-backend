@@ -12,30 +12,32 @@ pub struct Query {
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum QueryType {
-    #[serde(rename = "NOP")]
-    NoOp,
-    #[serde(rename = "VI")]
-    ValidatorInfo,
-    #[serde(rename = "NS")]
-    NominationSummary,
-    #[serde(rename = "ND")]
-    NominationDetails,
-    #[serde(rename = "PA")]
-    Payouts,
-    #[serde(rename = "RV")]
-    RemoveValidator,
-    #[serde(rename = "RW")]
-    Rewards,
-    #[serde(rename = "CB")]
-    ConfirmBroadcast,
-    #[serde(rename = "SE")]
-    SettingsEdit(SettingsEditQueryType),
-    #[serde(rename = "SN")]
-    SettingsNavigate(SettingsSubSection),
     #[serde(rename = "CA")]
     Cancel,
     #[serde(rename = "CL")]
     Close,
+    #[serde(rename = "CB")]
+    ConfirmBroadcast,
+    #[serde(rename = "ND")]
+    NominationDetails,
+    #[serde(rename = "NS")]
+    NominationSummary,
+    #[serde(rename = "NOP")]
+    NoOp,
+    #[serde(rename = "PA")]
+    Payouts,
+    #[serde(rename = "RD")]
+    ReferendumDetails,
+    #[serde(rename = "RV")]
+    RemoveValidator,
+    #[serde(rename = "RW")]
+    Rewards,
+    #[serde(rename = "SE")]
+    SettingsEdit(SettingsEditQueryType),
+    #[serde(rename = "SN")]
+    SettingsNavigate(SettingsSubSection),
+    #[serde(rename = "VI")]
+    ValidatorInfo,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]

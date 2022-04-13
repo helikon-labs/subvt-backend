@@ -1,0 +1,9 @@
+<strong>🗳 {{ chain | capitalize }} Referendum #{{ referendum_id }}</strong>
+<strong>Title:</strong> {% if title %}{{ title }}{% else %}N/A{% endif %}
+<strong>Proposer:</strong> <a href="https://{{ chain }}.subscan.io/account/{{ proposer_address }}">{{ condensed_proposer_address }}</a>
+<strong>Vote Threshold:</strong> {{ vote_threshold }}
+<strong>Ends at Block:</strong> #{{ end_block_number }}{% if status %}
+<strong>Status:</strong> {{ status }}{% endif %}{% if content %}
+<strong>Content:</strong> {{ content | truncate(length=500) }}{% endif %}
+
+<i>View full referendum details on <a href="https://{{ chain }}.polkassembly.io/referendum/{{ referendum_id }}">Polkassembly</a>.</i>

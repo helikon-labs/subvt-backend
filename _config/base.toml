@@ -30,7 +30,8 @@ inactive_validator_list_port = 7890
 validator_details_port = 7891
 
 [http]
-host = "0.0.0.0"
+request_timeout_seconds = 60
+service_host = "0.0.0.0"
 report_service_port = 7900
 app_service_port = 7901
 
@@ -46,7 +47,7 @@ port = 5432
 username = "subvt"
 password = "subvt"
 database_name = "subvt_app"
-pool_max_connections = 20
+pool_max_connections = 7
 connection_timeout_seconds = 3
 
 [network_postgres]
@@ -55,7 +56,7 @@ port = 5432
 username = "subvt"
 password = "subvt"
 database_name = "subvt_network"
-pool_max_connections = 20
+pool_max_connections = 7
 connection_timeout_seconds = 3
 
 [block_processor]
@@ -72,7 +73,6 @@ candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
 nominator_list_endpoint = "https://kusama.w3f.community/nominators"
 refresh_seconds = 300
-request_timeout_seconds = 60
 
 [report]
 max_era_index_range = 100
