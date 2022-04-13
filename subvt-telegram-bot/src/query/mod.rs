@@ -32,8 +32,10 @@ pub enum QueryType {
     SettingsEdit(SettingsEditQueryType),
     #[serde(rename = "SN")]
     SettingsNavigate(SettingsSubSection),
-    #[serde(rename = "X")]
+    #[serde(rename = "CA")]
     Cancel,
+    #[serde(rename = "CL")]
+    Close,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]

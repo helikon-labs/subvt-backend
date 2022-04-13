@@ -31,7 +31,7 @@ impl Messenger {
                 "settings_onekv.html",
                 QueryType::SettingsNavigate(SettingsSubSection::OneKV),
             )?,
-            self.get_settings_button("cancel.html", QueryType::Cancel)?,
+            self.get_settings_button("close.html", QueryType::Close)?,
         ];
         Ok(InlineKeyboardMarkup {
             inline_keyboard: rows,

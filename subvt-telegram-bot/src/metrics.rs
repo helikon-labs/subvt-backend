@@ -54,6 +54,7 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
     });
     let label = match query {
         QueryType::Cancel => "Cancel",
+        QueryType::Close => "Close",
         QueryType::ConfirmBroadcast => "ConfirmBroadcast",
         QueryType::NominationDetails => "NominationDetails",
         QueryType::NominationSummary => "NominationSummary",

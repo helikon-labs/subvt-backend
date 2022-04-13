@@ -3,6 +3,7 @@ members = [
     "subvt-app-service",
     "subvt-block-processor",
     "subvt-config",
+    "subvt-governance",
     "subvt-network-status-server",
     "subvt-network-status-updater",
     "subvt-logging",

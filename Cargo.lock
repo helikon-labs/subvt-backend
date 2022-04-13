@@ -6422,6 +6422,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-governance"
+version = "0.1.5"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "log",
+ "reqwest",
+ "subvt-config",
+ "subvt-types",
+]
+
+[[package]]
 name = "subvt-logging"
 version = "0.1.5"
 dependencies = [
@@ -6703,6 +6715,7 @@ dependencies = [
  "serde",
  "serde_json",
  "subvt-config",
+ "subvt-governance",
  "subvt-logging",
  "subvt-metrics",
  "subvt-persistence",

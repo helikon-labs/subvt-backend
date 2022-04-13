@@ -61,7 +61,7 @@ impl TelegramBot {
                 self.process_settings_navigate_query(chat_id, *sub_section)
                     .await?;
             }
-            QueryType::Cancel => {
+            QueryType::Cancel | QueryType::Close => {
                 if let Some(message_id) = original_message_id {
                     self.messenger.delete_message(chat_id, message_id).await?;
                 }

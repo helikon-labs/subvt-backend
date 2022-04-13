@@ -46,7 +46,7 @@ impl Messenger {
             "back.html",
             QueryType::SettingsNavigate(SettingsSubSection::ValidatorActivity),
         )?);
-        rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
+        rows.push(self.get_settings_button("close.html", QueryType::Close)?);
         Ok(InlineKeyboardMarkup {
             inline_keyboard: rows,
         })

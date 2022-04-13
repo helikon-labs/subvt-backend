@@ -15,6 +15,7 @@ pub fn init(config: &subvt_config::Config) {
     // include all executable SubVT modules here
     builder.filter(Some("subvt_app_service"), log_level);
     builder.filter(Some("subvt_block_processor"), log_level);
+    builder.filter(Some("subvt_governance"), log_level);
     builder.filter(Some("subvt_metrics"), log_level);
     builder.filter(Some("subvt_metrics_server"), log_level);
     builder.filter(Some("subvt_network_status_server"), log_level);

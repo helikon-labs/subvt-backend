@@ -79,7 +79,7 @@ impl Messenger {
         };
 
         rows.push(self.get_settings_button("back.html", QueryType::SettingsNavigate(back_target))?);
-        rows.push(self.get_settings_button("cancel.html", QueryType::Cancel)?);
+        rows.push(self.get_settings_button("close.html", QueryType::Close)?);
         Ok(InlineKeyboardMarkup {
             inline_keyboard: rows,
         })

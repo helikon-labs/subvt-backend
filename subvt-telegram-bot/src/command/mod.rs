@@ -95,6 +95,14 @@ impl TelegramBot {
                     .await?;
                 self.process_payouts_command(chat_id, args).await?;
             }
+            "/referenda" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                let posts = subvt_governance::fetch_open_referendum_list().await?;
+                println!("fetched posts :: {}", posts.len());
+            }
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres

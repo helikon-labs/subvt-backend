@@ -78,8 +78,8 @@ request_timeout_seconds = 60
 max_era_index_range = 100
 
 [plotter]
-tmp_dir_path = "/Users/kukabi/Desktop/subvt_plotter_tmp"
-font_dir_path = "/Users/kukabi/Documents/Development/subvt/subvt-backend/_fonts"
+tmp_dir_path = "/path/to/the/temporary/image/dir"
+font_dir_path = "/path/to/the/fonts/dir"
 font_sans_serif_family = "DejaVu Sans"
 
 [telemetry]
