@@ -4,6 +4,11 @@
 <strong>Vote Threshold:</strong> {{ vote_threshold }}
 <strong>Ends at Block:</strong> #{{ end_block_number }}{% if status %}
 <strong>Status:</strong> {{ status }}{% endif %}{% if content %}
-<strong>Content:</strong> {{ content | truncate(length=500) }}{% endif %}
+<strong>Content:</strong> {{ content | truncate(length=250) }}{% endif %}
+<i>View full referendum details on <a href="https://{{ chain }}.polkassembly.io/referendum/{{ referendum_id }}">Polkassembly</a>.</i>{% if validator_votes | length > 0 %}
 
-<i>View full referendum details on <a href="https://{{ chain }}.polkassembly.io/referendum/{{ referendum_id }}">Polkassembly</a>.</i>
+<strong>Validator Votes</strong>{% for validator_vote in validator_votes %}
+<strong>{{ validator_vote.0 }}</strong> has {% if validator_vote.1 | length > 0 and validator_vote.2 | length > 0 %}cast a split vote.{% else %}voted {% if validator_vote.1 | length > 0 %}👍 with <strong>{{ validator_vote.1 }}</strong>{% else %}👎 with <strong>{{ validator_vote.2 }}</strong>{% endif %} <strong>{{ token_ticker }}</strong> and {% if validator_vote.3 > 0 %}<strong>{{ validator_vote.3 }}x</strong>{% else %}no{% endif %} conviction.{% endif %}{% endfor %}{% endif %}{% if validators_without_vote | length > 0 %}
+
+⚠️ Validators below have not voted for this referendum yet:{% for validator_without_vote in validators_without_vote %}
+<strong>{{ validator_without_vote }}</strong>{% endfor %}{% endif %}

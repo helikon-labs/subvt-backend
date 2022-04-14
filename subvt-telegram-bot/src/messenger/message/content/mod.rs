@@ -111,8 +111,17 @@ impl MessageType {
                 context.insert("referendum_id", &id);
                 "referendum_not_found.html"
             }
-            Self::ReferendumDetails(post) => {
-                self.fill_referendum_details_context(&mut context, post);
+            Self::ReferendumDetails {
+                post,
+                chat_validators,
+                validator_votes,
+            } => {
+                self.fill_referendum_details_context(
+                    &mut context,
+                    post,
+                    chat_validators,
+                    validator_votes,
+                );
                 "referendum_details.html"
             }
         };

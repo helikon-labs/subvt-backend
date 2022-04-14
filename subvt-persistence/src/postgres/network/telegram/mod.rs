@@ -4,6 +4,8 @@ use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::{TelegramChatState, TelegramChatValidator};
 
+mod democracy;
+
 impl PostgreSQLNetworkStorage {
     pub async fn get_chat_count(&self) -> anyhow::Result<u64> {
         let chat_count: (i64,) = sqlx::query_as(

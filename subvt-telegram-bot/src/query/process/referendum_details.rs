@@ -15,12 +15,21 @@ impl TelegramBot {
         if let Some(id_str) = &query.parameter {
             let referendum_id: u32 = id_str.parse()?;
             if let Some(post) = polkassembly::fetch_referendum_details(referendum_id).await? {
+                let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
+                let validator_votes = self
+                    .network_postgres
+                    .get_chat_validator_votes_for_referendum(chat_id, referendum_id)
+                    .await?;
                 self.messenger
                     .send_message(
                         &self.app_postgres,
                         &self.network_postgres,
                         chat_id,
-                        Box::new(MessageType::ReferendumDetails(post)),
+                        Box::new(MessageType::ReferendumDetails {
+                            post,
+                            chat_validators,
+                            validator_votes,
+                        }),
                     )
                     .await?;
             } else {

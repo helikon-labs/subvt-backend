@@ -1,4 +1,5 @@
 use crate::query::QueryType;
+use subvt_types::app::event::democracy::DemocracyVotedEvent;
 use subvt_types::crypto::AccountId;
 use subvt_types::governance::polkassembly::ReferendumPost;
 use subvt_types::onekv::OneKVCandidateSummary;
@@ -51,5 +52,9 @@ pub enum MessageType {
     NoOpenReferendaFound,
     RefererendumList(Vec<ReferendumPost>),
     ReferendumNotFound(u32),
-    ReferendumDetails(ReferendumPost),
+    ReferendumDetails {
+        post: ReferendumPost,
+        chat_validators: Vec<TelegramChatValidator>,
+        validator_votes: Vec<DemocracyVotedEvent>,
+    },
 }
