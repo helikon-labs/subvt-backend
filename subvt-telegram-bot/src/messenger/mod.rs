@@ -275,37 +275,52 @@ impl Messenger {
                     }))
                 }
             }
-            MessageType::SelectReportType => {
-                let rows = vec![vec![
-                    InlineKeyboardButton {
-                        text: self.renderer.render("report_bug.html", &Context::new())?,
+            MessageType::SelectContactType => {
+                let rows = vec![
+                    vec![
+                        InlineKeyboardButton {
+                            text: self.renderer.render("report_bug.html", &Context::new())?,
+                            url: None,
+                            login_url: None,
+                            callback_data: Some(serde_json::to_string(&Query {
+                                query_type: QueryType::ReportBug,
+                                parameter: None,
+                            })?),
+                            switch_inline_query: None,
+                            switch_inline_query_current_chat: None,
+                            callback_game: None,
+                            pay: None,
+                        },
+                        InlineKeyboardButton {
+                            text: self
+                                .renderer
+                                .render("report_feature_request.html", &Context::new())?,
+                            url: None,
+                            login_url: None,
+                            callback_data: Some(serde_json::to_string(&Query {
+                                query_type: QueryType::ReportFeatureRequest,
+                                parameter: None,
+                            })?),
+                            switch_inline_query: None,
+                            switch_inline_query_current_chat: None,
+                            callback_game: None,
+                            pay: None,
+                        },
+                    ],
+                    vec![InlineKeyboardButton {
+                        text: self.renderer.render("cancel.html", &Context::new())?,
                         url: None,
                         login_url: None,
                         callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::ReportBug,
+                            query_type: QueryType::Cancel,
                             parameter: None,
                         })?),
                         switch_inline_query: None,
                         switch_inline_query_current_chat: None,
                         callback_game: None,
                         pay: None,
-                    },
-                    InlineKeyboardButton {
-                        text: self
-                            .renderer
-                            .render("report_feature_request.html", &Context::new())?,
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::ReportFeatureRequest,
-                            parameter: None,
-                        })?),
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    },
-                ]];
+                    }],
+                ];
                 Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
                     inline_keyboard: rows,
                 }))

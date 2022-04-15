@@ -13,7 +13,19 @@ impl MessageType {
     pub fn get_content(&self, renderer: &Tera) -> String {
         let mut context = Context::new();
         let template_name = match self {
-            Self::Intro => "introduction.html",
+            Self::About => {
+                context.insert("chain", &CONFIG.substrate.chain);
+                let maybe_version: Option<&str> = option_env!("CARGO_PKG_VERSION");
+                if let Some(version) = maybe_version {
+                    context.insert("version", version);
+                }
+                "about.html"
+            }
+            Self::Help => "help.html",
+            Self::Intro => {
+                context.insert("chain", &CONFIG.substrate.chain);
+                "introduction.html"
+            }
             Self::Ok => "ok.html",
             Self::BadRequest => "bad_request.html",
             Self::GenericError => "generic_error.html",
@@ -124,7 +136,7 @@ impl MessageType {
                 );
                 "referendum_details.html"
             }
-            Self::SelectReportType => "select_report_type.html",
+            Self::SelectContactType => "select_contact_type.html",
             Self::EnterBugReport => "enter_bug_report.html",
             Self::EnterFeatureRequest => "enter_feature_request.html",
             Self::ReportSaved => "report_saved.html",

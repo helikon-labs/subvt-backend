@@ -9,6 +9,8 @@ use subvt_types::telegram::TelegramChatValidator;
 pub mod content;
 
 pub enum MessageType {
+    About,
+    Help,
     Intro,
     Ok,
     BadRequest,
@@ -57,7 +59,7 @@ pub enum MessageType {
         chat_validators: Vec<TelegramChatValidator>,
         validator_votes: Vec<DemocracyVotedEvent>,
     },
-    SelectReportType,
+    SelectContactType,
     EnterBugReport,
     EnterFeatureRequest,
     ReportSaved,

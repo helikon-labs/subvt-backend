@@ -25,6 +25,34 @@ impl TelegramBot {
             args,
         );
         match command {
+            "/about" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.messenger
+                    .send_message(
+                        &self.app_postgres,
+                        &self.network_postgres,
+                        chat_id,
+                        Box::new(MessageType::About),
+                    )
+                    .await?;
+            }
+            "/help" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.messenger
+                    .send_message(
+                        &self.app_postgres,
+                        &self.network_postgres,
+                        chat_id,
+                        Box::new(MessageType::Help),
+                    )
+                    .await?;
+            }
             "/start" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
@@ -61,7 +89,7 @@ impl TelegramBot {
                     )
                     .await?;
             }
-            "/networkstatus" | "/network" | "/netstat" | "/ns" => {
+            "/networkstatus" | "/network" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.process_network_status_command(chat_id).await?;
             }
@@ -129,7 +157,7 @@ impl TelegramBot {
                     .await?;
                 self.process_remove_validator_command(chat_id, args).await?;
             }
-            "/report" => {
+            "/contact" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
@@ -139,7 +167,7 @@ impl TelegramBot {
                         &self.app_postgres,
                         &self.network_postgres,
                         chat_id,
-                        Box::new(MessageType::SelectReportType),
+                        Box::new(MessageType::SelectContactType),
                     )
                     .await?;
             }
@@ -150,7 +178,7 @@ impl TelegramBot {
                     .await?;
                 self.process_rewards_command(chat_id, args).await?;
             }
-            "/settings" | "/s" => {
+            "/settings" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
