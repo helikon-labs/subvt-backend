@@ -42,7 +42,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sp-session = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
 sp-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
 sp-version = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.18" }
-sqlx = { version = "0.5.11", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+sqlx = { version = "0.5.12", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
 thiserror = "1.0"
