@@ -1,21 +1,25 @@
-CREATE TYPE sub_validator_info AS (
-    discovered_at bigint,
-    killed_at bigint,
-    slash_count bigint,
-    offline_offence_count bigint,
-    active_era_count bigint,
-    inactive_era_count bigint,
-    total_reward_points bigint,
-    unclaimed_eras text,
-    blocks_authored bigint,
-    reward_points bigint,
-    heartbeat_received boolean,
-    onekv_candidate_record_id integer,
-    onekv_binary_version text,
-    onekv_rank bigint,
-    onekv_location text,
-    onekv_is_valid boolean
-);
+DO $$ BEGIN
+    IF to_regtype('sub_validator_info') IS NULL THEN
+        CREATE TYPE sub_validator_info AS (
+            discovered_at bigint,
+            killed_at bigint,
+            slash_count bigint,
+            offline_offence_count bigint,
+            active_era_count bigint,
+            inactive_era_count bigint,
+            total_reward_points bigint,
+            unclaimed_eras text,
+            blocks_authored bigint,
+            reward_points bigint,
+            heartbeat_received boolean,
+            onekv_candidate_record_id integer,
+            onekv_binary_version text,
+            onekv_rank bigint,
+            onekv_location text,
+            onekv_is_valid boolean
+        );
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sub_get_validator_info (block_hash_param VARCHAR(66), account_id_param VARCHAR(66), is_active_param boolean, era_index_param bigint)
 RETURNS sub_validator_info

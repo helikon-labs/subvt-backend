@@ -1,19 +1,23 @@
-CREATE TYPE sub_era_report AS (
-	start_timestamp bigint,
-	end_timestamp bigint,
-	minimum_stake VARCHAR(128),
-	maximum_stake VARCHAR(128),
-	average_stake VARCHAR(128),
-	median_stake VARCHAR(128),
-	total_validator_reward VARCHAR(128),
-	total_reward_points bigint,
-	total_reward bigint,
-	total_stake VARCHAR(128),
-	active_nominator_count integer,
-	offline_offence_count integer,
-	slashed_amount bigint,
-	chilling_count integer
-);
+DO $$ BEGIN
+    IF to_regtype('sub_era_report') IS NULL THEN
+        CREATE TYPE sub_era_report AS (
+        	start_timestamp bigint,
+        	end_timestamp bigint,
+        	minimum_stake VARCHAR(128),
+        	maximum_stake VARCHAR(128),
+        	average_stake VARCHAR(128),
+        	median_stake VARCHAR(128),
+        	total_validator_reward VARCHAR(128),
+        	total_reward_points bigint,
+        	total_reward bigint,
+        	total_stake VARCHAR(128),
+        	active_nominator_count integer,
+        	offline_offence_count integer,
+        	slashed_amount bigint,
+        	chilling_count integer
+        );
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sub_get_era_report (era_index_param bigint)
 RETURNS sub_era_report

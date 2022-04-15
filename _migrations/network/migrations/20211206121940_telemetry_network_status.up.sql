@@ -9,4 +9,5 @@ CREATE TABLE IF NOT EXISTS sub_telemetry_network_status (
 );
 
 INSERT INTO sub_telemetry_network_status(id, best_block_number, best_block_timestamp, average_block_time_ms, finalized_block_number, finalized_block_hash)
-VALUES(1, 0, 0, NULL, 0, '');
+VALUES(1, 0, 0, NULL, 0, '')
+ON CONFLICT (id) DO NOTHING;

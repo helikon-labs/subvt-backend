@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS app_network
     CONSTRAINT app_network_u_display UNIQUE (display)
 );
 
-INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count) VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'kusama', 'Kusama', 2, 'KSM', 12);
-INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count) VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'polkadot', 'Polkadot', 0, 'DOT', 10);
---INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count) VALUES(3, '0xE143F23803AC50E8F6F8E62695D1CE9E4E1D68AA36C1CD2CFD15340213F3423E', 'westend', 'Westend', 42, 'WND', 12);
+INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count)
+VALUES(1, '0xB0A8D493285C2DF73290DFB7E61F870F17B41801197A149CA93654499EA3DAFE', 'kusama', 'Kusama', 2, 'KSM', 12)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count)
+VALUES(2, '0x91B171BB158E2D3848FA23A9F1C25182FB8E20313B2C1EB49219DA7A70CE90C3', 'polkadot', 'Polkadot', 0, 'DOT', 10)
+ON CONFLICT(id) DO NOTHING;
+--INSERT INTO app_network(id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count) VALUES(3, '0xE143F23803AC50E8F6F8E62695D1CE9E4E1D68AA36C1CD2CFD15340213F3423E', 'westend', 'Westend', 42, 'WND', 12) ON CONFLICT(id) DO NOTHING;

@@ -5,46 +5,51 @@ CREATE TABLE IF NOT EXISTS app_notification_type
     updated_at  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-INSERT INTO app_notification_type(code) VALUES('chain_validator_offline_offence');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_new_nomination');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_lost_nomination');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_nomination_amount_change');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_chilled');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_active_next_session');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive_next_session');
-INSERT INTO app_notification_type(code) VALUES('chain_validate_extrinsic');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_unclaimed_payout');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_block_authorship');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_set_controller');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_session_keys_changed');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_identity_changed');
-INSERT INTO app_notification_type(code) VALUES('chain_validator_payout_stakers');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_offline');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_binary_out_of_date');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_peer_count_low');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_too_many_txs_in_queue');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_lagging');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_finality_lagging');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_download_bw_low');
-INSERT INTO app_notification_type(code) VALUES('telemetry_validator_upload_bw_low');
-INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_change');
-INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change');
-INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change');
-INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change');
+INSERT INTO app_notification_type(code) VALUES('chain_validator_offline_offence') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_new_nomination') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_lost_nomination') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_nomination_amount_change') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_chilled') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_active') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_active_next_session') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_inactive_next_session') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validate_extrinsic') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_unclaimed_payout') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_block_authorship') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_set_controller') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_session_keys_changed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_identity_changed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_payout_stakers') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_offline') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_binary_out_of_date') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_peer_count_low') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_too_many_txs_in_queue') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_lagging') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_finality_lagging') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_download_bw_low') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('telemetry_validator_upload_bw_low') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_change') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change') ON CONFLICT(code) DO NOTHING;
 -- democracy
-INSERT INTO app_notification_type(code) VALUES('democracy_cancelled');
-INSERT INTO app_notification_type(code) VALUES('democracy_delegated');
-INSERT INTO app_notification_type(code) VALUES('democracy_not_passed');
-INSERT INTO app_notification_type(code) VALUES('democracy_passed');
-INSERT INTO app_notification_type(code) VALUES('democracy_proposed');
-INSERT INTO app_notification_type(code) VALUES('democracy_seconded');
-INSERT INTO app_notification_type(code) VALUES('democracy_started');
-INSERT INTO app_notification_type(code) VALUES('democracy_undelegated');
-INSERT INTO app_notification_type(code) VALUES('democracy_voted');
+INSERT INTO app_notification_type(code) VALUES('democracy_cancelled') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_delegated') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_not_passed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_passed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_proposed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_seconded') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_started') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_undelegated') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('democracy_voted') ON CONFLICT(code) DO NOTHING;
 
-CREATE TYPE app_notification_type_param_data_type AS ENUM ('string', 'integer', 'balance', 'float', 'boolean');
+DO $$ BEGIN
+    IF to_regtype('app_notification_type_param_data_type') IS NULL THEN
+        CREATE TYPE app_notification_type_param_data_type
+        AS ENUM ('string', 'integer', 'balance', 'float', 'boolean');
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS app_notification_param_type
 (
@@ -58,7 +63,7 @@ CREATE TABLE IF NOT EXISTS app_notification_param_type
     is_optional             boolean NOT NULL,
     description             text,
     CONSTRAINT app_notification_param_type_u_notification_type_order
-            UNIQUE (notification_type_code, "order"),
+        UNIQUE (notification_type_code, "order"),
     CONSTRAINT app_notification_param_type_u_notification_type_code
         UNIQUE (notification_type_code, code),
     CONSTRAINT app_notification_param_type_fk_notification_type
@@ -93,7 +98,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     true,
     'Minimum nomination amount in native token.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- chain_lost_nomination
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -113,7 +118,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     true,
     'Minimum nomination amount in native token.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- chain_validator_nomination_amount_change :: no param
 -- chain_validator_chilled :: no param
 -- chain_validator_active :: no param
@@ -146,7 +151,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Telemetry offline duration for the validator in seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_binary_out_of_date
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -166,7 +171,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Telemetry binary out-of-date duration for the validator in seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_peer_count_low
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -186,7 +191,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the peer count is below this value for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -205,7 +210,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the peer count is below the given number for the duration of this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_too_many_txs_in_queue
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -225,7 +230,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the queued transaction count is above this value for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -244,7 +249,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the transaction count is above the given number for the duration of this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_lagging
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -264,7 +269,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator is behind this many blocks for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -283,7 +288,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator is behind the given number of blocks for the duration of this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_finality_lagging
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -303,7 +308,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s finality is behind this many blocks for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -322,7 +327,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s finality is behind the given number of blocks for the duration of this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_download_bw_low
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -342,7 +347,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s download bandwidth is lower than this value in kilobits per second for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -361,7 +366,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s download bandwidth is lower than this value in kBps for this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- telemetry_validator_upload_bw_low
 INSERT INTO app_notification_param_type(
     notification_type_code,
@@ -381,7 +386,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s upload bandwidth is lower than this value in kilobits per second for the given duration.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 INSERT INTO app_notification_param_type(
     notification_type_code,
     code,
@@ -400,7 +405,7 @@ INSERT INTO app_notification_param_type(
     NULL,
     false,
     'Notification happens if the validator''s upload bandwidth is lower than this value in kilobits per second for this many seconds.'
-);
+) ON CONFLICT(notification_type_code, code) DO NOTHING;
 -- onekv_validator_binary_version_change :: no param
 -- onekv_validator_rank_change :: no param
 -- onekv_validator_location_change :: no param

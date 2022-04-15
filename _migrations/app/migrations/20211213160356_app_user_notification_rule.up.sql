@@ -1,4 +1,8 @@
-CREATE TYPE app_notification_period_type AS ENUM ('off', 'immediate', 'hour', 'day', 'epoch', 'era');
+DO $$ BEGIN
+    IF to_regtype('app_notification_period_type') IS NULL THEN
+        CREATE TYPE app_notification_period_type AS ENUM ('off', 'immediate', 'hour', 'day', 'epoch', 'era');
+    END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule
 (
@@ -31,10 +35,9 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule
     CONSTRAINT app_user_notification_rule_u_rule UNIQUE (user_id, notification_type_code, network_id)
 );
 
-CREATE INDEX app_user_notification_rule_idx_user_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_idx_user_id
     ON app_user_notification_rule (user_id);
-
-CREATE INDEX app_user_notification_rule_idx_search
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_idx_search
     ON app_user_notification_rule (
         notification_type_code,
         deleted_at,
@@ -61,13 +64,11 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_validator
             ON UPDATE CASCADE
 );
 
-CREATE INDEX app_user_notification_rule_validator_idx_rule_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_validator_idx_rule_id
     ON app_user_notification_rule_validator (user_notification_rule_id);
-
-CREATE INDEX app_user_notification_rule_validator_idx_user_validator_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_validator_idx_user_validator_id
     ON app_user_notification_rule_validator (user_validator_id);
-
-CREATE INDEX app_user_notification_rule_validator_idx_search
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_validator_idx_search
     ON app_user_notification_rule_validator (user_notification_rule_id, user_validator_id);
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
@@ -89,10 +90,9 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
             ON UPDATE CASCADE
 );
 
-CREATE INDEX app_user_notification_rule_channel_idx_rule_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_channel_idx_rule_id
     ON app_user_notification_rule_channel (user_notification_rule_id);
-
-CREATE INDEX app_user_notification_rule_channel_idx_channel_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_channel_idx_channel_id
     ON app_user_notification_rule_channel (user_notification_channel_id);
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
@@ -115,8 +115,7 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
             ON UPDATE CASCADE
 );
 
-CREATE INDEX app_user_notification_rule_param_idx_rule_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_param_idx_rule_id
     ON app_user_notification_rule_channel (user_notification_rule_id);
-
-CREATE INDEX app_user_notification_rule_param_idx_param_id
+CREATE INDEX IF NOT EXISTS app_user_notification_rule_param_idx_param_id
     ON app_user_notification_rule_param (notification_param_type_id);

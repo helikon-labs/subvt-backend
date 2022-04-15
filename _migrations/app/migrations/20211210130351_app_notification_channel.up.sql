@@ -5,9 +5,9 @@ CREATE TABLE IF NOT EXISTS app_notification_channel
     updated_at  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-INSERT INTO app_notification_channel(code) VALUES('apns');
-INSERT INTO app_notification_channel(code) VALUES('fcm');
-INSERT INTO app_notification_channel(code) VALUES('telegram');
-INSERT INTO app_notification_channel(code) VALUES('email');
-INSERT INTO app_notification_channel(code) VALUES('gsm');
-INSERT INTO app_notification_channel(code) VALUES('sms');
+INSERT INTO app_notification_channel(code) VALUES('apns') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_channel(code) VALUES('fcm') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_channel(code) VALUES('telegram') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_channel(code) VALUES('email') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_channel(code) VALUES('gsm') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_channel(code) VALUES('sms') ON CONFLICT(code) DO NOTHING;

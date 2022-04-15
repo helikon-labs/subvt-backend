@@ -1,18 +1,22 @@
-CREATE TYPE sub_era_validator_report AS (
-	era_start_timestamp bigint,
-	era_end_timestamp bigint,
-    is_active boolean,
-	commission_per_billion bigint,
-	self_stake VARCHAR(128),
-	total_stake VARCHAR(128),
-	block_count integer,
-	reward_points integer,
-	self_reward bigint,
-	staker_reward bigint,
-	offline_offence_count integer,
-	slashed_amount bigint,
-	chilling_count integer
-);
+DO $$ BEGIN
+    IF to_regtype('sub_era_validator_report') IS NULL THEN
+        CREATE TYPE sub_era_validator_report AS (
+        	era_start_timestamp bigint,
+        	era_end_timestamp bigint,
+            is_active boolean,
+        	commission_per_billion bigint,
+        	self_stake VARCHAR(128),
+        	total_stake VARCHAR(128),
+        	block_count integer,
+        	reward_points integer,
+        	self_reward bigint,
+        	staker_reward bigint,
+        	offline_offence_count integer,
+        	slashed_amount bigint,
+        	chilling_count integer
+        );
+    END IF;
+END $$;
 
 CREATE OR REPLACE FUNCTION sub_get_era_validator_report (era_index_param bigint, account_id_param VARCHAR(66))
 RETURNS sub_era_validator_report

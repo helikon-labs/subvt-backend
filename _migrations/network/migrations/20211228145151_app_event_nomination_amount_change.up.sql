@@ -11,21 +11,18 @@ CREATE TABLE IF NOT EXISTS sub_app_event_nomination_amount_change
     total_amount                VARCHAR(128) NOT NULL,
     nominee_count               bigint NOT NULL,
     is_onekv                    boolean NOT NULL,
-    created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+    created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT sub_app_event_nomination_amount_change_fk_validator
+        FOREIGN KEY (validator_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_app_event_nomination_amount_change_fk_nominator
+        FOREIGN KEY (nominator_stash_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE
 );
 
-ALTER TABLE sub_app_event_nomination_amount_change
-    ADD CONSTRAINT sub_app_event_nomination_amount_change_fk_validator
-    FOREIGN KEY (validator_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-ALTER TABLE sub_app_event_nomination_amount_change
-    ADD CONSTRAINT sub_app_event_nomination_amount_change_fk_nominator
-    FOREIGN KEY (nominator_stash_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-
-CREATE INDEX sub_app_event_nomination_amount_change_idx_validator
+CREATE INDEX IF NOT EXISTS sub_app_event_nomination_amount_change_idx_validator
     ON sub_app_event_nomination_amount_change (validator_account_id);

@@ -21,17 +21,13 @@ CREATE TABLE IF NOT EXISTS app_user_validator
             ON UPDATE CASCADE
 );
 
-CREATE INDEX app_user_validator_idx_user_id
+CREATE INDEX IF NOT EXISTS app_user_validator_idx_user_id
     ON app_user_validator (user_id);
-
-CREATE INDEX app_user_validator_idx_user_id_network_id
+CREATE INDEX IF NOT EXISTS app_user_validator_idx_user_id_network_id
     ON app_user_validator (user_id, network_id);
-
-CREATE INDEX app_user_validator_idx_validator_account_id
+CREATE INDEX IF NOT EXISTS app_user_validator_idx_validator_account_id
     ON app_user_validator (validator_account_id);
-
-CREATE INDEX app_user_validator_idx_search_1
+CREATE INDEX IF NOT EXISTS app_user_validator_idx_search_1
     ON app_user_validator (network_id, validator_account_id, deleted_at);
-
-CREATE INDEX app_user_validator_idx_search_2
+CREATE INDEX IF NOT EXISTS app_user_validator_idx_search_2
     ON app_user_validator (id, network_id, validator_account_id, deleted_at);

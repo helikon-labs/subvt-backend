@@ -7,25 +7,20 @@ CREATE TABLE IF NOT EXISTS sub_event_era_paid
     era_index           bigint NOT NULL,
     validator_payout    VARCHAR(128) NOT NULL,
     remainder           VARCHAR(128) NOT NULL,
-    created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+    created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT sub_event_era_paid_u_extrinsic
+        UNIQUE (block_hash, event_index),
+    CONSTRAINT sub_event_era_paid_fk_block
+        FOREIGN KEY (block_hash)
+            REFERENCES sub_block (hash)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_event_era_paid_fk_era
+        FOREIGN KEY (era_index)
+            REFERENCES sub_era (index)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE
 );
 
-ALTER TABLE sub_event_era_paid
-    ADD CONSTRAINT sub_event_era_paid_u_extrinsic
-    UNIQUE (block_hash, event_index);
-
-ALTER TABLE sub_event_era_paid
-    ADD CONSTRAINT sub_event_era_paid_fk_block
-    FOREIGN KEY (block_hash)
-        REFERENCES sub_block (hash)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE;
-ALTER TABLE sub_event_era_paid
-    ADD CONSTRAINT sub_event_era_paid_fk_era
-    FOREIGN KEY (era_index)
-        REFERENCES sub_era (index)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-
-CREATE INDEX sub_event_era_paid_idx_block_hash
+CREATE INDEX IF NOT EXISTS sub_event_era_paid_idx_block_hash
     ON sub_event_era_paid (block_hash);

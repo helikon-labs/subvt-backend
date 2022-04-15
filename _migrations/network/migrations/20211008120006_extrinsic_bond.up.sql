@@ -9,37 +9,31 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
     amount                          VARCHAR(128) NOT NULL,
     reward_destination_encoded_hex  text NOT NULL,
     is_successful                   boolean NOT NULL,
-    created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+    created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT sub_extrinsic_bond_u_extrinsic
+        UNIQUE (block_hash, extrinsic_index),
+    CONSTRAINT sub_extrinsic_bond_fk_block
+        FOREIGN KEY (block_hash)
+            REFERENCES sub_block (hash)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_extrinsic_bond_fk_stash_account
+        FOREIGN KEY (stash_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_extrinsic_bond_fk_controller_account
+        FOREIGN KEY (controller_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE
 );
 
-ALTER TABLE sub_extrinsic_bond
-    ADD CONSTRAINT sub_extrinsic_bond_u_extrinsic
-    UNIQUE (block_hash, extrinsic_index);
-
-ALTER TABLE sub_extrinsic_bond
-    ADD CONSTRAINT sub_extrinsic_bond_fk_block
-    FOREIGN KEY (block_hash)
-        REFERENCES sub_block (hash)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE;
-ALTER TABLE sub_extrinsic_bond
-    ADD CONSTRAINT sub_extrinsic_bond_fk_stash_account
-    FOREIGN KEY (stash_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-ALTER TABLE sub_extrinsic_bond
-    ADD CONSTRAINT sub_extrinsic_bond_fk_controller_account
-    FOREIGN KEY (controller_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-
-CREATE INDEX sub_extrinsic_bond_idx_block_hash
+CREATE INDEX IF NOT EXISTS sub_extrinsic_bond_idx_block_hash
     ON sub_extrinsic_bond (block_hash);
-CREATE INDEX sub_extrinsic_bond_idx_stash_account_id
+CREATE INDEX IF NOT EXISTS sub_extrinsic_bond_idx_stash_account_id
     ON sub_extrinsic_bond (stash_account_id);
-CREATE INDEX sub_extrinsic_bond_idx_controller_account_id
+CREATE INDEX IF NOT EXISTS sub_extrinsic_bond_idx_controller_account_id
     ON sub_extrinsic_bond (controller_account_id);
-CREATE INDEX sub_extrinsic_bond_idx_caller_controller
+CREATE INDEX IF NOT EXISTS sub_extrinsic_bond_idx_caller_controller
     ON sub_extrinsic_bond (stash_account_id, controller_account_id);

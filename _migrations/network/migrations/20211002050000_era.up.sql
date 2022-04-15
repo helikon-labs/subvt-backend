@@ -15,5 +15,5 @@ CREATE TABLE IF NOT EXISTS sub_era
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
-CREATE INDEX sub_era_idx_time_interval
+CREATE INDEX IF NOT EXISTS sub_era_idx_time_interval
     ON sub_era (start_timestamp, end_timestamp);

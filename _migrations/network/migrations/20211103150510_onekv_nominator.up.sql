@@ -12,26 +12,20 @@ CREATE TABLE IF NOT EXISTS sub_onekv_nominator
     average_stake           double precision NOT NULL,
     new_bonded_amount       double precision NOT NULL,
     reward_destination      VARCHAR(128) NOT NULL,
-    created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
+    created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT sub_onekv_nominator_fk_account_id
+        FOREIGN KEY (account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_onekv_nominator_fk_stash_account_id
+        FOREIGN KEY (stash_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE,
+    CONSTRAINT sub_onekv_nominator_fk_proxy_account_id
+        FOREIGN KEY (proxy_account_id)
+            REFERENCES sub_account (id)
+            ON DELETE RESTRICT
+            ON UPDATE CASCADE
 );
-
-ALTER TABLE sub_onekv_nominator
-    ADD CONSTRAINT sub_onekv_nominator_fk_account_id
-    FOREIGN KEY (account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-
-ALTER TABLE sub_onekv_nominator
-    ADD CONSTRAINT sub_onekv_nominator_fk_stash_account_id
-    FOREIGN KEY (stash_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;
-
-ALTER TABLE sub_onekv_nominator
-    ADD CONSTRAINT sub_onekv_nominator_fk_proxy_account_id
-    FOREIGN KEY (proxy_account_id)
-        REFERENCES sub_account (id)
-        ON DELETE RESTRICT
-        ON UPDATE CASCADE;

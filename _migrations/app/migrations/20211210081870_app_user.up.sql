@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS app_user
     CONSTRAINT app_user_u_public_key UNIQUE (public_key_hex)
 );
 
-CREATE INDEX app_user_idx_public_key_hex
+CREATE INDEX IF NOT EXISTS app_user_idx_public_key_hex
     ON app_user (public_key_hex);
