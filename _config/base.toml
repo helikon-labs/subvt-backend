@@ -112,7 +112,7 @@ telegram_token = "TELEGRAM_TOKEN"
 template_dir_path = "/path/to/the/template/dir"
 
 [telegram_bot]
-admin_chat_id = 123
+admin_chat_ids = [1234, 4563]
 max_validators_per_chat = 25
 
 [metrics]

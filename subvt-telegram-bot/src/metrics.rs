@@ -62,6 +62,8 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
         QueryType::Payouts => "Rewards",
         QueryType::ReferendumDetails => "ReferendumDetails",
         QueryType::RemoveValidator => "RemoveValidator",
+        QueryType::ReportBug => "ReportBug",
+        QueryType::ReportFeatureRequest => "ReportFeatureRequest",
         QueryType::Rewards => "Rewards",
         QueryType::SettingsEdit(_) => "SettingsEdit",
         QueryType::SettingsNavigate(_) => "SettingsNavigate",

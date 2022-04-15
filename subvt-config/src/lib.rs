@@ -189,7 +189,7 @@ pub struct NotificationProcessorConfig {
 /// Telegram bot config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelegramBotConfig {
-    pub admin_chat_id: i64,
+    pub admin_chat_ids: Vec<i64>,
     pub max_validators_per_chat: u16,
 }
 

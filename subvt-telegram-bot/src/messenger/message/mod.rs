@@ -57,4 +57,10 @@ pub enum MessageType {
         chat_validators: Vec<TelegramChatValidator>,
         validator_votes: Vec<DemocracyVotedEvent>,
     },
+    SelectReportType,
+    EnterBugReport,
+    EnterFeatureRequest,
+    ReportSaved,
+    BugReport(String),
+    FeatureRequest(String),
 }

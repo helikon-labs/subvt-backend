@@ -5,6 +5,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::{TelegramChatState, TelegramChatValidator};
 
 mod democracy;
+mod report;
 
 impl PostgreSQLNetworkStorage {
     pub async fn get_chat_count(&self) -> anyhow::Result<u64> {

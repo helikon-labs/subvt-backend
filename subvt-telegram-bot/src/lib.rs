@@ -359,6 +359,60 @@ impl TelegramBot {
                                     .await?;
                             }
                         }
+                        TelegramChatState::EnterBugReport => {
+                            log::info!("New bug report from chat id {}: {}", message.chat.id, text);
+                            self.reset_chat_state(message.chat.id).await?;
+                            self.network_postgres
+                                .save_bug_report(message.chat.id, text)
+                                .await?;
+                            for admin_chat_id in &CONFIG.telegram_bot.admin_chat_ids {
+                                self.messenger
+                                    .send_message(
+                                        &self.app_postgres,
+                                        &self.network_postgres,
+                                        *admin_chat_id,
+                                        Box::new(MessageType::BugReport(text.to_string())),
+                                    )
+                                    .await?;
+                            }
+                            self.messenger
+                                .send_message(
+                                    &self.app_postgres,
+                                    &self.network_postgres,
+                                    message.chat.id,
+                                    Box::new(MessageType::ReportSaved),
+                                )
+                                .await?;
+                        }
+                        TelegramChatState::EnterFeatureRequest => {
+                            log::info!(
+                                "New feature request from chat id {}: {}",
+                                message.chat.id,
+                                text
+                            );
+                            self.reset_chat_state(message.chat.id).await?;
+                            self.network_postgres
+                                .save_feature_request(message.chat.id, text)
+                                .await?;
+                            for admin_chat_id in &CONFIG.telegram_bot.admin_chat_ids {
+                                self.messenger
+                                    .send_message(
+                                        &self.app_postgres,
+                                        &self.network_postgres,
+                                        *admin_chat_id,
+                                        Box::new(MessageType::FeatureRequest(text.to_string())),
+                                    )
+                                    .await?;
+                            }
+                            self.messenger
+                                .send_message(
+                                    &self.app_postgres,
+                                    &self.network_postgres,
+                                    message.chat.id,
+                                    Box::new(MessageType::ReportSaved),
+                                )
+                                .await?;
+                        }
                         _ => {
                             if message.chat.type_field == ChatType::Private {
                                 self.messenger
@@ -384,6 +438,7 @@ impl TelegramBot {
                 }
             }
         } else {
+            self.reset_chat_state(message.chat.id).await?;
             self.messenger
                 .send_message(
                     &self.app_postgres,
@@ -454,6 +509,7 @@ impl Service for TelegramBot {
                                             return log::error!("Unknown query: {}", callback_data);
                                         };
                                         if let Err(error) = tokio::try_join!(
+                                            self.reset_chat_state(message.chat.id),
                                             self.process_query(
                                                 message.chat.id,
                                                 Some(message.message_id),

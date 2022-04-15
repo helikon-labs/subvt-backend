@@ -6,6 +6,8 @@ use std::str::FromStr;
 pub enum TelegramChatState {
     Default,
     AddValidator,
+    EnterBugReport,
+    EnterFeatureRequest,
 }
 
 impl FromStr for TelegramChatState {
@@ -15,6 +17,8 @@ impl FromStr for TelegramChatState {
         match state {
             "Default" => Ok(Self::Default),
             "AddValidator" => Ok(Self::AddValidator),
+            "EnterBugReport" => Ok(Self::EnterBugReport),
+            "EnterFeatureRequest" => Ok(Self::EnterFeatureRequest),
             _ => panic!("Unknown state: {}", state),
         }
     }
@@ -25,6 +29,8 @@ impl Display for TelegramChatState {
         let display = match self {
             TelegramChatState::Default => "Default",
             TelegramChatState::AddValidator => "AddValidator",
+            TelegramChatState::EnterBugReport => "EnterBugReport",
+            TelegramChatState::EnterFeatureRequest => "EnterFeatureRequest",
         };
         write!(f, "{}", display)
     }

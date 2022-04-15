@@ -6,7 +6,7 @@ impl TelegramBot {
         chat_id: i64,
         command: &str,
     ) -> anyhow::Result<()> {
-        if CONFIG.telegram_bot.admin_chat_id == chat_id {
+        if CONFIG.telegram_bot.admin_chat_ids.contains(&chat_id) {
             self.messenger
                 .send_message(
                     &self.app_postgres,

@@ -7,6 +7,8 @@ mod nomination_summary;
 mod payouts;
 mod referendum_details;
 mod remove_validator;
+mod report_bug;
+mod report_feature_request;
 mod rewards;
 mod settings;
 mod settings_navigate;
@@ -69,6 +71,14 @@ impl TelegramBot {
             }
             QueryType::ReferendumDetails => {
                 self.process_referendum_details_query(chat_id, original_message_id, query)
+                    .await?;
+            }
+            QueryType::ReportBug => {
+                self.process_report_bug_query(chat_id, original_message_id)
+                    .await?;
+            }
+            QueryType::ReportFeatureRequest => {
+                self.process_report_feature_request_query(chat_id, original_message_id)
                     .await?;
             }
         }

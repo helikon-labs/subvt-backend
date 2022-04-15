@@ -32,6 +32,10 @@ pub enum QueryType {
     RemoveValidator,
     #[serde(rename = "RW")]
     Rewards,
+    #[serde(rename = "RB")]
+    ReportBug,
+    #[serde(rename = "RFR")]
+    ReportFeatureRequest,
     #[serde(rename = "SE")]
     SettingsEdit(SettingsEditQueryType),
     #[serde(rename = "SN")]

@@ -243,9 +243,9 @@ impl Messenger {
                                 "#{} - {}",
                                 post.onchain_link.onchain_referendum_id,
                                 if let Some(title) = &post.maybe_title {
-                                    title
+                                    title.to_owned()
                                 } else {
-                                    "No title"
+                                    self.renderer.render("no_title.html", &Context::new())?
                                 },
                             ),
                             url: None,
@@ -274,6 +274,41 @@ impl Messenger {
                         inline_keyboard: rows,
                     }))
                 }
+            }
+            MessageType::SelectReportType => {
+                let rows = vec![vec![
+                    InlineKeyboardButton {
+                        text: self.renderer.render("report_bug.html", &Context::new())?,
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::ReportBug,
+                            parameter: None,
+                        })?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    },
+                    InlineKeyboardButton {
+                        text: self
+                            .renderer
+                            .render("report_feature_request.html", &Context::new())?,
+                        url: None,
+                        login_url: None,
+                        callback_data: Some(serde_json::to_string(&Query {
+                            query_type: QueryType::ReportFeatureRequest,
+                            parameter: None,
+                        })?),
+                        switch_inline_query: None,
+                        switch_inline_query_current_chat: None,
+                        callback_game: None,
+                        pay: None,
+                    },
+                ]];
+                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
+                    inline_keyboard: rows,
+                }))
             }
             _ => None,
         };

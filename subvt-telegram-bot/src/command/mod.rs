@@ -129,6 +129,20 @@ impl TelegramBot {
                     .await?;
                 self.process_remove_validator_command(chat_id, args).await?;
             }
+            "/report" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.messenger
+                    .send_message(
+                        &self.app_postgres,
+                        &self.network_postgres,
+                        chat_id,
+                        Box::new(MessageType::SelectReportType),
+                    )
+                    .await?;
+            }
             "/rewards" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres

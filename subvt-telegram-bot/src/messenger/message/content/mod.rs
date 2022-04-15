@@ -124,6 +124,18 @@ impl MessageType {
                 );
                 "referendum_details.html"
             }
+            Self::SelectReportType => "select_report_type.html",
+            Self::EnterBugReport => "enter_bug_report.html",
+            Self::EnterFeatureRequest => "enter_feature_request.html",
+            Self::ReportSaved => "report_saved.html",
+            Self::BugReport(content) => {
+                context.insert("content", &content);
+                "bug_report.html"
+            }
+            Self::FeatureRequest(content) => {
+                context.insert("content", &content);
+                "feature_request.html"
+            }
         };
         renderer.render(template_name, &context).unwrap()
     }
