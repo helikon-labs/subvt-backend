@@ -2,6 +2,7 @@ use crate::plotlib::{Chart, ScaleBand, ScaleLinear, VerticalBarView};
 use crate::{PlotterError, CONFIG};
 use chrono::Datelike;
 use itertools::Itertools;
+use rand::Rng;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
@@ -75,12 +76,14 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         .load_data(&data)
         .unwrap();
     let millis = chrono::Utc::now().timestamp_millis();
+    let random: u16 = rand::thread_rng().gen();
     // save svg
     let svg_path = format!(
-        "{}{}{}.svg",
+        "{}{}{}_{}.svg",
         CONFIG.plotter.tmp_dir_path,
         std::path::MAIN_SEPARATOR,
         millis,
+        random,
     );
     if let Err(error) = Chart::new()
         .set_width(width)
@@ -104,10 +107,11 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
 
     // save png
     let png_path = format!(
-        "{}{}{}.png",
+        "{}{}{}_{}.png",
         CONFIG.plotter.tmp_dir_path,
         std::path::MAIN_SEPARATOR,
         millis,
+        random,
     );
     let mut opt = usvg::Options {
         resources_dir: std::fs::canonicalize(&svg_path)

@@ -1,9 +1,12 @@
-echo "*** INITIALIZING DATABASE ***"
-psql -U postgres -c "CREATE USER subvt WITH ENCRYPTED PASSWORD 'subvt';"
-psql -U postgres -c "CREATE DATABASE subvt_app;"
+echo "*********** START MIGRATION ***********"
+# create subvt user if not exists
+psql -U postgres -tc "SELECT 1 FROM pg_user WHERE usename = 'subvt'" | grep -q 1 || psql -U postgres -c "CREATE USER subvt WITH ENCRYPTED PASSWORD 'subvt';"
+# create the app database if not exists
+psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'subvt_app'" | grep -q 1 || psql -U postgres -c "CREATE DATABASE subvt_app;"
 psql -U postgres -c "ALTER DATABASE subvt_app OWNER TO subvt;"
-MIGRATION_FILES_DIR="/tmp/psql_data"
-for file in "$MIGRATION_FILES_DIR"/*.sql; do
-    psql -U subvt -d subvt_app -f "${file}"
+# apply migrations
+MIGRATION_FILES_DIR="/subvt/migrations"
+for file in "$MIGRATION_FILES_DIR"/*.up.sql; do
+    psql -U subvt -d subvt_network -f "${file}"
 done
-echo "*** DATABASE INITIALIZED ***"
+echo "************ END MIGRATION ************"

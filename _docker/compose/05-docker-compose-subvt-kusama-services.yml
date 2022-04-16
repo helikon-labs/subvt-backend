@@ -4,37 +4,37 @@ services:
   subvt_kusama_block_processor:
     container_name: subvt_kusama_block_processor
     restart: unless-stopped
-    image: "helikon/subvt-block-processor:0.1.5"
+    image: "helikon/subvt-block-processor:${VERSION}"
     networks:
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
       # rpc
-      - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
+      - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
       # start block
-      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=12059700
+      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=${KUSAMA_BLOCK_PROCESSOR_START_NUMBER}
   subvt_kusama_validator_list_updater:
     container_name: subvt_kusama_validator_list_updater
     restart: unless-stopped
-    image: "helikon/subvt-validator-list-updater:0.1.5"
+    image: "helikon/subvt-validator-list-updater:${VERSION}"
     depends_on:
       - subvt_kusama_block_processor
     networks:
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -42,23 +42,23 @@ services:
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
       # rpc
-      - SUBVT__SUBSTRATE__RPC_URL=wss://kusama-rpc.polkadot.io:443
+      - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
   subvt_kusama_active_validator_list_server:
     container_name: subvt_kusama_active_validator_list_server
     restart: unless-stopped
-    image: "helikon/subvt-active-validator-list-server:0.1.5"
+    image: "helikon/subvt-active-validator-list-server:${VERSION}"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
       - subvt_kusama
     ports:
-      - "7889:7889"
+      - "${KUSAMA_ACTIVE_VALIDATOR_LIST_SERVER_PORT}:7889"
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -66,19 +66,19 @@ services:
   subvt_kusama_inactive_validator_list_server:
     container_name: subvt_kusama_inactive_validator_list_server
     restart: unless-stopped
-    image: "helikon/subvt-inactive-validator-list-server:0.1.5"
+    image: "helikon/subvt-inactive-validator-list-server:${VERSION}"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
       - subvt_kusama
     ports:
-      - "7890:7890"
+      - "${KUSAMA_INACTIVE_VALIDATOR_LIST_SERVER_PORT}:7890"
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -86,19 +86,19 @@ services:
   subvt_kusama_validator_details_server:
     container_name: subvt_kusama_validator_details_server
     restart: unless-stopped
-    image: "helikon/subvt-validator-details-server:0.1.5"
+    image: "helikon/subvt-validator-details-server:${VERSION}"
     depends_on:
       - subvt_kusama_validator_list_updater
     networks:
       - subvt_kusama
     ports:
-      - "7891:7891"
+      - "${KUSAMA_VALIDATOR_DETAILS_SERVER_PORT}:7891"
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -106,15 +106,15 @@ services:
   subvt_kusama_network_status_updater:
     container_name: subvt_kusama_network_status_updater
     restart: unless-stopped
-    image: "helikon/subvt-network-status-updater:0.1.5"
+    image: "helikon/subvt-network-status-updater:${VERSION}"
     networks:
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -124,19 +124,19 @@ services:
   subvt_kusama_network_status_server:
     container_name: subvt_kusama_network_status_server
     restart: unless-stopped
-    image: "helikon/subvt-network-status-server:0.1.5"
+    image: "helikon/subvt-network-status-server:${VERSION}"
     depends_on:
       - subvt_kusama_network_status_updater
     networks:
       - subvt_kusama
     ports:
-      - "7888:7888"
+      - "${KUSAMA_NETWORK_STATUS_SERVER_PORT}:7888"
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
@@ -144,15 +144,15 @@ services:
   subvt_kusama_onekv_updater:
     container_name: subvt_kusama_onekv_updater
     restart: unless-stopped
-    image: "helikon/subvt-onekv-updater:0.1.5"
+    image: "helikon/subvt-onekv-updater:${VERSION}"
     networks:
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
@@ -160,15 +160,15 @@ services:
   subvt_kusama_telemetry_processor:
     container_name: subvt_kusama_telemetry_processor
     restart: unless-stopped
-    image: "helikon/subvt-telemetry-processor:0.1.5"
+    image: "helikon/subvt-telemetry-processor:${VERSION}"
     networks:
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
@@ -176,7 +176,7 @@ services:
   subvt_kusama_notification_generator:
     container_name: subvt_kusama_notification_generator
     restart: unless-stopped
-    image: "helikon/subvt-notification-generator:0.1.5"
+    image: "helikon/subvt-notification-generator:${VERSION}"
     depends_on:
       - subvt_kusama_validator_list_updater
       - subvt_kusama_network_status_updater
@@ -184,11 +184,11 @@ services:
       - subvt_app
       - subvt_kusama
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # app postgres
@@ -200,17 +200,17 @@ services:
   subvt_kusama_report_service:
     container_name: subvt_kusama_report_service
     restart: unless-stopped
-    image: "helikon/subvt-report-service:0.1.5"
+    image: "helikon/subvt-report-service:${VERSION}"
     networks:
       - subvt_kusama
     ports:
-      - "7900:7900"
+      - "${KUSAMA_REPORT_SERVICE_PORT}:7900"
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
@@ -218,19 +218,19 @@ services:
   subvt_kusama_telegram_bot:
     container_name: subvt_kusama_telegram_bot
     restart: unless-stopped
-    image: "helikon/subvt-telegram-bot:0.1.5"
+    image: "helikon/subvt-telegram-bot:${VERSION}"
     networks:
       - subvt_app
       - subvt_kusama
     volumes:
-      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_template:/subvt/template
-      - /Users/kukabi/Desktop/subvt_plotter_tmp:/subvt/tmp
+      - ${TEMPLATE_DIR}:/subvt/template
+      - ${PLOTTER_TMP_DIR}:/subvt/tmp
     environment:
-      - SUBVT_ENV=production
+      - SUBVT_ENV=${ENV}
       - SUBVT_NETWORK=kusama
       - SUBVT_CONFIG_DIR=/subvt/config
       # log level
-      - SUBVT__LOG__SUBVT_LEVEL=debug
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
       # metrics
       - SUBVT__METRICS__HOST=0.0.0.0
       # app postgres
@@ -242,7 +242,7 @@ services:
       # template dir
       - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
       # telegram
-      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=TELEGRAM_TOKEN
+      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=${KUSAMA_TELEGRAM_TOKEN}
       - SUBVT__TELEGRAM_BOT__ADMIN_CHAT_ID=1130952914
       # plotter
       - SUBVT__PLOTTER__TEMP_DIR_PATH=/subvt/tmp

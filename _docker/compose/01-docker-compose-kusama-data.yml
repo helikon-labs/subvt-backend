@@ -3,8 +3,11 @@ version: "3.8"
 services:
   subvt_kusama_postgres:
     container_name: subvt_kusama_postgres
-    command:
-      - "postgres"
+    # https://pgtune.leopard.in.ua/
+    image: "helikon/subvt-network-postgres:${VERSION}"
+    user: postgres
+    entrypoint:
+      - "/usr/local/bin/subvt-postgres-entrypoint.sh"
       - "-c"
       - "max_connections=100"
       - "-c"
@@ -38,22 +41,21 @@ services:
       - "-c"
       - "max_parallel_maintenance_workers=3"
     restart: unless-stopped
-    image: "helikon/subvt-network-postgres:0.1.5"
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:5432:5432"
+      - "${KUSAMA_POSTGRES_PORT}:5432"
     volumes:
       - subvt_kusama_postgres_data:/var/lib/postgresql/data
   subvt_kusama_redis:
     container_name: subvt_kusama_redis
     restart: unless-stopped
-    image: "redis:6.2.6"
+    image: "redis:${REDIS_VERSION}"
     command: redis-server --save "" --appendonly no
     networks:
       - subvt_kusama
     ports:
-      - "127.0.0.1:6379:6379"
+      - "${KUSAMA_REDIS_PORT}:6379"
     volumes:
       - subvt_kusama_redis_data:/data
 volumes:

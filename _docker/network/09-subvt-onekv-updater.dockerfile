@@ -1,6 +1,7 @@
-FROM helikon/subvt-backend-lib:0.1.5 as builder
+ARG version
+FROM helikon/subvt-backend-lib:$version as builder
 
-FROM helikon/subvt-backend-base:0.1.5
+FROM helikon/subvt-backend-base:$version
 # copy executable
 COPY --from=builder /subvt/bin/subvt-onekv-updater /usr/local/bin/
 CMD ["subvt-onekv-updater"]

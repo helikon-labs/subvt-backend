@@ -13,6 +13,7 @@ itertools = "0.10.3"
 lazy_static = "1.4.0"
 log = "0.4.16"
 thiserror = "1.0"
+rand = "0.8.5"
 resvg = "0.22.0"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }

@@ -6641,6 +6641,7 @@ dependencies = [
  "itertools",
  "lazy_static",
  "log",
+ "rand 0.8.5",
  "resvg",
  "subvt-config",
  "subvt-types",

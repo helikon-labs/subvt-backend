@@ -3,8 +3,11 @@ version: "3.8"
 services:
   subvt_polkadot_postgres:
     container_name: subvt_polkadot_postgres
-    command:
-      - "postgres"
+    # https://pgtune.leopard.in.ua/
+    image: "helikon/subvt-network-postgres:${VERSION}"
+    user: postgres
+    entrypoint:
+      - "/usr/local/bin/subvt-postgres-entrypoint.sh"
       - "-c"
       - "max_connections=100"
       - "-c"
@@ -38,22 +41,21 @@ services:
       - "-c"
       - "max_parallel_maintenance_workers=3"
     restart: unless-stopped
-    image: "helikon/subvt-network-postgres:0.1.5"
     networks:
       - subvt_polkadot
     ports:
-      - "127.0.0.1:5433:5432"
+      - "${POLKADOT_POSTGRES_PORT}:5432"
     volumes:
       - subvt_polkadot_postgres_data:/var/lib/postgresql/data
   subvt_polkadot_redis:
     container_name: subvt_polkadot_redis
     restart: unless-stopped
-    image: "redis:6.2.6"
+    image: "redis:${REDIS_VERSION}"
     command: redis-server --save "" --appendonly no
     networks:
       - subvt_polkadot
     ports:
-      - "127.0.0.1:6379:6379"
+      - "${POLKADOT_REDIS_PORT}:6379"
     volumes:
       - subvt_polkadot_redis_data:/data
 volumes:

@@ -3,8 +3,11 @@ version: "3.8"
 services:
   subvt_app_postgres:
     container_name: subvt_app_postgres
-    command:
-      - "postgres"
+    # https://pgtune.leopard.in.ua/
+    image: "helikon/subvt-app-postgres:${VERSION}"
+    user: postgres
+    entrypoint:
+      - "/usr/local/bin/subvt-postgres-entrypoint.sh"
       - "-c"
       - "max_connections=100"
       - "-c"
@@ -38,11 +41,10 @@ services:
       - "-c"
       - "max_parallel_maintenance_workers=3"
     restart: unless-stopped
-    image: "helikon/subvt-app-postgres:0.1.5"
     networks:
       - subvt_app
     ports:
-      - "127.0.0.1:5450:5432"
+      - "${APP_POSTGRES_PORT}:5432"
     volumes:
       - subvt_app_postgres_data:/var/lib/postgresql/data
 volumes:
