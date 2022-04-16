@@ -23,9 +23,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Run Docker network PostgreSQL
-        run: docker run -d -t -p 15432:5432 helikon/subvt-network-postgres:0.1.3
+        run: docker run -d -t -p 15432:5432 helikon/subvt-network-postgres:0.1.5
       - name: Run Docker app PostgreSQL
-        run: docker run -d -t -p 25432:5432 helikon/subvt-app-postgres:0.1.3
+        run: docker run -d -t -p 25432:5432 helikon/subvt-app-postgres:0.1.5
       - name: Toolchain
         uses: actions-rs/toolchain@v1
         with:

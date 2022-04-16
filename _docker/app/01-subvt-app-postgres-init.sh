@@ -7,6 +7,6 @@ psql -U postgres -c "ALTER DATABASE subvt_app OWNER TO subvt;"
 # apply migrations
 MIGRATION_FILES_DIR="/subvt/migrations"
 for file in "$MIGRATION_FILES_DIR"/*.up.sql; do
-    psql -U subvt -d subvt_network -f "${file}"
+    psql -U subvt -d subvt_app -f "${file}"
 done
 echo "************ END MIGRATION ************"
