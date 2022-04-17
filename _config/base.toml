@@ -113,7 +113,7 @@ template_dir_path = "/path/to/the/template/dir"
 
 [telegram_bot]
 # i64 array
-admin_chat_ids = [1234, 4563]
+admin_chat_ids = "1234,4563"
 max_validators_per_chat = 25
 # include the @
 username = "@bot_username"

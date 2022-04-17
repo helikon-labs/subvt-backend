@@ -1,16 +1,15 @@
 use async_trait::async_trait;
 use frankenstein::api_traits::AsyncTelegramApi;
 use frankenstein::api_traits::ErrorResponse;
-use reqwest::multipart;
-use serde::{Deserialize, Serialize};
+use hyper::{body::Buf, client::HttpConnector, Body, Client, Request, Response};
+use hyper_multipart_rfc7578::client::multipart::{Body as MultipartBody, Form as MultipartForm};
+use hyper_tls::HttpsConnector;
 use serde_json::Value;
 use std::path::PathBuf;
-use tokio::fs::File;
 
 static BASE_API_URL: &str = "https://api.telegram.org/bot";
 
-#[derive(PartialEq, Debug, Serialize, Deserialize, thiserror::Error)]
-#[serde(untagged)]
+#[derive(PartialEq, Debug, thiserror::Error)]
 pub enum Error {
     #[error("{0}")]
     Http(HttpError),
@@ -22,7 +21,7 @@ pub enum Error {
     Encode(String),
 }
 
-#[derive(PartialEq, Debug, Serialize, Deserialize, thiserror::Error)]
+#[derive(PartialEq, Debug, thiserror::Error)]
 #[error("Http Error {code}: {message}")]
 pub struct HttpError {
     pub code: u16,
@@ -31,15 +30,19 @@ pub struct HttpError {
 
 #[derive(Debug, Clone)]
 pub struct AsyncApi {
-    pub api_url: String,
-    client: reqwest::Client,
+    api_url: String,
+    client: Client<HttpsConnector<HttpConnector>, Body>,
+    multipart_client: Client<HttpsConnector<HttpConnector>, MultipartBody>,
 }
 
 impl AsyncApi {
     pub fn new(api_key: &str) -> Self {
         let api_url = format!("{}{}", BASE_API_URL, api_key);
-        let client = reqwest::Client::new();
-        Self { api_url, client }
+        Self {
+            api_url,
+            client: Client::builder().build(HttpsConnector::new()),
+            multipart_client: Client::builder().build(HttpsConnector::new()),
+        }
     }
 
     pub fn encode_params<T: serde::ser::Serialize + std::fmt::Debug>(
@@ -48,59 +51,35 @@ impl AsyncApi {
         serde_json::to_string(params).map_err(|e| Error::Encode(format!("{:?} : {:?}", e, params)))
     }
 
-    pub async fn decode_response<T: serde::de::DeserializeOwned>(
-        response: reqwest::Response,
+    async fn parse_response<T: serde::de::DeserializeOwned>(
+        response: Response<Body>,
     ) -> Result<T, Error> {
-        let status_code = response.status().as_u16();
-        match response.text().await {
-            Ok(message) => {
-                if status_code == 200 {
-                    let success_response: T = Self::parse_json(&message)?;
-                    return Ok(success_response);
-                }
-
-                let error_response: ErrorResponse = Self::parse_json(&message)?;
-                Err(Error::Api(error_response))
-            }
-            Err(e) => {
-                let err = Error::Decode(format!("Failed to decode response: {:?}", e));
-                Err(err)
-            }
-        }
-    }
-
-    fn parse_json<T: serde::de::DeserializeOwned>(body: &str) -> Result<T, Error> {
-        let json_result: Result<T, serde_json::Error> = serde_json::from_str(body);
-
-        match json_result {
-            Ok(result) => Ok(result),
-
-            Err(e) => {
-                let err = Error::Decode(format!("{:?} : {:?}", e, body));
-                Err(err)
-            }
+        let is_successful = response.status().is_success();
+        let response_body = hyper::body::aggregate(response).await?;
+        if is_successful {
+            Ok(serde_json::from_reader(response_body.reader())
+                .map_err(|e| Error::Decode(format!("{:?}", e)))?)
+        } else {
+            Err(Error::Api(
+                serde_json::from_reader(response_body.reader())
+                    .map_err(|e| Error::Decode(format!("{:?}", e)))?,
+            ))
         }
     }
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(error: reqwest::Error) -> Self {
-        let message = error.to_string();
-        let code = if let Some(status_code) = error.status() {
-            status_code.as_u16()
-        } else {
-            500
-        };
-
-        let error = HttpError { code, message };
-        Self::Http(error)
+impl From<hyper::Error> for Error {
+    fn from(error: hyper::Error) -> Self {
+        Self::Http(HttpError {
+            code: 500,
+            message: error.to_string(),
+        })
     }
 }
 
 impl From<std::io::Error> for Error {
     fn from(error: std::io::Error) -> Self {
         let message = error.to_string();
-
         Self::Encode(message)
     }
 }
@@ -117,43 +96,20 @@ impl AsyncTelegramApi for AsyncApi {
         method: &str,
         params: Option<T1>,
     ) -> Result<T2, Self::Error> {
-        use hyper::body::Buf;
-        use hyper::Client as HyperClient;
-
         let url = format!("{}/{}", self.api_url, method);
-        println!("URL {}", url);
-
-        let mut prepared_request = self
-            .client
-            .post(url.clone())
-            .header("Content-Type", "application/json");
-
-        prepared_request = if let Some(data) = params {
-            println!("ENTER");
-            let json_string = Self::encode_params(&data)?;
-
-            let https = hyper_tls::HttpsConnector::new();
-            let hyper_client = HyperClient::builder().build::<_, hyper::Body>(https);
-            let req = hyper::Request::builder()
-                .method(hyper::Method::POST)
-                .uri(&url)
-                .header("content-type", "application/json")
-                .body(hyper::Body::from(json_string))
-                .unwrap();
-            let resp = hyper_client.request(req).await.unwrap();
-            let body = hyper::body::aggregate(resp).await.unwrap();
-            let deser_resp: T2 = serde_json::from_reader(body.reader()).unwrap();
-            return Ok(deser_resp);
-
-            // prepared_request.body(json_string)
-        } else {
-            prepared_request
-        };
-
-        let response = prepared_request.send().await?;
-        let parsed_response: T2 = Self::decode_response(response).await?;
-
-        Ok(parsed_response)
+        let request = Request::builder()
+            .method(hyper::Method::POST)
+            .uri(&url)
+            .header("Content-Type", "application/json")
+            .body(if let Some(data) = params {
+                let body_json = Self::encode_params(&data)?;
+                Body::from(body_json)
+            } else {
+                Body::empty()
+            })
+            .map_err(|e| Error::Encode(e.to_string()))?;
+        let response = self.client.request(request).await?;
+        Self::parse_response(response).await
     }
 
     async fn request_with_form_data<
@@ -165,45 +121,30 @@ impl AsyncTelegramApi for AsyncApi {
         params: T1,
         files: Vec<(&str, PathBuf)>,
     ) -> Result<T2, Self::Error> {
-        // https://stackoverflow.com/questions/51397872/how-to-post-an-image-using-multipart-form-data-with-hyper
+        let url = format!("{}/{}", self.api_url, method);
+        let mut form = MultipartForm::default();
         let json_string = Self::encode_params(&params)?;
-        let json_struct: Value = serde_json::from_str(&json_string).unwrap();
-        let file_keys: Vec<&str> = files.iter().map(|(key, _)| *key).collect();
-        let files_with_paths: Vec<(String, &str, String)> = files
-            .iter()
-            .map(|(key, path)| {
-                (
-                    (*key).to_string(),
-                    path.to_str().unwrap(),
-                    path.file_name().unwrap().to_str().unwrap().to_string(),
-                )
-            })
-            .collect();
-
-        let mut form = multipart::Form::new();
+        let json_struct: Value =
+            serde_json::from_str(&json_string).map_err(|e| Error::Encode(format!("{:?}", e)))?;
+        let mut file_keys = vec![];
+        for (key, path) in &files {
+            file_keys.push(*key);
+            form.add_file(key.to_string(), path.to_str().unwrap())?;
+        }
         for (key, val) in json_struct.as_object().unwrap().iter() {
             if !file_keys.contains(&key.as_str()) {
-                let val = match val {
+                let value = match val {
                     &Value::String(ref val) => val.to_string(),
                     other => other.to_string(),
                 };
-
-                form = form.text(key.clone(), val.clone());
+                form.add_text(key, value);
             }
         }
-
-        for (parameter_name, file_path, file_name) in files_with_paths {
-            let file = File::open(file_path).await?;
-
-            let part = multipart::Part::stream(file).file_name(file_name);
-            form = form.part(parameter_name, part);
-        }
-
-        let url = format!("{}/{}", self.api_url, method);
-
-        let response = self.client.post(url).multipart(form).send().await?;
-        let parsed_response: T2 = Self::decode_response(response).await?;
-
-        Ok(parsed_response)
+        let req_builder = Request::post(url);
+        let request = form
+            .set_body::<MultipartBody>(req_builder)
+            .map_err(|e| Error::Encode(format!("{:?}", e)))?;
+        let response = self.multipart_client.request(request).await?;
+        Self::parse_response(response).await
     }
 }
