@@ -19,6 +19,7 @@ use subvt_types::app::{
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
+mod api;
 mod command;
 mod messenger;
 mod metrics;
@@ -26,7 +27,7 @@ mod query;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
-    static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+)(\s+[a-zA-Z0-9_-]+)*").unwrap();
+    static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+[@a-zA-Z0-9_]?)(\s+[a-zA-Z0-9_-]+)*").unwrap();
     static ref CMD_ARG_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
     static ref DEFAULT_RULES: Vec<(NotificationTypeCode, NotificationPeriodType, u16)> = vec![
@@ -196,7 +197,7 @@ impl TelegramBot {
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
         let api = AsyncApi::new(&CONFIG.notification_processor.telegram_token);
-        let messenger = Messenger::new(&CONFIG, api.clone())?;
+        let messenger = Messenger::new()?;
         Ok(TelegramBot {
             app_postgres,
             network_postgres,
@@ -331,6 +332,7 @@ impl TelegramBot {
                             .collect(),
                     )
                 };
+                let command = command.replace("@subvt_kusama_test_bot", "");
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
@@ -365,7 +367,7 @@ impl TelegramBot {
                             self.network_postgres
                                 .save_bug_report(message.chat.id, text)
                                 .await?;
-                            for admin_chat_id in &CONFIG.telegram_bot.admin_chat_ids {
+                            for admin_chat_id in &CONFIG.telegram_bot.get_admin_chat_ids() {
                                 self.messenger
                                     .send_message(
                                         &self.app_postgres,
@@ -394,7 +396,7 @@ impl TelegramBot {
                             self.network_postgres
                                 .save_feature_request(message.chat.id, text)
                                 .await?;
-                            for admin_chat_id in &CONFIG.telegram_bot.admin_chat_ids {
+                            for admin_chat_id in &CONFIG.telegram_bot.get_admin_chat_ids() {
                                 self.messenger
                                     .send_message(
                                         &self.app_postgres,

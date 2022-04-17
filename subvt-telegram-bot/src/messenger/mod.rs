@@ -1,15 +1,14 @@
+use crate::api::{AsyncApi, Error};
 use crate::query::{Query, QueryType};
 use crate::query::{SettingsEditQueryType, SettingsSubSection};
-use crate::TelegramBotError;
+use crate::{TelegramBotError, CONFIG};
 use frankenstein::{
-    AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    EditMessageResponse, EditMessageTextParams, Error, InlineKeyboardButton, InlineKeyboardMarkup,
-    Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup, SendMessageParams,
-    SendPhotoParams,
+    AnswerCallbackQueryParams, AsyncTelegramApi, ChatId, DeleteMessageParams, EditMessageResponse,
+    EditMessageTextParams, InlineKeyboardButton, InlineKeyboardMarkup, Message as TelegramMessage,
+    MethodResponse, ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
 use std::path::Path;
-use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
@@ -27,14 +26,15 @@ pub struct Messenger {
 }
 
 impl Messenger {
-    pub fn new(config: &Config, api: AsyncApi) -> anyhow::Result<Messenger> {
+    pub fn new() -> anyhow::Result<Messenger> {
         let renderer = Tera::new(&format!(
             "{}{}telegram{}dialog{}*.html",
-            config.notification_processor.template_dir_path,
+            CONFIG.notification_processor.template_dir_path,
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
         ))?;
+        let api = AsyncApi::new(&CONFIG.notification_processor.telegram_token);
         Ok(Messenger { api, renderer })
     }
 }
@@ -97,7 +97,7 @@ impl Messenger {
         match self.api.send_photo(&params).await {
             Ok(response) => Ok(response),
             Err(error) => {
-                if let Error::ApiError(ref api_error) = error {
+                if let Error::Api(ref api_error) = error {
                     if api_error.error_code == FORBIDDEN_ERROR_CODE {
                         // chat blocked, delete app user and chat
                         let app_user_id = network_postgres.get_chat_app_user_id(chat_id).await?;
@@ -347,7 +347,7 @@ impl Messenger {
         match self.api.send_message(&params).await {
             Ok(response) => Ok(response),
             Err(error) => {
-                if let Error::ApiError(ref api_error) = error {
+                if let Error::Api(ref api_error) = error {
                     if api_error.error_code == FORBIDDEN_ERROR_CODE {
                         // chat blocked, delete app user and chat
                         let app_user_id = network_postgres.get_chat_app_user_id(chat_id).await?;

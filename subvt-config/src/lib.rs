@@ -189,8 +189,19 @@ pub struct NotificationProcessorConfig {
 /// Telegram bot config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelegramBotConfig {
-    pub admin_chat_ids: Vec<i64>,
+    admin_chat_ids: String,
     pub max_validators_per_chat: u16,
+    pub username: String,
+}
+
+impl TelegramBotConfig {
+    pub fn get_admin_chat_ids(&self) -> Vec<i64> {
+        self.admin_chat_ids
+            .replace(' ', "")
+            .split(',')
+            .map(|item| item.parse::<i64>().unwrap())
+            .collect()
+    }
 }
 
 /// Prometheus metrics config.
