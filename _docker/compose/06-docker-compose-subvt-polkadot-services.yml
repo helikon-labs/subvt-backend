@@ -1,0 +1,256 @@
+version: "3.8"
+
+services:
+  subvt_polkadot_block_processor:
+    container_name: subvt_polkadot_block_processor
+    restart: unless-stopped
+    image: "helikon/subvt-block-processor:${VERSION}"
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
+      # start block
+      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=${POLKADOT_BLOCK_PROCESSOR_START_NUMBER}
+  subvt_polkadot_validator_list_updater:
+    container_name: subvt_polkadot_validator_list_updater
+    restart: unless-stopped
+    image: "helikon/subvt-validator-list-updater:${VERSION}"
+    depends_on:
+      - subvt_polkadot_block_processor
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
+  subvt_polkadot_active_validator_list_server:
+    container_name: subvt_polkadot_active_validator_list_server
+    restart: unless-stopped
+    image: "helikon/subvt-active-validator-list-server:${VERSION}"
+    depends_on:
+      - subvt_polkadot_validator_list_updater
+    networks:
+      - subvt_polkadot
+    ports:
+      - "${POLKADOT_ACTIVE_VALIDATOR_LIST_SERVER_PORT}:7889"
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+  subvt_polkadot_inactive_validator_list_server:
+    container_name: subvt_polkadot_inactive_validator_list_server
+    restart: unless-stopped
+    image: "helikon/subvt-inactive-validator-list-server:${VERSION}"
+    depends_on:
+      - subvt_polkadot_validator_list_updater
+    networks:
+      - subvt_polkadot
+    ports:
+      - "${POLKADOT_INACTIVE_VALIDATOR_LIST_SERVER_PORT}:7890"
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+  subvt_polkadot_validator_details_server:
+    container_name: subvt_polkadot_validator_details_server
+    restart: unless-stopped
+    image: "helikon/subvt-validator-details-server:${VERSION}"
+    depends_on:
+      - subvt_polkadot_validator_list_updater
+    networks:
+      - subvt_polkadot
+    ports:
+      - "${POLKADOT_VALIDATOR_DETAILS_SERVER_PORT}:7891"
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+  subvt_polkadot_network_status_updater:
+    container_name: subvt_polkadot_network_status_updater
+    restart: unless-stopped
+    image: "helikon/subvt-network-status-updater:${VERSION}"
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
+  subvt_polkadot_network_status_server:
+    container_name: subvt_polkadot_network_status_server
+    restart: unless-stopped
+    image: "helikon/subvt-network-status-server:${VERSION}"
+    depends_on:
+      - subvt_polkadot_network_status_updater
+    networks:
+      - subvt_polkadot
+    ports:
+      - "${POLKADOT_NETWORK_STATUS_SERVER_PORT}:7888"
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+  subvt_polkadot_onekv_updater:
+    container_name: subvt_polkadot_onekv_updater
+    restart: unless-stopped
+    image: "helikon/subvt-onekv-updater:${VERSION}"
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+  subvt_polkadot_telemetry_processor:
+    container_name: subvt_polkadot_telemetry_processor
+    restart: unless-stopped
+    image: "helikon/subvt-telemetry-processor:${VERSION}"
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+  subvt_polkadot_notification_generator:
+    container_name: subvt_polkadot_notification_generator
+    restart: unless-stopped
+    image: "helikon/subvt-notification-generator:${VERSION}"
+    depends_on:
+      - subvt_polkadot_validator_list_updater
+      - subvt_polkadot_network_status_updater
+    networks:
+      - subvt_app
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # app postgres
+      - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
+      # network postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+  subvt_polkadot_report_service:
+    container_name: subvt_polkadot_report_service
+    restart: unless-stopped
+    image: "helikon/subvt-report-service:${VERSION}"
+    networks:
+      - subvt_polkadot
+    ports:
+      - "${POLKADOT_REPORT_SERVICE_PORT}:7900"
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+  subvt_polkadot_telegram_bot:
+    container_name: subvt_polkadot_telegram_bot
+    restart: unless-stopped
+    image: "helikon/subvt-telegram-bot:${VERSION}"
+    networks:
+      - subvt_app
+      - subvt_polkadot
+    volumes:
+      - ${TEMPLATE_DIR}:/subvt/template
+      - ${TMP_DIR}:/subvt/tmp
+      - ${FONT_DIR}:/subvt/font
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # app postgres
+      - SUBVT__APP_POSTGRES__HOST=subvt_app_postgres
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
+      # network postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # template dir
+      - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
+      # telegram
+      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=${POLKADOT_TELEGRAM_TOKEN}
+      - SUBVT__TELEGRAM_BOT__ADMIN_CHAT_IDS=${POLKADOT_TELEGRAM_ADMIN_CHAT_IDS}
+      - SUBVT__TELEGRAM_BOT__USERNAME=${POLKADOT_TELEGRAM_BOT_USERNAME}
+      # plotter
+      - SUBVT__PLOTTER__TMP_DIR_PATH=/subvt/tmp
+      - SUBVT__PLOTTER__FONT_DIR_PATH=/subvt/font
+networks:
+  subvt_polkadot:
+    name: subvt_polkadot
+  subvt_app:
+    name: subvt_app
