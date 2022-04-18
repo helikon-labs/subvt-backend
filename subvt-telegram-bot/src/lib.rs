@@ -1,9 +1,12 @@
 //! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
 
-use crate::messenger::{message::MessageType, Messenger};
-use crate::query::Query;
+use crate::{
+    api::AsyncApi,
+    messenger::{message::MessageType, Messenger},
+    query::Query,
+};
 use async_trait::async_trait;
-use frankenstein::{AsyncApi, AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
+use frankenstein::{AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashSet;

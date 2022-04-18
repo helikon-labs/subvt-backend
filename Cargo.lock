@@ -1806,6 +1806,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "frankenstein"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9dbc60b200c5396841b10079320f3e5e78888b546fb182e3604ae09ec3e5aca"
+dependencies = [
+ "async-trait",
+ "serde",
+ "thiserror",
+ "typed-builder",
+]
+
+[[package]]
 name = "fuchsia-cprng"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6563,7 +6575,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "fcm",
- "frankenstein",
+ "frankenstein 0.12.0",
  "futures",
  "futures-util",
  "itertools",
@@ -6731,7 +6743,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "frankenstein",
+ "frankenstein 0.13.0",
  "hyper",
  "hyper-multipart-rfc7578",
  "hyper-tls",
