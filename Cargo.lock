@@ -1792,9 +1792,9 @@ dependencies = [
 
 [[package]]
 name = "frankenstein"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a8405c0011d7550be1251c3b671213e6d91a2ea28e98c08aef1fa25aa3fc39e"
+checksum = "b9dbc60b200c5396841b10079320f3e5e78888b546fb182e3604ae09ec3e5aca"
 dependencies = [
  "async-trait",
  "reqwest",
@@ -1802,18 +1802,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tokio",
- "typed-builder",
-]
-
-[[package]]
-name = "frankenstein"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9dbc60b200c5396841b10079320f3e5e78888b546fb182e3604ae09ec3e5aca"
-dependencies = [
- "async-trait",
- "serde",
- "thiserror",
  "typed-builder",
 ]
 
@@ -6575,7 +6563,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "fcm",
- "frankenstein 0.12.0",
+ "frankenstein",
  "futures",
  "futures-util",
  "itertools",
@@ -6743,7 +6731,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
- "frankenstein 0.13.0",
+ "frankenstein",
  "hyper",
  "hyper-multipart-rfc7578",
  "hyper-tls",
@@ -7396,7 +7384,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "digest 0.9.0",
  "rand 0.8.5",
