@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - '**'
+
+# remove comments if a recent tag push should
+# terminate the older running action
+#concurrency:
+#  group: ${{ github.ref }}
+#  cancel-in-progress: true
+
+jobs:
+  build-and-publish-docker-images:
+    name: Build and publish Docker images
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Make the shell script executable
+        run: chmod +x ./_docker/docker-build-and-publish.sh
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Build and publish
+        run: ./_docker/docker-build-and-publish.sh ${{ steps.get_version.outputs.VERSION }}

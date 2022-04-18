@@ -2,7 +2,7 @@ FROM rust:1.60 as builder
 RUN mkdir -p /subvt/bin \
     && mkdir -p /subvt/src
 WORKDIR /subvt/src
-COPY ./.. ./
+COPY ./. ./
 # add required nightly WASM target
 RUN rustup default nightly \
     && rustup target add wasm32-unknown-unknown \
