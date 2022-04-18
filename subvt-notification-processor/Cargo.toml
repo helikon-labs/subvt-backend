@@ -12,7 +12,6 @@ anyhow = "1.0.56"
 async-trait = "0.1.53"
 chrono = "0.4.19"
 fcm = "0.9.1"
-frankenstein = { version = "0.12.0", default-features = false, features = ["async-http-client"] }
 futures = "0.3.21"
 futures-util = "0.3.21"
 itertools = "0.10.3"
@@ -30,6 +29,7 @@ subvt-logging = { path = "../subvt-logging" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
+subvt-telegram-bot = { path = "../subvt-telegram-bot" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.15.0"

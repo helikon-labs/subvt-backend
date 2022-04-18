@@ -1,8 +1,8 @@
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
-use frankenstein::{
-    AsyncApi as TelegramClient, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams,
+use subvt_telegram_bot::{
+    api::AsyncApi as TelegramClient, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams,
 };
 use subvt_types::app::{Notification, NotificationChannel};
 

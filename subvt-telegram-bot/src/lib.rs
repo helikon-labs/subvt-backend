@@ -6,7 +6,8 @@ use crate::{
     query::Query,
 };
 use async_trait::async_trait;
-use frankenstein::{AsyncTelegramApi, ChatType, GetUpdatesParams, Message};
+pub use frankenstein::{AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
+use frankenstein::{ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashSet;
@@ -22,7 +23,7 @@ use subvt_types::app::{
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
-mod api;
+pub mod api;
 mod command;
 mod messenger;
 mod metrics;
