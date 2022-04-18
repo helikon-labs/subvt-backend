@@ -27,6 +27,16 @@ jobs:
         run: chmod +x ./_docker/docker-build-and-publish.sh
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
       - name: Build and publish
-        run: ./_docker/docker-build-and-publish.sh ${{ steps.get_version.outputs.VERSION }}
+        run: ./_docker/docker-build-and-publish.sh ${{ steps.get_version.outputs.version }}
+      - name: Generate changelog
+        id: changelog
+        uses: metcalfc/changelog-generator@v3.0.0
+        with:
+          myToken: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
+      - name: GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: ${{ steps.changelog.outputs.changelog }}
+          token: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
