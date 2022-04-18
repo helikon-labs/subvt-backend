@@ -10,6 +10,7 @@ services:
       - subvt_monitoring
     volumes:
       - ${PROMETHEUS_DIR}/subvt-app-prometheus.yml:/etc/prometheus/prometheus.yml
+      - subvt_app_prometheus_data:/prometheus
   subvt_kusama_prometheus:
     container_name: subvt_kusama_prometheus
     restart: unless-stopped
@@ -19,6 +20,7 @@ services:
       - subvt_monitoring
     volumes:
       - ${PROMETHEUS_DIR}/subvt-kusama-prometheus.yml:/etc/prometheus/prometheus.yml
+      - subvt_kusama_prometheus_data:/prometheus
   subvt_grafana:
     container_name: subvt_grafana
     restart: unless-stopped
@@ -26,6 +28,17 @@ services:
     networks:
       - subvt_monitoring
     ports: [ "${GRAFANA_PORT}:3000" ]
+    volumes:
+      - subvt_grafana_data:/var/lib/grafana
+volumes:
+  subvt_app_prometheus_data:
+    name: subvt_app_prometheus_data
+  subvt_kusama_prometheus_data:
+    name: subvt_kusama_prometheus_data
+  subvt_polkadot_prometheus_data:
+    name: subvt_polkadot_prometheus_data
+  subvt_grafana_data:
+    name: subvt_grafana_data
 networks:
   subvt_kusama:
     name: subvt_kusama
