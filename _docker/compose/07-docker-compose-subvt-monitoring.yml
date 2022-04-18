@@ -4,28 +4,28 @@ services:
   subvt_app_prometheus:
     container_name: subvt_app_prometheus
     restart: unless-stopped
-    image: "prom/prometheus:v2.34.0"
+    image: "prom/prometheus:${PROMETHEUS_VERSION}"
     networks:
       - subvt_app
       - subvt_monitoring
     volumes:
-      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_prometheus/subvt-app-prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${PROMETHEUS_DIR}/subvt-app-prometheus.yml:/etc/prometheus/prometheus.yml
   subvt_kusama_prometheus:
     container_name: subvt_kusama_prometheus
     restart: unless-stopped
-    image: "prom/prometheus:v2.34.0"
+    image: "prom/prometheus:${PROMETHEUS_VERSION}"
     networks:
       - subvt_kusama
       - subvt_monitoring
     volumes:
-      - /Users/kukabi/Documents/Development/subvt/subvt-backend/_prometheus/subvt-kusama-prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${PROMETHEUS_DIR}/subvt-kusama-prometheus.yml:/etc/prometheus/prometheus.yml
   subvt_grafana:
     container_name: subvt_grafana
     restart: unless-stopped
-    image: "grafana/grafana-oss:8.4.4"
+    image: "grafana/grafana-oss:${GRAFANA_VERSION}"
     networks:
       - subvt_monitoring
-    ports: [ "3000:3000" ]
+    ports: [ "${GRAFANA_PORT}:3000" ]
 networks:
   subvt_kusama:
     name: subvt_kusama
