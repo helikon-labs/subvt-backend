@@ -3,6 +3,7 @@
 </p>
 
 ![](https://github.com/helikon-labs/subvt-backend/actions/workflows/rust_checks.yml/badge.svg)
+![](https://github.com/helikon-labs/subvt-backend/actions/workflows/release.yml/badge.svg)
 
 # SubVT Backend
 
