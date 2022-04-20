@@ -16,7 +16,7 @@ use frame_support::dispatch::{DispatchError, DispatchInfo};
 use pallet_democracy::{AccountVote, PropIndex, ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
 use parity_scale_codec::{Compact, Decode};
-use polkadot_primitives::v1::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
+use polkadot_primitives::v2::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
 

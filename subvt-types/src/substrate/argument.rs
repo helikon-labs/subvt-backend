@@ -35,11 +35,10 @@ use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
-use polkadot_primitives::v1::{
+use polkadot_primitives::v2::{
     Balance, BlockNumber, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id,
-    InherentData, ValidationCode, ValidationCodeHash, ValidatorSignature,
+    InherentData, PvfCheckStatement, ValidationCode, ValidationCodeHash, ValidatorSignature,
 };
-use polkadot_primitives::v2::PvfCheckStatement;
 use polkadot_runtime::MaxAdditionalFields;
 use polkadot_runtime_common::assigned_slots::SlotLeasePeriodStart;
 use polkadot_runtime_common::{
@@ -75,6 +74,7 @@ pub enum ArgumentPrimitive {
     AccountIndex(AccountIndex),
     AuctionIndex(AuctionIndex),
     BABENextConfigDescriptor(NextConfigDescriptor),
+    BagsListScore(VoteWeight),
     Balance(Balance),
     BalanceStatus(BalanceStatus),
     Bool(bool),
@@ -444,6 +444,7 @@ generate_argument_primitive_decoder_impl! {[
     ("TaskAddress<BlockNumber>", decode_scheduler_task_address_1, SchedulerTaskAddress),
     ("TaskAddress<T::BlockNumber>", decode_scheduler_task_address_2, SchedulerTaskAddress),
     ("SessionIndex", decode_session_index, SessionIndex),
+    ("T::Score", decode_bags_list_score, BagsListScore),
     ("T::Keys", decode_session_keys, SessionKeys),
     ("SlotRange", decode_slot_range, SlotRange),
     ("SolutionOrSnapshotSize", decode_solution_or_snapshot_size, SolutionOrSnapshotSize),
