@@ -3,6 +3,7 @@ use subvt_types::app::event::democracy::DemocracyVotedEvent;
 use subvt_types::crypto::AccountId;
 use subvt_types::governance::polkassembly::ReferendumPost;
 use subvt_types::onekv::OneKVCandidateSummary;
+use subvt_types::sub_id::NFTCollection;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
 use subvt_types::telegram::TelegramChatValidator;
 
@@ -65,4 +66,10 @@ pub enum MessageType {
     ReportSaved,
     BugReport(String),
     FeatureRequest(String),
+    NFTs {
+        collection: NFTCollection,
+        page_index: usize,
+        has_prev: bool,
+        has_next: bool,
+    },
 }

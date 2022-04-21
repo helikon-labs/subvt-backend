@@ -232,6 +232,13 @@ pub struct PlotterConfig {
     pub font_sans_serif_family: String,
 }
 
+/// Sub.id NFTs API configuration.
+#[derive(Clone, Debug, Deserialize)]
+pub struct SubIDConfig {
+    pub api_url: String,
+    pub nfts_path: String,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -253,6 +260,7 @@ pub struct Config {
     pub telegram_bot: TelegramBotConfig,
     pub metrics: MetricsConfig,
     pub plotter: PlotterConfig,
+    pub sub_id: SubIDConfig,
 }
 
 impl Config {

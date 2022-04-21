@@ -6530,6 +6530,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-nft"
+version = "0.1.6"
+dependencies = [
+ "anyhow",
+ "lazy_static",
+ "log",
+ "reqwest",
+ "subvt-config",
+ "subvt-types",
+]
+
+[[package]]
 name = "subvt-notification-generator"
 version = "0.1.6"
 dependencies = [
@@ -6747,6 +6759,7 @@ dependencies = [
  "subvt-governance",
  "subvt-logging",
  "subvt-metrics",
+ "subvt-nft",
  "subvt-persistence",
  "subvt-plotter",
  "subvt-service-common",

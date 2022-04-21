@@ -200,6 +200,14 @@ impl TelegramBot {
                     .await?;
                 self.process_broadcast_command(chat_id, command).await?;
             }
+            "/nfts" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_validators_command(chat_id, QueryType::NFTs(0))
+                    .await?;
+            }
             _ => {
                 crate::metrics::command_call_counter("invalid").inc();
                 self.network_postgres

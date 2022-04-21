@@ -6,6 +6,7 @@ pub mod governance;
 pub mod onekv;
 pub mod rdb;
 pub mod report;
+pub mod sub_id;
 pub mod substrate;
 pub mod subvt;
 pub mod telegram;

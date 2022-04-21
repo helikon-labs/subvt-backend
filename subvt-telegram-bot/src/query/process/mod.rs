@@ -2,6 +2,7 @@ use crate::query::{Query, QueryType};
 use crate::TelegramBot;
 
 mod broadcast;
+mod nfts;
 mod nomination_details;
 mod nomination_summary;
 mod payouts;
@@ -28,28 +29,45 @@ impl TelegramBot {
             .await?;
         match &query.query_type {
             QueryType::NoOp => (),
+            QueryType::Cancel | QueryType::Close => {
+                if let Some(message_id) = original_message_id {
+                    self.messenger.delete_message(chat_id, message_id).await?;
+                }
+            }
             QueryType::ConfirmBroadcast => {
                 self.process_confirm_broadcast_query(chat_id, original_message_id)
                     .await?;
             }
-            QueryType::ValidatorInfo => {
-                self.process_validator_info_query(chat_id, original_message_id, query)
-                    .await?;
-            }
-            QueryType::NominationSummary => {
-                self.process_nomination_summary_query(chat_id, original_message_id, query)
+            QueryType::NFTs(page_index) => {
+                self.process_nfts_query(chat_id, original_message_id, query, *page_index)
                     .await?;
             }
             QueryType::NominationDetails => {
                 self.process_nomination_details_query(chat_id, original_message_id, query)
                     .await?;
             }
+            QueryType::NominationSummary => {
+                self.process_nomination_summary_query(chat_id, original_message_id, query)
+                    .await?;
+            }
             QueryType::Payouts => {
                 self.process_payouts_query(chat_id, original_message_id, query)
                     .await?;
             }
+            QueryType::ReferendumDetails => {
+                self.process_referendum_details_query(chat_id, original_message_id, query)
+                    .await?;
+            }
             QueryType::RemoveValidator => {
                 self.process_remove_validator_query(chat_id, original_message_id, query)
+                    .await?;
+            }
+            QueryType::ReportBug => {
+                self.process_report_bug_query(chat_id, original_message_id)
+                    .await?;
+            }
+            QueryType::ReportFeatureRequest => {
+                self.process_report_feature_request_query(chat_id, original_message_id)
                     .await?;
             }
             QueryType::Rewards => {
@@ -64,21 +82,8 @@ impl TelegramBot {
                 self.process_settings_navigate_query(chat_id, *sub_section)
                     .await?;
             }
-            QueryType::Cancel | QueryType::Close => {
-                if let Some(message_id) = original_message_id {
-                    self.messenger.delete_message(chat_id, message_id).await?;
-                }
-            }
-            QueryType::ReferendumDetails => {
-                self.process_referendum_details_query(chat_id, original_message_id, query)
-                    .await?;
-            }
-            QueryType::ReportBug => {
-                self.process_report_bug_query(chat_id, original_message_id)
-                    .await?;
-            }
-            QueryType::ReportFeatureRequest => {
-                self.process_report_feature_request_query(chat_id, original_message_id)
+            QueryType::ValidatorInfo => {
+                self.process_validator_info_query(chat_id, original_message_id, query)
                     .await?;
             }
         }

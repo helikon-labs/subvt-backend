@@ -199,7 +199,6 @@ pub(crate) fn set_democracy_voted_context(notification: &Notification, context: 
                 notification.id,
             );
         }
-        println!("VOTED CONTEXT {:?}", context);
     } else {
         log::error!(
             "Democracy voted event data does not exist in notification #{}.",

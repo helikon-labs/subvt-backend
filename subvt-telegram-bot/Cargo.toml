@@ -23,6 +23,7 @@ subvt-config = { path = "../subvt-config" }
 subvt-governance = { path = "../subvt-governance" }
 subvt-logging = { path = "../subvt-logging" }
 subvt-metrics = { path = "../subvt-metrics" }
+subvt-nft = { path = "../subvt-nft" }
 subvt-plotter = { path = "../subvt-plotter" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }

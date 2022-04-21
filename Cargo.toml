@@ -8,6 +8,7 @@ members = [
     "subvt-network-status-updater",
     "subvt-logging",
     "subvt-metrics",
+    "subvt-nft",
     "subvt-notification-generator",
     "subvt-notification-processor",
     "subvt-onekv-updater",

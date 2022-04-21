@@ -148,6 +148,7 @@ impl MessageType {
                 context.insert("content", &content);
                 "feature_request.html"
             }
+            Self::NFTs { .. } => "select_nft.html",
         };
         renderer.render(template_name, &context).unwrap()
     }

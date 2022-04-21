@@ -1,22 +1,21 @@
 use crate::api::{AsyncApi, Error};
-use crate::query::{Query, QueryType};
 use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncTelegramApi, ChatId, DeleteMessageParams, EditMessageResponse,
-    EditMessageTextParams, InlineKeyboardButton, InlineKeyboardMarkup, Message as TelegramMessage,
-    MethodResponse, ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
+    EditMessageTextParams, Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup,
+    SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
 use std::path::Path;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
-use subvt_utility::text::get_condensed_address;
 use tera::{Context, Tera};
 
+pub mod button;
+pub mod keyboard;
 pub mod message;
-pub mod settings;
 
 const FORBIDDEN_ERROR_CODE: u64 = 403;
 
@@ -118,223 +117,26 @@ impl Messenger {
         message_type: Box<MessageType>,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
         let inline_keyboard = match &*message_type {
-            MessageType::BroadcastConfirm => {
-                let rows = vec![
-                    vec![InlineKeyboardButton {
-                        text: "Yes".to_string(),
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::ConfirmBroadcast,
-                            parameter: None,
-                        })?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }],
-                    vec![InlineKeyboardButton {
-                        text: "No".to_string(),
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::Cancel,
-                            parameter: None,
-                        })?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }],
-                ];
-                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                    inline_keyboard: rows,
-                }))
-            }
+            MessageType::BroadcastConfirm => self.get_broadcast_confirm_keyboard()?,
             MessageType::ValidatorList {
                 validators,
                 query_type,
-            } => {
-                if validators.is_empty() {
-                    None
-                } else {
-                    let mut rows = vec![];
-                    for validator in validators {
-                        let query = Query {
-                            query_type: *query_type,
-                            parameter: Some(validator.id.to_string()),
-                        };
-                        rows.push(vec![InlineKeyboardButton {
-                            text: if let Some(display) = &validator.display {
-                                display.to_owned()
-                            } else {
-                                get_condensed_address(&validator.address, None)
-                            },
-                            url: None,
-                            login_url: None,
-                            callback_data: Some(serde_json::to_string(&query)?),
-                            web_app: None,
-                            switch_inline_query: None,
-                            switch_inline_query_current_chat: None,
-                            callback_game: None,
-                            pay: None,
-                        }]);
-                    }
-                    rows.push(vec![InlineKeyboardButton {
-                        text: self.renderer.render("cancel.html", &Context::new())?,
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::Cancel,
-                            parameter: None,
-                        })?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }]);
-                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                        inline_keyboard: rows,
-                    }))
-                }
-            }
+            } => self.get_validator_list_keyboard(validators, query_type)?,
             MessageType::NominationSummary {
                 chat_validator_id,
                 validator_details,
-            } => {
-                if validator_details.nominations.is_empty() {
-                    None
-                } else {
-                    let query = Query {
-                        query_type: QueryType::NominationDetails,
-                        parameter: Some(chat_validator_id.to_string()),
-                    };
-                    let rows = vec![vec![InlineKeyboardButton {
-                        text: self
-                            .renderer
-                            .render("view_nomination_details.html", &Context::new())?,
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&query)?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }]];
-                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                        inline_keyboard: rows,
-                    }))
-                }
-            }
+            } => self.get_nomination_summary_keyboard(*chat_validator_id, validator_details)?,
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
                 self.get_settings_keyboard()?,
             )),
-            MessageType::RefererendumList(posts) => {
-                if posts.is_empty() {
-                    None
-                } else {
-                    let mut rows = vec![];
-                    for post in posts {
-                        let query = Query {
-                            query_type: QueryType::ReferendumDetails,
-                            parameter: Some(post.onchain_link.onchain_referendum_id.to_string()),
-                        };
-                        rows.push(vec![InlineKeyboardButton {
-                            text: format!(
-                                "#{} - {}",
-                                post.onchain_link.onchain_referendum_id,
-                                if let Some(title) = &post.maybe_title {
-                                    title.to_owned()
-                                } else {
-                                    self.renderer.render("no_title.html", &Context::new())?
-                                },
-                            ),
-                            url: None,
-                            login_url: None,
-                            callback_data: Some(serde_json::to_string(&query)?),
-                            web_app: None,
-                            switch_inline_query: None,
-                            switch_inline_query_current_chat: None,
-                            callback_game: None,
-                            pay: None,
-                        }]);
-                    }
-                    rows.push(vec![InlineKeyboardButton {
-                        text: self.renderer.render("cancel.html", &Context::new())?,
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::Cancel,
-                            parameter: None,
-                        })?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }]);
-                    Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                        inline_keyboard: rows,
-                    }))
-                }
-            }
-            MessageType::SelectContactType => {
-                let rows = vec![
-                    vec![
-                        InlineKeyboardButton {
-                            text: self.renderer.render("report_bug.html", &Context::new())?,
-                            url: None,
-                            login_url: None,
-                            callback_data: Some(serde_json::to_string(&Query {
-                                query_type: QueryType::ReportBug,
-                                parameter: None,
-                            })?),
-                            web_app: None,
-                            switch_inline_query: None,
-                            switch_inline_query_current_chat: None,
-                            callback_game: None,
-                            pay: None,
-                        },
-                        InlineKeyboardButton {
-                            text: self
-                                .renderer
-                                .render("report_feature_request.html", &Context::new())?,
-                            url: None,
-                            login_url: None,
-                            callback_data: Some(serde_json::to_string(&Query {
-                                query_type: QueryType::ReportFeatureRequest,
-                                parameter: None,
-                            })?),
-                            web_app: None,
-                            switch_inline_query: None,
-                            switch_inline_query_current_chat: None,
-                            callback_game: None,
-                            pay: None,
-                        },
-                    ],
-                    vec![InlineKeyboardButton {
-                        text: self.renderer.render("cancel.html", &Context::new())?,
-                        url: None,
-                        login_url: None,
-                        callback_data: Some(serde_json::to_string(&Query {
-                            query_type: QueryType::Cancel,
-                            parameter: None,
-                        })?),
-                        web_app: None,
-                        switch_inline_query: None,
-                        switch_inline_query_current_chat: None,
-                        callback_game: None,
-                        pay: None,
-                    }],
-                ];
-                Some(ReplyMarkup::InlineKeyboardMarkup(InlineKeyboardMarkup {
-                    inline_keyboard: rows,
-                }))
-            }
+            MessageType::RefererendumList(posts) => self.get_referendum_list_keyboard(posts)?,
+            MessageType::SelectContactType => self.get_contact_type_keyboard()?,
+            MessageType::NFTs {
+                collection,
+                page_index,
+                has_prev,
+                has_next,
+            } => self.get_nft_collection_keyboard(collection, *page_index, *has_prev, *has_next)?,
             _ => None,
         };
         let params = SendMessageParams {
