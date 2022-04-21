@@ -46,7 +46,6 @@ impl Messenger {
         if has_next || has_prev {
             let mut nav_rows = vec![];
             if has_prev {
-                println!("has prev");
                 let mut context = Context::new();
                 context.insert("page_number", &(page_index));
                 nav_rows.push(InlineKeyboardButton {
@@ -65,7 +64,6 @@ impl Messenger {
                 });
             }
             if has_next {
-                println!("has next");
                 let mut context = Context::new();
                 context.insert("page_number", &(page_index + 2));
                 nav_rows.push(InlineKeyboardButton {

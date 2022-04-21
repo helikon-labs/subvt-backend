@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
     event_index             integer,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_event_validator_offline_u_extrinsic
-        UNIQUE (block_hash, event_index),
+    CONSTRAINT sub_event_validator_offline_u_event
+        UNIQUE (block_hash, event_index, validator_account_id),
     CONSTRAINT sub_event_validator_offline_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

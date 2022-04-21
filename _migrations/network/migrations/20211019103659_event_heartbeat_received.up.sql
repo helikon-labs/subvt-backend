@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sub_event_heartbeat_received
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_event_heartbeat_received_u_event
-        UNIQUE (block_hash, event_index),
+        UNIQUE (block_hash, event_index, validator_account_id),
     CONSTRAINT sub_event_heartbeat_received_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

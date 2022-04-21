@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
 cd "${0%/*}" || exit # cd script directory
 psql -U postgres -c "DROP DATABASE IF EXISTS subvt_app_test";
