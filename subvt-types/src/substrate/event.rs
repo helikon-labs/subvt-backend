@@ -849,12 +849,16 @@ impl SubstrateEvent {
         for event_index in 0..event_count {
             match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
                 Ok(event) => events.push(event),
-                Err(error) => log::error!(
-                    "Error decoding event #{} for block #{}: {:?}",
-                    event_index,
-                    block.header.get_number().unwrap(),
-                    error
-                ),
+                Err(error) => {
+                    log::error!(
+                        "Error decoding event #{} for block #{}: {:?}",
+                        event_index,
+                        block.header.get_number().unwrap(),
+                        error
+                    );
+                    // rest of the events cannot be decoded
+                    return Ok(events);
+                }
             }
         }
         Ok(events)

@@ -118,6 +118,10 @@ impl Metadata {
             2
         }
     }
+
+    pub fn is_dispatch_error_legacy(&self) -> bool {
+        self.last_runtime_upgrade_info.spec_version < 9170
+    }
 }
 
 impl Metadata {

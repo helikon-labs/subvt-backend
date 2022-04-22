@@ -4,7 +4,10 @@ use crate::{
     substrate::{
         error::DecodeError,
         extrinsic::SubstrateExtrinsic,
-        legacy::{DefunctVoter, ElectionSize, LegacyValidatorPrefs, ReadySolution, ValidatorIndex},
+        legacy::{
+            DefunctVoter, ElectionSize, LegacyDispatchError, LegacyValidatorPrefs, ReadySolution,
+            ValidatorIndex,
+        },
         metadata::{ArgumentMeta, Metadata},
         CallHash, Chain, MultiAddress, OpaqueTimeSlot, ProxyType, RewardDestination, SlotRange,
         ValidatorPreferences,
@@ -368,7 +371,6 @@ generate_argument_primitive_decoder_impl! {[
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
     ("AccountVote<BalanceOf<T>>", decode_democracy_account_vote, DemocracyAccountVote),
     ("DispatchInfo", decode_dispatch_info, DispatchInfo),
-    ("DispatchError", decode_dispatch_error, DispatchError),
     ("DispatchResult", decode_dispatch_result, DispatchResult),
     ("DisputeLocation", decode_dispute_location, DisputeLocation),
     ("DisputeResult", decode_dispute_result, DisputeResult),
@@ -575,6 +577,31 @@ impl Argument {
         }
     }
 
+    fn decode_dispatch_error(
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        if metadata.is_dispatch_error_legacy() {
+            match LegacyDispatchError::decode(&mut *bytes) {
+                Ok(legacy_dispatch_error) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::DispatchError(legacy_dispatch_error.into()),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode legacy dispatch error.".to_string(),
+                )),
+            }
+        } else {
+            match DispatchError::decode(&mut *bytes) {
+                Ok(dispatch_error) => Ok(Argument::Primitive(Box::new(
+                    ArgumentPrimitive::DispatchError(dispatch_error),
+                ))),
+                Err(_) => Err(ArgumentDecodeError::DecodeError(
+                    "Cannot decode dispatch error.".to_string(),
+                )),
+            }
+        }
+    }
+
     pub fn decode(
         chain: &Chain,
         metadata: &Metadata,
@@ -713,6 +740,8 @@ impl Argument {
                     Argument::decode_multi_location(metadata, &mut *bytes)
                 } else if name == "Xcm<()>" || name == "Box<Xcm<T::Call>>" {
                     Argument::decode_xcm(metadata, &mut *bytes)
+                } else if name == "DispatchError" {
+                    Argument::decode_dispatch_error(metadata, &mut *bytes)
                 } else {
                     match ArgumentPrimitive::decode(name, &mut *bytes) {
                         Ok(argument_primitive) => {
