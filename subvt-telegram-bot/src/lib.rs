@@ -267,7 +267,7 @@ impl TelegramBot {
         Ok(app_user_id)
     }
 
-    async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
+    async fn save_or_restore_chat(&self, message: &Message) -> anyhow::Result<()> {
         if !self
             .network_postgres
             .chat_exists_by_id(message.chat.id)
@@ -304,6 +304,10 @@ impl TelegramBot {
             }
             self.update_metrics_chat_count().await?;
         }
+        Ok(())
+    }
+
+    async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
         // group chat started - send intro
         if let Some(group_chat_created) = message.group_chat_created {
             if group_chat_created {
@@ -484,6 +488,7 @@ impl Service for TelegramBot {
                     for update in response.result {
                         update_params.offset = Some(update.update_id + 1);
                         if let Some(message) = update.message {
+                            self.save_or_restore_chat(&message).await?;
                             tokio::spawn(async move {
                                 if let Err(error) = self.process_message(&message).await {
                                     log::error!(
@@ -503,9 +508,10 @@ impl Service for TelegramBot {
                                 }
                             });
                         } else if let Some(callback_query) = update.callback_query {
-                            tokio::spawn(async move {
-                                if let Some(callback_data) = callback_query.data {
-                                    if let Some(message) = callback_query.message {
+                            if let Some(callback_data) = callback_query.data {
+                                if let Some(message) = callback_query.message {
+                                    self.save_or_restore_chat(&message).await?;
+                                    tokio::spawn(async move {
                                         let query: Query = if let Ok(query) =
                                             serde_json::from_str(&callback_data)
                                         {
@@ -539,9 +545,9 @@ impl Service for TelegramBot {
                                                 )
                                                 .await;
                                         }
-                                    }
+                                    });
                                 }
-                            });
+                            }
                         }
                     }
                 }

@@ -38,9 +38,15 @@ impl TelegramBot {
                 self.process_confirm_broadcast_query(chat_id, original_message_id)
                     .await?;
             }
-            QueryType::NFTs(page_index) => {
-                self.process_nfts_query(chat_id, original_message_id, query, *page_index)
-                    .await?;
+            QueryType::NFTs(page_index, is_first_load) => {
+                self.process_nfts_query(
+                    chat_id,
+                    original_message_id,
+                    query,
+                    *page_index,
+                    *is_first_load,
+                )
+                .await?;
             }
             QueryType::NominationDetails => {
                 self.process_nomination_details_query(chat_id, original_message_id, query)

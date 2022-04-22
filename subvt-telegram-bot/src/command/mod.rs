@@ -205,7 +205,7 @@ impl TelegramBot {
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
                     .await?;
-                self.process_validators_command(chat_id, QueryType::NFTs(0))
+                self.process_validators_command(chat_id, QueryType::NFTs(0, true))
                     .await?;
             }
             _ => {

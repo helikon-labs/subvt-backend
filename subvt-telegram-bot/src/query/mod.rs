@@ -18,8 +18,9 @@ pub enum QueryType {
     Close,
     #[serde(rename = "CB")]
     ConfirmBroadcast,
+    // (page index, whether it's the first load)
     #[serde(rename = "NF")]
-    NFTs(usize), // page index
+    NFTs(usize, bool),
     #[serde(rename = "ND")]
     NominationDetails,
     #[serde(rename = "NS")]

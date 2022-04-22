@@ -11,6 +11,7 @@ use std::path::Path;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
+use subvt_types::sub_id::NFTCollection;
 use tera::{Context, Tera};
 
 pub mod button;
@@ -132,11 +133,21 @@ impl Messenger {
             MessageType::RefererendumList(posts) => self.get_referendum_list_keyboard(posts)?,
             MessageType::SelectContactType => self.get_contact_type_keyboard()?,
             MessageType::NFTs {
-                collection,
+                validator_id,
+                collection_page,
                 page_index,
                 has_prev,
                 has_next,
-            } => self.get_nft_collection_keyboard(collection, *page_index, *has_prev, *has_next)?,
+                ..
+            } => Some(ReplyMarkup::InlineKeyboardMarkup(
+                self.get_nft_collection_keyboard(
+                    *validator_id,
+                    collection_page,
+                    *page_index,
+                    *has_prev,
+                    *has_next,
+                )?,
+            )),
             _ => None,
         };
         let params = SendMessageParams {
@@ -222,6 +233,44 @@ impl Messenger {
             entities: None,
             disable_web_page_preview: Some(true),
             reply_markup: Some(inline_keyboard),
+        };
+        match self.api.edit_message_text(&params).await {
+            Ok(response) => Ok(response),
+            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub async fn update_nfts_message(
+        &self,
+        chat_id: i64,
+        message_id: i32,
+        validator_id: u64,
+        total_count: usize,
+        collection_page: NFTCollection,
+        page_index: usize,
+        has_prev: bool,
+        has_next: bool,
+    ) -> anyhow::Result<EditMessageResponse> {
+        let params = EditMessageTextParams {
+            chat_id: Some(ChatId::Integer(chat_id)),
+            message_id: Some(message_id),
+            inline_message_id: None,
+            text: {
+                let mut context = Context::new();
+                context.insert("total_count", &total_count);
+                self.renderer.render("select_nft.html", &context)?
+            },
+            parse_mode: Some(frankenstein::ParseMode::Html),
+            entities: None,
+            disable_web_page_preview: Some(true),
+            reply_markup: Some(self.get_nft_collection_keyboard(
+                validator_id,
+                &collection_page,
+                page_index,
+                has_prev,
+                has_next,
+            )?),
         };
         match self.api.edit_message_text(&params).await {
             Ok(response) => Ok(response),

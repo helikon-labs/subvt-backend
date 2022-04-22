@@ -148,7 +148,12 @@ impl MessageType {
                 context.insert("content", &content);
                 "feature_request.html"
             }
-            Self::NFTs { .. } => "select_nft.html",
+            Self::NFTs { total_count, .. } => {
+                context.insert("total_count", total_count);
+                "select_nft.html"
+            }
+            Self::NoNFTsForValidator => "no_nfts_for_validator.html",
+            Self::Loading => "loading.html",
         };
         renderer.render(template_name, &context).unwrap()
     }

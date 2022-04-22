@@ -67,9 +67,13 @@ pub enum MessageType {
     BugReport(String),
     FeatureRequest(String),
     NFTs {
-        collection: NFTCollection,
+        validator_id: u64,
+        total_count: usize,
+        collection_page: NFTCollection,
         page_index: usize,
         has_prev: bool,
         has_next: bool,
     },
+    NoNFTsForValidator,
+    Loading,
 }
