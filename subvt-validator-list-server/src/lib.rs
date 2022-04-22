@@ -67,7 +67,14 @@ impl ValidatorListServer {
             "subscribe_validatorList",
             "subscribe_validatorList",
             "unsubscribe_validatorList",
-            move |_params, mut sink, _| {
+            move |_params, pending, _| {
+                let mut sink = match pending.accept() {
+                    Some(sink) => sink,
+                    _ => {
+                        log::warn!("Cannot accept new subscription: connection closed.");
+                        return;
+                    }
+                };
                 log::info!("New subscription.");
                 metrics::subscription_count().inc();
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
@@ -84,24 +91,38 @@ impl ValidatorListServer {
                 }
                 std::thread::spawn(move || loop {
                     if let Ok(update) = bus_receiver.recv() {
+                        if sink.is_closed() {
+                            log::info!("Subscription connection closed.");
+                            metrics::subscription_count().dec();
+                            return;
+                        }
                         match update {
                             BusEvent::Update(update) => {
                                 let send_result = sink.send(&update);
-                                if let Err(error) = send_result {
-                                    metrics::subscription_count().dec();
-                                    log::info!("Subscription closed. {:?}", error);
-                                    return;
-                                } else {
-                                    log::debug!("Published diff.");
+                                match send_result {
+                                    Err(error) => {
+                                        log::warn!("Error during publish: {:?}", error);
+                                        metrics::subscription_count().dec();
+                                        return;
+                                    }
+                                    Ok(is_successful) => {
+                                        if is_successful {
+                                            log::debug!("Diff published.");
+                                        } else {
+                                            log::info!("Publish failed. Closing connection.");
+                                            metrics::subscription_count().dec();
+                                            return;
+                                        }
+                                    }
                                 }
                             }
                             BusEvent::Error => {
+                                log::error!("Bus update receive error.");
                                 return;
                             }
                         }
                     }
                 });
-                Ok(())
             },
         )?;
         Ok(rpc_ws_server.start(rpc_module)?)

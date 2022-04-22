@@ -12,6 +12,11 @@ impl TelegramBot {
         page_index: usize,
         is_first_load: bool,
     ) -> anyhow::Result<()> {
+        if is_first_load {
+            if let Some(message_id) = original_message_id {
+                self.messenger.delete_message(chat_id, message_id).await?;
+            }
+        }
         if let Some(id_str) = &query.parameter {
             log::info!("Validator selected for NFTs in chat {}.", chat_id);
             let validator_id: u64 = id_str.parse()?;

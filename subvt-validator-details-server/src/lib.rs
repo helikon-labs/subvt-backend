@@ -96,11 +96,27 @@ impl ValidatorDetailsServer {
             "subscribe_validatorDetails",
             "subscribe_validatorDetails",
             "unsubscribe_validatorDetails",
-            move |params, mut sink, _| {
-                let account_id = if let Ok(account_id) = AccountId::from_str(params.one()?) {
-                    account_id
-                } else {
-                    return Err(jsonrpsee_core::error::Error::Custom("Invalid account id.".to_string()));
+            move |params, pending, _| {
+                let account_id = match params.one::<String>() {
+                    Ok(param) => {
+                        if let Ok(account_id) = AccountId::from_str(&param) {
+                            account_id
+                        } else {
+                            pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
+                            return;
+                        }
+                    }
+                    Err(_) => {
+                        pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
+                        return;
+                    }
+                };
+                let mut sink = match pending.accept() {
+                    Some(sink) => sink,
+                    _ => {
+                        log::warn!("Cannot accept new subscription: connection closed.");
+                        return;
+                    }
                 };
                 log::info!("New subscription {}.", account_id);
                 metrics::subscription_count().inc();
@@ -114,7 +130,7 @@ impl ValidatorDetailsServer {
                             log::error!("Error while fetching validator details: {:?}", error);
                             let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
                             let _ = sink.send(&error_message);
-                            return Err(jsonrpsee_core::error::Error::Custom(error_message));
+                            return;
                         }
                     };
                     let _ = sink.send(&ValidatorDetailsUpdate {
@@ -129,6 +145,11 @@ impl ValidatorDetailsServer {
                 std::thread::spawn(move || {
                     loop {
                         if let Ok(update) = bus_receiver.recv() {
+                            if sink.is_closed() {
+                                log::info!("Subscription connection closed.");
+                                metrics::subscription_count().dec();
+                                return;
+                            }
                             match update {
                                 BusEvent::NewFinalizedBlock(finalized_block_number) => {
                                     let active_validator_storage_key_prefix =  format!(
@@ -213,22 +234,31 @@ impl ValidatorDetailsServer {
                                         }
                                     };
                                     let send_result = sink.send(&update);
-                                    if let Err(error) = send_result {
-                                        log::info!("Subscription closed. {:?}", error);
-                                        metrics::subscription_count().dec();
-                                        return;
-                                    } else {
-                                        log::debug!("Published update for {}.", account_id);
+                                    match send_result {
+                                        Err(error) => {
+                                            log::warn!("Error during publish: {:?}", error);
+                                            metrics::subscription_count().dec();
+                                            return;
+                                        }
+                                        Ok(is_successful) => {
+                                            if is_successful {
+                                                log::debug!("Diff published.");
+                                            } else {
+                                                log::info!("Publish failed. Closing connection.");
+                                                metrics::subscription_count().dec();
+                                                return;
+                                            }
+                                        }
                                     }
                                 }
                                 BusEvent::Error => {
+                                    log::error!("Bus update receive error.");
                                     return;
                                 }
                             }
                         }
                     }
                 });
-                Ok(())
             },
         )?;
         Ok(rpc_ws_server.start(rpc_module)?)

@@ -44,9 +44,8 @@ impl Messenger {
                 }
             }
         }
-        let mut nav_rows = vec![];
-        // prev button
-        {
+        if has_prev || has_next {
+            let mut nav_rows = vec![];
             nav_rows.push(InlineKeyboardButton {
                 text: if has_prev {
                     let mut context = Context::new();
@@ -74,8 +73,6 @@ impl Messenger {
                 callback_game: None,
                 pay: None,
             });
-        }
-        {
             nav_rows.push(InlineKeyboardButton {
                 text: if has_next {
                     let mut context = Context::new();
@@ -103,8 +100,8 @@ impl Messenger {
                 callback_game: None,
                 pay: None,
             });
+            rows.push(nav_rows);
         }
-        rows.push(nav_rows);
         rows.push(self.get_settings_button("close.html", QueryType::Close)?);
         Ok(InlineKeyboardMarkup {
             inline_keyboard: rows,

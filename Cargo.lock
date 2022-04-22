@@ -789,9 +789,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.9"
+version = "3.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6aad2534fad53df1cc12519c5cda696dd3e20e6118a027e24054aea14a0bdcbe"
+checksum = "423af4bd829996d7de0b8bf0279f5b91a20306937be514e972a95c3d3ab13f33"
 dependencies = [
  "atty",
  "bitflags",
@@ -2502,9 +2502,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "91dc760c341fa81173f9a434931aaf32baad5552b0230cc6c93e8fb7eaad4c19"
+checksum = "1d02a921aa22006ed979c2e1c407fd21302ac6049e5b544634ec5ec41516363d"
 dependencies = [
  "jsonrpsee-client-transport",
  "jsonrpsee-core",
@@ -2518,11 +2518,11 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-client-transport"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "765f7a36d5087f74e3b3b47805c2188fef8eb54afcb587b078d9f8ebfe9c7220"
+checksum = "0d4d7c4b01e336c32fc17034560291fa0690170aedace93ae746e9aa119a5b91"
 dependencies = [
- "futures",
+ "futures-util",
  "http",
  "jsonrpsee-core",
  "jsonrpsee-types",
@@ -2539,15 +2539,17 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-core"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82ef77ecd20c2254d54f5da8c0738eacca61e6b6511268a8f2753e3148c6c706"
+checksum = "8066473754794e7784c61808d25d60dfb68e1025a625792a6a1bc680d1ab700a"
 dependencies = [
  "anyhow",
  "arrayvec 0.7.2",
+ "async-lock",
  "async-trait",
  "beef",
  "futures-channel",
+ "futures-timer",
  "futures-util",
  "hyper",
  "jsonrpsee-types",
@@ -2564,9 +2566,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-http-client"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92709e0b8255691f4df954a0176b1cbc3312f151e7ed2e643812e8bd121f1d1c"
+checksum = "157df2774b82fddf37a297fd5c8f711601b158176608f86d2adb5d227c524506"
 dependencies = [
  "async-trait",
  "hyper",
@@ -2583,9 +2585,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-http-server"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d35477aab03691360d21a77dd475f384474bc138c2051aafa766fe4aed50ac50"
+checksum = "ee81d83b686966d6ba3b79f21bc71beedad9ec7e31c201fccff31ef0dd212e17"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -2602,9 +2604,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-proc-macros"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7291c72805bc7d413b457e50d8ef3e87aa554da65ecbbc278abb7dfc283e7f0"
+checksum = "0e7e19642c62b191afcd74fb8cab29f209f5fc24fbd2efed1ffd4393ef447428"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -2614,9 +2616,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-types"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b6aa52f322cbf20c762407629b8300f39bcc0cf0619840d9252a2f65fd2dd9"
+checksum = "fd42e08ae7f0de7b00319f723f7b06e2d461ab69bfa615a611fab5dec00b192e"
 dependencies = [
  "anyhow",
  "beef",
@@ -2628,9 +2630,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-ws-client"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd66d18bab78d956df24dd0d2e41e4c00afbb818fda94a98264bdd12ce8506ac"
+checksum = "c10011be7e04339bdc8b5a8e3542eb5aa1aa08465d5c897044ce00b03ea8535b"
 dependencies = [
  "jsonrpsee-client-transport",
  "jsonrpsee-core",
@@ -2639,9 +2641,9 @@ dependencies = [
 
 [[package]]
 name = "jsonrpsee-ws-server"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a382e22db11cd9a1f04f5a4cc5446f155a3cd20cd1778fc65f30a76aff524120"
+checksum = "c87cb45124f148b8c6a977dcd86e38b1d95f6fdfa0e6f9e1ce94aa8c03ebab4b"
 dependencies = [
  "futures-channel",
  "futures-util",
@@ -6387,7 +6389,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "subvt-app-service"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -6415,7 +6417,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-block-processor"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6440,7 +6442,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-config"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "config",
  "serde",
@@ -6448,7 +6450,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-governance"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -6461,7 +6463,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-logging"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "env_logger",
  "log",
@@ -6470,7 +6472,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-metrics"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "env_logger",
  "log",
@@ -6484,7 +6486,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-server"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6509,7 +6511,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-updater"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6531,7 +6533,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-nft"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -6543,7 +6545,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-generator"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6569,7 +6571,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-processor"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "a2",
  "anyhow",
@@ -6603,7 +6605,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-onekv-updater"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6624,7 +6626,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-persistence"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6642,7 +6644,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-plotter"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6664,7 +6666,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-proc-macro"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -6673,7 +6675,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-report-service"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -6695,7 +6697,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-service-common"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -6712,7 +6714,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-substrate-client"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6739,7 +6741,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telegram-bot"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6772,7 +6774,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telemetry-processor"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -6795,7 +6797,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-types"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "chrono",
@@ -6844,7 +6846,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-utility"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "hex",
@@ -6854,7 +6856,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-details-server"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6878,7 +6880,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-server"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6904,7 +6906,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-updater"
-version = "0.1.6"
+version = "0.1.7"
 dependencies = [
  "anyhow",
  "async-lock",

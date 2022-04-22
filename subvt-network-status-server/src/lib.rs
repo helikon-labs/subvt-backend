@@ -60,7 +60,14 @@ impl NetworkStatusServer {
             "subscribe_networkStatus",
             "subscribe_networkStatus",
             "unsubscribe_networkStatus",
-            move |_params, mut sink, _| {
+            move |_params, pending, _| {
+                let mut sink = match pending.accept() {
+                    Some(sink) => sink,
+                    _ => {
+                        log::warn!("Cannot accept new subscription: connection closed.");
+                        return;
+                    }
+                };
                 log::info!("New subscription.");
                 metrics::subscription_count().inc();
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
@@ -78,6 +85,11 @@ impl NetworkStatusServer {
                 }
                 std::thread::spawn(move || loop {
                     if let Ok(status_diff) = bus_receiver.recv() {
+                        if sink.is_closed() {
+                            log::info!("Subscription connection closed.");
+                            metrics::subscription_count().dec();
+                            return;
+                        }
                         match status_diff {
                             BusEvent::NewBlock(status_diff) => {
                                 let update = NetworkStatusUpdate {
@@ -87,12 +99,21 @@ impl NetworkStatusServer {
                                     diff: Some(*status_diff.clone()),
                                 };
                                 let send_result = sink.send(&update);
-                                if let Err(error) = send_result {
-                                    log::info!("Subscription closed. {:?}", error);
-                                    metrics::subscription_count().dec();
-                                    return;
-                                } else {
-                                    log::debug!("Published diff.");
+                                match send_result {
+                                    Err(error) => {
+                                        log::warn!("Error during publish: {:?}", error);
+                                        metrics::subscription_count().dec();
+                                        return;
+                                    }
+                                    Ok(is_successful) => {
+                                        if is_successful {
+                                            log::debug!("Diff published.");
+                                        } else {
+                                            log::info!("Publish failed. Closing connection.");
+                                            metrics::subscription_count().dec();
+                                            return;
+                                        }
+                                    }
                                 }
                             }
                             BusEvent::Error => {
@@ -101,7 +122,6 @@ impl NetworkStatusServer {
                         }
                     }
                 });
-                Ok(())
             },
         )?;
         Ok(rpc_ws_server.start(rpc_module)?)
