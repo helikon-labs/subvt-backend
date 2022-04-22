@@ -22,7 +22,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1648735914305,
+  "iteration": 1650619638398,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -509,10 +509,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -594,6 +590,6 @@
   "timezone": "",
   "title": "SubVT App",
   "uid": "-tqzNQP7z",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }
