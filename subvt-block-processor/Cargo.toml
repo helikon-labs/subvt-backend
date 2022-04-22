@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.60.0"
 
 [dependencies]
-anyhow = "1.0.56"
+anyhow = "1.0.57"
 async-lock = "2.5.0"
 async-recursion = "1.0.0"
 async-trait = "0.1.53"
