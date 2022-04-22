@@ -6,7 +6,7 @@ rust-version = "1.60.0"
 
 [dependencies]
 actix-web = "4.0.0-rc.2"
-anyhow = "1.0.56"
+anyhow = "1.0.57"
 async-trait = "0.1.53"
 log = "0.4.16"
 serde_json = "1.0.79"

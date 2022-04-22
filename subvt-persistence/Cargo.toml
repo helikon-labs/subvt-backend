@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.60.0"
 
 [dependencies]
-anyhow = "1.0.56"
+anyhow = "1.0.57"
 chrono = "0.4.19"
 hex = "0.4"
 lazy_static = "1.4.0"
