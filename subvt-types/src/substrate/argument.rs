@@ -371,7 +371,6 @@ generate_argument_primitive_decoder_impl! {[
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
     ("AccountVote<BalanceOf<T>>", decode_democracy_account_vote, DemocracyAccountVote),
     ("DispatchInfo", decode_dispatch_info, DispatchInfo),
-    ("DispatchResult", decode_dispatch_result, DispatchResult),
     ("DisputeLocation", decode_dispute_location, DisputeLocation),
     ("DisputeResult", decode_dispute_result, DisputeResult),
     ("EcdsaSignature", decode_ecdsa_signature, EcdsaSignature),
@@ -602,6 +601,39 @@ impl Argument {
         }
     }
 
+    fn decode_dispatch_result(
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        if metadata.is_dispatch_error_legacy() {
+            let legacy_result: Result<(), LegacyDispatchError> = Decode::decode(&mut *bytes)
+                .map_err(|error| {
+                    ArgumentDecodeError::DecodeError(format!(
+                        "Cannot decode legacy dispatch result: {:?}",
+                        error
+                    ))
+                })?;
+            let dispatch_result: DispatchResult = match legacy_result {
+                Ok(()) => Ok(()),
+                Err(legacy_error) => Err(legacy_error.into()),
+            };
+            Ok(Argument::Primitive(Box::new(
+                ArgumentPrimitive::DispatchResult(dispatch_result),
+            )))
+        } else {
+            Ok(Argument::Primitive(Box::new(
+                ArgumentPrimitive::DispatchResult(DispatchResult::decode(&mut *bytes).map_err(
+                    |error| {
+                        ArgumentDecodeError::DecodeError(format!(
+                            "Cannot decode dispatch result: {:?}",
+                            error
+                        ))
+                    },
+                )?),
+            )))
+        }
+    }
+
     pub fn decode(
         chain: &Chain,
         metadata: &Metadata,
@@ -742,6 +774,8 @@ impl Argument {
                     Argument::decode_xcm(metadata, &mut *bytes)
                 } else if name == "DispatchError" {
                     Argument::decode_dispatch_error(metadata, &mut *bytes)
+                } else if name == "DispatchResult" {
+                    Argument::decode_dispatch_result(metadata, &mut *bytes)
                 } else {
                     match ArgumentPrimitive::decode(name, &mut *bytes) {
                         Ok(argument_primitive) => {
