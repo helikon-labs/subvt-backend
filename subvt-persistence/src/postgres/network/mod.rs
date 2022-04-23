@@ -26,6 +26,7 @@ use subvt_types::{
 
 pub mod app_event;
 pub mod democracy;
+pub mod error_log;
 pub mod nft;
 pub mod notify;
 pub mod onekv;

@@ -18,6 +18,7 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
+use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::paras::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
@@ -1054,7 +1055,10 @@ impl SubstrateClient {
     }
 
     /// Get the complete events in the given block.
-    pub async fn get_block_events(&self, block_hash: &str) -> anyhow::Result<Vec<SubstrateEvent>> {
+    pub async fn get_block_events(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Vec<Result<SubstrateEvent, DecodeError>>> {
         let block = self.get_block(block_hash).await?;
         let mut event_bytes: &[u8] = {
             let events_hex_string: String = self
@@ -1066,16 +1070,22 @@ impl SubstrateClient {
                 .await?;
             &hex::decode(events_hex_string.trim_start_matches("0x"))?
         };
-        SubstrateEvent::decode_events(&self.chain, &self.metadata, block, &mut event_bytes)
+        SubstrateEvent::decode_events(
+            &self.chain,
+            &self.metadata,
+            block_hash,
+            block,
+            &mut event_bytes,
+        )
     }
 
     /// Get the complete extrinsics in the given block.
     pub async fn get_block_extrinsics(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<SubstrateExtrinsic>> {
+    ) -> anyhow::Result<Vec<Result<SubstrateExtrinsic, DecodeError>>> {
         let block = self.get_block(block_hash).await?;
-        SubstrateExtrinsic::decode_extrinsics(&self.chain, &self.metadata, block)
+        SubstrateExtrinsic::decode_extrinsics(&self.chain, &self.metadata, block_hash, block)
     }
 
     /// Get runtime info at the given block.

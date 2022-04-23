@@ -42,3 +42,27 @@ pub fn block_processing_time_ms() -> Histogram {
     });
     METER.clone()
 }
+
+pub fn extrinsic_process_error_count() -> IntGauge {
+    static METER: Lazy<IntGauge> = Lazy::new(|| {
+        subvt_metrics::registry::register_int_gauge(
+            METRIC_PREFIX,
+            "extrinsic_process_error_count",
+            "Number of errors that happened either during the decoding or processing of an extrinsic in a block",
+        )
+            .unwrap()
+    });
+    METER.clone()
+}
+
+pub fn event_process_error_count() -> IntGauge {
+    static METER: Lazy<IntGauge> = Lazy::new(|| {
+        subvt_metrics::registry::register_int_gauge(
+            METRIC_PREFIX,
+            "event_process_error_count",
+            "Number of errors that happened either during the decoding or processing of an event in a block",
+        )
+            .unwrap()
+    });
+    METER.clone()
+}

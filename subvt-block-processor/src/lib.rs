@@ -13,6 +13,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::extrinsic::{SubstrateExtrinsic, TimestampExtrinsic};
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
@@ -260,17 +261,21 @@ impl BlockProcessor {
             runtime_information.era_index = active_era.index;
             runtime_information.epoch_index = current_epoch_index;
         }
-        let events = substrate_client.get_block_events(&block_hash).await?;
-        log::info!("Got {} events for block #{}.", events.len(), block_number);
-        let extrinsics = substrate_client.get_block_extrinsics(&block_hash).await?;
+        let event_results = substrate_client.get_block_events(&block_hash).await?;
+        log::info!(
+            "Got {} events for block #{}.",
+            event_results.len(),
+            block_number
+        );
+        let extrinsic_results = substrate_client.get_block_extrinsics(&block_hash).await?;
         log::info!(
             "Got {} extrinsics for block #{}.",
-            extrinsics.len(),
+            extrinsic_results.len(),
             block_number
         );
 
         let mut block_timestamp: Option<u64> = None;
-        for extrinsic in &extrinsics {
+        for extrinsic in extrinsic_results.iter().flatten() {
             if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
                 match timestamp_extrinsic {
                     TimestampExtrinsic::Set {
@@ -306,56 +311,110 @@ impl BlockProcessor {
         // process/persist events
         let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
         let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
-        for (index, event) in events.iter().enumerate() {
-            if let Err(error) = self
-                .process_event(
-                    substrate_client,
-                    postgres,
-                    current_epoch_index,
-                    &block_hash,
-                    block_number,
-                    block_timestamp,
-                    &mut successful_extrinsic_indices,
-                    &mut failed_extrinsic_indices,
-                    index,
-                    event,
-                )
-                .await
-            {
-                log::error!(
-                    "Error while processing event #{} of block #{}: {:?}",
-                    index,
-                    block_number,
-                    error,
-                );
+        for (index, event_result) in event_results.iter().enumerate() {
+            match event_result {
+                Ok(event) => {
+                    if let Err(error) = self
+                        .process_event(
+                            substrate_client,
+                            postgres,
+                            current_epoch_index,
+                            &block_hash,
+                            block_number,
+                            block_timestamp,
+                            &mut successful_extrinsic_indices,
+                            &mut failed_extrinsic_indices,
+                            index,
+                            event,
+                        )
+                        .await
+                    {
+                        let error_log = format!(
+                            "Error while processing event #{} of block #{}: {:?}",
+                            index, block_number, error,
+                        );
+                        log::error!("{}", error_log);
+                        metrics::event_process_error_count().inc();
+                        postgres
+                            .save_event_process_error_log(
+                                &block_hash,
+                                block_number,
+                                index,
+                                "process",
+                                &error_log,
+                            )
+                            .await?;
+                    }
+                }
+                Err(decode_error) => match decode_error {
+                    DecodeError::Error(error_log) => {
+                        metrics::event_process_error_count().inc();
+                        postgres
+                            .save_event_process_error_log(
+                                &block_hash,
+                                block_number,
+                                index,
+                                "decode",
+                                error_log,
+                            )
+                            .await?;
+                    }
+                },
             }
         }
         // persist extrinsics
-        for (index, extrinsic) in extrinsics.iter().enumerate() {
-            // check events for batch & batch_all
-            let is_successful = successful_extrinsic_indices.contains(&(index as u32));
-            if let Err(error) = self
-                .process_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash.clone(),
-                    block_number,
-                    &active_validator_account_ids,
-                    index,
-                    false,
-                    None,
-                    None,
-                    is_successful,
-                    extrinsic,
-                )
-                .await
-            {
-                log::error!(
-                    "Error while processing extrinsic #{} of block #{}: {:?}",
-                    index,
-                    block_number,
-                    error,
-                );
+        for (index, extrinsic_result) in extrinsic_results.iter().enumerate() {
+            match extrinsic_result {
+                Ok(extrinsic) => {
+                    // check events for batch & batch_all
+                    let is_successful = successful_extrinsic_indices.contains(&(index as u32));
+                    if let Err(error) = self
+                        .process_extrinsic(
+                            substrate_client,
+                            postgres,
+                            block_hash.clone(),
+                            block_number,
+                            &active_validator_account_ids,
+                            index,
+                            false,
+                            None,
+                            None,
+                            is_successful,
+                            extrinsic,
+                        )
+                        .await
+                    {
+                        let error_log = format!(
+                            "Error while processing extrinsic #{} of block #{}: {:?}",
+                            index, block_number, error,
+                        );
+                        log::error!("{}", error_log);
+                        metrics::extrinsic_process_error_count().inc();
+                        postgres
+                            .save_extrinsic_process_error_log(
+                                &block_hash,
+                                block_number,
+                                index,
+                                "process",
+                                &error_log,
+                            )
+                            .await?;
+                    }
+                }
+                Err(decode_error) => match decode_error {
+                    DecodeError::Error(error_log) => {
+                        metrics::extrinsic_process_error_count().inc();
+                        postgres
+                            .save_extrinsic_process_error_log(
+                                &block_hash,
+                                block_number,
+                                index,
+                                "decode",
+                                error_log,
+                            )
+                            .await?;
+                    }
+                },
             }
         }
         // notify
@@ -395,6 +454,11 @@ impl Service for BlockProcessor {
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
+            // init extrinsic and event process error count metrics
+            metrics::extrinsic_process_error_count()
+                .set(postgres.get_extrinsic_process_error_log_count().await? as i64);
+            metrics::event_process_error_count()
+                .set(postgres.get_event_process_error_log_count().await? as i64);
 
             block_subscription_substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,

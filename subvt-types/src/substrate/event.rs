@@ -841,26 +841,36 @@ impl SubstrateEvent {
     pub fn decode_events(
         chain: &Chain,
         metadata: &Metadata,
+        block_hash: &str,
         block: Block,
         bytes: &mut &[u8],
-    ) -> anyhow::Result<Vec<Self>> {
+    ) -> anyhow::Result<Vec<Result<Self, DecodeError>>> {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
-        let mut events: Vec<Self> = Vec::with_capacity(event_count as usize);
+        let mut result = Vec::with_capacity(event_count as usize);
         for event_index in 0..event_count {
             match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
-                Ok(event) => events.push(event),
-                Err(error) => {
-                    log::error!(
-                        "Error decoding event #{} for block #{}: {:?}",
-                        event_index,
-                        block.header.get_number().unwrap(),
-                        error
-                    );
-                    // rest of the events cannot be decoded
-                    return Ok(events);
+                Ok(event) => result.push(Ok(event)),
+                Err(decode_error) => {
+                    let error_log = match block.header.get_number() {
+                        Ok(number) => format!(
+                            "Error decoding event #{} for block #{}: {:?}",
+                            event_index,
+                            number,
+                            decode_error,
+                        ),
+                        Err(error) => format!(
+                            "[Cannot get block number: {:?}] Error decoding extrinsic #{} for block {}: {:?}",
+                            error,
+                            event_index,
+                            block_hash,
+                            decode_error,
+                        ),
+                    };
+                    log::error!("{}", error_log);
+                    result.push(Err(decode_error));
                 }
             }
         }
-        Ok(events)
+        Ok(result)
     }
 }

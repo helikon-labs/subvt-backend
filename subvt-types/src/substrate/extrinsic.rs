@@ -521,23 +521,37 @@ impl SubstrateExtrinsic {
     pub fn decode_extrinsics(
         chain: &Chain,
         metadata: &Metadata,
+        block_hash: &str,
         block: Block,
-    ) -> anyhow::Result<Vec<Self>> {
-        let mut extrinsics: Vec<Self> = Vec::new();
+    ) -> anyhow::Result<Vec<Result<Self, DecodeError>>> {
+        let mut result = Vec::new();
         for (extrinsic_index, extrinsic_hex_string) in block.extrinsics.iter().enumerate() {
             let mut raw_bytes: &[u8] = &hex::decode(extrinsic_hex_string.trim_start_matches("0x"))?;
             let byte_vector: Vec<u8> = Decode::decode(&mut raw_bytes).unwrap();
             let mut bytes: &[u8] = byte_vector.as_ref();
             match SubstrateExtrinsic::decode_extrinsic(chain, metadata, &None, &mut bytes) {
-                Ok(extrinsic) => extrinsics.push(extrinsic),
-                Err(error) => log::error!(
-                    "Error decoding extrinsic #{} for block #{}: {:?}",
-                    extrinsic_index,
-                    block.header.get_number().unwrap(),
-                    error
-                ),
+                Ok(extrinsic) => result.push(Ok(extrinsic)),
+                Err(decode_error) => {
+                    let error_log = match block.header.get_number() {
+                        Ok(number) => format!(
+                            "Error decoding extrinsic #{} for block #{}: {:?}",
+                            extrinsic_index,
+                            number,
+                            decode_error,
+                        ),
+                        Err(error) => format!(
+                            "[Cannot get block number: {:?}] Error decoding extrinsic #{} for block {}: {:?}",
+                            error,
+                            extrinsic_index,
+                            block_hash,
+                            decode_error,
+                        ),
+                    };
+                    log::error!("{}", error_log);
+                    result.push(Err(decode_error));
+                }
             }
         }
-        Ok(extrinsics)
+        Ok(result)
     }
 }
