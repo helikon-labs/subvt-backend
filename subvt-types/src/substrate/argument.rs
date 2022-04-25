@@ -301,7 +301,7 @@ macro_rules! generate_argument_primitive_decoder_impl {
                 pub fn $decode_function_name<I: Input>(input: &mut I) -> Result<ArgumentPrimitive, ArgumentDecodeError> {
                     match Decode::decode(&mut *input) {
                         Ok(decoded) => Ok(ArgumentPrimitive::$argument_primitive_enum_case_name(decoded)),
-                        Err(_) => Err(ArgumentDecodeError::DecodeError(format!("Cannot decode {}.", $name))),
+                        Err(error) => Err(ArgumentDecodeError::DecodeError(format!("Cannot decode {}: {:?}", $name, error))),
                     }
                 }
             )+
