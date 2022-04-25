@@ -1,28 +1,26 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::event::democracy::DemocracyProposedEvent;
-use subvt_types::substrate::Balance;
+use subvt_types::app::event::democracy::DemocracyPassedEvent;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn save_democracy_proposed_event(
+    pub async fn save_democracy_passed_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
         event_index: i32,
-        proposal_index: u32,
-        deposit: Balance,
+        referendum_index: u32,
     ) -> anyhow::Result<Option<i32>> {
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_democracy_proposed (block_hash, extrinsic_index, event_index, proposal_index, deposit)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO sub_event_democracy_passed (block_hash, extrinsic_index, event_index, referendum_index)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT(block_hash, event_index) DO NOTHING
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(proposal_index as i64)
-            .bind(deposit.to_string())
+            .bind(referendum_index as i64)
             .fetch_optional(&self.connection_pool)
             .await?;
         if let Some(result) = maybe_result {
@@ -32,14 +30,14 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_democracy_proposed_events_in_block(
+    pub async fn get_democracy_passed_events_in_block(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<DemocracyProposedEvent>> {
-        let db_events: Vec<(i32, String, Option<i32>, i32, i64, String)> = sqlx::query_as(
+    ) -> anyhow::Result<Vec<DemocracyPassedEvent>> {
+        let db_events: Vec<(i32, String, Option<i32>, i32, i64)> = sqlx::query_as(
             r#"
-            SELECT "id", block_hash, extrinsic_index, event_index, proposal_index, deposit
-            FROM sub_event_democracy_proposed
+            SELECT "id", block_hash, extrinsic_index, event_index, referendum_index
+            FROM sub_event_democracy_passed
             WHERE block_hash = $1
             ORDER BY "id" ASC
             "#,
@@ -49,13 +47,12 @@ impl PostgreSQLNetworkStorage {
         .await?;
         let mut events = Vec::new();
         for db_event in db_events {
-            events.push(DemocracyProposedEvent {
+            events.push(DemocracyPassedEvent {
                 id: db_event.0 as u32,
                 block_hash: db_event.1.clone(),
                 extrinsic_index: db_event.2.map(|index| index as u32),
                 event_index: db_event.3 as u32,
-                proposal_index: db_event.4 as u64,
-                deposit: db_event.5.parse()?,
+                referendum_index: db_event.4 as u64,
             })
         }
         Ok(events)

@@ -1,8 +1,8 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::event::democracy::DemocracyPassedEvent;
+use subvt_types::app::event::democracy::DemocracyCancelledEvent;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn save_democracy_passed_event(
+    pub async fn save_democracy_cancelled_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
@@ -11,8 +11,9 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Option<i32>> {
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_democracy_passed (block_hash, extrinsic_index, event_index, referendum_index)
+            INSERT INTO sub_event_democracy_cancelled (block_hash, extrinsic_index, event_index, referendum_index)
             VALUES ($1, $2, $3, $4)
+            ON CONFLICT(block_hash, event_index) DO NOTHING
             RETURNING id
             "#,
         )
@@ -29,14 +30,14 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_democracy_passed_events_in_block(
+    pub async fn get_democracy_cancelled_events_in_block(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<DemocracyPassedEvent>> {
+    ) -> anyhow::Result<Vec<DemocracyCancelledEvent>> {
         let db_events: Vec<(i32, String, Option<i32>, i32, i64)> = sqlx::query_as(
             r#"
             SELECT "id", block_hash, extrinsic_index, event_index, referendum_index
-            FROM sub_event_democracy_passed
+            FROM sub_event_democracy_cancelled
             WHERE block_hash = $1
             ORDER BY "id" ASC
             "#,
@@ -46,7 +47,7 @@ impl PostgreSQLNetworkStorage {
         .await?;
         let mut events = Vec::new();
         for db_event in db_events {
-            events.push(DemocracyPassedEvent {
+            events.push(DemocracyCancelledEvent {
                 id: db_event.0 as u32,
                 block_hash: db_event.1.clone(),
                 extrinsic_index: db_event.2.map(|index| index as u32),

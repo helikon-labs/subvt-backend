@@ -1,30 +1,29 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
-use std::str::FromStr;
-use subvt_types::app::event::democracy::DemocracySecondedEvent;
-use subvt_types::crypto::AccountId;
+use subvt_types::app::event::democracy::DemocracyProposedEvent;
+use subvt_types::substrate::Balance;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn save_democracy_seconded_event(
+    pub async fn save_democracy_proposed_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
         event_index: i32,
-        account_id: &AccountId,
         proposal_index: u32,
+        deposit: Balance,
     ) -> anyhow::Result<Option<i32>> {
-        self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_democracy_seconded (block_hash, extrinsic_index, event_index, account_id, proposal_index)
+            INSERT INTO sub_event_democracy_proposed (block_hash, extrinsic_index, event_index, proposal_index, deposit)
             VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT(block_hash, event_index) DO NOTHING
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(account_id.to_string())
             .bind(proposal_index as i64)
+            .bind(deposit.to_string())
             .fetch_optional(&self.connection_pool)
             .await?;
         if let Some(result) = maybe_result {
@@ -34,14 +33,14 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_democracy_seconded_events_in_block(
+    pub async fn get_democracy_proposed_events_in_block(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<DemocracySecondedEvent>> {
-        let db_events: Vec<(i32, String, Option<i32>, i32, String, i64)> = sqlx::query_as(
+    ) -> anyhow::Result<Vec<DemocracyProposedEvent>> {
+        let db_events: Vec<(i32, String, Option<i32>, i32, i64, String)> = sqlx::query_as(
             r#"
-            SELECT "id", block_hash, extrinsic_index, event_index, account_id, proposal_index
-            FROM sub_event_democracy_seconded
+            SELECT "id", block_hash, extrinsic_index, event_index, proposal_index, deposit
+            FROM sub_event_democracy_proposed
             WHERE block_hash = $1
             ORDER BY "id" ASC
             "#,
@@ -51,13 +50,13 @@ impl PostgreSQLNetworkStorage {
         .await?;
         let mut events = Vec::new();
         for db_event in db_events {
-            events.push(DemocracySecondedEvent {
+            events.push(DemocracyProposedEvent {
                 id: db_event.0 as u32,
                 block_hash: db_event.1.clone(),
                 extrinsic_index: db_event.2.map(|index| index as u32),
                 event_index: db_event.3 as u32,
-                account_id: AccountId::from_str(&db_event.4)?,
-                proposal_index: db_event.5 as u64,
+                proposal_index: db_event.4 as u64,
+                deposit: db_event.5.parse()?,
             })
         }
         Ok(events)

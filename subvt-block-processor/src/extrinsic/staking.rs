@@ -89,7 +89,7 @@ pub(crate) async fn process_staking_extrinsic(
                     })
                     .collect();
                 postgres
-                    .save_nomination(
+                    .save_nominate_extrinsic(
                         &block_hash,
                         index as i32,
                         is_nested_call,

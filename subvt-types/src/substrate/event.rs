@@ -868,6 +868,7 @@ impl SubstrateEvent {
                     };
                     log::error!("{}", error_log);
                     result.push(Err(decode_error));
+                    break;
                 }
             }
         }

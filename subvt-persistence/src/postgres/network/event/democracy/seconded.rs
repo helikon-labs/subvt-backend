@@ -1,31 +1,31 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
-use subvt_types::app::event::democracy::DemocracyDelegatedEvent;
+use subvt_types::app::event::democracy::DemocracySecondedEvent;
 use subvt_types::crypto::AccountId;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn save_democracy_delegated_event(
+    pub async fn save_democracy_seconded_event(
         &self,
         block_hash: &str,
         extrinsic_index: Option<i32>,
         event_index: i32,
-        original_account_id: &AccountId,
-        delegate_account_id: &AccountId,
+        account_id: &AccountId,
+        proposal_index: u32,
     ) -> anyhow::Result<Option<i32>> {
-        self.save_account(original_account_id).await?;
-        self.save_account(delegate_account_id).await?;
+        self.save_account(account_id).await?;
         let maybe_result: Option<(i32,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_event_democracy_delegated (block_hash, extrinsic_index, event_index, original_account_id, delegate_account_id)
+            INSERT INTO sub_event_democracy_seconded (block_hash, extrinsic_index, event_index, account_id, proposal_index)
             VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT(block_hash, event_index) DO NOTHING
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(original_account_id.to_string())
-            .bind(delegate_account_id.to_string())
+            .bind(account_id.to_string())
+            .bind(proposal_index as i64)
             .fetch_optional(&self.connection_pool)
             .await?;
         if let Some(result) = maybe_result {
@@ -35,30 +35,30 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_democracy_delegated_events_in_block(
+    pub async fn get_democracy_seconded_events_in_block(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<DemocracyDelegatedEvent>> {
-        let db_events: Vec<(i32, String, Option<i32>, i32, String, String)> = sqlx::query_as(
+    ) -> anyhow::Result<Vec<DemocracySecondedEvent>> {
+        let db_events: Vec<(i32, String, Option<i32>, i32, String, i64)> = sqlx::query_as(
             r#"
-            SELECT "id", block_hash, extrinsic_index, event_index, original_account_id, delegate_account_id
-            FROM sub_event_democracy_delegated
+            SELECT "id", block_hash, extrinsic_index, event_index, account_id, proposal_index
+            FROM sub_event_democracy_seconded
             WHERE block_hash = $1
             ORDER BY "id" ASC
             "#,
         )
-            .bind(block_hash)
-            .fetch_all(&self.connection_pool)
-            .await?;
+        .bind(block_hash)
+        .fetch_all(&self.connection_pool)
+        .await?;
         let mut events = Vec::new();
         for db_event in db_events {
-            events.push(DemocracyDelegatedEvent {
+            events.push(DemocracySecondedEvent {
                 id: db_event.0 as u32,
                 block_hash: db_event.1.clone(),
                 extrinsic_index: db_event.2.map(|index| index as u32),
                 event_index: db_event.3 as u32,
-                original_account_id: AccountId::from_str(&db_event.4)?,
-                delegate_account_id: AccountId::from_str(&db_event.5)?,
+                account_id: AccountId::from_str(&db_event.4)?,
+                proposal_index: db_event.5 as u64,
             })
         }
         Ok(events)

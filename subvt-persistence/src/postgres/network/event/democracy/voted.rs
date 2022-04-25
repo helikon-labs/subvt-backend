@@ -22,6 +22,7 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_event_democracy_voted (block_hash, extrinsic_index, event_index, account_id, referendum_index, aye_balance, nay_balance, conviction)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT(block_hash, event_index) DO NOTHING
             RETURNING id
             "#,
         )

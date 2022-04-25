@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_validate
     blocks_nominations      boolean NOT NULL,
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE  NOT NULL DEFAULT now(),
+    CONSTRAINT sub_extrinsic_validate_u_extrinsic
+        UNIQUE (block_hash, extrinsic_index),
     CONSTRAINT sub_extrinsic_validate_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
