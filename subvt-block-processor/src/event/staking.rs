@@ -56,6 +56,22 @@ pub(crate) async fn process_staking_event(
                 )
                 .await?;
         }
+        StakingEvent::PayoutStarted {
+            extrinsic_index,
+            era_index,
+            validator_account_id,
+        } => {
+            let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+            postgres
+                .save_payout_started_event(
+                    block_hash,
+                    extrinsic_index,
+                    event_index as i32,
+                    *era_index,
+                    validator_account_id,
+                )
+                .await?;
+        }
         StakingEvent::Rewarded {
             extrinsic_index,
             rewardee_account_id,

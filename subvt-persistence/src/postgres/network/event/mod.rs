@@ -9,5 +9,6 @@ pub mod killed_account;
 pub mod new_account;
 pub mod nominator_kicked;
 pub mod offline;
+pub mod payout_started;
 pub mod rewarded;
 pub mod slashed;

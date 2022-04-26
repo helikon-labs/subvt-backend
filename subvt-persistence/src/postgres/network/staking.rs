@@ -346,6 +346,7 @@ impl PostgreSQLNetworkStorage {
                 }
             }
         }
+        unclaimed_era_indices.sort_unstable();
         Ok(ValidatorInfo {
             discovered_at: validator_info.0.map(|value| value as u64),
             killed_at: validator_info.1.map(|value| value as u64),

@@ -57,14 +57,14 @@ BEGIN
     WHERE EV.era_index = E.index
     AND EV.validator_account_id = account_id_param
     AND EV.is_active = true
+    AND EV.reward_points > 0
     AND E.end_timestamp < (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000)
-    AND E.start_timestamp > (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000 - (100::bigint * 24 * 60 * 60 * 1000))
+    AND E.start_timestamp > (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000 - (90::bigint * 24 * 60 * 60 * 1000))
     AND NOT EXISTS(
         SELECT 1
-        FROM sub_extrinsic_payout_stakers EPS
+        FROM sub_event_payout_started EPS
         WHERE EPS.validator_account_id = account_id_param
         AND EPS.era_index = EV.era_index
-        AND is_successful = true
     );
 
     SELECT A.discovered_at
