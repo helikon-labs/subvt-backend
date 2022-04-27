@@ -62,7 +62,6 @@ pub struct ValidatorDetails {
     pub inactive_era_count: u64,
     pub slash_count: u64,
     pub offline_offence_count: u64,
-    pub total_reward_points: u64,
     pub unclaimed_era_indices: Vec<u32>,
     pub is_para_validator: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -87,6 +86,10 @@ pub struct ValidatorDetails {
     pub onekv_location: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_is_valid: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onekv_online_since: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub onekv_offline_since: Option<u64>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]

@@ -1,24 +1,24 @@
 DO $$ BEGIN
-    IF to_regtype('sub_validator_info') IS NULL THEN
-        CREATE TYPE sub_validator_info AS (
-            discovered_at bigint,
-            killed_at bigint,
-            slash_count bigint,
-            offline_offence_count bigint,
-            active_era_count bigint,
-            inactive_era_count bigint,
-            total_reward_points bigint,
-            unclaimed_eras text,
-            blocks_authored bigint,
-            reward_points bigint,
-            heartbeat_received boolean,
-            onekv_candidate_record_id integer,
-            onekv_binary_version text,
-            onekv_rank bigint,
-            onekv_location text,
-            onekv_is_valid boolean
-        );
-    END IF;
+	DROP FUNCTION IF EXISTS sub_get_validator_info;
+	DROP TYPE IF EXISTS sub_validator_info;
+	CREATE TYPE sub_validator_info AS (
+		discovered_at bigint,
+		slash_count bigint,
+		offline_offence_count bigint,
+		active_era_count bigint,
+		inactive_era_count bigint,
+		unclaimed_eras text,
+		blocks_authored bigint,
+		reward_points bigint,
+		heartbeat_received boolean,
+		onekv_candidate_record_id integer,
+		onekv_binary_version text,
+		onekv_rank bigint,
+		onekv_location text,
+		onekv_is_valid boolean,
+		onekv_online_since bigint,
+		onekv_offline_since bigint
+	);
 END $$;
 
 CREATE OR REPLACE FUNCTION sub_get_validator_info (block_hash_param VARCHAR(66), account_id_param VARCHAR(66), is_active_param boolean, era_index_param bigint)
@@ -39,8 +39,8 @@ BEGIN
     FROM sub_event_validator_offline
     WHERE validator_account_id = account_id_param;
 	
-    SELECT COUNT(DISTINCT era_index), COALESCE(SUM(reward_points), 0)
-    INTO result_record.active_era_count, result_record.total_reward_points
+    SELECT COUNT(DISTINCT era_index)
+    INTO result_record.active_era_count
     FROM sub_era_validator
     WHERE validator_account_id = account_id_param
     AND is_active = true;
@@ -71,11 +71,6 @@ BEGIN
     INTO result_record.discovered_at
     FROM sub_account A
     WHERE A.id = account_id_param;
-	
-    SELECT A.killed_at
-    INTO result_record.killed_at
-    FROM sub_account A
-    WHERE A.id = account_id_param;
 
     if is_active_param then
         SELECT COUNT(DISTINCT number)
@@ -100,9 +95,9 @@ BEGIN
         ) INTO result_record.heartbeat_received;
     end if;
 
-    SELECT id, rank, location, is_valid, version
+    SELECT id, rank, location, is_valid, version, online_since, offline_since
     FROM sub_onekv_candidate C
-    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_location, result_record.onekv_is_valid, result_record.onekv_binary_version
+    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_location, result_record.onekv_is_valid, result_record.onekv_binary_version, result_record.onekv_online_since, result_record.onekv_offline_since
     WHERE C.validator_account_id = account_id_param
     ORDER BY id DESC
     LIMIT 1;

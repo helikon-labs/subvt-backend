@@ -10,8 +10,6 @@ use subvt_types::{
 
 type PostgresValidatorInfo = (
     Option<i64>,
-    Option<i64>,
-    i64,
     i64,
     i64,
     i64,
@@ -25,6 +23,8 @@ type PostgresValidatorInfo = (
     Option<i64>,
     Option<String>,
     Option<bool>,
+    Option<i64>,
+    Option<i64>,
 );
 
 impl PostgreSQLNetworkStorage {
@@ -328,7 +328,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, killed_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, total_reward_points, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_binary_version, onekv_rank, onekv_location, onekv_is_valid
+            SELECT discovered_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_binary_version, onekv_rank, onekv_location, onekv_is_valid, onekv_online_since, onekv_offline_since
             FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
@@ -339,7 +339,7 @@ impl PostgreSQLNetworkStorage {
             .fetch_one(&self.connection_pool)
             .await?;
         let mut unclaimed_era_indices: Vec<u32> = Vec::new();
-        if let Some(concated_string) = validator_info.7 {
+        if let Some(concated_string) = validator_info.5 {
             for unclaimed_era_index_string in concated_string.split(',') {
                 if let Ok(unclaimed_era_index) = unclaimed_era_index_string.parse::<u32>() {
                     unclaimed_era_indices.push(unclaimed_era_index);
@@ -349,21 +349,21 @@ impl PostgreSQLNetworkStorage {
         unclaimed_era_indices.sort_unstable();
         Ok(ValidatorInfo {
             discovered_at: validator_info.0.map(|value| value as u64),
-            killed_at: validator_info.1.map(|value| value as u64),
-            slash_count: validator_info.2 as u64,
-            offline_offence_count: validator_info.3 as u64,
-            active_era_count: validator_info.4 as u64,
-            inactive_era_count: validator_info.5 as u64,
-            total_reward_points: validator_info.6 as u64,
+            slash_count: validator_info.1 as u64,
+            offline_offence_count: validator_info.2 as u64,
+            active_era_count: validator_info.3 as u64,
+            inactive_era_count: validator_info.4 as u64,
             unclaimed_era_indices,
-            blocks_authored: validator_info.8.map(|value| value as u64),
-            reward_points: validator_info.9.map(|value| value as u64),
-            heartbeat_received: validator_info.10,
-            onekv_candidate_record_id: validator_info.11.map(|value| value as u32),
-            onekv_binary_version: validator_info.12,
-            onekv_rank: validator_info.13.map(|value| value as u64),
-            onekv_location: validator_info.14,
-            onekv_is_valid: validator_info.15,
+            blocks_authored: validator_info.6.map(|value| value as u64),
+            reward_points: validator_info.7.map(|value| value as u64),
+            heartbeat_received: validator_info.8,
+            onekv_candidate_record_id: validator_info.9.map(|value| value as u32),
+            onekv_binary_version: validator_info.10,
+            onekv_rank: validator_info.11.map(|value| value as u64),
+            onekv_location: validator_info.12,
+            onekv_is_valid: validator_info.13,
+            onekv_online_since: validator_info.14.map(|value| value as u64),
+            onekv_offline_since: validator_info.15.map(|value| value as u64),
         })
     }
 }

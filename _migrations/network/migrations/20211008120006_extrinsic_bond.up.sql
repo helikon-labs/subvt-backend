@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
     block_hash                      VARCHAR(66) NOT NULL,
     extrinsic_index                 integer NOT NULL,
     is_nested_call                  boolean NOT NULL,
+    batch_index                     text,
     stash_account_id                VARCHAR(66) NOT NULL,
     controller_account_id           VARCHAR(66) NOT NULL,
     amount                          VARCHAR(128) NOT NULL,
@@ -11,7 +12,7 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_bond
     is_successful                   boolean NOT NULL,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_extrinsic_bond_u_extrinsic
-        UNIQUE (block_hash, extrinsic_index),
+        UNIQUE (block_hash, extrinsic_index, batch_index),
     CONSTRAINT sub_extrinsic_bond_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

@@ -123,7 +123,18 @@ impl Block {
     }
 }
 
-pub type PostgresValidateExtrinsic = (i32, String, i32, bool, String, String, i64, bool, bool);
+pub type PostgresValidateExtrinsic = (
+    i32,
+    String,
+    i32,
+    bool,
+    Option<String>,
+    String,
+    String,
+    i64,
+    bool,
+    bool,
+);
 
 impl ValidateExtrinsic {
     pub fn from(db_extrinsic: PostgresValidateExtrinsic) -> anyhow::Result<ValidateExtrinsic> {
@@ -132,16 +143,18 @@ impl ValidateExtrinsic {
             block_hash: db_extrinsic.1.clone(),
             extrinsic_index: db_extrinsic.2 as u32,
             is_nested_call: db_extrinsic.3,
-            stash_account_id: AccountId::from_str(&db_extrinsic.4)?,
-            controller_account_id: AccountId::from_str(&db_extrinsic.5)?,
-            commission_per_billion: db_extrinsic.6 as u64,
-            blocks_nominations: db_extrinsic.7,
-            is_successful: db_extrinsic.8,
+            batch_index: db_extrinsic.4,
+            stash_account_id: AccountId::from_str(&db_extrinsic.5)?,
+            controller_account_id: AccountId::from_str(&db_extrinsic.6)?,
+            commission_per_billion: db_extrinsic.7 as u64,
+            blocks_nominations: db_extrinsic.8,
+            is_successful: db_extrinsic.9,
         })
     }
 }
 
-pub type PostgresSetControllerExtrinsic = (i32, String, i32, bool, String, String, bool);
+pub type PostgresSetControllerExtrinsic =
+    (i32, String, i32, bool, Option<String>, String, String, bool);
 
 impl SetControllerExtrinsic {
     pub fn from(
@@ -152,14 +165,25 @@ impl SetControllerExtrinsic {
             block_hash: db_extrinsic.1.clone(),
             extrinsic_index: db_extrinsic.2 as u32,
             is_nested_call: db_extrinsic.3,
-            caller_account_id: AccountId::from_str(&db_extrinsic.4)?,
-            controller_account_id: AccountId::from_str(&db_extrinsic.5)?,
-            is_successful: db_extrinsic.6,
+            batch_index: db_extrinsic.4,
+            caller_account_id: AccountId::from_str(&db_extrinsic.5)?,
+            controller_account_id: AccountId::from_str(&db_extrinsic.6)?,
+            is_successful: db_extrinsic.7,
         })
     }
 }
 
-pub type PostgresPayoutStakersExtrinsic = (i32, String, i32, bool, String, String, i64, bool);
+pub type PostgresPayoutStakersExtrinsic = (
+    i32,
+    String,
+    i32,
+    bool,
+    Option<String>,
+    String,
+    String,
+    i64,
+    bool,
+);
 
 impl PayoutStakersExtrinsic {
     pub fn from(
@@ -170,10 +194,11 @@ impl PayoutStakersExtrinsic {
             block_hash: db_extrinsic.1.clone(),
             extrinsic_index: db_extrinsic.2 as u32,
             is_nested_call: db_extrinsic.3,
-            caller_account_id: AccountId::from_str(&db_extrinsic.4)?,
-            validator_account_id: AccountId::from_str(&db_extrinsic.5)?,
-            era_index: db_extrinsic.6 as u32,
-            is_successful: db_extrinsic.7,
+            batch_index: db_extrinsic.4,
+            caller_account_id: AccountId::from_str(&db_extrinsic.5)?,
+            validator_account_id: AccountId::from_str(&db_extrinsic.6)?,
+            era_index: db_extrinsic.7 as u32,
+            is_successful: db_extrinsic.8,
         })
     }
 }

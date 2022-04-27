@@ -14,6 +14,7 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
+        batch_index: Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         is_successful: bool,
         extrinsic: &UtilityExtrinsic,
@@ -23,7 +24,7 @@ impl BlockProcessor {
                 maybe_signature: _,
                 calls,
             } => {
-                for call in calls {
+                for (inner_batch_index, call) in calls.iter().enumerate() {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
@@ -32,6 +33,11 @@ impl BlockProcessor {
                         active_validator_account_ids,
                         index,
                         true,
+                        if let Some(batch_index) = batch_index.as_ref() {
+                            Some(format!("{}{}", batch_index, inner_batch_index))
+                        } else {
+                            Some(inner_batch_index.to_string())
+                        },
                         maybe_multisig_account_id,
                         None,
                         is_successful,
@@ -44,7 +50,7 @@ impl BlockProcessor {
                 maybe_signature: _,
                 calls,
             } => {
-                for call in calls {
+                for (inner_batch_index, call) in calls.iter().enumerate() {
                     self.process_extrinsic(
                         substrate_client,
                         postgres,
@@ -53,6 +59,11 @@ impl BlockProcessor {
                         active_validator_account_ids,
                         index,
                         true,
+                        if let Some(batch_index) = batch_index.as_ref() {
+                            Some(format!("{}{}", batch_index, inner_batch_index))
+                        } else {
+                            Some(inner_batch_index.to_string())
+                        },
                         maybe_multisig_account_id,
                         None,
                         is_successful,

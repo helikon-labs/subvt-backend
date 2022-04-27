@@ -14,6 +14,7 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
+        batch_index: Option<String>,
         is_successful: bool,
         extrinsic: &MultisigExtrinsic,
     ) -> anyhow::Result<()> {
@@ -60,6 +61,7 @@ impl BlockProcessor {
                     active_validator_account_ids,
                     index,
                     true,
+                    batch_index,
                     Some(multisig_account_id),
                     None,
                     is_successful,
@@ -98,6 +100,7 @@ impl BlockProcessor {
                     active_validator_account_ids,
                     index,
                     true,
+                    batch_index,
                     Some(multisig_account_id),
                     None,
                     is_successful,

@@ -10,7 +10,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Vec<PayoutStakersExtrinsic>> {
         let db_extrinsics: Vec<PostgresPayoutStakersExtrinsic> = sqlx::query_as(
             r#"
-            SELECT "id", block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful
+            SELECT "id", block_hash, extrinsic_index, is_nested_call, batch_index, caller_account_id, validator_account_id, era_index, is_successful
             FROM sub_extrinsic_payout_stakers
             WHERE block_hash = $1 AND is_successful = true
             ORDER BY "id" ASC
@@ -26,11 +26,13 @@ impl PostgreSQLNetworkStorage {
         Ok(extrinsics)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn save_payout_stakers_extrinsic(
         &self,
         block_hash: &str,
         extrinsic_index: i32,
         is_nested_call: bool,
+        batch_index: Option<String>,
         is_successful: bool,
         (caller_account_id, validator_account_id): (&AccountId, &AccountId),
         era_index: u32,
@@ -39,15 +41,16 @@ impl PostgreSQLNetworkStorage {
         self.save_account(validator_account_id).await?;
         let maybe_result: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO sub_extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, caller_account_id, validator_account_id, era_index, is_successful)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT(block_hash, extrinsic_index) DO NOTHING
+            INSERT INTO sub_extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, batch_index, caller_account_id, validator_account_id, era_index, is_successful)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT(block_hash, extrinsic_index, batch_index) DO NOTHING
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(is_nested_call)
+            .bind(batch_index)
             .bind(caller_account_id.to_string())
             .bind(validator_account_id.to_string())
             .bind(era_index)

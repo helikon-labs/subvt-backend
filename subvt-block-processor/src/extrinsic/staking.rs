@@ -11,6 +11,7 @@ pub(crate) async fn process_staking_extrinsic(
     block_hash: String,
     index: usize,
     is_nested_call: bool,
+    batch_index: Option<String>,
     maybe_multisig_account_id: Option<AccountId>,
     maybe_real_account_id: Option<AccountId>,
     is_successful: bool,
@@ -47,6 +48,7 @@ pub(crate) async fn process_staking_extrinsic(
                         &block_hash,
                         index as i32,
                         is_nested_call,
+                        batch_index,
                         is_successful,
                         (
                             &stash_account_id,
@@ -93,6 +95,7 @@ pub(crate) async fn process_staking_extrinsic(
                         &block_hash,
                         index as i32,
                         is_nested_call,
+                        batch_index,
                         is_successful,
                         &controller_account_id,
                         &target_account_ids,
@@ -118,18 +121,17 @@ pub(crate) async fn process_staking_extrinsic(
                 }
             };
             if let Some(caller_account_id) = maybe_caller_account_id {
-                // ignore the errors here - may fail due to non-existent era foreign key,
-                // past eras may not have been saved
-                let _ = postgres
+                postgres
                     .save_payout_stakers_extrinsic(
                         &block_hash,
                         index as i32,
                         is_nested_call,
+                        batch_index,
                         is_successful,
                         (&caller_account_id, validator_account_id),
                         *era_index,
                     )
-                    .await;
+                    .await?;
             } else {
                 log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
             }
@@ -160,6 +162,7 @@ pub(crate) async fn process_staking_extrinsic(
                         &block_hash,
                         index as i32,
                         is_nested_call,
+                        batch_index,
                         is_successful,
                         &caller_account_id,
                         &controller_account_id,
@@ -194,6 +197,7 @@ pub(crate) async fn process_staking_extrinsic(
                             &block_hash,
                             index as i32,
                             is_nested_call,
+                            batch_index,
                             is_successful,
                             (&stash_account_id, &controller_account_id),
                             preferences,

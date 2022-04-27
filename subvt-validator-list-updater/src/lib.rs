@@ -212,12 +212,10 @@ impl ValidatorListUpdater {
                 )
                 .await?;
             validator.account.discovered_at = db_validator_info.discovered_at;
-            validator.account.killed_at = db_validator_info.killed_at;
             validator.slash_count = db_validator_info.slash_count;
             validator.offline_offence_count = db_validator_info.offline_offence_count;
             validator.active_era_count = db_validator_info.active_era_count;
             validator.inactive_era_count = db_validator_info.inactive_era_count;
-            validator.total_reward_points = db_validator_info.total_reward_points;
             validator.unclaimed_era_indices = db_validator_info.unclaimed_era_indices.clone();
             validator.blocks_authored = db_validator_info.blocks_authored;
             validator.reward_points = db_validator_info.reward_points;
@@ -227,6 +225,8 @@ impl ValidatorListUpdater {
             validator.onekv_rank = db_validator_info.onekv_rank;
             validator.onekv_location = db_validator_info.onekv_location;
             validator.onekv_is_valid = db_validator_info.onekv_is_valid;
+            validator.onekv_online_since = db_validator_info.onekv_online_since;
+            validator.onekv_offline_since = db_validator_info.onekv_offline_since;
         }
         log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
