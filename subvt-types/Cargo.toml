@@ -47,4 +47,4 @@ sqlx = { version = "0.5.13", features = ["postgres", "runtime-tokio-rustls", "ch
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
 thiserror = "1.0"
-xcm = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.19" }
+xcm = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.20" }
