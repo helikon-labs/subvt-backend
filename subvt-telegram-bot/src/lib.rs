@@ -121,6 +121,11 @@ lazy_static! {
             0,
         ),
         (
+            NotificationTypeCode::OneKVValidatorOnlineStatusChange,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
             NotificationTypeCode::OneKVValidatorRankChange,
             NotificationPeriodType::Immediate,
             0,

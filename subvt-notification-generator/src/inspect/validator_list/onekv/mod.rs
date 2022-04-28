@@ -6,6 +6,7 @@ use subvt_types::subvt::ValidatorDetails;
 
 mod binary_version;
 mod location;
+mod online;
 mod rank;
 mod validity;
 
@@ -46,6 +47,14 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_onekv_validity_change(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            finalized_block_number,
+            last,
+            current,
+        )
+        .await?;
+        self.inspect_onekv_online_status_change(
             network_postgres,
             app_postgres,
             finalized_block_number,

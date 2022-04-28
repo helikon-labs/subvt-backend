@@ -33,6 +33,7 @@ INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_c
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('onekv_validator_online_status_change') ON CONFLICT(code) DO NOTHING;
 -- democracy
 INSERT INTO app_notification_type(code) VALUES('democracy_cancelled') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_delegated') ON CONFLICT(code) DO NOTHING;
@@ -410,4 +411,5 @@ INSERT INTO app_notification_param_type(
 -- onekv_validator_rank_change :: no param
 -- onekv_validator_location_change :: no param
 -- onekv_validator_validity_change :: no param
+-- onekv_validator_online_status_change :: no param
 -- democracy notifications :: no param

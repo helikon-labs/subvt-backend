@@ -1,0 +1,1 @@
+{% if online_since %}🟢{% else %}🔴{% endif %} {{ validator_display }} is {% if online_since %}online{% else %}offline{% endif %}

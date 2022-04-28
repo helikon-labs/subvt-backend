@@ -17,7 +17,7 @@ impl NotificationGenerator {
         let validator_account_id = if let Some(author_account_id) = &block.author_account_id {
             author_account_id
         } else {
-            log::error!("Block ${} author is null.", block.number);
+            log::error!("Block #{} author is null.", block.number);
             return Ok(());
         };
         let rules = app_postgres

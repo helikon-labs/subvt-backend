@@ -1,0 +1,5 @@
+{{ validator_display }}{% if online_since %}
+🟢 came back online on {{ online_since }}{% elif offline_since %}
+🔴 went offline on {{ offline_since }}{% else %}
+changed online status{% endif %}{% if offline_since %}
+ℹ️ This data is fetched from the 1KV backend. If you are sure that your validator is online and it shows on the W3F Telemetry then you may safely ignore this notification.{% endif %}

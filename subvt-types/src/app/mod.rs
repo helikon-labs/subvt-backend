@@ -116,6 +116,7 @@ pub enum NotificationTypeCode {
     OneKVValidatorLocationChange,
     OneKVValidatorRankChange,
     OneKVValidatorValidityChange,
+    OneKVValidatorOnlineStatusChange,
     TelemetryValidatorBinaryOutOfDate,
     TelemetryValidatorDownloadBwLow,
     TelemetryValidatorFinalityLagging,
@@ -194,6 +195,9 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
             NotificationTypeCode::OneKVValidatorLocationChange => "onekv_validator_location_change",
             NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
+            NotificationTypeCode::OneKVValidatorOnlineStatusChange => {
+                "onekv_validator_online_status_change"
+            }
             // democracy
             NotificationTypeCode::DemocracyCancelled => "democracy_cancelled",
             NotificationTypeCode::DemocracyDelegated => "democracy_delegated",
@@ -268,6 +272,9 @@ impl From<&str> for NotificationTypeCode {
             "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
             "onekv_validator_location_change" => NotificationTypeCode::OneKVValidatorLocationChange,
             "onekv_validator_validity_change" => NotificationTypeCode::OneKVValidatorValidityChange,
+            "onekv_validator_online_status_change" => {
+                NotificationTypeCode::OneKVValidatorOnlineStatusChange
+            }
             "democracy_cancelled" => NotificationTypeCode::DemocracyCancelled,
             "democracy_delegated" => NotificationTypeCode::DemocracyDelegated,
             "democracy_not_passed" => NotificationTypeCode::DemocracyNotPassed,

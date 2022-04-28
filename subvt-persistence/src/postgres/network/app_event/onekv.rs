@@ -87,4 +87,26 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(result.0 as u32)
     }
+
+    pub async fn save_onekv_online_status_change_event(
+        &self,
+        validator_account_id: &AccountId,
+        online_since: u64,
+        offline_since: u64,
+    ) -> anyhow::Result<u32> {
+        self.save_account(validator_account_id).await?;
+        let result: (i32,) = sqlx::query_as(
+            r#"
+            INSERT INTO sub_app_event_onekv_online_status_change (validator_account_id, online_since, offline_since)
+            VALUES ($1, $2, $3)
+            RETURNING id
+            "#,
+        )
+        .bind(validator_account_id.to_string())
+        .bind(online_since as i64)
+        .bind(offline_since as i64)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(result.0 as u32)
+    }
 }

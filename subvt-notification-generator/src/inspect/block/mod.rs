@@ -28,7 +28,7 @@ impl NotificationGenerator {
         let block = match network_postgres.get_block_by_number(block_number).await? {
             Some(block) => block,
             None => {
-                log::error!("Block ${} not found.", block_number);
+                log::error!("Block #{} not found.", block_number);
                 return Ok(());
             }
         };

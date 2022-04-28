@@ -67,3 +67,10 @@ pub struct OneKVValidityChange {
     pub is_valid: bool,
     pub validity_items: Vec<OneKVValidity>,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct OneKVOnlineStatusChange {
+    pub validator_account_id: AccountId,
+    pub online_since: u64,
+    pub offline_since: u64,
+}

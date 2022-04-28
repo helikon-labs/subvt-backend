@@ -1,0 +1,1 @@
+DROP TABLE sub_app_event_onekv_online_status_change CASCADE;
