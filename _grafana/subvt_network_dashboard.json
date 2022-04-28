@@ -34,6 +34,153 @@
         "x": 0,
         "y": 0
       },
+      "id": 101,
+      "panels": [],
+      "title": "Subscan",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "${subscan_json_api_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 0,
+        "y": 1
+      },
+      "id": 99,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.4",
+      "targets": [
+        {
+          "cacheDurationSeconds": 5,
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "${subscan_json_api_data_source}"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.data.blockNum",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "",
+          "refId": "A",
+          "urlPath": "/api/scan/metadata"
+        }
+      ],
+      "title": "Subscan Best Block",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "marcusolsson-json-datasource",
+        "uid": "${subscan_json_api_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
+        "x": 5,
+        "y": 1
+      },
+      "id": 102,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.4",
+      "targets": [
+        {
+          "cacheDurationSeconds": 5,
+          "datasource": {
+            "type": "marcusolsson-json-datasource",
+            "uid": "${subscan_json_api_data_source}"
+          },
+          "fields": [
+            {
+              "jsonPath": "$.data.finalized_blockNum",
+              "type": "number"
+            }
+          ],
+          "method": "GET",
+          "queryParams": "",
+          "refId": "A",
+          "urlPath": "/api/scan/metadata"
+        }
+      ],
+      "title": "Subscan Finalized Block",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
       "id": 91,
       "panels": [],
       "title": "Telemetry Processor",
@@ -67,69 +214,7 @@
         "h": 3,
         "w": 5,
         "x": 0,
-        "y": 1
-      },
-      "id": 94,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.4.4",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prometheus_data_source}"
-          },
-          "exemplar": true,
-          "expr": "subvt_telemetry_processor::finalized_block_number",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Finalized Block",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prometheus_data_source}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 5,
-        "x": 5,
-        "y": 1
+        "y": 5
       },
       "id": 93,
       "options": {
@@ -190,8 +275,70 @@
       "gridPos": {
         "h": 3,
         "w": 5,
+        "x": 5,
+        "y": 5
+      },
+      "id": 94,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_telemetry_processor::finalized_block_number",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Finalized Block",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 5,
         "x": 10,
-        "y": 1
+        "y": 5
       },
       "id": 95,
       "options": {
@@ -231,7 +378,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 8
       },
       "id": 10,
       "panels": [],
@@ -266,7 +413,7 @@
         "h": 3,
         "w": 5,
         "x": 0,
-        "y": 5
+        "y": 9
       },
       "id": 2,
       "options": {
@@ -328,7 +475,7 @@
         "h": 3,
         "w": 5,
         "x": 5,
-        "y": 5
+        "y": 9
       },
       "id": 4,
       "options": {
@@ -394,7 +541,7 @@
         "h": 3,
         "w": 6,
         "x": 10,
-        "y": 5
+        "y": 9
       },
       "id": 6,
       "options": {
@@ -456,7 +603,7 @@
         "h": 3,
         "w": 4,
         "x": 16,
-        "y": 5
+        "y": 9
       },
       "id": 97,
       "options": {
@@ -518,7 +665,7 @@
         "h": 3,
         "w": 4,
         "x": 20,
-        "y": 5
+        "y": 9
       },
       "id": 96,
       "options": {
@@ -581,7 +728,7 @@
         "h": 3,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 12
       },
       "id": 8,
       "options": {
@@ -626,7 +773,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 15
       },
       "id": 12,
       "panels": [],
@@ -660,7 +807,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 16
       },
       "id": 14,
       "options": {
@@ -724,7 +871,7 @@
         "h": 3,
         "w": 8,
         "x": 0,
-        "y": 16
+        "y": 20
       },
       "id": 16,
       "options": {
@@ -785,7 +932,7 @@
         "h": 3,
         "w": 9,
         "x": 8,
-        "y": 16
+        "y": 20
       },
       "id": 17,
       "options": {
@@ -851,7 +998,7 @@
         "h": 3,
         "w": 7,
         "x": 17,
-        "y": 16
+        "y": 20
       },
       "id": 18,
       "options": {
@@ -891,7 +1038,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "id": 20,
       "panels": [],
@@ -926,7 +1073,7 @@
         "h": 3,
         "w": 8,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "id": 22,
       "options": {
@@ -991,7 +1138,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 20
+        "y": 24
       },
       "id": 24,
       "options": {
@@ -1031,7 +1178,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 23
+        "y": 27
       },
       "id": 55,
       "panels": [],
@@ -1066,7 +1213,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 24
+        "y": 28
       },
       "id": 59,
       "options": {
@@ -1128,7 +1275,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 24
+        "y": 28
       },
       "id": 57,
       "options": {
@@ -1190,7 +1337,7 @@
         "h": 3,
         "w": 4,
         "x": 8,
-        "y": 24
+        "y": 28
       },
       "id": 58,
       "options": {
@@ -1252,7 +1399,7 @@
         "h": 3,
         "w": 4,
         "x": 12,
-        "y": 24
+        "y": 28
       },
       "id": 62,
       "options": {
@@ -1314,7 +1461,7 @@
         "h": 3,
         "w": 4,
         "x": 16,
-        "y": 24
+        "y": 28
       },
       "id": 60,
       "options": {
@@ -1376,7 +1523,7 @@
         "h": 3,
         "w": 4,
         "x": 20,
-        "y": 24
+        "y": 28
       },
       "id": 61,
       "options": {
@@ -1416,7 +1563,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 31
       },
       "id": 40,
       "panels": [],
@@ -1450,7 +1597,7 @@
         "h": 3,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 32
       },
       "id": 42,
       "options": {
@@ -1515,7 +1662,7 @@
         "h": 3,
         "w": 4,
         "x": 12,
-        "y": 28
+        "y": 32
       },
       "id": 44,
       "options": {
@@ -1576,7 +1723,7 @@
         "h": 3,
         "w": 4,
         "x": 16,
-        "y": 28
+        "y": 32
       },
       "id": 45,
       "options": {
@@ -1637,7 +1784,7 @@
         "h": 3,
         "w": 4,
         "x": 20,
-        "y": 28
+        "y": 32
       },
       "id": 46,
       "options": {
@@ -1677,7 +1824,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 31
+        "y": 35
       },
       "id": 48,
       "panels": [],
@@ -1712,7 +1859,7 @@
         "h": 3,
         "w": 5,
         "x": 0,
-        "y": 32
+        "y": 36
       },
       "id": 53,
       "options": {
@@ -1773,7 +1920,7 @@
         "h": 3,
         "w": 5,
         "x": 5,
-        "y": 32
+        "y": 36
       },
       "id": 50,
       "options": {
@@ -1835,7 +1982,7 @@
         "h": 3,
         "w": 5,
         "x": 10,
-        "y": 32
+        "y": 36
       },
       "id": 51,
       "options": {
@@ -1897,7 +2044,7 @@
         "h": 3,
         "w": 5,
         "x": 15,
-        "y": 32
+        "y": 36
       },
       "id": 52,
       "options": {
@@ -1937,7 +2084,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 39
       },
       "id": 26,
       "panels": [],
@@ -1972,7 +2119,7 @@
         "h": 3,
         "w": 12,
         "x": 0,
-        "y": 36
+        "y": 40
       },
       "id": 28,
       "options": {
@@ -2037,7 +2184,7 @@
         "h": 3,
         "w": 12,
         "x": 12,
-        "y": 36
+        "y": 40
       },
       "id": 30,
       "options": {
@@ -2102,7 +2249,7 @@
         "h": 3,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 43
       },
       "id": 32,
       "options": {
@@ -2167,7 +2314,7 @@
         "h": 3,
         "w": 3,
         "x": 12,
-        "y": 39
+        "y": 43
       },
       "id": 34,
       "options": {
@@ -2229,7 +2376,7 @@
         "h": 3,
         "w": 2,
         "x": 15,
-        "y": 39
+        "y": 43
       },
       "id": 38,
       "options": {
@@ -2291,7 +2438,7 @@
         "h": 3,
         "w": 2,
         "x": 17,
-        "y": 39
+        "y": 43
       },
       "id": 36,
       "options": {
@@ -2357,7 +2504,7 @@
         "h": 3,
         "w": 2,
         "x": 19,
-        "y": 39
+        "y": 43
       },
       "id": 37,
       "options": {
@@ -2397,7 +2544,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 46
       },
       "id": 81,
       "panels": [],
@@ -2432,7 +2579,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 43
+        "y": 47
       },
       "id": 83,
       "options": {
@@ -2496,7 +2643,7 @@
         "h": 3,
         "w": 3,
         "x": 3,
-        "y": 43
+        "y": 47
       },
       "id": 88,
       "options": {
@@ -2561,7 +2708,7 @@
         "h": 3,
         "w": 3,
         "x": 6,
-        "y": 43
+        "y": 47
       },
       "id": 85,
       "options": {
@@ -2623,7 +2770,7 @@
         "h": 3,
         "w": 3,
         "x": 9,
-        "y": 43
+        "y": 47
       },
       "id": 87,
       "options": {
@@ -2688,7 +2835,7 @@
         "h": 3,
         "w": 3,
         "x": 12,
-        "y": 43
+        "y": 47
       },
       "id": 89,
       "options": {
@@ -2728,7 +2875,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 50
       },
       "id": 64,
       "panels": [],
@@ -2767,7 +2914,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 47
+        "y": 51
       },
       "id": 66,
       "options": {
@@ -2833,7 +2980,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 47
+        "y": 51
       },
       "id": 67,
       "options": {
@@ -2894,7 +3041,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 47
+        "y": 51
       },
       "id": 69,
       "options": {
@@ -2958,7 +3105,7 @@
         "h": 3,
         "w": 8,
         "x": 16,
-        "y": 47
+        "y": 51
       },
       "id": 70,
       "options": {
@@ -3001,7 +3148,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 54
       },
       "id": 72,
       "panels": [],
@@ -3035,7 +3182,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 51
+        "y": 55
       },
       "id": 75,
       "options": {
@@ -3096,7 +3243,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 51
+        "y": 55
       },
       "id": 74,
       "options": {
@@ -3165,7 +3312,7 @@
         "h": 3,
         "w": 4,
         "x": 8,
-        "y": 51
+        "y": 55
       },
       "id": 77,
       "options": {
@@ -3230,7 +3377,7 @@
         "h": 3,
         "w": 12,
         "x": 12,
-        "y": 51
+        "y": 55
       },
       "id": 79,
       "options": {
@@ -3278,8 +3425,8 @@
       {
         "current": {
           "selected": false,
-          "text": "SubVT Kusama Prometheus",
-          "value": "SubVT Kusama Prometheus"
+          "text": "SubVT Network Prometheus",
+          "value": "SubVT Network Prometheus"
         },
         "hide": 0,
         "includeAll": false,
@@ -3287,6 +3434,24 @@
         "name": "prometheus_data_source",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "Subscan Network Status",
+          "value": "Subscan Network Status"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "subscan_json_api_data_source",
+        "options": [],
+        "query": "marcusolsson-json-datasource",
         "queryValue": "",
         "refresh": 1,
         "regex": "",
