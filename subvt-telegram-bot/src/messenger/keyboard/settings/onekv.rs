@@ -27,6 +27,14 @@ impl Messenger {
             rows.push(item);
         }
         if let Some(item) = self.get_notification_on_off_button(
+            NotificationTypeCode::OneKVValidatorOnlineStatusChange,
+            "settings_item_onekv_online_status_change.html",
+            SettingsEditQueryType::OneKVOnlineStatusChange,
+            notification_rules,
+        )? {
+            rows.push(item);
+        }
+        if let Some(item) = self.get_notification_on_off_button(
             NotificationTypeCode::OneKVValidatorRankChange,
             "settings_item_onekv_rank_change.html",
             SettingsEditQueryType::OneKVRankChange,

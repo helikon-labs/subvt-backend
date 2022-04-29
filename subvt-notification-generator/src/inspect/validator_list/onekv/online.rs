@@ -35,7 +35,8 @@ impl NotificationGenerator {
                 ),
                 _ => return Ok(()),
             };
-        if current_online_since != last_online_since || current_offline_since != last_offline_since
+        if (current_online_since > 0 && last_online_since == 0)
+            || (current_offline_since > 0 && last_offline_since == 0)
         {
             log::debug!(
                 "1KV online status (online_since, offline_since) of {} changed from {:?} to {:?}.",

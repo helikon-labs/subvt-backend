@@ -125,4 +125,6 @@ pub enum SettingsEditQueryType {
     OneKVValidityChange,
     #[serde(rename = "OKVL")]
     OneKVLocationChange,
+    #[serde(rename = "OKVO")]
+    OneKVOnlineStatusChange,
 }

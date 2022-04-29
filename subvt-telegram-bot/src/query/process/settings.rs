@@ -318,6 +318,15 @@ impl TelegramBot {
                 .await?;
                 SettingsSubSection::OneKV
             }
+            SettingsEditQueryType::OneKVOnlineStatusChange => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::OneKVValidatorOnlineStatusChange,
+                )
+                .await?;
+                SettingsSubSection::OneKV
+            }
         };
         let notification_rules = self
             .app_postgres
