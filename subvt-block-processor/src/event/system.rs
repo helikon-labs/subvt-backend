@@ -6,7 +6,7 @@ pub(crate) async fn process_system_event(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,
     block_number: u64,
-    block_timestamp: Option<u64>,
+    block_timestamp: u64,
     successful_extrinsic_indices: &mut Vec<u32>,
     failed_extrinsic_indices: &mut Vec<u32>,
     event_index: usize,

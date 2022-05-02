@@ -180,6 +180,17 @@ impl SubstrateClient {
         Ok(block_wrapper.block)
     }
 
+    pub async fn get_block_timestamp(&self, block_hash: &str) -> anyhow::Result<u64> {
+        let hex_string: String = self
+            .ws_client
+            .request(
+                "state_getStorage",
+                get_rpc_storage_plain_params("Timestamp", "Now", Some(block_hash)),
+            )
+            .await?;
+        decode_hex_string(hex_string.as_str())
+    }
+
     /// Get active era at the given block.
     pub async fn get_active_era(&self, block_hash: &str) -> anyhow::Result<Era> {
         let hex_string: String = self
@@ -223,20 +234,7 @@ impl SubstrateClient {
             decode_hex_string::<(u32, u32)>(hex_string.as_str())?.1
         };
         let start_block_hash = self.get_block_hash(start_block_number as u64).await?;
-        let start_timestamp: u64 = {
-            let hex_string: String = self
-                .ws_client
-                .request(
-                    "state_getStorage",
-                    get_rpc_storage_plain_params(
-                        "Timestamp",
-                        "Now",
-                        Some(start_block_hash.as_str()),
-                    ),
-                )
-                .await?;
-            decode_hex_string(hex_string.as_str())?
-        };
+        let start_timestamp = self.get_block_timestamp(&start_block_hash).await?;
         let end_timestamp = start_timestamp + self.metadata.constants.epoch_duration_millis;
         Ok(Epoch {
             index,

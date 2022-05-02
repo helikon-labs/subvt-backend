@@ -14,7 +14,6 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::error::DecodeError;
-use subvt_types::substrate::extrinsic::{SubstrateExtrinsic, TimestampExtrinsic};
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
@@ -274,19 +273,7 @@ impl BlockProcessor {
             block_number
         );
 
-        let mut block_timestamp: Option<u64> = None;
-        for extrinsic in extrinsic_results.iter().flatten() {
-            if let SubstrateExtrinsic::Timestamp(timestamp_extrinsic) = extrinsic {
-                match timestamp_extrinsic {
-                    TimestampExtrinsic::Set {
-                        maybe_signature: _,
-                        timestamp,
-                    } => {
-                        block_timestamp = Some(*timestamp);
-                    }
-                }
-            }
-        }
+        let block_timestamp = substrate_client.get_block_timestamp(&block_hash).await?;
         let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
             active_validator_account_ids
                 .get(validator_index)

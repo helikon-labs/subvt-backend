@@ -10,7 +10,7 @@ impl PostgreSQLNetworkStorage {
         &self,
         block_hash: &str,
         block_header: &BlockHeader,
-        block_timestamp: Option<u64>,
+        block_timestamp: u64,
         maybe_author_account_id: Option<AccountId>,
         (era_index, epoch_index): (u32, u32),
         (metadata_version, runtime_version): (i16, i16),
@@ -29,7 +29,7 @@ impl PostgreSQLNetworkStorage {
             "#)
             .bind(block_hash)
             .bind(block_header.get_number()? as u32)
-            .bind(block_timestamp.map(|timestamp| timestamp as i64))
+            .bind(block_timestamp as i64)
             .bind(maybe_author_account_id_hex)
             .bind(era_index)
             .bind(epoch_index)

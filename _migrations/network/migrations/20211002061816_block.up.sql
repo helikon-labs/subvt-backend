@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sub_block
 (
     hash                VARCHAR(66) PRIMARY KEY,
     number              bigint NOT NULL,
-    timestamp           bigint,
+    timestamp           bigint NOT NULL,
     author_account_id   VARCHAR(66),
     era_index           bigint NOT NULL,
     epoch_index         bigint NOT NULL,

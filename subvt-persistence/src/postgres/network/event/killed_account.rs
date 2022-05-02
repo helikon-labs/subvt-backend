@@ -6,7 +6,7 @@ impl PostgreSQLNetworkStorage {
         &self,
         block_hash: &str,
         block_number: u64,
-        block_timestamp: Option<u64>,
+        block_timestamp: u64,
         extrinsic_index: Option<i32>,
         event_index: i32,
         account_id: &AccountId,
@@ -39,7 +39,7 @@ impl PostgreSQLNetworkStorage {
         )
             .bind(block_hash)
             .bind(block_number as i64)
-            .bind(block_timestamp.map(|timestamp| timestamp as i64))
+            .bind(block_timestamp as i64)
             .bind(account_id.to_string())
             .fetch_optional(&self.connection_pool)
             .await?;
