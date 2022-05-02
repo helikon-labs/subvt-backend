@@ -2,6 +2,7 @@ use crate::BlockProcessor;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
+use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::extrinsic::MultisigExtrinsic;
 
 impl BlockProcessor {
@@ -15,9 +16,10 @@ impl BlockProcessor {
         active_validator_account_ids: &[AccountId],
         index: usize,
         batch_index: Option<String>,
-        is_successful: bool,
+        events: &mut Vec<SubstrateEvent>,
+        batch_fail: bool,
         extrinsic: &MultisigExtrinsic,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         match extrinsic {
             MultisigExtrinsic::AsMulti {
                 maybe_signature: signature,
@@ -31,12 +33,18 @@ impl BlockProcessor {
                 let signature = if let Some(signature) = signature {
                     signature
                 } else {
+                    panic!(
+                        "Cannot get signature while processing AsMulti extrinsic {}-{}.",
+                        block_number, index
+                    );
+                    /*
                     log::error!(
                         "Cannot get signature while processing AsMulti extrinsic {}-{}.",
                         block_number,
                         index
                     );
                     return Ok(());
+                     */
                 };
                 let multisig_account_id =
                     if let Some(signer_account_id) = signature.get_signer_account_id() {
@@ -46,28 +54,37 @@ impl BlockProcessor {
                             *threshold,
                         )
                     } else {
-                        log::error!(
+                        panic!(
                         "Cannot get multisig account id while processing AsMulti extrinsic {}-{}.",
-                        block_number,
-                        index
+                        block_number, index
                     );
+                        /*
+                        log::error!(
+                            "Cannot get multisig account id while processing AsMulti extrinsic {}-{}.",
+                            block_number,
+                            index
+                        );
                         return Ok(());
+                         */
                     };
-                self.process_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash,
-                    block_number,
-                    active_validator_account_ids,
-                    index,
-                    true,
-                    batch_index,
-                    Some(multisig_account_id),
-                    None,
-                    is_successful,
-                    &*call,
-                )
-                .await?;
+                let is_successful = self
+                    .process_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash,
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        true,
+                        batch_index,
+                        Some(multisig_account_id),
+                        None,
+                        events,
+                        batch_fail,
+                        &*call,
+                    )
+                    .await?;
+                Ok(is_successful)
             }
             MultisigExtrinsic::AsMultiThreshold1 {
                 maybe_signature: signature,
@@ -77,38 +94,49 @@ impl BlockProcessor {
                 let signature = if let Some(signature) = signature {
                     signature
                 } else {
+                    panic!(
+                        "Cannot get signature while processing AsMultiThreshold1 extrinsic {}-{}.",
+                        block_number, index
+                    );
+                    /*
                     log::error!(
                         "Cannot get signature while processing AsMultiThreshold1 extrinsic {}-{}.",
                         block_number,
                         index
                     );
-                    return Ok(());
+                    return Ok(false);
+                     */
                 };
                 let multisig_account_id = if let Some(signer_account_id) =
                     signature.get_signer_account_id()
                 {
                     AccountId::multisig_account_id(&signer_account_id, other_signatories, 1)
                 } else {
+                    panic!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
+                    /*
                     log::error!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
-                    return Ok(());
+                    return Ok(false);
+                     */
                 };
-                self.process_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash,
-                    block_number,
-                    active_validator_account_ids,
-                    index,
-                    true,
-                    batch_index,
-                    Some(multisig_account_id),
-                    None,
-                    is_successful,
-                    &*call,
-                )
-                .await?;
+                let is_successful = self
+                    .process_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash,
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        true,
+                        batch_index,
+                        Some(multisig_account_id),
+                        None,
+                        events,
+                        batch_fail,
+                        &*call,
+                    )
+                    .await?;
+                Ok(is_successful)
             }
         }
-        Ok(())
     }
 }

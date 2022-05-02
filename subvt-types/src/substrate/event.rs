@@ -22,7 +22,7 @@ use sp_staking::SessionIndex;
 
 type EraIndex = u32;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum BalancesEvent {
     BalanceSet {
         extrinsic_index: Option<u32>,
@@ -41,6 +41,22 @@ pub enum BalancesEvent {
         to_account_id: AccountId,
         amount: Balance,
     },
+}
+
+impl BalancesEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::BalanceSet {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Deposit {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Transfer {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl BalancesEvent {
@@ -73,7 +89,7 @@ impl BalancesEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum DemocracyEvent {
     Cancelled {
         extrinsic_index: Option<u32>,
@@ -117,6 +133,40 @@ pub enum DemocracyEvent {
         referendum_index: ReferendumIndex,
         vote: AccountVote<Balance>,
     },
+}
+
+impl DemocracyEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::Cancelled {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Delegated {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::NotPassed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Passed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Proposed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Seconded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Started {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Undelegated {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Voted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl DemocracyEvent {
@@ -174,7 +224,7 @@ impl DemocracyEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum IdentityEvent {
     IdentityCleared {
         extrinsic_index: Option<u32>,
@@ -223,6 +273,40 @@ pub enum IdentityEvent {
         main_account_id: AccountId,
         repatriated_deposit: Balance,
     },
+}
+
+impl IdentityEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::IdentityCleared {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::IdentityKilled {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::IdentitySet {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::JudgementGiven {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::JudgementRequested {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::JudgementUnrequested {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::SubIdentityAdded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::SubIdentityRemoved {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::SubIdentityRevoked {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl IdentityEvent {
@@ -293,7 +377,7 @@ impl IdentityEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ImOnlineEvent {
     AllGood {
         extrinsic_index: Option<u32>,
@@ -305,6 +389,20 @@ pub enum ImOnlineEvent {
     SomeOffline {
         identification_tuples: Vec<IdentificationTuple>,
     },
+}
+
+impl ImOnlineEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::AllGood {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::HeartbeatReceived {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::SomeOffline { .. } => None,
+        }
+    }
 }
 
 impl ImOnlineEvent {
@@ -337,13 +435,23 @@ impl ImOnlineEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum OffencesEvent {
     Offence {
         extrinsic_index: Option<u32>,
         offence_kind: Kind,
         time_slot: OpaqueTimeSlot,
     },
+}
+
+impl OffencesEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::Offence {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl OffencesEvent {
@@ -364,7 +472,7 @@ impl OffencesEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ParachainInclusionEvent {
     CandidateBacked {
         extrinsic_index: Option<u32>,
@@ -386,6 +494,22 @@ pub enum ParachainInclusionEvent {
         head_data: HeadData,
         core_index: CoreIndex,
     },
+}
+
+impl ParachainInclusionEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::CandidateBacked {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::CandidateIncluded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::CandidateTimedOut {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl ParachainInclusionEvent {
@@ -427,7 +551,7 @@ impl ParachainInclusionEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ParachainsEvent {
     CurrentHeadUpdated {
         extrinsic_index: Option<u32>,
@@ -449,6 +573,28 @@ pub enum ParachainsEvent {
         extrinsic_index: Option<u32>,
         parachain_id: Id,
     },
+}
+
+impl ParachainsEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::CurrentHeadUpdated {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::CodeUpgradeScheduled {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::NewHeadNoted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::CurrentCodeUpdated {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::ActionQueued {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl ParachainsEvent {
@@ -486,12 +632,22 @@ impl ParachainsEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum SessionEvent {
     NewSession {
         extrinsic_index: Option<u32>,
         session_index: SessionIndex,
     },
+}
+
+impl SessionEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::NewSession {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl SessionEvent {
@@ -511,7 +667,7 @@ impl SessionEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum StakingEvent {
     Bonded {
         extrinsic_index: Option<u32>,
@@ -568,6 +724,49 @@ pub enum StakingEvent {
         account_id: AccountId,
         amount: Balance,
     },
+}
+
+impl StakingEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::Bonded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Chilled {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::EraPaid {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::NominatorKicked {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::OldSlashingReportDiscarded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::PayoutStarted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Rewarded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Slashed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::StakersElected {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::StakingElectionFailed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Unbonded {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::Withdrawn {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl StakingEvent {
@@ -642,7 +841,7 @@ impl StakingEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum SystemEvent {
     CodeUpdated {
         extrinsic_index: Option<u32>,
@@ -664,6 +863,28 @@ pub enum SystemEvent {
         extrinsic_index: Option<u32>,
         account_id: AccountId,
     },
+}
+
+impl SystemEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::CodeUpdated {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::ExtrinsicFailed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::ExtrinsicSuccess {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::KilledAccount {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::NewAccount {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl SystemEvent {
@@ -699,7 +920,7 @@ impl SystemEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum UtilityEvent {
     ItemCompleted {
         extrinsic_index: Option<u32>,
@@ -712,6 +933,22 @@ pub enum UtilityEvent {
     BatchCompleted {
         extrinsic_index: Option<u32>,
     },
+}
+
+impl UtilityEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::ItemCompleted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::BatchInterrupted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::BatchCompleted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl UtilityEvent {
@@ -738,7 +975,7 @@ impl UtilityEvent {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum SubstrateEvent {
     Balances(BalancesEvent),
     Democracy(DemocracyEvent),
@@ -757,6 +994,27 @@ pub enum SubstrateEvent {
         extrinsic_index: Option<u32>,
         arguments: Vec<Argument>,
     },
+}
+
+impl SubstrateEvent {
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::Balances(event) => event.get_extrinsic_index(),
+            Self::Democracy(event) => event.get_extrinsic_index(),
+            Self::Identity(event) => event.get_extrinsic_index(),
+            Self::ImOnline(event) => event.get_extrinsic_index(),
+            Self::Offences(event) => event.get_extrinsic_index(),
+            Self::ParachainInclusion(event) => event.get_extrinsic_index(),
+            Self::Parachains(event) => event.get_extrinsic_index(),
+            Self::Session(event) => event.get_extrinsic_index(),
+            Self::Staking(event) => event.get_extrinsic_index(),
+            Self::System(event) => event.get_extrinsic_index(),
+            Self::Utility(event) => event.get_extrinsic_index(),
+            Self::Other {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
 }
 
 impl SubstrateEvent {

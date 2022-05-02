@@ -7,21 +7,10 @@ pub(crate) async fn process_system_event(
     block_hash: &str,
     block_number: u64,
     block_timestamp: u64,
-    successful_extrinsic_indices: &mut Vec<u32>,
-    failed_extrinsic_indices: &mut Vec<u32>,
     event_index: usize,
     event: &SystemEvent,
 ) -> anyhow::Result<()> {
     match event {
-        SystemEvent::ExtrinsicFailed {
-            extrinsic_index,
-            dispatch_error: _,
-            dispatch_info: _,
-        } => failed_extrinsic_indices.push(extrinsic_index.unwrap()),
-        SystemEvent::ExtrinsicSuccess {
-            extrinsic_index,
-            dispatch_info: _,
-        } => successful_extrinsic_indices.push(extrinsic_index.unwrap()),
         SystemEvent::NewAccount {
             extrinsic_index,
             account_id,

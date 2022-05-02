@@ -24,8 +24,6 @@ impl BlockProcessor {
         block_hash: &str,
         block_number: u64,
         block_timestamp: u64,
-        successful_extrinsic_indices: &mut Vec<u32>,
-        failed_extrinsic_indices: &mut Vec<u32>,
         event_index: usize,
         event: &SubstrateEvent,
     ) -> anyhow::Result<()> {
@@ -53,8 +51,6 @@ impl BlockProcessor {
                     block_hash,
                     block_number,
                     block_timestamp,
-                    successful_extrinsic_indices,
-                    failed_extrinsic_indices,
                     event_index,
                     system_event,
                 )

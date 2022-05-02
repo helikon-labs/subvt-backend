@@ -5,6 +5,7 @@ use async_recursion::async_recursion;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
+use subvt_types::substrate::event::{SubstrateEvent, SystemEvent, UtilityEvent};
 use subvt_types::substrate::extrinsic::SubstrateExtrinsic;
 
 mod imonline;
@@ -12,6 +13,42 @@ mod multisig;
 mod proxy;
 mod staking;
 mod utility;
+
+fn consume_call_events(events: &mut Vec<SubstrateEvent>) -> bool {
+    let mut maybe_delimiter_index: Option<usize> = None;
+    let mut is_successful = true;
+    for (index, event) in events.iter().enumerate() {
+        match event {
+            SubstrateEvent::System(SystemEvent::ExtrinsicSuccess { .. }) => {
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::System(SystemEvent::ExtrinsicFailed { .. }) => {
+                is_successful = false;
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::Utility(UtilityEvent::ItemCompleted { .. }) => {
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::Utility(UtilityEvent::BatchInterrupted { .. }) => {
+                is_successful = false;
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            _ => (),
+        }
+    }
+    if let Some(delimiter_index) = maybe_delimiter_index {
+        events.drain(0..(delimiter_index + 1));
+        is_successful
+    } else {
+        panic!(
+            "Call delimiter event not found (ExtrinsicSuccess, ExtrinsicFailed or ItemCompleted)."
+        );
+    }
+}
 
 impl BlockProcessor {
     #[async_recursion]
@@ -28,11 +65,13 @@ impl BlockProcessor {
         batch_index: Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         maybe_real_account_id: Option<AccountId>,
-        is_successful: bool,
+        events: &mut Vec<SubstrateEvent>,
+        batch_fail: bool,
         extrinsic: &SubstrateExtrinsic,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<bool> {
         match extrinsic {
             SubstrateExtrinsic::ImOnline(imonline_extrinsic) => {
+                let is_successful = !batch_fail && consume_call_events(events);
                 process_imonline_extrinsic(
                     postgres,
                     &block_hash,
@@ -43,38 +82,46 @@ impl BlockProcessor {
                     is_successful,
                     imonline_extrinsic,
                 )
-                .await?
+                .await?;
+                Ok(is_successful)
             }
             SubstrateExtrinsic::Multisig(multisig_extrinsic) => {
-                self.process_multisig_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash,
-                    block_number,
-                    active_validator_account_ids,
-                    index,
-                    batch_index,
-                    is_successful,
-                    multisig_extrinsic,
-                )
-                .await?
+                let is_successful = self
+                    .process_multisig_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash,
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        batch_index,
+                        events,
+                        batch_fail,
+                        multisig_extrinsic,
+                    )
+                    .await?;
+                Ok(is_successful)
             }
             SubstrateExtrinsic::Proxy(proxy_extrinsic) => {
-                self.process_proxy_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash,
-                    block_number,
-                    active_validator_account_ids,
-                    index,
-                    batch_index,
-                    maybe_multisig_account_id,
-                    is_successful,
-                    proxy_extrinsic,
-                )
-                .await?
+                let is_successful = self
+                    .process_proxy_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash,
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        batch_index,
+                        maybe_multisig_account_id,
+                        events,
+                        batch_fail,
+                        proxy_extrinsic,
+                    )
+                    .await?;
+                Ok(is_successful)
             }
             SubstrateExtrinsic::Staking(staking_extrinsic) => {
+                let is_successful = !batch_fail && consume_call_events(events);
                 process_staking_extrinsic(
                     substrate_client,
                     postgres,
@@ -87,25 +134,28 @@ impl BlockProcessor {
                     is_successful,
                     staking_extrinsic,
                 )
-                .await?
+                .await?;
+                Ok(is_successful)
             }
             SubstrateExtrinsic::Utility(utility_extrinsic) => {
-                self.process_utility_extrinsic(
-                    substrate_client,
-                    postgres,
-                    block_hash,
-                    block_number,
-                    active_validator_account_ids,
-                    index,
-                    batch_index,
-                    maybe_multisig_account_id,
-                    is_successful,
-                    utility_extrinsic,
-                )
-                .await?
+                let is_successful = self
+                    .process_utility_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash,
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        batch_index,
+                        maybe_multisig_account_id,
+                        events,
+                        batch_fail,
+                        utility_extrinsic,
+                    )
+                    .await?;
+                Ok(is_successful)
             }
-            _ => (),
+            _ => Ok(!batch_fail && consume_call_events(events)),
         }
-        Ok(())
     }
 }

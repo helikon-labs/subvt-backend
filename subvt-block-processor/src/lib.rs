@@ -14,6 +14,7 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::error::DecodeError;
+use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::metadata::MetadataVersion;
 use subvt_types::{
     crypto::AccountId,
@@ -296,11 +297,19 @@ impl BlockProcessor {
             )
             .await?;
         // process/persist events
-        let mut successful_extrinsic_indices: Vec<u32> = Vec::new();
-        let mut failed_extrinsic_indices: Vec<u32> = Vec::new();
+        let mut extrinsic_event_map: HashMap<u32, Vec<SubstrateEvent>> = HashMap::new();
         for (index, event_result) in event_results.iter().enumerate() {
             match event_result {
                 Ok(event) => {
+                    if let Some(extrinsic_index) = event.get_extrinsic_index() {
+                        if let Some(extrinsic_events) =
+                            extrinsic_event_map.get_mut(&extrinsic_index)
+                        {
+                            extrinsic_events.push(event.clone())
+                        } else {
+                            extrinsic_event_map.insert(extrinsic_index, vec![event.clone()]);
+                        }
+                    }
                     if let Err(error) = self
                         .process_event(
                             substrate_client,
@@ -309,8 +318,6 @@ impl BlockProcessor {
                             &block_hash,
                             block_number,
                             block_timestamp,
-                            &mut successful_extrinsic_indices,
-                            &mut failed_extrinsic_indices,
                             index,
                             event,
                         )
@@ -355,7 +362,6 @@ impl BlockProcessor {
             match extrinsic_result {
                 Ok(extrinsic) => {
                     // check events for batch & batch_all
-                    let is_successful = successful_extrinsic_indices.contains(&(index as u32));
                     if let Err(error) = self
                         .process_extrinsic(
                             substrate_client,
@@ -368,7 +374,10 @@ impl BlockProcessor {
                             None,
                             None,
                             None,
-                            is_successful,
+                            extrinsic_event_map
+                                .get_mut(&(index as u32))
+                                .unwrap_or(&mut vec![]),
+                            false,
                             extrinsic,
                         )
                         .await
