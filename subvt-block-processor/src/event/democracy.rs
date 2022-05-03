@@ -181,3 +181,64 @@ pub(crate) async fn process_democracy_event(
     }
     Ok(())
 }
+
+pub(crate) async fn update_democracy_event_batch_index(
+    postgres: &PostgreSQLNetworkStorage,
+    block_hash: &str,
+    batch_index: &Option<String>,
+    event_index: i32,
+    event: &DemocracyEvent,
+) -> anyhow::Result<()> {
+    match event {
+        DemocracyEvent::Cancelled { .. } => {
+            postgres
+                .update_democracy_cancelled_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Delegated { .. } => {
+            postgres
+                .update_democracy_delegated_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::NotPassed { .. } => {
+            postgres
+                .update_democracy_not_passed_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Passed { .. } => {
+            postgres
+                .update_democracy_passed_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Proposed { .. } => {
+            postgres
+                .update_democracy_proposed_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Seconded { .. } => {
+            postgres
+                .update_democracy_seconded_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Started { .. } => {
+            postgres
+                .update_democracy_started_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        DemocracyEvent::Undelegated { .. } => {
+            postgres
+                .update_democracy_undelegated_event_batch_index(
+                    block_hash,
+                    batch_index,
+                    event_index,
+                )
+                .await?;
+        }
+        DemocracyEvent::Voted { .. } => {
+            postgres
+                .update_democracy_voted_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+    }
+    Ok(())
+}

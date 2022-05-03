@@ -57,4 +57,25 @@ impl PostgreSQLNetworkStorage {
         }
         Ok(events)
     }
+
+    pub async fn update_democracy_not_passed_event_batch_index(
+        &self,
+        block_hash: &str,
+        batch_index: &Option<String>,
+        event_index: i32,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE sub_event_democracy_not_passed
+            SET batch_index = $1
+            WHERE block_hash = $2 AND event_index = $3
+            "#,
+        )
+        .bind(batch_index)
+        .bind(block_hash)
+        .bind(event_index)
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
 }

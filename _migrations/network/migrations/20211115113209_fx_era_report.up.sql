@@ -40,8 +40,9 @@ BEGIN
 	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
 	INTO result_record.total_reward
 	WHERE EPS.era_index = era_index_param
-	AND EPS.extrinsic_index = ER.extrinsic_index
 	AND EPS.block_hash = ER.block_hash
+	AND EPS.extrinsic_index = ER.extrinsic_index
+	AND EPS.batch_index = ER.batch_index
 	AND EPS.is_successful = true;
 	
 	SELECT COUNT(DISTINCT EVO.id)

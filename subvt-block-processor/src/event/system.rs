@@ -47,3 +47,26 @@ pub(crate) async fn process_system_event(
     }
     Ok(())
 }
+
+pub(crate) async fn update_system_event_batch_index(
+    postgres: &PostgreSQLNetworkStorage,
+    block_hash: &str,
+    batch_index: &Option<String>,
+    event_index: i32,
+    event: &SystemEvent,
+) -> anyhow::Result<()> {
+    match event {
+        SystemEvent::KilledAccount { .. } => {
+            postgres
+                .update_killed_account_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        SystemEvent::NewAccount { .. } => {
+            postgres
+                .update_new_account_event_batch_index(block_hash, batch_index, event_index)
+                .await?;
+        }
+        _ => (),
+    }
+    Ok(())
+}

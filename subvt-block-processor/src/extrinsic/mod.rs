@@ -1,3 +1,4 @@
+use crate::event::update_event_batch_indices;
 use crate::extrinsic::imonline::process_imonline_extrinsic;
 use crate::extrinsic::staking::process_staking_extrinsic;
 use crate::BlockProcessor;
@@ -14,7 +15,12 @@ mod proxy;
 mod staking;
 mod utility;
 
-fn consume_call_events(events: &mut Vec<(usize, SubstrateEvent)>) -> bool {
+async fn consume_call_events(
+    postgres: &PostgreSQLNetworkStorage,
+    block_hash: &str,
+    batch_index: &Option<String>,
+    events: &mut Vec<(usize, SubstrateEvent)>,
+) -> anyhow::Result<bool> {
     let mut maybe_delimiter_index: Option<usize> = None;
     let mut is_successful = true;
     for (index, event) in events.iter().enumerate() {
@@ -41,8 +47,15 @@ fn consume_call_events(events: &mut Vec<(usize, SubstrateEvent)>) -> bool {
         }
     }
     if let Some(delimiter_index) = maybe_delimiter_index {
+        update_event_batch_indices(
+            postgres,
+            block_hash,
+            batch_index,
+            &events[0..(delimiter_index + 1)],
+        )
+        .await?;
         events.drain(0..(delimiter_index + 1));
-        is_successful
+        Ok(is_successful)
     } else {
         panic!(
             "Call delimiter event not found (ExtrinsicSuccess, ExtrinsicFailed or ItemCompleted)."
@@ -71,7 +84,8 @@ impl BlockProcessor {
     ) -> anyhow::Result<bool> {
         match extrinsic {
             SubstrateExtrinsic::ImOnline(imonline_extrinsic) => {
-                let is_successful = !batch_fail && consume_call_events(events);
+                let is_successful = !batch_fail
+                    && consume_call_events(postgres, &block_hash, batch_index, events).await?;
                 process_imonline_extrinsic(
                     postgres,
                     &block_hash,
@@ -121,7 +135,8 @@ impl BlockProcessor {
                 Ok(is_successful)
             }
             SubstrateExtrinsic::Staking(staking_extrinsic) => {
-                let is_successful = !batch_fail && consume_call_events(events);
+                let is_successful = !batch_fail
+                    && consume_call_events(postgres, &block_hash, batch_index, events).await?;
                 process_staking_extrinsic(
                     substrate_client,
                     postgres,
@@ -132,7 +147,6 @@ impl BlockProcessor {
                     maybe_multisig_account_id,
                     maybe_real_account_id,
                     is_successful,
-                    events,
                     staking_extrinsic,
                 )
                 .await?;
@@ -156,7 +170,8 @@ impl BlockProcessor {
                     .await?;
                 Ok(is_successful)
             }
-            _ => Ok(!batch_fail && consume_call_events(events)),
+            _ => Ok(!batch_fail
+                && consume_call_events(postgres, &block_hash, batch_index, events).await?),
         }
     }
 }

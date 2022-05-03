@@ -1,8 +1,6 @@
-use crate::event::update_event_batch_indices;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::extrinsic::StakingExtrinsic;
 use subvt_types::substrate::MultiAddress;
 
@@ -17,7 +15,6 @@ pub(crate) async fn process_staking_extrinsic(
     maybe_multisig_account_id: Option<AccountId>,
     maybe_real_account_id: Option<AccountId>,
     is_successful: bool,
-    events: &[(usize, SubstrateEvent)],
     extrinsic: &StakingExtrinsic,
 ) -> anyhow::Result<()> {
     match extrinsic {
@@ -217,7 +214,5 @@ pub(crate) async fn process_staking_extrinsic(
             }
         }
     }
-    // update event batch indices
-    update_event_batch_indices(postgres, &block_hash, batch_index, events).await?;
     Ok(())
 }
