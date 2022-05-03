@@ -1,5 +1,6 @@
 //! Indexes historical block data into the PostreSQL database instance.
 
+use crate::event::process_event;
 use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -297,7 +298,7 @@ impl BlockProcessor {
             )
             .await?;
         // process/persist events
-        let mut extrinsic_event_map: HashMap<u32, Vec<SubstrateEvent>> = HashMap::new();
+        let mut extrinsic_event_map: HashMap<u32, Vec<(usize, SubstrateEvent)>> = HashMap::new();
         for (index, event_result) in event_results.iter().enumerate() {
             match event_result {
                 Ok(event) => {
@@ -305,23 +306,23 @@ impl BlockProcessor {
                         if let Some(extrinsic_events) =
                             extrinsic_event_map.get_mut(&extrinsic_index)
                         {
-                            extrinsic_events.push(event.clone())
+                            extrinsic_events.push((index, event.clone()))
                         } else {
-                            extrinsic_event_map.insert(extrinsic_index, vec![event.clone()]);
+                            extrinsic_event_map
+                                .insert(extrinsic_index, vec![(index, event.clone())]);
                         }
                     }
-                    if let Err(error) = self
-                        .process_event(
-                            substrate_client,
-                            postgres,
-                            current_epoch_index,
-                            &block_hash,
-                            block_number,
-                            block_timestamp,
-                            index,
-                            event,
-                        )
-                        .await
+                    if let Err(error) = process_event(
+                        substrate_client,
+                        postgres,
+                        current_epoch_index,
+                        &block_hash,
+                        block_number,
+                        block_timestamp,
+                        index,
+                        event,
+                    )
+                    .await
                     {
                         let error_log = format!(
                             "Error while processing event #{} of block #{}: {:?}",
@@ -371,7 +372,7 @@ impl BlockProcessor {
                             &active_validator_account_ids,
                             index,
                             false,
-                            None,
+                            &None,
                             None,
                             None,
                             extrinsic_event_map

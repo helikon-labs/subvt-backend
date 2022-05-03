@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_batch_interrupted
     id                      SERIAL PRIMARY KEY,
     block_hash              VARCHAR(66) NOT NULL,
     extrinsic_index         integer,
+    batch_index             text,
     event_index             integer NOT NULL,
     item_index              integer NOT NULL,
     dispatch_error_debug    text,

@@ -14,11 +14,11 @@ mod proxy;
 mod staking;
 mod utility;
 
-fn consume_call_events(events: &mut Vec<SubstrateEvent>) -> bool {
+fn consume_call_events(events: &mut Vec<(usize, SubstrateEvent)>) -> bool {
     let mut maybe_delimiter_index: Option<usize> = None;
     let mut is_successful = true;
     for (index, event) in events.iter().enumerate() {
-        match event {
+        match event.1 {
             SubstrateEvent::System(SystemEvent::ExtrinsicSuccess { .. }) => {
                 maybe_delimiter_index = Some(index);
                 break;
@@ -62,10 +62,10 @@ impl BlockProcessor {
         active_validator_account_ids: &[AccountId],
         index: usize,
         is_nested_call: bool,
-        batch_index: Option<String>,
+        batch_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         maybe_real_account_id: Option<AccountId>,
-        events: &mut Vec<SubstrateEvent>,
+        events: &mut Vec<(usize, SubstrateEvent)>,
         batch_fail: bool,
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<bool> {
@@ -132,6 +132,7 @@ impl BlockProcessor {
                     maybe_multisig_account_id,
                     maybe_real_account_id,
                     is_successful,
+                    events,
                     staking_extrinsic,
                 )
                 .await?;

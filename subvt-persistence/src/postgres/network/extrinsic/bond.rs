@@ -9,7 +9,7 @@ impl PostgreSQLNetworkStorage {
         block_hash: &str,
         extrinsic_index: i32,
         is_nested_call: bool,
-        batch_index: Option<String>,
+        batch_index: &Option<String>,
         is_successful: bool,
         (stash_account_id, controller_account_id, amount, reward_destination): (
             &AccountId,

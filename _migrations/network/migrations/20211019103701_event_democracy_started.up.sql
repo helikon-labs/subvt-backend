@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_started
     id                  SERIAL PRIMARY KEY,
     block_hash          VARCHAR(66) NOT NULL,
     extrinsic_index     integer,
+    batch_index         text,
     event_index         integer NOT NULL,
     referendum_index    bigint NOT NULL,
     vote_threshold      VARCHAR(32) NOT NULL,

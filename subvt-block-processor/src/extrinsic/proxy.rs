@@ -15,9 +15,9 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
-        batch_index: Option<String>,
+        batch_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
-        events: &mut Vec<SubstrateEvent>,
+        events: &mut Vec<(usize, SubstrateEvent)>,
         batch_fail: bool,
         extrinsic: &ProxyExtrinsic,
     ) -> anyhow::Result<bool> {

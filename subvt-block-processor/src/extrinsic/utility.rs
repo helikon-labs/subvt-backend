@@ -15,9 +15,9 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
-        batch_index: Option<String>,
+        batch_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
-        events: &mut Vec<SubstrateEvent>,
+        events: &mut Vec<(usize, SubstrateEvent)>,
         batch_fail: bool,
         extrinsic: &UtilityExtrinsic,
     ) -> anyhow::Result<bool> {
@@ -37,7 +37,7 @@ impl BlockProcessor {
                             active_validator_account_ids,
                             index,
                             true,
-                            if let Some(batch_index) = batch_index.as_ref() {
+                            &if let Some(batch_index) = batch_index.as_ref() {
                                 Some(format!("{}{}", batch_index, inner_batch_index))
                             } else {
                                 Some(inner_batch_index.to_string())
@@ -69,7 +69,7 @@ impl BlockProcessor {
                             active_validator_account_ids,
                             index,
                             true,
-                            if let Some(batch_index) = batch_index.as_ref() {
+                            &if let Some(batch_index) = batch_index.as_ref() {
                                 Some(format!("{}{}", batch_index, inner_batch_index))
                             } else {
                                 Some(inner_batch_index.to_string())

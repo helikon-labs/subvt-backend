@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_nominator_kicked
     id                      SERIAL PRIMARY KEY,
     block_hash              VARCHAR(66) NOT NULL,
     extrinsic_index         integer,
+    batch_index             text,
     event_index             integer NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
     nominator_account_id    VARCHAR(66) NOT NULL,
