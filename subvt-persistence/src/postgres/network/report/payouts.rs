@@ -14,7 +14,7 @@ impl PostgreSQLNetworkStorage {
             WHERE EV.block_hash = EX.block_hash
             AND E.index = EX.era_index
             AND EV.extrinsic_index = EX.extrinsic_index
-            AND EV.batch_index = EX.batch_index
+            AND COALESCE(EV.batch_index, '') = COALESCE(EX.batch_index, '')
             AND EX.validator_account_id = $1
             AND EV.rewardee_account_id != $1
             GROUP BY E.index
