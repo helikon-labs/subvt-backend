@@ -17,6 +17,7 @@ impl BlockProcessor {
         index: usize,
         batch_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
+        maybe_real_account_id: Option<AccountId>,
         events: &mut Vec<(usize, SubstrateEvent)>,
         batch_fail: bool,
         extrinsic: &UtilityExtrinsic,
@@ -43,7 +44,7 @@ impl BlockProcessor {
                                 Some(inner_batch_index.to_string())
                             },
                             maybe_multisig_account_id,
-                            None,
+                            maybe_real_account_id,
                             events,
                             !is_successful,
                             call,
@@ -75,7 +76,7 @@ impl BlockProcessor {
                                 Some(inner_batch_index.to_string())
                             },
                             maybe_multisig_account_id,
-                            None,
+                            maybe_real_account_id,
                             events,
                             !is_successful,
                             call,

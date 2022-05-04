@@ -34,7 +34,8 @@ impl PostgreSQLNetworkStorage {
         is_nested_call: bool,
         batch_index: &Option<String>,
         is_successful: bool,
-        (caller_account_id, validator_account_id): (&AccountId, &AccountId),
+        caller_account_id: &AccountId,
+        validator_account_id: &AccountId,
         era_index: u32,
     ) -> anyhow::Result<Option<i32>> {
         self.save_account(caller_account_id).await?;

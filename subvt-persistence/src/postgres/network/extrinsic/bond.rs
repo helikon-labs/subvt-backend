@@ -4,6 +4,7 @@ use subvt_types::substrate::RewardDestination;
 use subvt_types::{crypto::AccountId, substrate::Balance};
 
 impl PostgreSQLNetworkStorage {
+    #[allow(clippy::too_many_arguments)]
     pub async fn save_bond_extrinsic(
         &self,
         block_hash: &str,
@@ -11,12 +12,10 @@ impl PostgreSQLNetworkStorage {
         is_nested_call: bool,
         batch_index: &Option<String>,
         is_successful: bool,
-        (stash_account_id, controller_account_id, amount, reward_destination): (
-            &AccountId,
-            &AccountId,
-            Balance,
-            &RewardDestination,
-        ),
+        stash_account_id: &AccountId,
+        controller_account_id: &AccountId,
+        amount: Balance,
+        reward_destination: &RewardDestination,
     ) -> anyhow::Result<Option<i32>> {
         self.save_account(stash_account_id).await?;
         self.save_account(controller_account_id).await?;

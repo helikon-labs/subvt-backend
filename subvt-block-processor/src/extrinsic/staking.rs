@@ -50,12 +50,10 @@ pub(crate) async fn process_staking_extrinsic(
                         is_nested_call,
                         batch_index,
                         is_successful,
-                        (
-                            &stash_account_id,
-                            &controller_account_id,
-                            *amount,
-                            reward_destination,
-                        ),
+                        &stash_account_id,
+                        &controller_account_id,
+                        *amount,
+                        reward_destination,
                     )
                     .await?;
             } else {
@@ -128,7 +126,8 @@ pub(crate) async fn process_staking_extrinsic(
                         is_nested_call,
                         batch_index,
                         is_successful,
-                        (&caller_account_id, validator_account_id),
+                        &caller_account_id,
+                        validator_account_id,
                         *era_index,
                     )
                     .await?;
