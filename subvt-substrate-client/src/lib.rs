@@ -70,8 +70,8 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         log::info!("Got metadata.");
-        metadata.log_all_calls();
-        metadata.log_all_events();
+        // metadata.log_all_calls();
+        // metadata.log_all_events();
         metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
