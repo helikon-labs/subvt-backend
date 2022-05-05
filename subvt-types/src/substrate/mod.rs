@@ -633,9 +633,9 @@ pub struct Stake {
 
 impl Stake {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let ledger: StakingLedger<AccountId, Balance> = Decode::decode(&mut bytes)?;
+        let ledger: StakingLedger<polkadot_runtime::Runtime> = Decode::decode(&mut bytes)?;
         let stake = Self {
-            stash_account_id: ledger.stash,
+            stash_account_id: AccountId::new(ledger.stash.into()),
             total_amount: ledger.total,
             active_amount: ledger.active,
             // claimed_era_indices: ledger.claimed_rewards,

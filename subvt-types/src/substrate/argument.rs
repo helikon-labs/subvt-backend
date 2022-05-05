@@ -33,6 +33,7 @@ use pallet_identity::{Data, IdentityFields, IdentityInfo, Judgement, RegistrarIn
 use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
+use pallet_nomination_pools::{BondExtra, PoolId, PoolState};
 use pallet_scheduler::TaskAddress;
 use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
@@ -152,6 +153,9 @@ pub enum ArgumentPrimitive {
     MultisigTimepoint(Timepoint<BlockNumber>),
     MultiSignature(MultiSignature),
     MultiSigner(MultiSigner),
+    NominationPoolBondExtra(BondExtra<Balance>),
+    NominationPoolId(PoolId),
+    NominationPoolState(PoolState),
     OffenceKind(Kind),
     OpaqueTimeSlot(OpaqueTimeSlot),
     ParachainsInherentData(InherentData),
@@ -432,6 +436,9 @@ generate_argument_primitive_decoder_impl! {[
     ("Perbill", decode_perbill, Perbill),
     ("Percent", decode_percent, Percent),
     ("Perquintill", decode_perquintill, Perquintill),
+    ("BondExtra<BalanceOf<T>>", decode_nomination_pool_bond_extra, NominationPoolBondExtra),
+    ("PoolId", decode_nomination_pool_id, NominationPoolId),
+    ("PoolState", decode_nomination_pool_state, NominationPoolState),
     ("ProxyType", decode_proxy_type_1, ProxyType),
     ("T::ProxyType", decode_proxy_type_2, ProxyType),
     ("PvfCheckStatement", decode_pvf_check_statement, PvfCheckStatement),
