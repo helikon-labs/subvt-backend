@@ -1011,8 +1011,8 @@ impl MultisigEvent {
                 approving_account_id: get_argument_primitive!(&arguments[0], AccountId),
                 timepoint: get_argument_primitive!(&arguments[1], MultisigTimepoint),
                 multisig_account_id: get_argument_primitive!(&arguments[2], AccountId),
-                call_hash: get_argument_primitive!(&arguments[2], CallHash),
-                result: get_argument_primitive!(&arguments[3], DispatchResult),
+                call_hash: get_argument_primitive!(&arguments[3], CallHash),
+                result: get_argument_primitive!(&arguments[4], DispatchResult),
             })),
             _ => None,
         };
