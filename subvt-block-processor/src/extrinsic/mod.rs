@@ -6,7 +6,9 @@ use async_recursion::async_recursion;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::event::{SubstrateEvent, SystemEvent, UtilityEvent};
+use subvt_types::substrate::event::{
+    MultisigEvent, ProxyEvent, SubstrateEvent, SystemEvent, UtilityEvent,
+};
 use subvt_types::substrate::extrinsic::SubstrateExtrinsic;
 
 mod imonline;
@@ -25,7 +27,28 @@ async fn consume_call_events(
     let mut is_successful = true;
     for (index, event) in events.iter().enumerate() {
         match event.1 {
-            SubstrateEvent::System(SystemEvent::ExtrinsicSuccess { .. }) => {
+            SubstrateEvent::Utility(UtilityEvent::ItemCompleted { .. }) => {
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::Utility(UtilityEvent::BatchInterrupted { .. }) => {
+                is_successful = false;
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::Proxy(ProxyEvent::ProxyExecuted {
+                result: dispatch_result,
+                ..
+            }) => {
+                is_successful = dispatch_result.is_ok();
+                maybe_delimiter_index = Some(index);
+                break;
+            }
+            SubstrateEvent::Multisig(MultisigEvent::MultisigExecuted {
+                result: dispatch_result,
+                ..
+            }) => {
+                is_successful = dispatch_result.is_ok();
                 maybe_delimiter_index = Some(index);
                 break;
             }
@@ -34,12 +57,7 @@ async fn consume_call_events(
                 maybe_delimiter_index = Some(index);
                 break;
             }
-            SubstrateEvent::Utility(UtilityEvent::ItemCompleted { .. }) => {
-                maybe_delimiter_index = Some(index);
-                break;
-            }
-            SubstrateEvent::Utility(UtilityEvent::BatchInterrupted { .. }) => {
-                is_successful = false;
+            SubstrateEvent::System(SystemEvent::ExtrinsicSuccess { .. }) => {
                 maybe_delimiter_index = Some(index);
                 break;
             }

@@ -53,9 +53,10 @@ BEGIN
 	
     SELECT STRING_AGG(EV.era_index::character varying, ',')
     INTO result_record.unclaimed_eras
-    FROM sub_era_validator EV, sub_era E
-    WHERE EV.era_index = E.index
-    AND EV.validator_account_id = account_id_param
+    FROM sub_era_validator EV
+    INNER JOIN sub_era E
+        ON EV.era_index = E.index
+    WHERE EV.validator_account_id = account_id_param
     AND EV.is_active = true
     AND EV.reward_points > 0
     AND E.end_timestamp < (EXTRACT(epoch FROM now() AT time zone 'UTC')::bigint * 1000)
@@ -87,10 +88,11 @@ BEGIN
 
         SELECT EXISTS(
             SELECT E.id
-            FROM sub_extrinsic_heartbeat E, sub_block B
+            FROM sub_extrinsic_heartbeat E
+            INNER JOIN sub_block B
+                ON E.session_index = B.epoch_index
             WHERE E.validator_account_id = account_id_param
             AND B.hash = block_hash_param
-            AND E.session_index = B.epoch_index
             AND E.is_successful = true
         ) INTO result_record.heartbeat_received;
     end if;

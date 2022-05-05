@@ -10,14 +10,15 @@ impl PostgreSQLNetworkStorage {
         let era_rewards: Vec<(i64, i64, i64, i64)> = sqlx::query_as(
             r#"
             SELECT E.index, E.start_timestamp, E.end_timestamp, SUM(EV.amount::bigint)::bigint
-            FROM sub_event_rewarded EV, sub_extrinsic_payout_stakers EX, sub_era E
-            WHERE EV.block_hash = EX.block_hash
-            AND E.index = EX.era_index
-            AND EV.extrinsic_index = EX.extrinsic_index
-            AND COALESCE(EV.batch_index, '') = COALESCE(EX.batch_index, '')
-            AND EX.validator_account_id = $1
-            AND EV.rewardee_account_id = $1
-            AND EX.is_successful = true
+            FROM sub_event_rewarded EV
+            INNER JOIN sub_extrinsic_payout_stakers EX
+                ON EV.block_hash = EX.block_hash
+                AND EV.extrinsic_index = EX.extrinsic_index
+                AND COALESCE(EV.batch_index, '') = COALESCE(EX.batch_index, '')
+                AND EX.validator_account_id = EV.rewardee_account_id
+            INNER JOIN sub_era E
+                ON E.index = EX.era_index
+            WHERE EV.rewardee_account_id = $1
             GROUP BY E.index
             ORDER BY E.index ASC;
             "#,

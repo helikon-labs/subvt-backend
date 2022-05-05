@@ -1,5 +1,6 @@
 //! Substrate event types, and decode logic.
 //! Note: These are only the events that are utilized in SubVT.
+use crate::substrate::CallHash;
 use crate::{
     crypto::AccountId,
     substrate::{
@@ -12,10 +13,12 @@ use crate::{
         Balance, Block, Chain, OpaqueTimeSlot,
     },
 };
-use frame_support::dispatch::{DispatchError, DispatchInfo};
+use frame_support::dispatch::{DispatchError, DispatchInfo, DispatchResult};
 use pallet_democracy::{AccountVote, PropIndex, ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
+use pallet_multisig::Timepoint;
 use parity_scale_codec::{Compact, Decode};
+use polkadot_core_primitives::BlockNumber;
 use polkadot_primitives::v2::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
@@ -951,6 +954,80 @@ impl UtilityEvent {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum ProxyEvent {
+    ProxyExecuted {
+        extrinsic_index: Option<u32>,
+        result: DispatchResult,
+    },
+}
+
+impl ProxyEvent {
+    pub fn from(
+        name: &str,
+        extrinsic_index: Option<u32>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        let maybe_event = match name {
+            "ProxyExecuted" => Some(SubstrateEvent::Proxy(ProxyEvent::ProxyExecuted {
+                extrinsic_index,
+                result: get_argument_primitive!(&arguments[0], DispatchResult),
+            })),
+            _ => None,
+        };
+        Ok(maybe_event)
+    }
+
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::ProxyExecuted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum MultisigEvent {
+    MultisigExecuted {
+        extrinsic_index: Option<u32>,
+        approving_account_id: AccountId,
+        timepoint: Timepoint<BlockNumber>,
+        multisig_account_id: AccountId,
+        call_hash: CallHash,
+        result: DispatchResult,
+    },
+}
+
+impl MultisigEvent {
+    pub fn from(
+        name: &str,
+        extrinsic_index: Option<u32>,
+        arguments: Vec<Argument>,
+    ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        let maybe_event = match name {
+            "MultisigExecuted" => Some(SubstrateEvent::Multisig(MultisigEvent::MultisigExecuted {
+                extrinsic_index,
+                approving_account_id: get_argument_primitive!(&arguments[0], AccountId),
+                timepoint: get_argument_primitive!(&arguments[1], MultisigTimepoint),
+                multisig_account_id: get_argument_primitive!(&arguments[2], AccountId),
+                call_hash: get_argument_primitive!(&arguments[2], CallHash),
+                result: get_argument_primitive!(&arguments[3], DispatchResult),
+            })),
+            _ => None,
+        };
+        Ok(maybe_event)
+    }
+
+    pub fn get_extrinsic_index(&self) -> Option<u32> {
+        match self {
+            Self::MultisigExecuted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+        }
+    }
+}
+
 impl UtilityEvent {
     pub fn from(
         name: &str,
@@ -981,9 +1058,11 @@ pub enum SubstrateEvent {
     Democracy(DemocracyEvent),
     Identity(IdentityEvent),
     ImOnline(ImOnlineEvent),
+    Multisig(MultisigEvent),
     Offences(OffencesEvent),
     ParachainInclusion(Box<ParachainInclusionEvent>),
     Parachains(ParachainsEvent),
+    Proxy(ProxyEvent),
     Session(SessionEvent),
     Staking(StakingEvent),
     System(SystemEvent),
@@ -1003,9 +1082,11 @@ impl SubstrateEvent {
             Self::Democracy(event) => event.get_extrinsic_index(),
             Self::Identity(event) => event.get_extrinsic_index(),
             Self::ImOnline(event) => event.get_extrinsic_index(),
+            Self::Multisig(event) => event.get_extrinsic_index(),
             Self::Offences(event) => event.get_extrinsic_index(),
             Self::ParachainInclusion(event) => event.get_extrinsic_index(),
             Self::Parachains(event) => event.get_extrinsic_index(),
+            Self::Proxy(event) => event.get_extrinsic_index(),
             Self::Session(event) => event.get_extrinsic_index(),
             Self::Staking(event) => event.get_extrinsic_index(),
             Self::System(event) => event.get_extrinsic_index(),
@@ -1066,11 +1147,13 @@ impl SubstrateEvent {
             "Democracy" => DemocracyEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Identity" => IdentityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "ImOnline" => ImOnlineEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Multisig" => MultisigEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Offences" => OffencesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "ParaInclusion" => {
                 ParachainInclusionEvent::from(&event.name, extrinsic_index, arguments.clone())?
             }
             "Paras" => ParachainsEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Proxy" => ProxyEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Session" => SessionEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "Staking" => StakingEvent::from(&event.name, extrinsic_index, arguments.clone())?,
             "System" => SystemEvent::from(&event.name, extrinsic_index, arguments.clone())?,
