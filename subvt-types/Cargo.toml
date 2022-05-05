@@ -11,7 +11,7 @@ frame-metadata = { version = "15.0.0", features = ["std", "v12", "v13", "v14"] }
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
 hex = "0.4"
-log = "0.4.16"
+log = "0.4.17"
 pallet-bags-list = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
 pallet-bounties = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
 pallet-collective = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.20" }
