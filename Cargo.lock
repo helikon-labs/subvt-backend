@@ -843,9 +843,9 @@ dependencies = [
 
 [[package]]
 name = "common-multipart-rfc7578"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22328b3864f1d8dbe7036f3f2fdfdcb1f367af43dca418943d396fbf8c4b8021"
+checksum = "5baee326bc603965b0f26583e1ecd7c111c41b49bd92a344897476a352798869"
 dependencies = [
  "bytes",
  "futures-core",
@@ -2302,9 +2302,9 @@ dependencies = [
 
 [[package]]
 name = "hyper-multipart-rfc7578"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63ca8108ac0ae98d310d41cddb11c6b822e8aca865dbe421366934e6f7f72e10"
+checksum = "f0eb2cf73e96e9925f4bed948e763aa2901c2f1a3a5f713ee41917433ced6671"
 dependencies = [
  "bytes",
  "common-multipart-rfc7578",

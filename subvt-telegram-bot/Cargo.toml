@@ -10,7 +10,7 @@ async-trait = "0.1.53"
 chrono = "0.4.19"
 frankenstein = { version = "0.13.0", default-features = false, features = ["async-telegram-trait"] }
 hyper = "0.14.18"
-hyper-multipart-rfc7578 = "0.7.0"
+hyper-multipart-rfc7578 = "0.8.0"
 hyper-tls = "0.5.0"
 itertools = "0.10.3"
 lazy_static = "1.4.0"
