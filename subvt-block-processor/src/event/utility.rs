@@ -40,27 +40,39 @@ pub(crate) async fn process_utility_event(
     Ok(())
 }
 
-pub(crate) async fn update_utility_event_batch_index(
+pub(crate) async fn update_utility_event_nesting_index(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,
-    batch_index: &Option<String>,
+    maybe_nesting_index: &Option<String>,
     event_index: i32,
     event: &UtilityEvent,
 ) -> anyhow::Result<()> {
     match event {
         UtilityEvent::BatchCompleted { .. } => {
             postgres
-                .update_batch_completed_event_batch_index(block_hash, batch_index, event_index)
+                .update_batch_completed_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
                 .await?;
         }
         UtilityEvent::BatchInterrupted { .. } => {
             postgres
-                .update_batch_interrupted_event_batch_index(block_hash, batch_index, event_index)
+                .update_batch_interrupted_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
                 .await?;
         }
         UtilityEvent::ItemCompleted { .. } => {
             postgres
-                .update_batch_item_completed_event_batch_index(block_hash, batch_index, event_index)
+                .update_batch_item_completed_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
                 .await?;
         }
     }

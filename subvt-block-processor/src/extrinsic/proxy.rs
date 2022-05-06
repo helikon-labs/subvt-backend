@@ -15,7 +15,7 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         events: &mut Vec<(usize, SubstrateEvent)>,
         batch_fail: bool,
@@ -37,7 +37,11 @@ impl BlockProcessor {
                         active_validator_account_ids,
                         index,
                         true,
-                        batch_index,
+                        &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                            Some(format!("{}P", nesting_index))
+                        } else {
+                            Some("P".to_string())
+                        },
                         maybe_multisig_account_id,
                         Some(*real_account_id),
                         events,
@@ -63,7 +67,11 @@ impl BlockProcessor {
                         active_validator_account_ids,
                         index,
                         true,
-                        batch_index,
+                        &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                            Some(format!("{}PA", nesting_index))
+                        } else {
+                            Some("PA".to_string())
+                        },
                         maybe_multisig_account_id,
                         Some(*real_account_id),
                         events,

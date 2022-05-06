@@ -8,7 +8,7 @@ impl PostgreSQLNetworkStorage {
         block_hash: &str,
         extrinsic_index: i32,
         is_nested_call: bool,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         is_successful: bool,
         controller_account_id: &AccountId,
         validator_account_ids: &[AccountId],
@@ -16,16 +16,16 @@ impl PostgreSQLNetworkStorage {
         self.save_account(controller_account_id).await?;
         let maybe_extrinsic_nominate_id: Option<(i32, )> = sqlx::query_as(
             r#"
-            INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, batch_index, controller_account_id, is_successful)
+            INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, nesting_index, controller_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT(block_hash, extrinsic_index, batch_index) DO NOTHING
+            ON CONFLICT(block_hash, extrinsic_index, nesting_index) DO NOTHING
             RETURNING id
             "#,
         )
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(is_nested_call)
-            .bind(batch_index)
+            .bind(maybe_nesting_index)
             .bind(controller_account_id.to_string())
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)

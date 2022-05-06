@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_rewarded
     id                  SERIAL PRIMARY KEY,
     block_hash          VARCHAR(66) NOT NULL,
     extrinsic_index     integer,
-    batch_index         text,
+    nesting_index       text,
     event_index         integer NOT NULL,
     rewardee_account_id VARCHAR(66) NOT NULL,
     amount              VARCHAR(128) NOT NULL,

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_heartbeat
     block_hash              VARCHAR(66) NOT NULL,
     extrinsic_index         integer NOT NULL,
     is_nested_call          boolean NOT NULL,
-    batch_index             text,
+    nesting_index           text,
     block_number            bigint NOT NULL,
     session_index           bigint NOT NULL,
     validator_index         bigint NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_heartbeat
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_extrinsic_heartbeat_u_extrinsic
-        UNIQUE (block_hash, extrinsic_index, batch_index),
+        UNIQUE (block_hash, extrinsic_index, nesting_index),
     CONSTRAINT sub_extrinsic_heartbeat_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)

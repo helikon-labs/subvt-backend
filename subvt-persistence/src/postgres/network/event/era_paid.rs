@@ -28,21 +28,21 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
-    pub async fn update_era_paid_event_batch_index(
+    pub async fn update_era_paid_event_nesting_index(
         &self,
         block_hash: &str,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         event_index: i32,
         era_index: u32,
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
             UPDATE sub_event_era_paid
-            SET batch_index = $1
+            SET nesting_index = $1
             WHERE block_hash = $2 AND event_index = $3 AND era_index = $4
             "#,
         )
-        .bind(batch_index)
+        .bind(maybe_nesting_index)
         .bind(block_hash)
         .bind(event_index)
         .bind(era_index)

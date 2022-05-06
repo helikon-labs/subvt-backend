@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_proposed
     id              SERIAL PRIMARY KEY,
     block_hash      VARCHAR(66) NOT NULL,
     extrinsic_index integer,
-    batch_index     text,
+    nesting_index   text,
     event_index     integer NOT NULL,
     proposal_index  bigint NOT NULL,
     deposit         VARCHAR(128) NOT NULL,

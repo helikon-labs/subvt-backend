@@ -42,7 +42,7 @@ BEGIN
 	WHERE EPS.era_index = era_index_param
 	AND EPS.block_hash = ER.block_hash
 	AND EPS.extrinsic_index = ER.extrinsic_index
-	AND EPS.batch_index = ER.batch_index
+	AND EPS.nesting_index = ER.nesting_index
 	AND EPS.is_successful = true;
 	
 	SELECT COUNT(DISTINCT EVO.id)

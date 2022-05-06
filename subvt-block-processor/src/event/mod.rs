@@ -1,8 +1,8 @@
-use crate::event::democracy::{process_democracy_event, update_democracy_event_batch_index};
+use crate::event::democracy::{process_democracy_event, update_democracy_event_nesting_index};
 use crate::event::imonline::process_imonline_event;
-use crate::event::staking::{process_staking_event, update_staking_event_batch_index};
-use crate::event::system::{process_system_event, update_system_event_batch_index};
-use crate::event::utility::{process_utility_event, update_utility_event_batch_index};
+use crate::event::staking::{process_staking_event, update_staking_event_nesting_index};
+use crate::event::system::{process_system_event, update_system_event_nesting_index};
+use crate::event::utility::{process_utility_event, update_utility_event_nesting_index};
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::event::SubstrateEvent;
@@ -61,49 +61,49 @@ pub(crate) async fn process_event(
     Ok(())
 }
 
-pub(crate) async fn update_event_batch_indices(
+pub(crate) async fn update_event_nesting_indices(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,
-    batch_index: &Option<String>,
+    maybe_nesting_index: &Option<String>,
     events: &[(usize, SubstrateEvent)],
 ) -> anyhow::Result<()> {
     for (event_index, event) in events {
         match event {
             SubstrateEvent::Democracy(democracy_event) => {
-                update_democracy_event_batch_index(
+                update_democracy_event_nesting_index(
                     postgres,
                     block_hash,
-                    batch_index,
+                    maybe_nesting_index,
                     *event_index as i32,
                     democracy_event,
                 )
                 .await?;
             }
             SubstrateEvent::Staking(staking_event) => {
-                update_staking_event_batch_index(
+                update_staking_event_nesting_index(
                     postgres,
                     block_hash,
-                    batch_index,
+                    maybe_nesting_index,
                     *event_index as i32,
                     staking_event,
                 )
                 .await?;
             }
             SubstrateEvent::System(system_event) => {
-                update_system_event_batch_index(
+                update_system_event_nesting_index(
                     postgres,
                     block_hash,
-                    batch_index,
+                    maybe_nesting_index,
                     *event_index as i32,
                     system_event,
                 )
                 .await?
             }
             SubstrateEvent::Utility(utility_event) => {
-                update_utility_event_batch_index(
+                update_utility_event_nesting_index(
                     postgres,
                     block_hash,
-                    batch_index,
+                    maybe_nesting_index,
                     *event_index as i32,
                     utility_event,
                 )

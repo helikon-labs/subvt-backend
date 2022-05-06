@@ -14,7 +14,7 @@ impl PostgreSQLNetworkStorage {
             INNER JOIN sub_extrinsic_payout_stakers EX
                 ON EV.block_hash = EX.block_hash
                 AND EV.extrinsic_index = EX.extrinsic_index
-                AND COALESCE(EV.batch_index, '') = COALESCE(EX.batch_index, '')
+                AND COALESCE(EV.nesting_index, '') = COALESCE(EX.nesting_index, '')
                 AND EX.validator_account_id = EV.rewardee_account_id
             INNER JOIN sub_era E
                 ON E.index = EX.era_index

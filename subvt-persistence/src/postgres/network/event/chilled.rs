@@ -56,10 +56,10 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
-    pub async fn update_chilled_event_batch_index(
+    pub async fn update_chilled_event_nesting_index(
         &self,
         block_hash: &str,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         event_index: i32,
         stash_account_id: &AccountId,
     ) -> anyhow::Result<()> {
@@ -67,11 +67,11 @@ impl PostgreSQLNetworkStorage {
         sqlx::query(
             r#"
             UPDATE sub_event_chilled
-            SET batch_index = $1
+            SET nesting_index = $1
             WHERE block_hash = $2 AND event_index = $3 AND stash_account_id = $4
             "#,
         )
-        .bind(batch_index)
+        .bind(maybe_nesting_index)
         .bind(block_hash)
         .bind(event_index)
         .bind(stash_account_id.to_string())

@@ -109,10 +109,10 @@ pub(crate) async fn process_staking_event(
     Ok(())
 }
 
-pub(crate) async fn update_staking_event_batch_index(
+pub(crate) async fn update_staking_event_nesting_index(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,
-    batch_index: &Option<String>,
+    maybe_nesting_index: &Option<String>,
     event_index: i32,
     event: &StakingEvent,
 ) -> anyhow::Result<()> {
@@ -121,9 +121,9 @@ pub(crate) async fn update_staking_event_batch_index(
             stash_account_id, ..
         } => {
             postgres
-                .update_chilled_event_batch_index(
+                .update_chilled_event_nesting_index(
                     block_hash,
-                    batch_index,
+                    maybe_nesting_index,
                     event_index,
                     stash_account_id,
                 )
@@ -131,27 +131,40 @@ pub(crate) async fn update_staking_event_batch_index(
         }
         StakingEvent::EraPaid { era_index, .. } => {
             postgres
-                .update_era_paid_event_batch_index(block_hash, batch_index, event_index, *era_index)
+                .update_era_paid_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                    *era_index,
+                )
                 .await?;
         }
         StakingEvent::NominatorKicked { .. } => {
             postgres
-                .update_nominator_kicked_event_batch_index(block_hash, batch_index, event_index)
+                .update_nominator_kicked_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
                 .await?;
         }
         StakingEvent::PayoutStarted { .. } => {
             postgres
-                .update_payout_started_event_batch_index(block_hash, batch_index, event_index)
+                .update_payout_started_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
                 .await?;
         }
         StakingEvent::Rewarded { .. } => {
             postgres
-                .update_rewarded_event_batch_index(block_hash, batch_index, event_index)
+                .update_rewarded_event_nesting_index(block_hash, maybe_nesting_index, event_index)
                 .await?;
         }
         StakingEvent::Slashed { .. } => {
             postgres
-                .update_slashed_event_batch_index(block_hash, batch_index, event_index)
+                .update_slashed_event_nesting_index(block_hash, maybe_nesting_index, event_index)
                 .await?;
         }
         _ => (),

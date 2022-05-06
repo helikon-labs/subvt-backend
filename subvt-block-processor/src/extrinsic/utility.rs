@@ -15,7 +15,7 @@ impl BlockProcessor {
         block_number: u64,
         active_validator_account_ids: &[AccountId],
         index: usize,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         maybe_real_account_id: Option<AccountId>,
         events: &mut Vec<(usize, SubstrateEvent)>,
@@ -28,7 +28,7 @@ impl BlockProcessor {
                 calls,
             } => {
                 let mut is_successful = !batch_fail;
-                for (inner_batch_index, call) in calls.iter().enumerate() {
+                for (batch_index, call) in calls.iter().enumerate() {
                     let call_is_successful = self
                         .process_extrinsic(
                             substrate_client,
@@ -38,10 +38,10 @@ impl BlockProcessor {
                             active_validator_account_ids,
                             index,
                             true,
-                            &if let Some(batch_index) = batch_index.as_ref() {
-                                Some(format!("{}{}", batch_index, inner_batch_index))
+                            &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                                Some(format!("{}{}", nesting_index, batch_index))
                             } else {
-                                Some(inner_batch_index.to_string())
+                                Some(batch_index.to_string())
                             },
                             maybe_multisig_account_id,
                             maybe_real_account_id,
@@ -60,7 +60,7 @@ impl BlockProcessor {
                 calls,
             } => {
                 let mut is_successful = !batch_fail;
-                for (inner_batch_index, call) in calls.iter().enumerate() {
+                for (batch_index, call) in calls.iter().enumerate() {
                     let call_is_successful = self
                         .process_extrinsic(
                             substrate_client,
@@ -70,10 +70,10 @@ impl BlockProcessor {
                             active_validator_account_ids,
                             index,
                             true,
-                            &if let Some(batch_index) = batch_index.as_ref() {
-                                Some(format!("{}{}", batch_index, inner_batch_index))
+                            &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                                Some(format!("{}{}", nesting_index, batch_index))
                             } else {
-                                Some(inner_batch_index.to_string())
+                                Some(batch_index.to_string())
                             },
                             maybe_multisig_account_id,
                             maybe_real_account_id,

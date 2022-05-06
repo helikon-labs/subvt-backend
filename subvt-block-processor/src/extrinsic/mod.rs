@@ -1,4 +1,4 @@
-use crate::event::update_event_batch_indices;
+use crate::event::update_event_nesting_indices;
 use crate::extrinsic::imonline::process_imonline_extrinsic;
 use crate::extrinsic::staking::process_staking_extrinsic;
 use crate::BlockProcessor;
@@ -20,7 +20,7 @@ mod utility;
 async fn consume_call_events(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,
-    batch_index: &Option<String>,
+    maybe_nesting_index: &Option<String>,
     events: &mut Vec<(usize, SubstrateEvent)>,
 ) -> anyhow::Result<bool> {
     let mut maybe_delimiter_index: Option<usize> = None;
@@ -65,10 +65,10 @@ async fn consume_call_events(
         }
     }
     if let Some(delimiter_index) = maybe_delimiter_index {
-        update_event_batch_indices(
+        update_event_nesting_indices(
             postgres,
             block_hash,
-            batch_index,
+            maybe_nesting_index,
             &events[0..(delimiter_index + 1)],
         )
         .await?;
@@ -93,7 +93,7 @@ impl BlockProcessor {
         active_validator_account_ids: &[AccountId],
         index: usize,
         is_nested_call: bool,
-        batch_index: &Option<String>,
+        maybe_nesting_index: &Option<String>,
         maybe_multisig_account_id: Option<AccountId>,
         maybe_real_account_id: Option<AccountId>,
         events: &mut Vec<(usize, SubstrateEvent)>,
@@ -103,14 +103,15 @@ impl BlockProcessor {
         match extrinsic {
             SubstrateExtrinsic::ImOnline(imonline_extrinsic) => {
                 let is_successful = !batch_fail
-                    && consume_call_events(postgres, &block_hash, batch_index, events).await?;
+                    && consume_call_events(postgres, &block_hash, maybe_nesting_index, events)
+                        .await?;
                 process_imonline_extrinsic(
                     postgres,
                     &block_hash,
                     active_validator_account_ids,
                     index,
                     is_nested_call,
-                    batch_index,
+                    maybe_nesting_index,
                     is_successful,
                     imonline_extrinsic,
                 )
@@ -126,7 +127,7 @@ impl BlockProcessor {
                         block_number,
                         active_validator_account_ids,
                         index,
-                        batch_index,
+                        maybe_nesting_index,
                         maybe_real_account_id,
                         events,
                         batch_fail,
@@ -144,7 +145,7 @@ impl BlockProcessor {
                         block_number,
                         active_validator_account_ids,
                         index,
-                        batch_index,
+                        maybe_nesting_index,
                         maybe_multisig_account_id,
                         events,
                         batch_fail,
@@ -155,14 +156,15 @@ impl BlockProcessor {
             }
             SubstrateExtrinsic::Staking(staking_extrinsic) => {
                 let is_successful = !batch_fail
-                    && consume_call_events(postgres, &block_hash, batch_index, events).await?;
+                    && consume_call_events(postgres, &block_hash, maybe_nesting_index, events)
+                        .await?;
                 process_staking_extrinsic(
                     substrate_client,
                     postgres,
                     block_hash,
                     index,
                     is_nested_call,
-                    batch_index,
+                    maybe_nesting_index,
                     maybe_multisig_account_id,
                     maybe_real_account_id,
                     is_successful,
@@ -180,7 +182,7 @@ impl BlockProcessor {
                         block_number,
                         active_validator_account_ids,
                         index,
-                        batch_index,
+                        maybe_nesting_index,
                         maybe_multisig_account_id,
                         maybe_real_account_id,
                         events,
@@ -191,7 +193,7 @@ impl BlockProcessor {
                 Ok(is_successful)
             }
             _ => Ok(!batch_fail
-                && consume_call_events(postgres, &block_hash, batch_index, events).await?),
+                && consume_call_events(postgres, &block_hash, maybe_nesting_index, events).await?),
         }
     }
 }

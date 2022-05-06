@@ -9,7 +9,7 @@ pub(crate) async fn process_imonline_extrinsic(
     active_validator_account_ids: &[AccountId],
     index: usize,
     is_nested_call: bool,
-    batch_index: &Option<String>,
+    maybe_nesting_index: &Option<String>,
     is_successful: bool,
     extrinsic: &ImOnlineExtrinsic,
 ) -> anyhow::Result<()> {
@@ -28,7 +28,7 @@ pub(crate) async fn process_imonline_extrinsic(
                         block_hash,
                         index as i32,
                         is_nested_call,
-                        batch_index,
+                        maybe_nesting_index,
                         is_successful,
                         *block_number,
                         *session_index,
