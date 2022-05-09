@@ -203,3 +203,60 @@ impl From<&ValidatorStake> for ValidatorStakeSummary {
         }
     }
 }
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct NominationSummary {
+    pub active_nominator_count: usize,
+    pub active_nomination_total: Balance,
+    pub inactive_nominator_count: usize,
+    pub inactive_nomination_total: Balance,
+}
+
+impl From<&ValidatorDetails> for NominationSummary {
+    fn from(validator_details: &ValidatorDetails) -> Self {
+        let (
+            active_nominator_count,
+            active_nomination_total,
+            inactive_nominator_count,
+            inactive_nomination_total,
+        ) = if let Some(validator_stake) = &validator_details.validator_stake {
+            let active_nominator_account_ids: Vec<AccountId> = validator_stake
+                .nominators
+                .iter()
+                .map(|n| n.account.id)
+                .collect();
+            let mut inactive_nominator_count: usize = 0;
+            let mut inactive_nomination_total: Balance = 0;
+            for nomination in &validator_details.nominations {
+                if !active_nominator_account_ids.contains(&nomination.stash_account.id) {
+                    inactive_nominator_count += 1;
+                    inactive_nomination_total += nomination.stake.active_amount;
+                }
+            }
+            (
+                active_nominator_account_ids.len(),
+                validator_stake.total_stake,
+                inactive_nominator_count,
+                inactive_nomination_total,
+            )
+        } else {
+            let inactive_nomination_total: Balance = validator_details
+                .nominations
+                .iter()
+                .map(|n| n.stake.total_amount)
+                .sum();
+            (
+                0,
+                0,
+                validator_details.nominations.len(),
+                inactive_nomination_total,
+            )
+        };
+        NominationSummary {
+            active_nominator_count,
+            active_nomination_total,
+            inactive_nominator_count,
+            inactive_nomination_total,
+        }
+    }
+}

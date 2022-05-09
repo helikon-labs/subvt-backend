@@ -5,7 +5,7 @@ use subvt_types::governance::polkassembly::ReferendumPost;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::sub_id::NFTCollection;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
-use subvt_types::telegram::TelegramChatValidator;
+use subvt_types::telegram::{TelegramChatValidator, TelegramChatValidatorSummary};
 
 pub mod content;
 
@@ -76,4 +76,5 @@ pub enum MessageType {
     },
     NoNFTsForValidator,
     Loading,
+    ValidatorsSummary(Vec<TelegramChatValidatorSummary>),
 }

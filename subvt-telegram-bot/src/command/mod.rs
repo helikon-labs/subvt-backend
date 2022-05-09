@@ -9,6 +9,7 @@ mod payouts;
 mod remove_validator;
 mod rewards;
 mod settings;
+mod summary;
 mod validators;
 
 impl TelegramBot {
@@ -207,6 +208,10 @@ impl TelegramBot {
                     .await?;
                 self.process_validators_command(chat_id, QueryType::NFTs(0, true))
                     .await?;
+            }
+            "/summary" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.process_summary_command(chat_id).await?;
             }
             _ => {
                 crate::metrics::command_call_counter("invalid").inc();

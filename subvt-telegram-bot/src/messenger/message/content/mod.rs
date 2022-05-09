@@ -8,6 +8,7 @@ mod nomination_details;
 mod nomination_summary;
 mod referendum_details;
 mod validator_info;
+mod validators_summary;
 
 impl MessageType {
     pub fn get_content(&self, renderer: &Tera) -> String {
@@ -154,6 +155,10 @@ impl MessageType {
             }
             Self::NoNFTsForValidator => "no_nfts_for_validator.html",
             Self::Loading => "loading.html",
+            Self::ValidatorsSummary(validator_summaries) => {
+                self.fill_validators_summary_context(&mut context, validator_summaries);
+                "validators_summary.html"
+            }
         };
         renderer.render(template_name, &context).unwrap()
     }

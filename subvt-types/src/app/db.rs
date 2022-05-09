@@ -1,4 +1,5 @@
 //! Helper types to read data from PostgreSQL using SQLx.
+use crate::app::event::democracy::DemocracyVotedEvent;
 use crate::app::extrinsic::{PayoutStakersExtrinsic, SetControllerExtrinsic, ValidateExtrinsic};
 use crate::app::{
     Block, Network, Notification, NotificationParamDataType, NotificationPeriodType,
@@ -245,6 +246,42 @@ impl Notification {
             sent_at: None,
             delivered_at: None,
             read_at: None,
+        })
+    }
+}
+
+pub type PostgresDemocracyVotedEvent = (
+    i32,
+    String,
+    Option<i32>,
+    i32,
+    String,
+    i64,
+    Option<String>,
+    Option<String>,
+    Option<i32>,
+);
+
+impl DemocracyVotedEvent {
+    pub fn from(db_event: PostgresDemocracyVotedEvent) -> anyhow::Result<DemocracyVotedEvent> {
+        Ok(DemocracyVotedEvent {
+            id: db_event.0 as u32,
+            block_hash: db_event.1.clone(),
+            extrinsic_index: db_event.2.map(|index| index as u32),
+            event_index: db_event.3 as u32,
+            account_id: AccountId::from_str(&db_event.4)?,
+            referendum_index: db_event.5 as u64,
+            aye_balance: if let Some(balance) = db_event.6 {
+                Some(balance.parse()?)
+            } else {
+                None
+            },
+            nay_balance: if let Some(balance) = db_event.7 {
+                Some(balance.parse()?)
+            } else {
+                None
+            },
+            conviction: db_event.8.map(|c| c as u8),
         })
     }
 }
