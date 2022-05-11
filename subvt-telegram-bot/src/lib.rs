@@ -478,11 +478,15 @@ impl Service for TelegramBot {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         log::info!("Telegram bot has started.");
+
         let mut update_params = GetUpdatesParams {
             offset: None,
             limit: None,
             timeout: None,
-            allowed_updates: Some(vec!["message".to_string(), "callback_query".to_string()]),
+            allowed_updates: Some(vec![
+                frankenstein::AllowedUpdate::Message,
+                frankenstein::AllowedUpdate::CallbackQuery,
+            ]),
         };
         self.update_metrics_chat_count().await?;
         self.update_metrics_validator_count().await?;
@@ -492,67 +496,76 @@ impl Service for TelegramBot {
                 Ok(response) => {
                     for update in response.result {
                         update_params.offset = Some(update.update_id + 1);
-                        if let Some(message) = update.message {
-                            self.save_or_restore_chat(&message).await?;
-                            tokio::spawn(async move {
-                                if let Err(error) = self.process_message(&message).await {
-                                    log::error!(
-                                        "Error while processing message #{}: {:?}",
-                                        message.message_id,
-                                        error
-                                    );
-                                    let _ = self
-                                        .messenger
-                                        .send_message(
-                                            &self.app_postgres,
-                                            &self.network_postgres,
-                                            message.chat.id,
-                                            Box::new(MessageType::GenericError),
-                                        )
-                                        .await;
-                                }
-                            });
-                        } else if let Some(callback_query) = update.callback_query {
-                            if let Some(callback_data) = callback_query.data {
-                                if let Some(message) = callback_query.message {
-                                    self.save_or_restore_chat(&message).await?;
-                                    tokio::spawn(async move {
-                                        let query: Query = if let Ok(query) =
-                                            serde_json::from_str(&callback_data)
-                                        {
-                                            query
-                                        } else {
-                                            // log and ignore unknown query
-                                            return log::error!("Unknown query: {}", callback_data);
-                                        };
-                                        if let Err(error) = tokio::try_join!(
-                                            self.reset_chat_state(message.chat.id),
-                                            self.process_query(
+                        match update.content {
+                            frankenstein::UpdateContent::Message(message) => {
+                                self.save_or_restore_chat(&message).await?;
+                                tokio::spawn(async move {
+                                    if let Err(error) = self.process_message(&message).await {
+                                        log::error!(
+                                            "Error while processing message #{}: {:?}",
+                                            message.message_id,
+                                            error
+                                        );
+                                        let _ = self
+                                            .messenger
+                                            .send_message(
+                                                &self.app_postgres,
+                                                &self.network_postgres,
                                                 message.chat.id,
-                                                Some(message.message_id),
-                                                &query
-                                            ),
-                                            self.messenger
-                                                .answer_callback_query(&callback_query.id, None),
-                                        ) {
-                                            log::error!(
-                                                "Error while processing message #{}: {:?}",
-                                                message.message_id,
-                                                error
-                                            );
-                                            let _ = self
-                                                .messenger
-                                                .send_message(
-                                                    &self.app_postgres,
-                                                    &self.network_postgres,
+                                                Box::new(MessageType::GenericError),
+                                            )
+                                            .await;
+                                    }
+                                });
+                            }
+                            frankenstein::UpdateContent::CallbackQuery(callback_query) => {
+                                if let Some(callback_data) = callback_query.data {
+                                    if let Some(message) = callback_query.message {
+                                        self.save_or_restore_chat(&message).await?;
+                                        tokio::spawn(async move {
+                                            let query: Query = if let Ok(query) =
+                                                serde_json::from_str(&callback_data)
+                                            {
+                                                query
+                                            } else {
+                                                // log and ignore unknown query
+                                                return log::error!(
+                                                    "Unknown query: {}",
+                                                    callback_data
+                                                );
+                                            };
+                                            if let Err(error) = tokio::try_join!(
+                                                self.reset_chat_state(message.chat.id),
+                                                self.process_query(
                                                     message.chat.id,
-                                                    Box::new(MessageType::GenericError),
-                                                )
-                                                .await;
-                                        }
-                                    });
+                                                    Some(message.message_id),
+                                                    &query
+                                                ),
+                                                self.messenger.answer_callback_query(
+                                                    &callback_query.id,
+                                                    None
+                                                ),
+                                            ) {
+                                                log::error!(
+                                                    "Error while processing message #{}: {:?}",
+                                                    message.message_id,
+                                                    error
+                                                );
+                                                let _ = self
+                                                    .messenger
+                                                    .send_message(
+                                                        &self.app_postgres,
+                                                        &self.network_postgres,
+                                                        message.chat.id,
+                                                        Box::new(MessageType::GenericError),
+                                                    )
+                                                    .await;
+                                            }
+                                        });
+                                    }
                                 }
                             }
+                            _ => (),
                         }
                     }
                 }
