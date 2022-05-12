@@ -104,10 +104,10 @@ apns_team_id = "APNS_TEAM_ID"
 apns_topic = "APP_BUNDLE"
 apns_is_production = false
 fcm_api_key = "FCM_API_KEY"
-# can be set with the SUBVT__NOTIFICATION_SENDER__KUSAMA_TELEGRAM_TOKEN
+# can be set with the SUBVT__NOTIFICATION_SENDER__KUSAMA_TELEGRAM_API_TOKEN
 # environment variable
 kusama_telegram_api_token = "kusama_telegram_api_token"
-# can be set with the SUBVT__NOTIFICATION_SENDER__POLKADOT_TELEGRAM_TOKEN
+# can be set with the SUBVT__NOTIFICATION_SENDER__POLKADOT_TELEGRAM_API_TOKEN
 # environment variable
 polkadot_telegram_api_token = "polkadot_telegram_api_token"
 # can be set with the SUBVT__NOTIFICATION_SENDER__TEMPLATE_DIR_PATH
