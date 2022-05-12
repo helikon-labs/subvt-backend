@@ -70,7 +70,7 @@ impl NotificationProcessor {
                     .await
                 {
                     Ok(_) => {
-                        metrics::epoch_index().set(status.current_epoch.index as i64);
+                        metrics::epoch_index(&network.chain).set(status.current_epoch.index as i64);
                     }
                     Err(error) => {
                         log::error!(
@@ -100,7 +100,7 @@ impl NotificationProcessor {
                     .await
                 {
                     Ok(_) => {
-                        metrics::era_index().set(status.active_era.index as i64);
+                        metrics::era_index(&network.chain).set(status.active_era.index as i64);
                     }
                     Err(error) => {
                         log::error!(

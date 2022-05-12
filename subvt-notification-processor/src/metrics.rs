@@ -1,30 +1,32 @@
 use once_cell::sync::Lazy;
-use subvt_metrics::registry::{HistogramVec, IntCounter, IntCounterVec, IntGauge};
+use subvt_metrics::registry::{HistogramVec, IntCounter, IntCounterVec, IntGauge, IntGaugeVec};
 
 const METRIC_PREFIX: &str = "subvt_notification_processor";
 
-pub(crate) fn epoch_index() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
+pub(crate) fn epoch_index(network_name: &str) -> IntGauge {
+    static METER: Lazy<IntGaugeVec> = Lazy::new(|| {
+        subvt_metrics::registry::register_int_gauge_vec(
             METRIC_PREFIX,
             "epoch_index",
             "Last processed epoch index for epoch notifications",
+            &["network_name"],
         )
         .unwrap()
     });
-    METER.clone()
+    METER.with_label_values(&[network_name])
 }
 
-pub(crate) fn era_index() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
+pub(crate) fn era_index(network_name: &str) -> IntGauge {
+    static METER: Lazy<IntGaugeVec> = Lazy::new(|| {
+        subvt_metrics::registry::register_int_gauge_vec(
             METRIC_PREFIX,
             "era_index",
-            "Last processed era index for era notifications",
+            "Last processed epoch index for epoch notifications",
+            &["network_name"],
         )
         .unwrap()
     });
-    METER.clone()
+    METER.with_label_values(&[network_name])
 }
 
 pub(crate) fn sent_notification_counter(notification_channel: &str) -> IntCounter {
