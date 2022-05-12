@@ -394,7 +394,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
+        "w": 3,
         "x": 4,
         "y": 5
       },
@@ -420,14 +420,15 @@
             "type": "prometheus",
             "uid": "${app_prometheus_data_source}"
           },
-          "exemplar": true,
-          "expr": "subvt_notification_processor::era_index",
+          "exemplar": false,
+          "expr": "subvt_notification_processor::era_index{network_name=\"kusama\"}",
+          "format": "heatmap",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Era",
+      "title": "Kusama Era",
       "type": "stat"
     },
     {
@@ -456,8 +457,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 8,
+        "w": 3,
+        "x": 7,
         "y": 5
       },
       "id": 4,
@@ -483,13 +484,15 @@
             "uid": "${app_prometheus_data_source}"
           },
           "exemplar": true,
-          "expr": "subvt_notification_processor::epoch_index",
+          "expr": "subvt_notification_processor::epoch_index{network_name=\"kusama\"}",
+          "format": "heatmap",
+          "hide": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{le}}",
           "refId": "A"
         }
       ],
-      "title": "Epoch",
+      "title": "Kusama Epoch",
       "type": "stat"
     },
     {
@@ -517,8 +520,134 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 12,
-        "x": 12,
+        "w": 3,
+        "x": 10,
+        "y": 5
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${app_prometheus_data_source}"
+          },
+          "exemplar": false,
+          "expr": "subvt_notification_processor::era_index{network_name=\"polkadot\"}",
+          "format": "heatmap",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Polkadot Era",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${app_prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 13,
+        "y": 5
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.4.4",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${app_prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_notification_processor::epoch_index{network_name=\"polkadot\"}",
+          "format": "heatmap",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{le}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Polkadot Epoch",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${app_prometheus_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 8,
+        "x": 16,
         "y": 5
       },
       "id": 17,
@@ -564,7 +693,7 @@
     "list": [
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "SubVT App Prometheus",
           "value": "SubVT App Prometheus"
         },
