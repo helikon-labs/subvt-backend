@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,12 +24,16 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 1,
-  "iteration": 1650619638398,
+  "id": 16,
+  "iteration": 1652359294691,
   "links": [],
   "liveNow": false,
   "panels": [
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -82,7 +89,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -144,7 +151,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -194,6 +201,8 @@
       "id": 13,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -208,7 +217,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -262,6 +271,8 @@
       "id": 19,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -276,7 +287,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -296,6 +307,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -333,7 +348,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
+        "w": 3,
         "x": 0,
         "y": 5
       },
@@ -352,7 +367,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -366,7 +381,7 @@
           "refId": "A"
         }
       ],
-      "title": "Sent Notifications",
+      "title": "Sent Notif.s",
       "type": "stat"
     },
     {
@@ -394,8 +409,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
-        "x": 4,
+        "w": 2,
+        "x": 3,
         "y": 5
       },
       "id": 6,
@@ -413,7 +428,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -428,7 +443,7 @@
           "refId": "A"
         }
       ],
-      "title": "Kusama Era",
+      "title": "KSM Era",
       "type": "stat"
     },
     {
@@ -458,7 +473,7 @@
       "gridPos": {
         "h": 3,
         "w": 3,
-        "x": 7,
+        "x": 5,
         "y": 5
       },
       "id": 4,
@@ -476,7 +491,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -492,7 +507,7 @@
           "refId": "A"
         }
       ],
-      "title": "Kusama Epoch",
+      "title": "KSM Epoch",
       "type": "stat"
     },
     {
@@ -500,6 +515,69 @@
         "type": "prometheus",
         "uid": "${app_prometheus_data_source}"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 2,
+        "x": 8,
+        "y": 5
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${app_prometheus_data_source}"
+          },
+          "exemplar": false,
+          "expr": "subvt_notification_processor::era_index{network_name=\"polkadot\"}",
+          "format": "heatmap",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "DOT Era",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${app_prometheus_data_source}"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -524,69 +602,6 @@
         "x": 10,
         "y": 5
       },
-      "id": 20,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.4.4",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${app_prometheus_data_source}"
-          },
-          "exemplar": false,
-          "expr": "subvt_notification_processor::era_index{network_name=\"polkadot\"}",
-          "format": "heatmap",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "title": "Polkadot Era",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${app_prometheus_data_source}"
-      },
-      "description": "",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 3,
-        "x": 13,
-        "y": 5
-      },
       "id": 21,
       "options": {
         "colorMode": "value",
@@ -602,7 +617,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -618,7 +633,7 @@
           "refId": "A"
         }
       ],
-      "title": "Polkadot Epoch",
+      "title": "DOT Epoch",
       "type": "stat"
     },
     {
@@ -646,13 +661,15 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 8,
-        "x": 16,
+        "w": 11,
+        "x": 13,
         "y": 5
       },
       "id": 17,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -667,7 +684,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -686,7 +703,7 @@
       "type": "bargauge"
     }
   ],
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -719,6 +736,6 @@
   "timezone": "",
   "title": "SubVT App",
   "uid": "-tqzNQP7z",
-  "version": 1,
+  "version": 6,
   "weekStart": ""
 }

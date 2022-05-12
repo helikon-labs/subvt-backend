@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -21,13 +24,17 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
-  "iteration": 1650723708206,
+  "id": 17,
+  "iteration": 1652359696382,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -83,7 +90,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "cacheDurationSeconds": 5,
@@ -150,7 +157,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "cacheDurationSeconds": 5,
@@ -175,6 +182,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -231,7 +242,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -293,7 +304,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -355,7 +366,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -374,6 +385,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -430,7 +445,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -492,7 +507,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -558,7 +573,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -620,7 +635,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -682,7 +697,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -733,6 +748,8 @@
       "id": 8,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "vertical",
         "reduceOptions": {
           "calcs": [
@@ -747,7 +764,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -769,6 +786,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -812,6 +833,8 @@
       "id": 14,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -826,7 +849,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -888,7 +911,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -949,7 +972,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1015,7 +1038,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1034,6 +1057,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1090,7 +1117,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1155,7 +1182,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1174,6 +1201,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1230,7 +1261,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1292,7 +1323,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1354,7 +1385,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1416,7 +1447,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1478,7 +1509,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1540,7 +1571,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1559,6 +1590,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1602,6 +1637,8 @@
       "id": 42,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -1616,7 +1653,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1679,7 +1716,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1740,7 +1777,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1801,7 +1838,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1820,6 +1857,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1876,7 +1917,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1937,7 +1978,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -1999,7 +2040,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2061,7 +2102,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2080,6 +2121,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2124,6 +2169,8 @@
       "id": 28,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -2138,7 +2185,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2189,6 +2236,8 @@
       "id": 30,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -2203,7 +2252,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2254,6 +2303,8 @@
       "id": 32,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -2268,7 +2319,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2331,7 +2382,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2393,7 +2444,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2455,7 +2506,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2521,7 +2572,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2540,6 +2591,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2567,8 +2622,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -2596,7 +2650,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2631,8 +2685,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -2660,7 +2713,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2692,8 +2745,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2725,7 +2777,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2758,8 +2810,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -2787,7 +2838,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2819,8 +2870,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2852,7 +2902,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2871,6 +2921,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -2898,8 +2952,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2931,7 +2984,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -2964,8 +3017,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -2997,7 +3049,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3029,8 +3081,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3046,6 +3097,8 @@
       "id": 69,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -3060,7 +3113,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3093,8 +3146,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3110,6 +3162,8 @@
       "id": 70,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -3124,7 +3178,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3144,6 +3198,10 @@
     },
     {
       "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "H-mdTFeGk"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -3170,8 +3228,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3199,7 +3256,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3231,8 +3288,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3261,7 +3317,7 @@
         "text": {},
         "textMode": "auto"
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3296,8 +3352,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3317,6 +3372,8 @@
       "id": 77,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -3327,7 +3384,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3360,8 +3417,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3382,6 +3438,8 @@
       "id": 79,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -3396,7 +3454,7 @@
           "valueSize": 10
         }
       },
-      "pluginVersion": "8.4.4",
+      "pluginVersion": "8.5.2",
       "targets": [
         {
           "datasource": {
@@ -3417,14 +3475,14 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 35,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "SubVT Network Prometheus",
           "value": "SubVT Network Prometheus"
         },
@@ -3468,6 +3526,6 @@
   "timezone": "",
   "title": "SubVT Network",
   "uid": "1-0ZgEE7z",
-  "version": 1,
+  "version": 5,
   "weekStart": ""
 }
