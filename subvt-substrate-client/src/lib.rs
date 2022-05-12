@@ -681,7 +681,8 @@ impl SubstrateClient {
             for session_key_pair in session_key_pairs.iter() {
                 let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
                 if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
-                    validator.active_next_session = validator.next_session_keys == session_keys;
+                    validator.active_next_session = true;
+                    validator.queued_session_keys = Some(session_keys.clone());
                 }
             }
         }

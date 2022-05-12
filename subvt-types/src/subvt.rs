@@ -54,6 +54,7 @@ pub struct ValidatorDetails {
     pub self_stake: Stake,
     pub reward_destination: RewardDestination,
     pub next_session_keys: String,
+    pub queued_session_keys: Option<String>,
     pub is_active: bool,
     pub active_next_session: bool,
     pub nominations: Vec<Nomination>,

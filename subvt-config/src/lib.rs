@@ -180,8 +180,10 @@ pub struct NotificationProcessorConfig {
     pub apns_is_production: bool,
     // Firebase Cloud Messaging
     pub fcm_api_key: String,
-    // Telegram bot API token
-    pub telegram_token: String,
+    // Kusama Telegram bot API token
+    pub kusama_telegram_api_token: String,
+    // Kusama Telegram bot API token
+    pub polkadot_telegram_api_token: String,
     // where the template files reside
     pub template_dir_path: String,
 }
@@ -189,6 +191,7 @@ pub struct NotificationProcessorConfig {
 /// Telegram bot config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelegramBotConfig {
+    pub api_token: String,
     admin_chat_ids: String,
     pub max_validators_per_chat: u16,
     pub username: String,

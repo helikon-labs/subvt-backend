@@ -23,10 +23,7 @@ impl NotificationProcessor {
             channel,
             notification_group.len(),
         );
-        let sender = match self.senders.get(&channel) {
-            Some(sender) => sender.clone(),
-            None => panic!("Sender not found for notification channel: {}", channel),
-        };
+        let sender = self.sender_repository.get_sender(&channel, network_id);
         for notification in notification_group.iter() {
             self.postgres
                 .mark_notification_processing(notification.id)
@@ -75,13 +72,9 @@ impl NotificationProcessor {
             notification.notification_type_code,
             notification.notification_channel,
         );
-        let sender = match self.senders.get(&notification.notification_channel) {
-            Some(sender) => sender.clone(),
-            None => panic!(
-                "Sender not found for notification channel: {}",
-                notification.notification_channel
-            ),
-        };
+        let sender = self
+            .sender_repository
+            .get_sender(&notification.notification_channel, notification.network_id);
         self.postgres
             .mark_notification_processing(notification.id)
             .await?;

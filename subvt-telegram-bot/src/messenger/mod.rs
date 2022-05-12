@@ -34,7 +34,7 @@ impl Messenger {
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
         ))?;
-        let api = AsyncApi::new(&CONFIG.notification_processor.telegram_token);
+        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
         Ok(Messenger { api, renderer })
     }
 }

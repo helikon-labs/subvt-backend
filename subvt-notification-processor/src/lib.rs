@@ -21,47 +21,82 @@ pub(crate) mod metrics;
 mod processor;
 mod sender;
 
-type SenderMap = HashMap<NotificationChannel, Arc<Box<dyn NotificationSender>>>;
-
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
+pub(crate) struct SenderRepository {
+    apns_sender: Arc<Box<dyn NotificationSender>>,
+    email_sender: Arc<Box<dyn NotificationSender>>,
+    fcm_sender: Arc<Box<dyn NotificationSender>>,
+    kusama_telegram_sender: Arc<Box<dyn NotificationSender>>,
+    polkadot_telegram_sender: Arc<Box<dyn NotificationSender>>,
+}
+
+impl SenderRepository {
+    pub(crate) async fn new(
+        network_map: &HashMap<u32, Network>,
+    ) -> anyhow::Result<SenderRepository> {
+        let content_provider = ContentProvider::new(network_map.clone())?;
+        let apns_sender = Arc::new(Box::new(APNSSender::new(content_provider.clone()).await?)
+            as Box<dyn NotificationSender>);
+        let email_sender = Arc::new(Box::new(EmailSender::new(content_provider.clone()).await?)
+            as Box<dyn NotificationSender>);
+        let fcm_sender = Arc::new(Box::new(FCMSender::new(content_provider.clone()).await?)
+            as Box<dyn NotificationSender>);
+        let kusama_telegram_sender = Arc::new(Box::new(
+            TelegramSender::new(
+                &CONFIG.notification_processor.kusama_telegram_api_token,
+                content_provider.clone(),
+            )
+            .await?,
+        ) as Box<dyn NotificationSender>);
+        let polkadot_telegram_sender = Arc::new(Box::new(
+            TelegramSender::new(
+                &CONFIG.notification_processor.polkadot_telegram_api_token,
+                content_provider.clone(),
+            )
+            .await?,
+        ) as Box<dyn NotificationSender>);
+        Ok(SenderRepository {
+            apns_sender,
+            email_sender,
+            fcm_sender,
+            kusama_telegram_sender,
+            polkadot_telegram_sender,
+        })
+    }
+
+    pub(crate) fn get_sender(
+        &self,
+        channel: &NotificationChannel,
+        network_id: u32,
+    ) -> Arc<Box<dyn NotificationSender>> {
+        match channel {
+            NotificationChannel::APNS => self.apns_sender.clone(),
+            NotificationChannel::Email => self.email_sender.clone(),
+            NotificationChannel::FCM => self.fcm_sender.clone(),
+            NotificationChannel::Telegram => match network_id {
+                1 => self.kusama_telegram_sender.clone(),
+                2 => self.polkadot_telegram_sender.clone(),
+                _ => unimplemented!(
+                    "Telegram sender not implemeneted for network with id {}",
+                    network_id
+                ),
+            },
+            NotificationChannel::SMS => unimplemented!("SMS sender not implemented."),
+            NotificationChannel::GSM => unimplemented!("GSM sender not implemented."),
+        }
+    }
+}
+
 pub struct NotificationProcessor {
     postgres: Arc<PostgreSQLAppStorage>,
-    senders: SenderMap,
+    sender_repository: SenderRepository,
     network_map: HashMap<u32, Network>,
 }
 
 impl NotificationProcessor {
-    async fn prepare_senders(network_map: &HashMap<u32, Network>) -> anyhow::Result<SenderMap> {
-        let mut senders = HashMap::new();
-        let content_provider = ContentProvider::new(network_map.clone())?;
-        senders.insert(
-            NotificationChannel::APNS,
-            Arc::new(Box::new(APNSSender::new(content_provider.clone()).await?)
-                as Box<dyn NotificationSender>),
-        );
-        senders.insert(
-            NotificationChannel::Email,
-            Arc::new(Box::new(EmailSender::new(content_provider.clone()).await?)
-                as Box<dyn NotificationSender>),
-        );
-        senders.insert(
-            NotificationChannel::FCM,
-            Arc::new(Box::new(FCMSender::new(content_provider.clone()).await?)
-                as Box<dyn NotificationSender>),
-        );
-        senders.insert(
-            NotificationChannel::Telegram,
-            Arc::new(
-                Box::new(TelegramSender::new(content_provider.clone()).await?)
-                    as Box<dyn NotificationSender>,
-            ),
-        );
-        Ok(senders)
-    }
-
     async fn get_network_map(
         postgres: &PostgreSQLAppStorage,
     ) -> anyhow::Result<HashMap<u32, Network>> {
@@ -79,7 +114,7 @@ impl NotificationProcessor {
         let network_map = NotificationProcessor::get_network_map(&postgres).await?;
         Ok(NotificationProcessor {
             postgres,
-            senders: NotificationProcessor::prepare_senders(&network_map).await?,
+            sender_repository: SenderRepository::new(&network_map).await?,
             network_map,
         })
     }

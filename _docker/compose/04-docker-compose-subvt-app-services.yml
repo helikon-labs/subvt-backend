@@ -26,6 +26,7 @@ services:
     networks:
       - subvt_app
       - subvt_kusama
+      - subvt_polkadot
     volumes:
       - ${CERT_DIR}:/subvt/cert
       - ${TEMPLATE_DIR}:/subvt/template
@@ -41,11 +42,12 @@ services:
       - SUBVT__APP_POSTGRES__PORT=5432
       # redis
       - SUBVT__REDIS__KUSAMA_URL=redis://subvt_kusama_redis:6379/
-      - SUBVT__REDIS__POLKADOT_URL=redis://subvt_kusama_redis:6379/
+      - SUBVT__REDIS__POLKADOT_URL=redis://subvt_polkadot_redis:6379/
       # templates
       - SUBVT__NOTIFICATION_PROCESSOR__TEMPLATE_DIR_PATH=/subvt/template
       # telegram
-      - SUBVT__NOTIFICATION_PROCESSOR__TELEGRAM_TOKEN=${KUSAMA_TELEGRAM_TOKEN}
+      - SUBVT__NOTIFICATION_PROCESSOR__KUSAMA_TELEGRAM_API_TOKEN=${KUSAMA_TELEGRAM_API_TOKEN}
+      - SUBVT__NOTIFICATION_PROCESSOR__POLKADOT_TELEGRAM_API_TOKEN=${POLKADOT_TELEGRAM_API_TOKEN}
       # APNS
       - SUBVT__NOTIFICATION_PROCESSOR__APNS_KEY_LOCATION=/subvt/cert/subvt_apns_key.p8
       - SUBVT__NOTIFICATION_PROCESSOR__APNS_KEY_ID=${APNS_KEY_ID}
@@ -65,3 +67,5 @@ networks:
     name: subvt_app
   subvt_kusama:
     name: subvt_kusama
+  subvt_polkadot:
+    name: subvt_polkadot

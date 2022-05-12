@@ -205,7 +205,7 @@ impl TelegramBot {
         let network_postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
-        let api = AsyncApi::new(&CONFIG.notification_processor.telegram_token);
+        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
         let messenger = Messenger::new()?;
         Ok(TelegramBot {
             app_postgres,
