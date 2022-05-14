@@ -75,9 +75,7 @@ async fn consume_call_events(
         events.drain(0..(delimiter_index + 1));
         Ok(is_successful)
     } else {
-        panic!(
-            "Call delimiter event not found (ExtrinsicSuccess, ExtrinsicFailed or ItemCompleted)."
-        );
+        Err(anyhow::anyhow!("Call delimiter event not found (ItemCompleted, BatchInterrupted, ProxyExecuted, MultisigExecuted, ExtrinsicSuccess, ExtrinsicFailed)."))
     }
 }
 
