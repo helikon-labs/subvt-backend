@@ -1,9 +1,11 @@
 use crate::{query::QueryType, MessageType, TelegramBot};
+use async_recursion::async_recursion;
 use subvt_governance::polkassembly;
 
 mod add_validator;
 mod broadcast;
 mod broadcast_test;
+mod migrate;
 mod network_status;
 mod payouts;
 mod remove_validator;
@@ -13,6 +15,7 @@ mod summary;
 mod validators;
 
 impl TelegramBot {
+    #[async_recursion]
     pub async fn process_command(
         &self,
         chat_id: i64,
@@ -92,6 +95,9 @@ impl TelegramBot {
             }
             "/networkstatus" | "/network" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.process_network_status_command(chat_id).await?;
             }
             "/validatorinfo" | "/vi" => {
@@ -211,7 +217,17 @@ impl TelegramBot {
             }
             "/summary" => {
                 crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
                 self.process_summary_command(chat_id).await?;
+            }
+            "/migrate" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_migrate_command(chat_id, args).await?;
             }
             _ => {
                 crate::metrics::command_call_counter("invalid").inc();

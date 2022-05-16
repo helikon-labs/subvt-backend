@@ -115,6 +115,9 @@ polkadot_telegram_api_token = "polkadot_telegram_api_token"
 template_dir_path = "/path/to/the/template/dir"
 
 [telegram_bot]
+# for migration from the old 1KV bot
+mongo_url = "mongodb://localhost:27017"
+mongo_db_name = "kusama_1kv_bot"
 api_token = "telegram_api_token"
 # i64 array
 admin_chat_ids = "1234,4563"

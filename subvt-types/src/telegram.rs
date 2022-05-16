@@ -1,6 +1,6 @@
 use crate::crypto::AccountId;
 use crate::subvt::{NominationSummary, ValidatorDetails};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use subvt_utility::numeric::format_decimal;
@@ -11,6 +11,7 @@ pub enum TelegramChatState {
     AddValidator,
     EnterBugReport,
     EnterFeatureRequest,
+    EnterMigrationCode,
 }
 
 impl FromStr for TelegramChatState {
@@ -22,6 +23,7 @@ impl FromStr for TelegramChatState {
             "AddValidator" => Ok(Self::AddValidator),
             "EnterBugReport" => Ok(Self::EnterBugReport),
             "EnterFeatureRequest" => Ok(Self::EnterFeatureRequest),
+            "EnterMigrationCode" => Ok(Self::EnterMigrationCode),
             _ => panic!("Unknown state: {}", state),
         }
     }
@@ -34,6 +36,7 @@ impl Display for TelegramChatState {
             TelegramChatState::AddValidator => "AddValidator",
             TelegramChatState::EnterBugReport => "EnterBugReport",
             TelegramChatState::EnterFeatureRequest => "EnterFeatureRequest",
+            TelegramChatState::EnterMigrationCode => "EnterMigrationCode",
         };
         write!(f, "{}", display)
     }
@@ -105,4 +108,25 @@ impl TelegramChatValidatorSummary {
             missing_referendum_votes: vec![],
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVBotChat {
+    pub chat_id: i64,
+    pub block_notification_period: u16,
+    pub unclaimed_payout_notification_period: u16,
+    pub send_new_nomination_notifications: bool,
+    pub send_chilling_event_notifications: bool,
+    pub send_offline_event_notifications: bool,
+    pub migration_code: String,
+    pub is_migrated: Option<bool>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVBotValidator {
+    pub stash_address: String,
+    pub name: String,
+    pub chat_ids: Vec<i64>,
 }

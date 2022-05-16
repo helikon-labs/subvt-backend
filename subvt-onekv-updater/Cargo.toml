@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.60.0"
 
 [dependencies]
-anyhow = "1.0.57"
+anyhow = "1.0"
 async-trait = "0.1.53"
 chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
 lazy_static = "1.4.0"

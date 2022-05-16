@@ -77,4 +77,10 @@ pub enum MessageType {
     NoNFTsForValidator,
     Loading,
     ValidatorsSummary(Vec<TelegramChatValidatorSummary>),
+    EnterMigrationCode,
+    MigrationChatNotFound,
+    MigrationInvalidCode,
+    MigrationNoValidatorFound,
+    MigrationAlreadyMigrated,
+    MigrationSuccessful(usize),
 }

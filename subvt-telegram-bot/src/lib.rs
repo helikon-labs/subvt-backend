@@ -428,6 +428,16 @@ impl TelegramBot {
                                 )
                                 .await?;
                         }
+                        TelegramChatState::EnterMigrationCode => {
+                            log::info!(
+                                "Migration code entered in chat id {}: {}",
+                                message.chat.id,
+                                text
+                            );
+                            self.reset_chat_state(message.chat.id).await?;
+                            self.process_command(message.chat.id, "/migrate", &[text.to_string()])
+                                .await?;
+                        }
                         _ => {
                             if message.chat.type_field == ChatType::Private {
                                 self.messenger

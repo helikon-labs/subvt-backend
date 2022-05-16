@@ -249,6 +249,9 @@ services:
       # plotter
       - SUBVT__PLOTTER__TMP_DIR_PATH=/subvt/tmp
       - SUBVT__PLOTTER__FONT_DIR_PATH=/subvt/font
+      # mongodb for migration from the old 1KV bot
+      - SUBVT__TELEGRAM_BOT__MONGO_DB_URL=mongodb://localhost:27017
+      - SUBVT__TELEGRAM_BOT__MONGO_DB_NAME=dot_1kv_telegram_bot
 networks:
   subvt_polkadot:
     name: subvt_polkadot
