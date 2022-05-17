@@ -114,8 +114,8 @@ impl TelegramChatValidatorSummary {
 #[serde(rename_all = "camelCase")]
 pub struct OneKVBotChat {
     pub chat_id: i64,
-    pub block_notification_period: u16,
-    pub unclaimed_payout_notification_period: u16,
+    pub block_notification_period: i64,
+    pub unclaimed_payout_notification_period: i64,
     pub send_new_nomination_notifications: bool,
     pub send_chilling_event_notifications: bool,
     pub send_offline_event_notifications: bool,

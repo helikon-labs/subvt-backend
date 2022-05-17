@@ -163,7 +163,7 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracySeconded,
-            NotificationPeriodType::Immediate,
+            NotificationPeriodType::Off,
             0,
         ),
         (

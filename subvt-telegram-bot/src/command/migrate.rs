@@ -2,6 +2,7 @@ use crate::{MessageType, TelegramBot, CONFIG};
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
 use mongodb::{options::ClientOptions, Client};
+use subvt_types::app::{NotificationPeriodType, NotificationTypeCode};
 use subvt_types::telegram::{OneKVBotChat, OneKVBotValidator, TelegramChatState};
 
 const MIGRATION_CODE_LENGTH: usize = 5;
@@ -92,13 +93,79 @@ impl TelegramBot {
                 .await?;
             return Ok(());
         }
-        /*
-        chat.block_notification_period => off'sa off
-        chat.send_chilling_event_notifications on off
-        chat.send_new_nomination_notifications on off
-        chat.send_offline_event_notifications on off
-        chat.unclaimed_payout_notification_period db'yi incele
-         */
+        // migrate notification rules
+        let user_id = self.network_postgres.get_chat_app_user_id(chat_id).await?;
+        // chilling events
+        if !chat.send_chilling_event_notifications {
+            self.app_postgres
+                .update_user_notification_rule_period(
+                    user_id,
+                    NotificationTypeCode::ChainValidatorChilled,
+                    NotificationPeriodType::Off,
+                    0,
+                )
+                .await?;
+        }
+        // new & lost nominations
+        if !chat.send_new_nomination_notifications {
+            self.app_postgres
+                .update_user_notification_rule_period(
+                    user_id,
+                    NotificationTypeCode::ChainValidatorNewNomination,
+                    NotificationPeriodType::Off,
+                    0,
+                )
+                .await?;
+            self.app_postgres
+                .update_user_notification_rule_period(
+                    user_id,
+                    NotificationTypeCode::ChainValidatorLostNomination,
+                    NotificationPeriodType::Off,
+                    0,
+                )
+                .await?;
+        }
+        // offline offences
+        if !chat.send_offline_event_notifications {
+            self.app_postgres
+                .update_user_notification_rule_period(
+                    user_id,
+                    NotificationTypeCode::ChainValidatorOfflineOffence,
+                    NotificationPeriodType::Off,
+                    0,
+                )
+                .await?;
+        }
+        // block authorship
+        let (block_notification_period_type, block_notification_period) =
+            match chat.block_notification_period {
+                -1 => (NotificationPeriodType::Off, 0),
+                0 => (NotificationPeriodType::Immediate, 0),
+                60 => (NotificationPeriodType::Hour, 1),
+                180 | 720 => (NotificationPeriodType::Epoch, 3),
+                360 | 1440 => (NotificationPeriodType::Era, 1),
+                _ => (NotificationPeriodType::Hour, 1),
+            };
+        self.app_postgres
+            .update_user_notification_rule_period(
+                user_id,
+                NotificationTypeCode::ChainValidatorBlockAuthorship,
+                block_notification_period_type,
+                block_notification_period,
+            )
+            .await?;
+        // unclaimed payouts
+        if chat.unclaimed_payout_notification_period == -1 {
+            self.app_postgres
+                .update_user_notification_rule_period(
+                    user_id,
+                    NotificationTypeCode::ChainValidatorUnclaimedPayout,
+                    NotificationPeriodType::Off,
+                    0,
+                )
+                .await?;
+        }
+        // migrate validators
         for validator in &validators {
             let stash_address = validator.stash_address.as_str();
             self.process_command(chat_id, "/add", &[stash_address.to_string()])
@@ -106,7 +173,7 @@ impl TelegramBot {
             let chat_ids: Vec<i64> = validator
                 .chat_ids
                 .iter()
-                .filter(|validator_chat_id| **validator_chat_id != chat_id)
+                .filter(|validator_chat_id| **validator_chat_id != chat.chat_id)
                 .copied()
                 .collect();
             validator_collection
@@ -117,12 +184,9 @@ impl TelegramBot {
                 )
                 .await?;
         }
-        /*
-        update notification settings
-         */
         chat_collection
             .update_one(
-                doc! { "chatId": chat_id },
+                doc! { "chatId": chat.chat_id },
                 doc! { "$set": { "isMigrated": true } },
                 None,
             )
