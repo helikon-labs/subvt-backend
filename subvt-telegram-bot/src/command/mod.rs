@@ -131,7 +131,7 @@ impl TelegramBot {
                     .await?;
                 self.process_payouts_command(chat_id, args).await?;
             }
-            "/referenda" => {
+            "/referenda" | "democracy" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)

@@ -73,18 +73,20 @@ impl TelemetryProcessor {
                 startup_time,
             } => {
                 log::debug!("Add node #{} :: {:?}.", node_id, node_details);
-                metrics::node_count().inc();
                 let mut map = node_map.lock().await;
-                map.insert(*node_id, *node_details.clone());
+                if map.insert(*node_id, *node_details.clone()).is_none() {
+                    metrics::node_count().inc();
+                }
                 postgres
                     .save_node(*node_id, node_details, *startup_time, location)
                     .await?;
             }
             FeedMessage::RemovedNode { node_id } => {
                 log::debug!("Removed node #{}.", node_id);
-                metrics::node_count().dec();
                 let mut map = node_map.lock().await;
-                map.remove(node_id);
+                if map.remove(node_id).is_some() {
+                    metrics::node_count().dec();
+                }
                 postgres.remove_node(*node_id).await?;
             }
             FeedMessage::LocatedNode {
