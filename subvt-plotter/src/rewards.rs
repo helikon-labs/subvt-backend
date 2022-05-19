@@ -90,6 +90,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         .set_height(height)
         .set_margins(top, right, bottom, left)
         .add_title(title.to_string())
+        .add_subtitle("• data from Jan 1st, 2022 •".to_string())
         .set_summary(format!(
             "Total: {} {}",
             total_formatted, CONFIG.substrate.token_ticker,
