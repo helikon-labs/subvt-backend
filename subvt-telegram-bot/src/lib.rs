@@ -345,7 +345,7 @@ impl TelegramBot {
                             .collect(),
                     )
                 };
-                let command = command.replace("@subvt_kusama_test_bot", "");
+                let command = command.replace(&CONFIG.telegram_bot.username, "");
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
