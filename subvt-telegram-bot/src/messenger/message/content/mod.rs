@@ -1,3 +1,4 @@
+//! Content for all message types.
 use super::MessageType;
 use crate::CONFIG;
 use subvt_utility::text::get_condensed_address;

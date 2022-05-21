@@ -1,8 +1,10 @@
+//! `/summary` command processor.
 use crate::{MessageType, TelegramBot, CONFIG};
 use subvt_governance::polkassembly::fetch_open_referendum_list;
 use subvt_types::telegram::TelegramChatValidatorSummary;
 
 impl TelegramBot {
+    //! Sends the user a handy summary of all added validators.
     pub(crate) async fn process_summary_command(&self, chat_id: i64) -> anyhow::Result<()> {
         let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
         if chat_validators.is_empty() {

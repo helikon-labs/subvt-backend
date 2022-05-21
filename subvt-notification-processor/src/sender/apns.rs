@@ -1,3 +1,4 @@
+//! Apple Push Notification Service (APNS) sender. Sends notifications to Apple devices.
 use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;

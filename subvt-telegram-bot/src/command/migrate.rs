@@ -1,3 +1,4 @@
+//! `/migrate` command processor.
 use crate::{MessageType, TelegramBot, CONFIG};
 use futures::stream::TryStreamExt;
 use mongodb::bson::doc;
@@ -8,6 +9,8 @@ use subvt_types::telegram::{OneKVBotChat, OneKVBotValidator, TelegramChatState};
 const MIGRATION_CODE_LENGTH: usize = 5;
 
 impl TelegramBot {
+    //! Processes the `/migrate` command, which is designed to migrate a user's validators and
+    //! notification settings from the deprecated 1KV bot.
     pub(crate) async fn process_migrate_command(
         &self,
         chat_id: i64,

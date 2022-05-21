@@ -1,3 +1,5 @@
+//! This keyboard lists open referenda. Every button is an open referendum, and its details is
+//! displayed on a click on it.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};

@@ -1,3 +1,4 @@
+//! Content for a selected open referendum.
 use crate::MessageType;
 use crate::CONFIG;
 use subvt_types::app::event::democracy::DemocracyVotedEvent;

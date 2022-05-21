@@ -1,3 +1,4 @@
+//! This module manages the creation of the content for every message type.
 use crate::query::QueryType;
 use subvt_types::app::event::democracy::DemocracyVotedEvent;
 use subvt_types::crypto::AccountId;
@@ -9,6 +10,7 @@ use subvt_types::telegram::{TelegramChatValidator, TelegramChatValidatorSummary}
 
 pub mod content;
 
+//! All types of messages that can be sent to a chat.
 pub enum MessageType {
     About,
     Help,

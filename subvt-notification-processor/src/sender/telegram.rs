@@ -1,3 +1,4 @@
+//! Telegram notification sender. Sends notification as messages to the SubVT Telegram Bot chats.
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender};
 use async_trait::async_trait;

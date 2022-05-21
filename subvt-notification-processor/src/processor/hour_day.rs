@@ -1,3 +1,4 @@
+//! X-hourly and x-daily notification processing logic.
 use crate::NotificationProcessor;
 use chrono::{Datelike, Timelike, Utc};
 use subvt_types::app::NotificationPeriodType;

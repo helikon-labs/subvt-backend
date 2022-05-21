@@ -1,3 +1,4 @@
+//! Content for the `/summary` request, displays a summary of all validators.
 use crate::{MessageType, CONFIG};
 use subvt_types::telegram::TelegramChatValidatorSummary;
 use tera::Context;

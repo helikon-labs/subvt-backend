@@ -1,5 +1,4 @@
 //! Templated notification content provider.
-
 use crate::content::context::{get_grouped_renderer_context, get_renderer_context};
 use crate::CONFIG;
 use std::collections::HashMap;

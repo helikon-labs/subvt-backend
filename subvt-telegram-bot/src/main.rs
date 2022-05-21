@@ -1,5 +1,4 @@
 //! See `./lib.rs` for details.
-
 use once_cell::sync::OnceCell;
 use subvt_service_common::Service;
 use subvt_telegram_bot::TelegramBot;

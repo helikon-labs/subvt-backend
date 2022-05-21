@@ -1,3 +1,4 @@
+//! NFT selection keyboard to visit an NFT's URL, displayed as response to the `/nfts` command.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup};

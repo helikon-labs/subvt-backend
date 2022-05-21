@@ -1,3 +1,4 @@
+//! Email sender.
 use crate::content::NotificationContent;
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};

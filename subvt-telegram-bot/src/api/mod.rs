@@ -1,3 +1,5 @@
+//! Frankenstein Telegram async API trait implementation. Mostly adopted from the original
+//! implementation in the original crate @ https://github.com/ayrat555/frankenstein/blob/master/src/api/async_telegram_api_impl.rs.
 use async_trait::async_trait;
 use frankenstein::api_traits::AsyncTelegramApi;
 use frankenstein::api_traits::ErrorResponse;

@@ -1,3 +1,4 @@
+//! Keyboard for the selection of the `/contact` type: bug report or feature request.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};

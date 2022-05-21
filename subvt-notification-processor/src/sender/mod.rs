@@ -1,3 +1,4 @@
+//! Notification sender trait. Implemented by senders of different notification channels.
 use async_trait::async_trait;
 use subvt_types::app::{Notification, NotificationChannel};
 

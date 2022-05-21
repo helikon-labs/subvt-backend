@@ -1,3 +1,5 @@
+//! Validator selection keyboard - utilized by many other commands where a display of a list of
+//! validators and the selection of one of them is required.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};

@@ -1,3 +1,4 @@
+//! `/add` command processor.
 use super::{MessageType, TelegramBot};
 use crate::{
     query::{Query, QueryType},
@@ -8,6 +9,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
 impl TelegramBot {
+    //! Processes the `/add` command that is used to add a validator to a chat.
     pub(crate) async fn process_add_validator_command(
         &self,
         chat_id: i64,
@@ -17,6 +19,7 @@ impl TelegramBot {
             .network_postgres
             .get_chat_validator_count(chat_id)
             .await?;
+        // check validator count against the max permitted per chat
         if validator_count >= CONFIG.telegram_bot.max_validators_per_chat {
             self.messenger
                 .send_message(
@@ -27,6 +30,7 @@ impl TelegramBot {
                 )
                 .await?;
         }
+        // check address exists
         if args.is_empty() {
             self.network_postgres
                 .set_chat_state(chat_id, TelegramChatState::AddValidator)
@@ -42,7 +46,9 @@ impl TelegramBot {
             return Ok(());
         }
         for address in args {
+            // check valid address
             match AccountId::from_ss58_check(address) {
+                // get validator details from Redis
                 Ok(account_id) => {
                     if let Some(validator) = self.redis.fetch_validator_details(&account_id).await?
                     {
@@ -62,6 +68,7 @@ impl TelegramBot {
                                 )
                                 .await?;
                         } else {
+                            // all passed, add the validator to the chat
                             let id = self
                                 .network_postgres
                                 .add_validator_to_chat(
@@ -78,6 +85,8 @@ impl TelegramBot {
                                 chat_id,
                                 id
                             );
+                            // attach the validator to the SubVT user too so that the notification
+                            // conditions can be processed
                             let app_user_id =
                                 self.network_postgres.get_chat_app_user_id(chat_id).await?;
                             // add validator to the app user for notifications

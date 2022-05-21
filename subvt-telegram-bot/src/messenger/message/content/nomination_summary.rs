@@ -1,3 +1,4 @@
+//! Content for the `/nominationsummary` request.
 use super::MessageType;
 use crate::CONFIG;
 use subvt_types::subvt::{NominationSummary, ValidatorDetails};

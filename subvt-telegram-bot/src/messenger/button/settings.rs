@@ -1,3 +1,4 @@
+//! Manages the creation of different types of `/settings` buttons.
 use super::super::Messenger;
 use crate::query::{Query, QueryType, SettingsEditQueryType};
 use crate::CONFIG;

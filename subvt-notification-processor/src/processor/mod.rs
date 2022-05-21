@@ -1,3 +1,4 @@
+//! Contains the notification processing logic.
 use crate::{metrics, NotificationProcessor};
 use std::collections::HashMap;
 use subvt_types::app::{

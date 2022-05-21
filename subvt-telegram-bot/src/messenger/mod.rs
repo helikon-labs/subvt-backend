@@ -1,3 +1,4 @@
+//! This module handles the sending of all the messages to a Telegram chat.
 use crate::api::{AsyncApi, Error};
 use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
@@ -20,13 +21,17 @@ pub mod message;
 
 const FORBIDDEN_ERROR_CODE: u64 = 403;
 
+//! Telegram messenger.
 pub struct Messenger {
+    //! Async Telegram API.
     api: AsyncApi,
+    //! Template renderer.
     renderer: Tera,
 }
 
 impl Messenger {
     pub fn new() -> anyhow::Result<Messenger> {
+        // init the renderer with the template collection
         let renderer = Tera::new(&format!(
             "{}{}telegram{}dialog{}*.html",
             CONFIG.notification_processor.template_dir_path,
@@ -34,6 +39,7 @@ impl Messenger {
             std::path::MAIN_SEPARATOR,
             std::path::MAIN_SEPARATOR,
         ))?;
+        // init the async Telegram API
         let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
         Ok(Messenger { api, renderer })
     }
@@ -110,6 +116,7 @@ impl Messenger {
         }
     }
 
+    //! Send a message with content indicated by the `message_type` parameter.
     pub async fn send_message(
         &self,
         app_postgres: &PostgreSQLAppStorage,
@@ -117,6 +124,8 @@ impl Messenger {
         chat_id: i64,
         message_type: Box<MessageType>,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
+        // some messages need an inline keyboard, such as selection from the validator list,
+        // selection from the NFT list, etc.
         let inline_keyboard = match &*message_type {
             MessageType::BroadcastConfirm => self.get_broadcast_confirm_keyboard()?,
             MessageType::ValidatorList {
@@ -183,6 +192,8 @@ impl Messenger {
         }
     }
 
+    //! Inline keyboard displayed for the `/settings` command doesn't get recreated after every
+    //! option change, but it gets updated after every change.
     pub async fn update_settings_message(
         &self,
         chat_id: i64,
@@ -240,6 +251,7 @@ impl Messenger {
         }
     }
 
+    //! `/nfts` command produces a paged list. This function manages the paging.
     #[allow(clippy::too_many_arguments)]
     pub async fn update_nfts_message(
         &self,

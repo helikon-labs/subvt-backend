@@ -1,6 +1,8 @@
+//! `/broadcast` command processor.
 use crate::{MessageType, TelegramBot, CONFIG};
 
 impl TelegramBot {
+    //! This command is used by the chat admin(s) to broadcast messages to all chats.
     pub(crate) async fn process_broadcast_command(
         &self,
         chat_id: i64,

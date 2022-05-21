@@ -1,3 +1,4 @@
+//! Content for the `/nominationdetails` request.
 use super::MessageType;
 use crate::CONFIG;
 use itertools::Itertools;

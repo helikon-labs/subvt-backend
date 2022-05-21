@@ -1,3 +1,4 @@
+//! Content for the `/networkstatus` request.
 use super::MessageType;
 use crate::CONFIG;
 use chrono::{TimeZone, Utc};

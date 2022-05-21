@@ -1,3 +1,4 @@
+//! Keyboard for the confirmation of the `/broadcast` request.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};

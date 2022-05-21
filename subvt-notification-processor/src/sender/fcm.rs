@@ -1,3 +1,4 @@
+//! Firebase Cloud Messaging (FCM) sender. Sends notifications to Android devices.
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;

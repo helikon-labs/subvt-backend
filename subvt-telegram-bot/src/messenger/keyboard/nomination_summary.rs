@@ -1,3 +1,5 @@
+//! Single-button keyboard to move on to the nomination details from the nomination summary
+//! for a validator.
 use crate::query::QueryType;
 use crate::{Messenger, Query};
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};

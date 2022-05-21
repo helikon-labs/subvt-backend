@@ -1,3 +1,5 @@
+//! Telegram bot command processing happens here. All the commands are `match`ed and processed in
+//! the `process_command` function below and the corresponding command modules.
 use crate::{query::QueryType, MessageType, TelegramBot};
 use async_recursion::async_recursion;
 use subvt_governance::polkassembly;

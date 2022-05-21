@@ -1,3 +1,4 @@
+//! Content for the `/validatorinfo` request, after the selection of the validator.
 use super::MessageType;
 use crate::CONFIG;
 use chrono::{TimeZone, Utc};

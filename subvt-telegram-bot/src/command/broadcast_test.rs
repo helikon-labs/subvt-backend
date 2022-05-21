@@ -1,6 +1,10 @@
+//! `/broadcasttest` command processor.
 use crate::{MessageType, TelegramBot, CONFIG};
 
 impl TelegramBot {
+    //! This command is used by the chat admin(s) to test the broadcast messages.
+    //! Sends the broadcast message to the admin chats, so they get a chance to confirm the content
+    //! before it gets broadcast.
     pub(crate) async fn process_broadcast_test_command(
         &self,
         chat_id: i64,

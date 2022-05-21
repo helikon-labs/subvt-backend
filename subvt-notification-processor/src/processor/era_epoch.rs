@@ -1,3 +1,4 @@
+//! Era and epoch notification processing logic.
 use crate::{metrics, NotificationProcessor, CONFIG};
 use anyhow::Context;
 use futures_util::StreamExt as _;

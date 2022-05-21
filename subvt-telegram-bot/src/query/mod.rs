@@ -1,3 +1,5 @@
+//! Queries happen as a result of user interaction with inline keyboards, usually a call-to-action
+//! or item selection (validator, referendum, NFT, etc.).
 use serde::{Deserialize, Serialize};
 
 pub mod process;
@@ -10,6 +12,7 @@ pub struct Query {
     pub parameter: Option<String>,
 }
 
+//! Types of all queries, i.e. keyboard actions.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum QueryType {
     #[serde(rename = "CA")]
@@ -47,6 +50,7 @@ pub enum QueryType {
     ValidatorInfo,
 }
 
+//! `/settings` command keyboard subsections.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum SettingsSubSection {
     #[serde(rename = "R")]
@@ -69,6 +73,7 @@ pub enum SettingsSubSection {
     OneKV,
 }
 
+//! Query to edit a settings sub-item, i.e. notification type.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub enum SettingsEditQueryType {
     #[serde(rename = "BA")]

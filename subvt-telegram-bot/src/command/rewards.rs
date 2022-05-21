@@ -1,7 +1,10 @@
+//! `/rewards` command processor.
 use crate::query::QueryType;
 use crate::{Query, TelegramBot};
 
 impl TelegramBot {
+    //! Sends the user the rewards report for a selected validator. The report is a chart that
+    //! Displays the total earned amount by the validator per month in the native token.
     pub(crate) async fn process_rewards_command(
         &self,
         chat_id: i64,

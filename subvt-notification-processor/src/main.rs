@@ -1,5 +1,4 @@
 //! See `./lib.rs` for details.
-
 use once_cell::sync::OnceCell;
 use subvt_notification_processor::NotificationProcessor;
 use subvt_service_common::Service;

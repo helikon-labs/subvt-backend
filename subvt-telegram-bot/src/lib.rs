@@ -1,5 +1,5 @@
-//! Telegram bot. Former 1KV Telegram Bot migrated to SubVT.
-
+//! Telegram bot. Former 1KV Telegram Bot (https://github.com/helikon-labs/polkadot-kusama-1kv-telegram-bot)
+//! migrated to the SubVT backend (https://github.com/helikon-labs/subvt-backend/tree/development).
 use crate::{
     api::AsyncApi,
     messenger::{message::MessageType, Messenger},
@@ -34,6 +34,7 @@ lazy_static! {
     static ref CMD_REGEX: Regex = Regex::new(r"^/([a-zA-Z0-9_]+[@a-zA-Z0-9_]?)(\s+[a-zA-Z0-9_-]+)*").unwrap();
     static ref CMD_ARG_REGEX: Regex = Regex::new(r"^[a-zA-Z0-9_-]+$").unwrap();
     static ref SPLITTER_REGEX: Regex = Regex::new(r"\s+").unwrap();
+    /// Default notification rules.
     static ref DEFAULT_RULES: Vec<(NotificationTypeCode, NotificationPeriodType, u16)> = vec![
         (
             NotificationTypeCode::ChainValidateExtrinsic,
@@ -191,10 +192,15 @@ pub enum TelegramBotError {
 }
 
 pub struct TelegramBot {
+    /// SubVT application deployment Postgres helper.
     app_postgres: PostgreSQLAppStorage,
+    /// SubVT network deployment Postgres helper.
     network_postgres: PostgreSQLNetworkStorage,
+    /// SubVT application deployment Redis helper.
     redis: Redis,
+    /// Telegram API helper.
     api: AsyncApi,
+    /// Telegram messenger struct.
     messenger: Messenger,
 }
 
@@ -225,6 +231,7 @@ impl TelegramBot {
         Ok(())
     }
 
+    /// Create default notification for the SubVT user corresponding to the chat.
     async fn create_default_notification_rules(
         &self,
         app_user_id: u32,
@@ -247,6 +254,7 @@ impl TelegramBot {
         Ok(())
     }
 
+    /// Create a SubVT application user for the Telegram chat.
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
         log::info!(
             "Create new app user, notification channel and rules for chat {}.",
@@ -272,6 +280,8 @@ impl TelegramBot {
         Ok(app_user_id)
     }
 
+    /// Works after each Telegram update to see if the user exists/deleted. Created/undeletes
+    /// as necessary.
     async fn save_or_restore_chat(&self, message: &Message) -> anyhow::Result<()> {
         if !self
             .network_postgres
@@ -311,6 +321,7 @@ impl TelegramBot {
         }
         Ok(())
     }
+
 
     async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
         // group chat started - send intro
@@ -488,7 +499,7 @@ impl Service for TelegramBot {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         log::info!("Telegram bot has started.");
-
+        // only receive message and callback query updates
         let mut update_params = GetUpdatesParams {
             offset: None,
             limit: None,
@@ -498,8 +509,10 @@ impl Service for TelegramBot {
                 frankenstein::AllowedUpdate::CallbackQuery,
             ]),
         };
+        // update metrics
         self.update_metrics_chat_count().await?;
         self.update_metrics_validator_count().await?;
+        // process Telegram updates in a loop
         loop {
             let result = self.api.get_updates(&update_params).await;
             match result {
@@ -507,6 +520,7 @@ impl Service for TelegramBot {
                     for update in response.result {
                         update_params.offset = Some(update.update_id + 1);
                         match update.content {
+                            // process message
                             frankenstein::UpdateContent::Message(message) => {
                                 self.save_or_restore_chat(&message).await?;
                                 tokio::spawn(async move {
@@ -528,6 +542,7 @@ impl Service for TelegramBot {
                                     }
                                 });
                             }
+                            // process callback query
                             frankenstein::UpdateContent::CallbackQuery(callback_query) => {
                                 if let Some(callback_data) = callback_query.data {
                                     if let Some(message) = callback_query.message {

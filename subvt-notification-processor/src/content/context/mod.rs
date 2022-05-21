@@ -1,3 +1,5 @@
+//! This module and sub-modules set the context of notification templates for various notification
+//! types.
 use crate::content::context::block_authorship::set_block_authorship_grouped_context;
 use crate::content::context::democracy::{
     set_democracy_cancelled_context, set_democracy_delegated_context,
