@@ -21,11 +21,11 @@ pub mod message;
 
 const FORBIDDEN_ERROR_CODE: u64 = 403;
 
-//! Telegram messenger.
+/// Telegram messenger.
 pub struct Messenger {
-    //! Async Telegram API.
+    /// Async Telegram API.
     api: AsyncApi,
-    //! Template renderer.
+    /// Template renderer.
     renderer: Tera,
 }
 
@@ -116,7 +116,7 @@ impl Messenger {
         }
     }
 
-    //! Send a message with content indicated by the `message_type` parameter.
+    /// Send a message with content indicated by the `message_type` parameter.
     pub async fn send_message(
         &self,
         app_postgres: &PostgreSQLAppStorage,
@@ -192,8 +192,8 @@ impl Messenger {
         }
     }
 
-    //! Inline keyboard displayed for the `/settings` command doesn't get recreated after every
-    //! option change, but it gets updated after every change.
+    /// Inline keyboard displayed for the `/settings` command doesn't get recreated after every
+    /// option change, but it gets updated after every change.
     pub async fn update_settings_message(
         &self,
         chat_id: i64,
@@ -251,7 +251,7 @@ impl Messenger {
         }
     }
 
-    //! `/nfts` command produces a paged list. This function manages the paging.
+    /// `/nfts` command produces a paged list. This function manages the paging.
     #[allow(clippy::too_many_arguments)]
     pub async fn update_nfts_message(
         &self,

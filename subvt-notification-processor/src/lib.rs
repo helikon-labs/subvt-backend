@@ -24,7 +24,7 @@ lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-//! Senders for different notification channels.
+/// Senders for different notification channels.
 pub(crate) struct SenderRepository {
     apns_sender: Arc<Box<dyn NotificationSender>>,
     email_sender: Arc<Box<dyn NotificationSender>>,
@@ -67,7 +67,7 @@ impl SenderRepository {
         })
     }
 
-    //! Returns the sender for a specific notification channel.
+    /// Returns the sender for a specific notification channel.
     pub(crate) fn get_sender(
         &self,
         channel: &NotificationChannel,
@@ -91,9 +91,9 @@ impl SenderRepository {
     }
 }
 
-//! Notification processor, has the SubVT application database to access notifications,
-//! a repository of notification senders for different channels, and a map of network ids to
-//! supported networks.
+/// Notification processor, has the SubVT application database to access notifications,
+/// a repository of notification senders for different channels, and a map of network ids to
+/// supported networks.
 pub struct NotificationProcessor {
     postgres: Arc<PostgreSQLAppStorage>,
     sender_repository: SenderRepository,

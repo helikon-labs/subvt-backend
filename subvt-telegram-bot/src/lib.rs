@@ -322,7 +322,6 @@ impl TelegramBot {
         Ok(())
     }
 
-
     async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
         // group chat started - send intro
         if let Some(group_chat_created) = message.group_chat_created {

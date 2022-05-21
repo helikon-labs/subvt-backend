@@ -10,7 +10,7 @@ use subvt_types::telegram::{TelegramChatValidator, TelegramChatValidatorSummary}
 
 pub mod content;
 
-//! All types of messages that can be sent to a chat.
+/// All types of messages that can be sent to a chat.
 pub enum MessageType {
     About,
     Help,
