@@ -17,8 +17,8 @@ Complete details can be found in the
 [system architecture document](https://github.com/helikon-labs/subvt/blob/main/document/software/01-subvt_system_architecture.md).
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_large.png" target="_blank">
-    <img src="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_small.png"/>
+  <a href="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_large.jpg" target="_blank">
+    <img src="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_small.jpg"/>
   </a>
   <br/>
 </p>
