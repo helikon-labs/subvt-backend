@@ -1,6 +1,6 @@
 //! Sends the persisted notifications to various channels (email, APNS, FCM, SMS, GSM, Telegram).
 use crate::content::ContentProvider;
-use crate::sender::apns::APNSSender;
+// use crate::sender::apns::APNSSender;
 use crate::sender::email::EmailSender;
 use crate::sender::fcm::FCMSender;
 use crate::sender::telegram::TelegramSender;
@@ -26,7 +26,7 @@ lazy_static! {
 
 /// Senders for different notification channels.
 pub(crate) struct SenderRepository {
-    apns_sender: Arc<Box<dyn NotificationSender>>,
+    // apns_sender: Arc<Box<dyn NotificationSender>>,
     email_sender: Arc<Box<dyn NotificationSender>>,
     fcm_sender: Arc<Box<dyn NotificationSender>>,
     kusama_telegram_sender: Arc<Box<dyn NotificationSender>>,
@@ -38,8 +38,10 @@ impl SenderRepository {
         network_map: &HashMap<u32, Network>,
     ) -> anyhow::Result<SenderRepository> {
         let content_provider = ContentProvider::new(network_map.clone())?;
+        /*
         let apns_sender = Arc::new(Box::new(APNSSender::new(content_provider.clone()).await?)
             as Box<dyn NotificationSender>);
+         */
         let email_sender = Arc::new(Box::new(EmailSender::new(content_provider.clone()).await?)
             as Box<dyn NotificationSender>);
         let fcm_sender = Arc::new(Box::new(FCMSender::new(content_provider.clone()).await?)
@@ -59,7 +61,7 @@ impl SenderRepository {
             .await?,
         ) as Box<dyn NotificationSender>);
         Ok(SenderRepository {
-            apns_sender,
+            // apns_sender,
             email_sender,
             fcm_sender,
             kusama_telegram_sender,
@@ -74,7 +76,7 @@ impl SenderRepository {
         network_id: u32,
     ) -> Arc<Box<dyn NotificationSender>> {
         match channel {
-            NotificationChannel::APNS => self.apns_sender.clone(),
+            // NotificationChannel::APNS => self.apns_sender.clone(),
             NotificationChannel::Email => self.email_sender.clone(),
             NotificationChannel::FCM => self.fcm_sender.clone(),
             NotificationChannel::Telegram => match network_id {
@@ -85,6 +87,7 @@ impl SenderRepository {
                     network_id
                 ),
             },
+            NotificationChannel::APNS => unimplemented!("APNS sender not implemented."),
             NotificationChannel::SMS => unimplemented!("SMS sender not implemented."),
             NotificationChannel::GSM => unimplemented!("GSM sender not implemented."),
         }
