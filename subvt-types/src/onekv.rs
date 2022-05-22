@@ -181,7 +181,7 @@ pub struct OneKVNominator {
     pub reward_destination: String,
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OneKVNominee {
     pub name: String,

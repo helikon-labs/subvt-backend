@@ -3,7 +3,7 @@ use anyhow::Context;
 use serde::Deserialize;
 use serde_json::value::RawValue;
 
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct NodeStats {
     pub peer_count: u64,
     pub queued_tx_count: u64,
@@ -35,7 +35,7 @@ pub struct NodeLocation(
     pub String,
 );
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NodeDetails {
     pub name: String,
     pub implementation: String,
@@ -50,7 +50,7 @@ pub struct Block {
     _block_height: u64,
 }
 
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, Eq, PartialEq)]
 pub struct BlockDetails {
     pub block_number: u64,
     pub block_hash: String,

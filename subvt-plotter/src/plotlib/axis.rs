@@ -9,7 +9,7 @@ use svg::parser::Error;
 use svg::Node;
 
 /// Enum of possible axis positions on the chart.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum AxisPosition {
     Top,
     Right,

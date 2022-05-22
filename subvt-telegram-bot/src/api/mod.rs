@@ -23,7 +23,7 @@ pub enum Error {
     Encode(String),
 }
 
-#[derive(PartialEq, Debug, thiserror::Error)]
+#[derive(Eq, PartialEq, Debug, thiserror::Error)]
 #[error("Http Error {code}: {message}")]
 pub struct HttpError {
     pub code: u16,

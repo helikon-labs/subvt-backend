@@ -12,7 +12,7 @@ use svg::node::Text as TextNode;
 use svg::Node;
 
 /// Define the orientation enum to aid in rendering and business logic.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Orientation {
     Horizontal,
     Vertical,
