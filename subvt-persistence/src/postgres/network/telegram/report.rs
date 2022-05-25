@@ -8,7 +8,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO telegram_bot_bug_report (telegram_chat_id, content)
+            INSERT INTO sub_telegram_bot_bug_report (telegram_chat_id, content)
             VALUES ($1, $2)
             "#,
         )
@@ -26,7 +26,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<()> {
         sqlx::query(
             r#"
-            INSERT INTO telegram_bot_feature_request(telegram_chat_id, content)
+            INSERT INTO sub_telegram_bot_feature_request(telegram_chat_id, content)
             VALUES ($1, $2)
             "#,
         )

@@ -3,4 +3,4 @@
 🗳👍 voted <strong>aye</strong> for referendum #{{ referendum_index }} with <strong>{{ aye_balance }} {{ token_ticker }}</strong> and <strong>{% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction</strong>.{% elif nay_balance %}
 🗳👎 voted <strong>nay</strong> for referendum #{{ referendum_index }} with <strong>{{ nay_balance }} {{ token_ticker }}</strong> and <strong>{% if conviction  %}{% if conviction == 0 %}no{% else %}{{ conviction }}x{% endif %}{% else %}no{% endif %} conviction</strong>.{% else %}
 🗳 cast a vote for referendum #{{ referendum_index }}.{% endif %}
-View the referendum on <a href="https://{{ chain }}.polkassembly.io/referendum/{{ referendum_index }}">Polkassembly</a>.
+You can view the referendum details using the /democracy command.

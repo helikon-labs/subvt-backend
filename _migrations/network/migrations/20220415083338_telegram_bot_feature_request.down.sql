@@ -1,1 +1,1 @@
-DROP TABLE telegram_bot_feature_request CASCADE;
+DROP TABLE sub_telegram_bot_feature_request CASCADE;
