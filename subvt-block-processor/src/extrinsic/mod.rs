@@ -31,6 +31,11 @@ async fn consume_call_events(
                 maybe_delimiter_index = Some(index);
                 break;
             }
+            SubstrateEvent::Utility(UtilityEvent::ItemFailed { .. }) => {
+                is_successful = false;
+                maybe_delimiter_index = Some(index);
+                break;
+            }
             SubstrateEvent::Utility(UtilityEvent::BatchInterrupted { .. }) => {
                 is_successful = false;
                 maybe_delimiter_index = Some(index);
@@ -75,7 +80,7 @@ async fn consume_call_events(
         events.drain(0..(delimiter_index + 1));
         Ok(is_successful)
     } else {
-        Err(anyhow::anyhow!("Call delimiter event not found (ItemCompleted, BatchInterrupted, ProxyExecuted, MultisigExecuted, ExtrinsicSuccess, ExtrinsicFailed)."))
+        Err(anyhow::anyhow!("Call delimiter event not found (ItemCompleted, ItemFailed, BatchInterrupted, ProxyExecuted, MultisigExecuted, ExtrinsicSuccess, ExtrinsicFailed)."))
     }
 }
 

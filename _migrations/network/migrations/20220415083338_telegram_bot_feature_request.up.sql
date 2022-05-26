@@ -1,3 +1,5 @@
+ALTER TABLE IF EXISTS telegram_bot_feature_request RENAME TO sub_telegram_bot_feature_request;
+
 CREATE TABLE IF NOT EXISTS sub_telegram_bot_feature_request
 (
     telegram_chat_id    bigint NOT NULL,

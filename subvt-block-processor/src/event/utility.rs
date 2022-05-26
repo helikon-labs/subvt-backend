@@ -36,6 +36,7 @@ pub(crate) async fn process_utility_event(
                 .save_batch_completed_event(block_hash, extrinsic_index, event_index as i32)
                 .await?;
         }
+        _ => (),
     }
     Ok(())
 }
@@ -75,6 +76,7 @@ pub(crate) async fn update_utility_event_nesting_index(
                 )
                 .await?;
         }
+        _ => (),
     }
     Ok(())
 }

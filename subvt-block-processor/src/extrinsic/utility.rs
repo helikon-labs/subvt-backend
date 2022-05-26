@@ -86,6 +86,35 @@ impl BlockProcessor {
                 }
                 Ok(is_successful)
             }
+            UtilityExtrinsic::ForceBatch {
+                maybe_signature: _,
+                calls,
+            } => {
+                for (batch_index, call) in calls.iter().enumerate() {
+                    self.process_extrinsic(
+                        substrate_client,
+                        postgres,
+                        block_hash.clone(),
+                        block_number,
+                        active_validator_account_ids,
+                        index,
+                        true,
+                        &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                            Some(format!("{}{}", nesting_index, batch_index))
+                        } else {
+                            Some(batch_index.to_string())
+                        },
+                        maybe_multisig_account_id,
+                        maybe_real_account_id,
+                        events,
+                        false,
+                        call,
+                    )
+                    .await?;
+                }
+                // force batch call always returns ok regardless of an interruption
+                Ok(true)
+            }
         }
     }
 }

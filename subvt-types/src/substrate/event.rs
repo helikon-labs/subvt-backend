@@ -928,12 +928,19 @@ pub enum UtilityEvent {
     ItemCompleted {
         extrinsic_index: Option<u32>,
     },
+    ItemFailed {
+        extrinsic_index: Option<u32>,
+        dispatch_error: DispatchError,
+    },
     BatchInterrupted {
         extrinsic_index: Option<u32>,
         item_index: u32,
         dispatch_error: DispatchError,
     },
     BatchCompleted {
+        extrinsic_index: Option<u32>,
+    },
+    BatchCompletedWithErrors {
         extrinsic_index: Option<u32>,
     },
 }
@@ -944,10 +951,16 @@ impl UtilityEvent {
             Self::ItemCompleted {
                 extrinsic_index, ..
             } => *extrinsic_index,
+            Self::ItemFailed {
+                extrinsic_index, ..
+            } => *extrinsic_index,
             Self::BatchInterrupted {
                 extrinsic_index, ..
             } => *extrinsic_index,
             Self::BatchCompleted {
+                extrinsic_index, ..
+            } => *extrinsic_index,
+            Self::BatchCompletedWithErrors {
                 extrinsic_index, ..
             } => *extrinsic_index,
         }
@@ -1038,6 +1051,10 @@ impl UtilityEvent {
             "ItemCompleted" => Some(SubstrateEvent::Utility(UtilityEvent::ItemCompleted {
                 extrinsic_index,
             })),
+            "ItemFailed" => Some(SubstrateEvent::Utility(UtilityEvent::ItemFailed {
+                extrinsic_index,
+                dispatch_error: get_argument_primitive!(&arguments[0], DispatchError),
+            })),
             "BatchInterrupted" => Some(SubstrateEvent::Utility(UtilityEvent::BatchInterrupted {
                 extrinsic_index,
                 item_index: get_argument_primitive!(&arguments[0], U32),
@@ -1046,6 +1063,9 @@ impl UtilityEvent {
             "BatchCompleted" => Some(SubstrateEvent::Utility(UtilityEvent::BatchCompleted {
                 extrinsic_index,
             })),
+            "BatchCompletedWithErrors" => Some(SubstrateEvent::Utility(
+                UtilityEvent::BatchCompletedWithErrors { extrinsic_index },
+            )),
             _ => None,
         };
         Ok(maybe_event)

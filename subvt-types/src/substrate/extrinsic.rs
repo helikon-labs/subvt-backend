@@ -319,6 +319,10 @@ pub enum UtilityExtrinsic {
         maybe_signature: Option<Signature>,
         calls: Vec<SubstrateExtrinsic>,
     },
+    ForceBatch {
+        maybe_signature: Option<Signature>,
+        calls: Vec<SubstrateExtrinsic>,
+    },
 }
 
 impl UtilityExtrinsic {
@@ -328,23 +332,35 @@ impl UtilityExtrinsic {
         arguments: Vec<Argument>,
     ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
         let maybe_extrinsic = match name {
-            "batch" | "batch_all" => {
+            "batch" => {
                 let mut calls: Vec<SubstrateExtrinsic> = Vec::new();
                 for call in get_argument_vector!(&arguments[0], Call) {
                     calls.push(call);
                 }
-                let extrinsic = if name == "batch" {
-                    UtilityExtrinsic::Batch {
-                        maybe_signature,
-                        calls,
-                    }
-                } else {
-                    UtilityExtrinsic::BatchAll {
-                        maybe_signature,
-                        calls,
-                    }
-                };
-                Some(SubstrateExtrinsic::Utility(extrinsic))
+                Some(SubstrateExtrinsic::Utility(UtilityExtrinsic::Batch {
+                    maybe_signature,
+                    calls,
+                }))
+            }
+            "batch_all" => {
+                let mut calls: Vec<SubstrateExtrinsic> = Vec::new();
+                for call in get_argument_vector!(&arguments[0], Call) {
+                    calls.push(call);
+                }
+                Some(SubstrateExtrinsic::Utility(UtilityExtrinsic::BatchAll {
+                    maybe_signature,
+                    calls,
+                }))
+            }
+            "force_batch" => {
+                let mut calls: Vec<SubstrateExtrinsic> = Vec::new();
+                for call in get_argument_vector!(&arguments[0], Call) {
+                    calls.push(call);
+                }
+                Some(SubstrateExtrinsic::Utility(UtilityExtrinsic::ForceBatch {
+                    maybe_signature,
+                    calls,
+                }))
             }
             _ => None,
         };
@@ -495,7 +511,7 @@ impl SubstrateExtrinsic {
             ("Timestamp", "set") => {
                 TimestampExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
-            ("Utility", "batch") | ("Utility", "batch_all") => {
+            ("Utility", "batch") | ("Utility", "batch_all") | ("Utility", "force_batch") => {
                 UtilityExtrinsic::from(&call.name, signature.clone(), arguments.clone())?
             }
             _ => None,
