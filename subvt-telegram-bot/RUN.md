@@ -17,11 +17,13 @@ Follow the steps below to run the SubVT backend on Docker Compose.
    2. `KUSAMA_TELEGRAM_BOT_USERNAME`: Full Telegram bot username for the Kusama bot.
    3. `POLKADOT_TELEGRAM_API_TOKEN`: Telegram API token for the Polkadot bot.
    4. `POLKADOT_TELEGRAM_BOT_USERNAME`: Full Telegram bot username for the Polkadot bot.
-   5. `KUSAMA_BLOCK_PROCESSOR_START_NUMBER`: Start block number for the Kusama block processor. Set this to a recent block if you don't need the historical data for rewards and payouts reports.
-   6. `POLKADOT_BLOCK_PROCESSOR_START_NUMBER`: Same as the previous, but for Polkadot.
-   7. `FONT_DIR`: Set this to the full path of the [_fonts](../_fonts) directory in the SubVT source root directory.
-   8. `TMP_DIR`: Set this to the full path of an arbitrary temporary folder. This folder is going to be used for the temporary storage of the chart image files before they get sent to the Telegram chat they're prepared for.
-   9. `PROMETHEUS_DIR`: Set this to the full path of the [_prometheus](../_prometheus) directory in the SubVT source root directory.
-   10. `TEMPLATE_DIR`: Set this to the full path of the [_template](../_template) directory in the SubVT source root directory. This directory contains the notification template files.
+   5. `KUSAMA_RPC_URL`: Kusama node RPC URL. Port number is mandatory, e.g. `wss://kusama-rpc.polkadot.io:443`. SubVT backend can function with the public RPC endpoints as set by the defaults in the `.env.sample` file, but it requires a locally available dedicated archive node to perform well.
+   6. `POLKADOT_RPC_URL`: Same as previous, but for Polkadot.
+   7. `KUSAMA_BLOCK_PROCESSOR_START_NUMBER`: Start block number for the Kusama block processor. Set this to a recent block if you don't need the historical data for rewards and payouts reports.
+   8. `POLKADOT_BLOCK_PROCESSOR_START_NUMBER`: Same as the previous, but for Polkadot.
+   9. `FONT_DIR`: Set this to the full path of the [_fonts](../_fonts) directory in the SubVT source root directory.
+   10. `TMP_DIR`: Set this to the full path of an arbitrary temporary folder. This folder is going to be used for the temporary storage of the chart image files before they get sent to the Telegram chat they're prepared for.
+   11. `PROMETHEUS_DIR`: Set this to the full path of the [_prometheus](../_prometheus) directory in the SubVT source root directory.
+   12. `TEMPLATE_DIR`: Set this to the full path of the [_template](../_template) directory in the SubVT source root directory. This directory contains the notification template files.
 6. Run the script [up.sh](../_docker/compose/up.sh). This is going to fetch the latest images from Docker Hub, configure your containers and run the whole system.
 7. Your bots should be available for chat after the successful completion of the previous step.
