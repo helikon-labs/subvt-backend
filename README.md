@@ -18,7 +18,7 @@ Complete details can be found in the
 
 <p align="center">
   <a href="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_large.jpg" target="_blank">
-    <img src="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_small.jpg"/>
+    <img src="https://raw.githubusercontent.com/helikon-labs/subvt/main/document/software/image/01-subvt_system_architecture_x_small.jpg"/>
   </a>
   <br/>
 </p>
