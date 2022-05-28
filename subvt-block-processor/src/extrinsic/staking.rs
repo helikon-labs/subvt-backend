@@ -18,51 +18,7 @@ pub(crate) async fn process_staking_extrinsic(
     extrinsic: &StakingExtrinsic,
 ) -> anyhow::Result<()> {
     match extrinsic {
-        StakingExtrinsic::Bond {
-            maybe_signature: signature,
-            controller,
-            amount,
-            reward_destination,
-        } => {
-            let maybe_stash_account_id = if maybe_real_account_id.is_some() {
-                maybe_real_account_id
-            } else if maybe_multisig_account_id.is_some() {
-                maybe_multisig_account_id
-            } else {
-                match signature {
-                    Some(signature) => signature.get_signer_account_id(),
-                    _ => None,
-                }
-            };
-            let controller_account_id = if let Some(account_id) = controller.get_account_id() {
-                account_id
-            } else {
-                log::error!(
-                    "Controller address is not raw account id in staking.bond. Cannot persist."
-                );
-                return Ok(());
-            };
-            if let Some(stash_account_id) = maybe_stash_account_id {
-                postgres
-                    .save_bond_extrinsic(
-                        &block_hash,
-                        index as i32,
-                        is_nested_call,
-                        maybe_nesting_index,
-                        is_successful,
-                        &stash_account_id,
-                        &controller_account_id,
-                        *amount,
-                        reward_destination,
-                    )
-                    .await?;
-            } else {
-                log::error!(
-                    "Cannot get caller account id from signature for extrinsic #{} Staking.bond.",
-                    index
-                );
-            }
-        }
+        StakingExtrinsic::Bond { .. } => (),
         StakingExtrinsic::Nominate {
             maybe_signature: signature,
             targets,

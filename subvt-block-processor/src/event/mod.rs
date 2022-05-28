@@ -2,7 +2,6 @@ use crate::event::democracy::{process_democracy_event, update_democracy_event_ne
 use crate::event::imonline::process_imonline_event;
 use crate::event::staking::{process_staking_event, update_staking_event_nesting_index};
 use crate::event::system::{process_system_event, update_system_event_nesting_index};
-use crate::event::utility::{process_utility_event, update_utility_event_nesting_index};
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::event::SubstrateEvent;
@@ -11,7 +10,6 @@ mod democracy;
 mod imonline;
 mod staking;
 mod system;
-mod utility;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_event(
@@ -53,9 +51,7 @@ pub(crate) async fn process_event(
             )
             .await?
         }
-        SubstrateEvent::Utility(utility_event) => {
-            process_utility_event(postgres, block_hash, event_index, utility_event).await?
-        }
+        SubstrateEvent::Utility(_) => (),
         _ => (),
     }
     Ok(())
@@ -99,16 +95,7 @@ pub(crate) async fn update_event_nesting_indices(
                 )
                 .await?
             }
-            SubstrateEvent::Utility(utility_event) => {
-                update_utility_event_nesting_index(
-                    postgres,
-                    block_hash,
-                    maybe_nesting_index,
-                    *event_index as i32,
-                    utility_event,
-                )
-                .await?;
-            }
+            SubstrateEvent::Utility(_) => (),
             _ => (),
         }
     }

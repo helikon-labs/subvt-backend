@@ -1,1 +1,0 @@
-DROP TABLE sub_extrinsic_bond CASCADE;

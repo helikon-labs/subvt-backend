@@ -1,1 +1,0 @@
-DROP TABLE sub_event_batch_item_completed CASCADE;
