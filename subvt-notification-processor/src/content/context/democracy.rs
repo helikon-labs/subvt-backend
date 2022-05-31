@@ -168,7 +168,11 @@ pub(crate) fn set_democracy_started_context(notification: &Notification, context
     }
 }
 
-pub(crate) fn set_democracy_voted_context(notification: &Notification, context: &mut Context) {
+pub(crate) fn set_democracy_voted_context(
+    network: &Network,
+    notification: &Notification,
+    context: &mut Context,
+) {
     if let Some(notification_data_json) = &notification.data_json {
         if let Ok(event) =
             serde_json::from_str::<DemocracyVotedEvent>(notification_data_json.as_str())
@@ -177,7 +181,7 @@ pub(crate) fn set_democracy_voted_context(notification: &Notification, context: 
             if let Some(aye_balance) = event.aye_balance {
                 let aye_balance_formatted = format_decimal(
                     aye_balance,
-                    CONFIG.substrate.token_decimals,
+                    network.token_decimal_count as usize,
                     CONFIG.substrate.token_format_decimal_points,
                 );
                 context.insert("aye_balance", &aye_balance_formatted);
@@ -185,7 +189,7 @@ pub(crate) fn set_democracy_voted_context(notification: &Notification, context: 
             if let Some(nay_balance) = event.nay_balance {
                 let nay_balance_formatted = format_decimal(
                     nay_balance,
-                    CONFIG.substrate.token_decimals,
+                    network.token_decimal_count as usize,
                     CONFIG.substrate.token_format_decimal_points,
                 );
                 context.insert("nay_balance", &nay_balance_formatted);

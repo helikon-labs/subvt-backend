@@ -157,7 +157,7 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::DemocracyUndelegated => (),
         NotificationTypeCode::DemocracyVoted => {
-            set_democracy_voted_context(notification, &mut context);
+            set_democracy_voted_context(network, notification, &mut context);
         }
         _ => todo!(
             "Push notification content not yet ready for {}.",
