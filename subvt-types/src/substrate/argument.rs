@@ -106,6 +106,7 @@ pub enum ArgumentPrimitive {
     CompactMoment(Compact<u64>),
     CompactParachainId(Compact<Id>),
     CompactWeight(Compact<Weight>),
+    ConfigOpAccountId(ConfigOp<AccountId>),
     ConfigOpBalance(ConfigOp<Balance>),
     ConfigOpPercent(ConfigOp<Percent>),
     ConfigOpPerbill(ConfigOp<Perbill>),
@@ -364,6 +365,7 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<ReferendumIndex>", decode_compact_referendum_index, CompactReferendumIndex),
     ("Compact<u32>", decode_compact_u32, CompactU32),
     ("Compact<Weight>", decode_compact_weight, CompactWeight),
+    ("ConfigOp<T::AccountId>", decode_config_op_account_id, ConfigOpAccountId),
     ("ConfigOp<BalanceOf<T>>", decode_config_op_balance, ConfigOpBalance),
     ("ConfigOp<u32>", decode_config_op_u32, ConfigOpU32),
     ("ConfigOp<Percent>", decode_config_op_percent, ConfigOpPercent),
@@ -709,6 +711,7 @@ impl Argument {
                     || name == "ChangesTrieConfiguration"
                     || name == "Box<CallOrHashOf<T>>"
                     || name == "Box<xcm::opaque::VersionedXcm>"
+                    || name == "Box<RawSolution<SolutionOf<T::MinerConfig>>>"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
