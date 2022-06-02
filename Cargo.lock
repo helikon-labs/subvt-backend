@@ -4122,7 +4122,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.22",
  "xcm-executor",
 ]
 
@@ -4582,7 +4582,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm",
+ "xcm 0.9.22",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -4629,7 +4629,7 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "static_assertions",
- "xcm",
+ "xcm 0.9.22",
 ]
 
 [[package]]
@@ -4692,7 +4692,7 @@ dependencies = [
  "sp-session",
  "sp-staking",
  "sp-std",
- "xcm",
+ "xcm 0.9.22",
  "xcm-executor",
 ]
 
@@ -7168,7 +7168,7 @@ dependencies = [
  "subvt-proc-macro",
  "subvt-utility",
  "thiserror",
- "xcm",
+ "xcm 0.9.23",
 ]
 
 [[package]]
@@ -7782,7 +7782,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.3",
  "digest 0.9.0",
- "rand 0.8.5",
+ "rand 0.4.6",
  "static_assertions",
 ]
 
@@ -8403,7 +8403,20 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "scale-info",
- "xcm-procedural",
+ "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot.git?tag=v0.9.22)",
+]
+
+[[package]]
+name = "xcm"
+version = "0.9.23"
+source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.23#a7e188cd9665c735f4b9d5a58cdbc4dd1850eae0"
+dependencies = [
+ "derivative",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "scale-info",
+ "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot.git?tag=v0.9.23)",
 ]
 
 [[package]]
@@ -8422,7 +8435,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.22",
  "xcm-executor",
 ]
 
@@ -8440,13 +8453,24 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm",
+ "xcm 0.9.22",
 ]
 
 [[package]]
 name = "xcm-procedural"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.22#17c7b9594aedbfc644d7e6e26f7bd244e68ccf4d"
+dependencies = [
+ "Inflector",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "xcm-procedural"
+version = "0.1.0"
+source = "git+https://github.com/paritytech/polkadot.git?tag=v0.9.23#a7e188cd9665c735f4b9d5a58cdbc4dd1850eae0"
 dependencies = [
  "Inflector",
  "proc-macro2",
