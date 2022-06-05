@@ -134,6 +134,13 @@ pub struct BlockProcessorConfig {
     pub start_block_number: u64,
 }
 
+/// Validator list updater configuration.
+#[derive(Clone, Debug, Deserialize)]
+pub struct ValidatorListUpdaterConfig {
+    /// Keep this many records in Redis for the past validator list updates.
+    pub history_record_depth: u64,
+}
+
 /// 1KV configuration - only used for Polkadot and Kusama.
 #[derive(Clone, Debug, Deserialize)]
 pub struct OneKVConfig {
@@ -248,6 +255,7 @@ pub struct SubIDConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub block_processor: BlockProcessorConfig,
+    pub validator_list_updater: ValidatorListUpdaterConfig,
     pub env: Environment,
     pub common: CommonConfig,
     pub http: HTTPConfig,

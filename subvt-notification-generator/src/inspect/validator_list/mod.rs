@@ -22,7 +22,6 @@ mod update;
 
 impl NotificationGenerator {
     /// Called after each validator list update PUBLISH event.
-    #[allow(clippy::too_many_arguments)]
     async fn inspect_validator_list_update(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

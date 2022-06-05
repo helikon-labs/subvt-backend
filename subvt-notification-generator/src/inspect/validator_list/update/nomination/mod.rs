@@ -12,7 +12,6 @@ mod new_nomination;
 mod renomination;
 
 impl NotificationGenerator {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_nomination_changes(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

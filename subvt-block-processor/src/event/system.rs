@@ -1,7 +1,6 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::substrate::event::SystemEvent;
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_system_event(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,

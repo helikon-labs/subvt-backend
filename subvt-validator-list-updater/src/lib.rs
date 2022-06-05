@@ -26,8 +26,6 @@ lazy_static! {
     static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
-const HISTORY_BLOCK_DEPTH: u64 = 3;
-
 #[derive(Default)]
 pub struct ValidatorListUpdater;
 
@@ -155,7 +153,7 @@ impl ValidatorListUpdater {
             .take(
                 processed_block_numbers
                     .len()
-                    .saturating_sub(HISTORY_BLOCK_DEPTH as usize),
+                    .saturating_sub(CONFIG.validator_list_updater.history_record_depth as usize),
             )
             .collect();
         log::info!("Delete from history: {:?}", to_delete);

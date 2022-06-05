@@ -19,7 +19,6 @@ mod session_keys;
 impl NotificationGenerator {
     /// Runs after each notification from the validator list updater for each validator,
     /// checks for changes in the validator and persists notifications where a rule requires it.
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_validator_changes(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

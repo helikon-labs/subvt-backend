@@ -63,7 +63,7 @@ pub struct OneKVCandidateDetails {
     pub offline_accumulated: u64,
     pub offline_since: u64,
     pub online_since: u64,
-    pub node_refs: u32,
+    pub node_refs: i64,
     pub rank: i64,
     pub rank_events: Vec<OneKVRankEvent>,
     pub reward_destination: String,
