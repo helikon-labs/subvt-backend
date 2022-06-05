@@ -199,6 +199,8 @@ services:
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
   subvt_kusama_report_service:
     container_name: subvt_kusama_report_service
     restart: unless-stopped
