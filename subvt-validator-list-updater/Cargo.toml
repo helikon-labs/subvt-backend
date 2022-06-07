@@ -25,4 +25,4 @@ subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-substrate-client = { path = "../subvt-substrate-client" }
 subvt-types = { path = "../subvt-types" }
-tokio = { version = "1.18.2",features = ["full"] }
+tokio = { version = "1.19.1",features = ["full"] }
