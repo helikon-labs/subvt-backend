@@ -26,4 +26,4 @@ subvt-metrics = { path = "../subvt-metrics" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
-tokio = { version = "1.19.1",features = ["full"] }
+tokio = { version = "1.19.2",features = ["full"] }
