@@ -86,7 +86,7 @@ impl BlockProcessor {
                         maybe_real_account_id,
                         events,
                         batch_fail,
-                        &*call,
+                        call,
                     )
                     .await?;
                 Ok(is_successful)
@@ -141,7 +141,7 @@ impl BlockProcessor {
                         maybe_real_account_id,
                         events,
                         batch_fail,
-                        &*call,
+                        call,
                     )
                     .await?;
                 Ok(is_successful)

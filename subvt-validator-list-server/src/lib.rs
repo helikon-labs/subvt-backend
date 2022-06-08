@@ -221,7 +221,8 @@ impl Service for ValidatorListServer {
             {
                 // find the ones to remove
                 let validator_map = validator_map.read().unwrap();
-                for validator_account_id in validator_map.keys() {
+                let current_validator_account_ids = validator_map.keys();
+                for validator_account_id in current_validator_account_ids {
                     if !validator_account_ids.contains(&validator_account_id.to_string()) {
                         update.remove_ids.push(*validator_account_id);
                     }
