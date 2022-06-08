@@ -7,7 +7,7 @@ rust-version = "1.60.0"
 [dependencies]
 anyhow = "1.0"
 async-lock = "2.5.0"
-async-trait = "0.1.53"
+async-trait = "0.1.56"
 async-tungstenite = { version = "0.17.2", features = ["tokio-runtime", "tokio-native-tls"] }
 futures = "0.3"
 lazy_static = "1.4.0"
