@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS sub_telemetry_network_status (
-    id                      integer PRIMARY KEY,
+    id                      INTEGER PRIMARY KEY,
     best_block_number       bigint NOT NULL,
     best_block_timestamp    bigint NOT NULL,
     average_block_time_ms   bigint,

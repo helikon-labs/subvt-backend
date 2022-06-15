@@ -32,6 +32,6 @@ subvt-service-common = { path = "../subvt-service-common" }
 subvt-telegram-bot = { path = "../subvt-telegram-bot" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
-tera = "1.15.0"
+tera = "1.16.0"
 thiserror = "1.0"
 tokio = { version = "1.19.2",features = ["full"] }

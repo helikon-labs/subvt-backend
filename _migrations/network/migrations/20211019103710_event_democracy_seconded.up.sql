@@ -2,9 +2,9 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_seconded
 (
     id              SERIAL PRIMARY KEY,
     block_hash      VARCHAR(66) NOT NULL,
-    extrinsic_index integer,
+    extrinsic_index INTEGER,
     nesting_index   text,
-    event_index     integer NOT NULL,
+    event_index     INTEGER NOT NULL,
     account_id      VARCHAR(66) NOT NULL,
     proposal_index  bigint NOT NULL,
     created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

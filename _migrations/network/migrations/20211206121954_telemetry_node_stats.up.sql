@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS sub_telemetry_node_stats (
     time            TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     node_id         bigint NOT NULL,
-    peer_count      integer NOT NULL,
-    queued_tx_count integer NOT NULL,
+    peer_count      INTEGER NOT NULL,
+    queued_tx_count INTEGER NOT NULL,
     CONSTRAINT sub_telemetry_node_stats_fk_telemetry_node
         FOREIGN KEY (node_id)
             REFERENCES sub_telemetry_node (id)

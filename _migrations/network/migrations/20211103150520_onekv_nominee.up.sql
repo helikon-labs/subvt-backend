@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS sub_onekv_nominee
 (
     id                  SERIAL PRIMARY KEY,
-    onekv_nominator_id  integer NOT NULL,
+    onekv_nominator_id  INTEGER NOT NULL,
     stash_account_id    VARCHAR(128) NOT NULL,
     name                text NOT NULL,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

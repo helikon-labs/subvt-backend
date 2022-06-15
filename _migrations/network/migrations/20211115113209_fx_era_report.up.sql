@@ -11,10 +11,10 @@ DO $$ BEGIN
         	total_reward_points bigint,
         	total_reward bigint,
         	total_stake VARCHAR(128),
-        	active_nominator_count integer,
-        	offline_offence_count integer,
+        	active_nominator_count INTEGER,
+        	offline_offence_count INTEGER,
         	slashed_amount bigint,
-        	chilling_count integer
+        	chilling_count INTEGER
         );
     END IF;
 END $$;

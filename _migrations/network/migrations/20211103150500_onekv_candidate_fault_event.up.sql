@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_candidate_fault_event
 (
     onekv_id                VARCHAR(128) PRIMARY KEY,
     validator_account_id    VARCHAR(66) NOT NULL,
-    previous_rank           integer,
+    previous_rank           INTEGER,
     reason                  TEXT,
     happened_at             bigint NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

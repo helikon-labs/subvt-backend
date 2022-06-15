@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS sub_onekv_nominator
     stash_account_id        VARCHAR(66) NOT NULL,
     proxy_account_id        VARCHAR(66) NOT NULL,
     bonded_amount           VARCHAR(128) NOT NULL,
-    proxy_delay             integer NOT NULL,
+    proxy_delay             INTEGER NOT NULL,
     last_nomination_at      bigint NOT NULL,
     nominator_created_at    bigint NOT NULL,
     average_stake           double precision NOT NULL,

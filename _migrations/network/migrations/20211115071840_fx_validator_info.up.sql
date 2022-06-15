@@ -11,7 +11,7 @@ DO $$ BEGIN
 		blocks_authored bigint,
 		reward_points bigint,
 		heartbeat_received boolean,
-		onekv_candidate_record_id integer,
+		onekv_candidate_record_id INTEGER,
 		onekv_binary_version text,
 		onekv_rank bigint,
 		onekv_location text,

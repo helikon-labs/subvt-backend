@@ -44,7 +44,7 @@ sp-runtime = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sp-session = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 sp-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
 sp-version = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.23" }
-sqlx = { version = "0.5.13", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
 thiserror = "1.0"

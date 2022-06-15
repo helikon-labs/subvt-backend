@@ -14,10 +14,10 @@ lazy_static = "1.4.0"
 log = "0.4.16"
 thiserror = "1.0"
 rand = "0.8.5"
-resvg = "0.22.0"
+resvg = "0.23.0"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 svg = "0.10.0"
 tiny-skia = "0.6.4"
-usvg = "0.22.0"
+usvg = "0.23.0"

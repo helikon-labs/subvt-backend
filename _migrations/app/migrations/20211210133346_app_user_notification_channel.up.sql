@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS app_user_notification_channel
 (
     id                          SERIAL PRIMARY KEY,
-    user_id                     integer NOT NULL,
+    user_id                     INTEGER NOT NULL,
     notification_channel_code   VARCHAR(16) NOT NULL,
     target                      VARCHAR(1024) NOT NULL,
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

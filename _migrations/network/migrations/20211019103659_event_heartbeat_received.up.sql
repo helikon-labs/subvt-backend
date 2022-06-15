@@ -2,9 +2,9 @@ CREATE TABLE IF NOT EXISTS sub_event_heartbeat_received
 (
     id                      SERIAL PRIMARY KEY,
     block_hash              VARCHAR(66) NOT NULL,
-    extrinsic_index         integer,
+    extrinsic_index         INTEGER,
     nesting_index           text,
-    event_index             integer NOT NULL,
+    event_index             INTEGER NOT NULL,
     session_index           bigint NOT NULL,
     im_online_key           VARCHAR(66) NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,

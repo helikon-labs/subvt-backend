@@ -7,13 +7,13 @@ END $$;
 CREATE TABLE IF NOT EXISTS app_user_notification_rule
 (
     id                      SERIAL PRIMARY KEY,
-    user_id                 integer NOT NULL,
+    user_id                 INTEGER NOT NULL,
     notification_type_code  VARCHAR(256) NOT NULL,
     name                    text,
-    network_id              integer,
+    network_id              INTEGER,
     is_for_all_validators   boolean NOT NULL,
     period_type             app_notification_period_type NOT NULL default 'immediate',
-    period                  integer NOT NULL default 0,
+    period                  INTEGER NOT NULL default 0,
     notes                   text,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     deleted_at              TIMESTAMP WITHOUT TIME ZONE,
@@ -47,8 +47,8 @@ CREATE INDEX IF NOT EXISTS app_user_notification_rule_idx_search
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_validator
 (
-    user_notification_rule_id   integer NOT NULL,
-    user_validator_id           integer NOT NULL,
+    user_notification_rule_id   INTEGER NOT NULL,
+    user_validator_id           INTEGER NOT NULL,
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_validator_pk
         PRIMARY KEY (user_notification_rule_id, user_validator_id),
@@ -73,8 +73,8 @@ CREATE INDEX IF NOT EXISTS app_user_notification_rule_validator_idx_search
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_channel
 (
-    user_notification_rule_id       integer NOT NULL,
-    user_notification_channel_id    integer NOT NULL,
+    user_notification_rule_id       INTEGER NOT NULL,
+    user_notification_channel_id    INTEGER NOT NULL,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_channel_pk
         PRIMARY KEY (user_notification_rule_id, user_notification_channel_id),
@@ -97,8 +97,8 @@ CREATE INDEX IF NOT EXISTS app_user_notification_rule_channel_idx_channel_id
 
 CREATE TABLE IF NOT EXISTS app_user_notification_rule_param
 (
-    user_notification_rule_id   integer NOT NULL,
-    notification_param_type_id  integer NOT NULL,
+    user_notification_rule_id   INTEGER NOT NULL,
+    notification_param_type_id  INTEGER NOT NULL,
     "value"                     VARCHAR(128),
     created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT app_user_notification_rule_param_pk

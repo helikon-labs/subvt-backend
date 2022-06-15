@@ -32,11 +32,16 @@ pub struct Network {
     pub ss58_prefix: u32,
     pub token_ticker: String,
     pub token_decimal_count: u8,
-    pub network_status_service_url: Option<String>,
-    pub report_service_url: Option<String>,
-    pub validator_details_service_url: Option<String>,
-    pub active_validator_list_service_url: Option<String>,
-    pub inactive_validator_list_service_url: Option<String>,
+    pub network_status_service_host: Option<String>,
+    pub network_status_service_port: Option<u16>,
+    pub report_service_host: Option<String>,
+    pub report_service_port: Option<u16>,
+    pub validator_details_service_host: Option<String>,
+    pub validator_details_service_port: Option<u16>,
+    pub active_validator_list_service_host: Option<String>,
+    pub active_validator_list_service_port: Option<u16>,
+    pub inactive_validator_list_service_host: Option<String>,
+    pub inactive_validator_list_service_port: Option<u16>,
 }
 
 fn default_id() -> u32 {

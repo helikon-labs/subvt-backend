@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS sub_error_log_process_extrinsic
     id              SERIAL PRIMARY KEY,
     block_hash      VARCHAR(66) NOT NULL,
     block_number    bigint NOT NULL,
-    extrinsic_index integer NOT NULL,
+    extrinsic_index INTEGER NOT NULL,
     type            VARCHAR(32) NOT NULL,
     error_log       text,
     created_at      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

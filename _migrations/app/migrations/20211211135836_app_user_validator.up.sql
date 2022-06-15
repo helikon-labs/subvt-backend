@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS app_user_validator
 (
     id                      SERIAL PRIMARY KEY,
-    user_id                 integer NOT NULL,
-    network_id              integer NOT NULL,
+    user_id                 INTEGER NOT NULL,
+    network_id              INTEGER NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),

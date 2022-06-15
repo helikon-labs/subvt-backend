@@ -7,7 +7,7 @@ impl PostgreSQLAppStorage {
     pub async fn get_network_by_id(&self, id: u32) -> anyhow::Result<Network> {
         Ok(sqlx::query_as(
             r#"
-            SELECT id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count, network_status_service_url, report_service_url, validator_details_service_url, active_validator_list_service_url, inactive_validator_list_service_url
+            SELECT id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count, network_status_service_host, network_status_service_port, report_service_host, report_service_port, validator_details_service_host, validator_details_service_port, active_validator_list_service_host, active_validator_list_service_port, inactive_validator_list_service_host, inactive_validator_list_service_port
             FROM app_network
             WHERE id = $1
             "#
@@ -34,7 +34,7 @@ impl PostgreSQLAppStorage {
     pub async fn get_networks(&self) -> anyhow::Result<Vec<Network>> {
         Ok(sqlx::query_as(
             r#"
-            SELECT id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count, network_status_service_url, report_service_url, validator_details_service_url, active_validator_list_service_url, inactive_validator_list_service_url
+            SELECT id, hash, chain, display, ss58_prefix, token_ticker, token_decimal_count, network_status_service_host, network_status_service_port, report_service_host, report_service_port, validator_details_service_host, validator_details_service_port, active_validator_list_service_host, active_validator_list_service_port, inactive_validator_list_service_host, inactive_validator_list_service_port
             FROM app_network
             ORDER BY id ASC
             "#

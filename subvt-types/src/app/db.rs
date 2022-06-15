@@ -17,10 +17,15 @@ pub type PostgresNetwork = (
     String,
     i32,
     Option<String>,
+    Option<i32>,
     Option<String>,
+    Option<i32>,
     Option<String>,
+    Option<i32>,
     Option<String>,
+    Option<i32>,
     Option<String>,
+    Option<i32>,
 );
 
 impl From<PostgresNetwork> for Network {
@@ -33,11 +38,16 @@ impl From<PostgresNetwork> for Network {
             ss58_prefix: db_network.4 as u32,
             token_ticker: db_network.5.clone(),
             token_decimal_count: db_network.6 as u8,
-            network_status_service_url: db_network.7,
-            report_service_url: db_network.8,
-            validator_details_service_url: db_network.9,
-            active_validator_list_service_url: db_network.10,
-            inactive_validator_list_service_url: db_network.11,
+            network_status_service_host: db_network.7,
+            network_status_service_port: db_network.8.map(|port| port as u16),
+            report_service_host: db_network.9,
+            report_service_port: db_network.10.map(|port| port as u16),
+            validator_details_service_host: db_network.11,
+            validator_details_service_port: db_network.12.map(|port| port as u16),
+            active_validator_list_service_host: db_network.13,
+            active_validator_list_service_port: db_network.14.map(|port| port as u16),
+            inactive_validator_list_service_host: db_network.15,
+            inactive_validator_list_service_port: db_network.16.map(|port| port as u16),
         }
     }
 }

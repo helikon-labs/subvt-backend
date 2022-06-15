@@ -7,13 +7,13 @@ DO $$ BEGIN
         	commission_per_billion bigint,
         	self_stake VARCHAR(128),
         	total_stake VARCHAR(128),
-        	block_count integer,
-        	reward_points integer,
+        	block_count INTEGER,
+        	reward_points INTEGER,
         	self_reward bigint,
         	staker_reward bigint,
-        	offline_offence_count integer,
+        	offline_offence_count INTEGER,
         	slashed_amount bigint,
-        	chilling_count integer
+        	chilling_count INTEGER
         );
     END IF;
 END $$;

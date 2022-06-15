@@ -2,14 +2,14 @@ CREATE TABLE IF NOT EXISTS sub_event_democracy_voted
 (
     id                  SERIAL PRIMARY KEY,
     block_hash          VARCHAR(66) NOT NULL,
-    extrinsic_index     integer,
+    extrinsic_index     INTEGER,
     nesting_index       text,
-    event_index         integer NOT NULL,
+    event_index         INTEGER NOT NULL,
     account_id          VARCHAR(66) NOT NULL,
     referendum_index    bigint NOT NULL,
     aye_balance         VARCHAR(128),
     nay_balance         VARCHAR(128),
-    conviction          integer,
+    conviction          INTEGER,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_event_democracy_voted_u_event
         UNIQUE (block_hash, event_index),

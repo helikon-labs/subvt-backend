@@ -4400,9 +4400,9 @@ dependencies = [
 
 [[package]]
 name = "pico-args"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db8bcd96cb740d03149cbad5518db9fd87126a10ab519c011893b1754134c468"
+checksum = "5be167a7af36ee22fe3115051bc51f6e6c7054c9348e28deb4f49bd6f705a315"
 
 [[package]]
 name = "pin-project"
@@ -5186,9 +5186,9 @@ dependencies = [
 
 [[package]]
 name = "resvg"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e702d1e8e00a3a0717b96244cba840f34f542d8f23097c8903266c4e2975658"
+checksum = "34489194784b86c03c3d688258e2ba73f3c82700ba4673ee2ecad5ae540b9438"
 dependencies = [
  "gif",
  "jpeg-decoder",
@@ -6520,8 +6520,7 @@ dependencies = [
 [[package]]
 name = "sqlx"
 version = "0.5.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "551873805652ba0d912fec5bbb0f8b4cdd96baf8e2ebf5970e5671092966019b"
+source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-field-count#061079d79bd5971b3ef428178b993dea75b66f10"
 dependencies = [
  "sqlx-core",
  "sqlx-macros",
@@ -6530,8 +6529,7 @@ dependencies = [
 [[package]]
 name = "sqlx-core"
 version = "0.5.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e48c61941ccf5ddcada342cd59e3e5173b007c509e1e8e990dafc830294d9dc5"
+source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-field-count#061079d79bd5971b3ef428178b993dea75b66f10"
 dependencies = [
  "ahash",
  "atoi",
@@ -6583,8 +6581,7 @@ dependencies = [
 [[package]]
 name = "sqlx-macros"
 version = "0.5.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc0fba2b0cae21fc00fe6046f8baa4c7fcb49e379f0f592b04696607f69ed2e1"
+source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-field-count#061079d79bd5971b3ef428178b993dea75b66f10"
 dependencies = [
  "dotenv",
  "either",
@@ -6602,8 +6599,7 @@ dependencies = [
 [[package]]
 name = "sqlx-rt"
 version = "0.5.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4db708cd3e459078f85f39f96a00960bd841f66ee2a669e90bf36907f5a79aae"
+source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-field-count#061079d79bd5971b3ef428178b993dea75b66f10"
 dependencies = [
  "once_cell",
  "tokio",
@@ -7339,9 +7335,9 @@ dependencies = [
 
 [[package]]
 name = "tera"
-version = "1.15.0"
+version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3cac831b615c25bcef632d1cabf864fa05813baad3d526829db18eb70e8b58d"
+checksum = "7c9783d6ff395ae80cf17ed9a25360e7ba37742a79fa8fddabb073c5c7c8856d"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -7985,9 +7981,9 @@ dependencies = [
 
 [[package]]
 name = "usvg"
-version = "0.22.0"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a261d60a7215fa339482047cc3dafd4e22e2bf34396aaebef2b707355bbb39c0"
+checksum = "28a82565b5c96dcbb58c9bdbb6aa3642abd395a6a6b480658532c6f74c3c4b7a"
 dependencies = [
  "base64 0.13.0",
  "data-url",
