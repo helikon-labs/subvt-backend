@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 static BASE_API_URL: &str = "https://api.telegram.org/bot";
 
-#[derive(PartialEq, Debug, thiserror::Error)]
+#[derive(Eq, Debug, PartialEq, thiserror::Error)]
 pub enum Error {
     #[error("{0}")]
     Http(HttpError),
