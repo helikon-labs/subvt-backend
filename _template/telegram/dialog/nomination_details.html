@@ -2,12 +2,12 @@
 👤 Self Stake: <strong>{{ self_stake }} {{ token_ticker }}</strong>
 {% if active_nominations %}
 <strong>🟢️️️ ACTIVE {{ active_nomination_total}} {{ token_ticker }}</strong>{% for active_nomination in active_nominations | slice(end=list_limit) %}
-<pre>{{ active_nomination.1 }}</pre> • <pre>{{ active_nomination.0 | truncate(length=9) }}{% if active_nomination.2 %} (1KV){% endif %}</pre>{% endfor %}{% if active_nominations | length > list_limit %}
+<pre>{{ active_nomination.1 }} • {{ active_nomination.0 | truncate(length=9) }}{% if active_nomination.2 %} (1KV){% endif %}</pre>{% endfor %}{% if active_nominations | length > list_limit %}
 <i>...{{ active_nominations | length - list_limit }} more</i>
 {% endif %}{% else %}▶️ No active nominations.{% endif %}
 {% if inactive_nominations %}
 <strong>⚪️ INACTIVE {{ inactive_nomination_total}} {{ token_ticker }}</strong>{% for inactive_nomination in inactive_nominations | slice(end=list_limit) %}
-<pre>{{ inactive_nomination.1 }}</pre> • <pre>{{ inactive_nomination.0 | truncate(length=9) }}{% if inactive_nomination.2 %} (1KV){% endif %}</pre>{% endfor %}{% if inactive_nominations | length > list_limit %}
+<pre>{{ inactive_nomination.1 }} • {{ inactive_nomination.0 | truncate(length=9) }}{% if inactive_nomination.2 %} (1KV){% endif %}</pre>{% endfor %}{% if inactive_nominations | length > list_limit %}
 <i>...{{ inactive_nominations | length - list_limit }} more</i>
 {% endif %}{% else %}⏸ No inactive nominations.{% endif %}
 
