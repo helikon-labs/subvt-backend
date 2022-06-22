@@ -61,7 +61,10 @@ impl NotificationProcessor {
                     for notification in notification_group.iter() {
                         let _ = postgres.mark_notification_failed(notification.id).await;
                         let _ = postgres
-                            .set_notification_log(notification.id, format!("{:?}", error).as_str())
+                            .set_notification_error_log(
+                                notification.id,
+                                format!("{:?}", error).as_str(),
+                            )
                             .await;
                     }
                 }
@@ -129,7 +132,10 @@ impl NotificationProcessor {
                     .inc();
                     let _ = postgres.mark_notification_failed(notification_id).await;
                     let _ = postgres
-                        .set_notification_log(notification_id, format!("{:?}", error).as_str())
+                        .set_notification_error_log(
+                            notification_id,
+                            format!("{:?}", error).as_str(),
+                        )
                         .await;
                 }
             }

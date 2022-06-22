@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS app_notification
     notification_channel_code       VARCHAR(16) NOT NULL,
     notification_target             VARCHAR(1024) NOT NULL,
     data_json                       text,
-    log                             text,
+    error_log                       text,
     created_at                      TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     processing_started_at           TIMESTAMP WITHOUT TIME ZONE,
     failed_at                       TIMESTAMP WITHOUT TIME ZONE,

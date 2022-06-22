@@ -295,15 +295,15 @@ impl PostgreSQLAppStorage {
         Ok(())
     }
 
-    pub async fn set_notification_log(&self, id: u32, log: &str) -> anyhow::Result<()> {
+    pub async fn set_notification_error_log(&self, id: u32, error_log: &str) -> anyhow::Result<()> {
         sqlx::query(
             r#"
             UPDATE app_notification
-            SET log = $1
+            SET error_log = $1
             WHERE id = $2
             "#,
         )
-        .bind(log)
+        .bind(error_log)
         .bind(id as i32)
         .execute(&self.connection_pool)
         .await?;

@@ -25,7 +25,9 @@ impl Messenger {
                 for nft in chain_collection {
                     let url = if let Some(url) = &nft.url {
                         Some(url.clone())
-                    } else { nft.image_url.clone() };
+                    } else {
+                        nft.image_url.clone()
+                    };
                     rows.push(vec![InlineKeyboardButton {
                         text: format!(
                             "{} - {}",
