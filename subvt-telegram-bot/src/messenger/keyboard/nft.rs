@@ -23,6 +23,9 @@ impl Messenger {
         for chain in sorted_chain_keys {
             if let Some(chain_collection) = collection_page.get(chain) {
                 for nft in chain_collection {
+                    let url = if let Some(url) = &nft.url {
+                        Some(url.clone())
+                    } else { nft.image_url.clone() };
                     rows.push(vec![InlineKeyboardButton {
                         text: format!(
                             "{} - {}",
@@ -33,9 +36,16 @@ impl Messenger {
                                 &nft.id
                             }
                         ),
-                        url: nft.url.clone(),
+                        url: url.clone(),
                         login_url: None,
-                        callback_data: None,
+                        callback_data: if url.is_none() {
+                            Some(serde_json::to_string(&Query {
+                                query_type: QueryType::NoOp,
+                                parameter: None,
+                            })?)
+                        } else {
+                            None
+                        },
                         web_app: None,
                         switch_inline_query: None,
                         switch_inline_query_current_chat: None,
