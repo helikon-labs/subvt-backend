@@ -82,7 +82,7 @@ impl NotificationGenerator {
                     user_notification_channel_id: channel.id,
                     notification_channel: channel.channel,
                     notification_target: channel.target.clone(),
-                    log: None,
+                    error_log: None,
                     created_at: None,
                     sent_at: None,
                     delivered_at: None,

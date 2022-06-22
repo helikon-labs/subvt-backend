@@ -538,7 +538,7 @@ pub struct Notification {
     pub notification_channel: NotificationChannel,
     pub notification_target: String,
     pub data_json: Option<String>,
-    pub log: Option<String>,
+    pub error_log: Option<String>,
     pub created_at: Option<NaiveDateTime>,
     pub sent_at: Option<NaiveDateTime>,
     pub delivered_at: Option<NaiveDateTime>,

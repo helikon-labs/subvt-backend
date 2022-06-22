@@ -134,7 +134,7 @@ impl PostgreSQLAppStorage {
     pub async fn save_notification(&self, notification: &Notification) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log)
+            INSERT INTO app_notification (user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, error_log)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING id
             "#,
@@ -151,7 +151,7 @@ impl PostgreSQLAppStorage {
             .bind(&notification.notification_channel.to_string())
             .bind(&notification.notification_target)
             .bind(&notification.data_json)
-            .bind(&notification.log)
+            .bind(&notification.error_log)
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0 as u32)
@@ -166,7 +166,7 @@ impl PostgreSQLAppStorage {
         let db_notifications: Vec<PostgresNotification> = sqlx::query_as(
             if maybe_network_id.is_some() {
                 r#"
-                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
+                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, error_log
                 FROM app_notification
                 WHERE processing_started_at IS NULL
                 AND period_type = $1
@@ -175,7 +175,7 @@ impl PostgreSQLAppStorage {
                 "#
             } else {
                 r#"
-                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, log
+                SELECT id, user_id, user_notification_rule_id, network_id, period_type, period, validator_account_id, validator_account_json, notification_type_code, user_notification_channel_id, notification_channel_code, notification_target, data_json, error_log
                 FROM app_notification
                 WHERE processing_started_at IS NULL
                 AND period_type = $1

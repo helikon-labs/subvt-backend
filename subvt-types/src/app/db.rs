@@ -251,7 +251,7 @@ impl Notification {
             notification_channel: db_notification.10.as_str().into(),
             notification_target: db_notification.11.clone(),
             data_json: db_notification.12.clone(),
-            log: db_notification.13.clone(),
+            error_log: db_notification.13.clone(),
             created_at: None,
             sent_at: None,
             delivered_at: None,
