@@ -198,8 +198,6 @@ pub struct NotificationProcessorConfig {
 /// Telegram bot config.
 #[derive(Clone, Debug, Deserialize)]
 pub struct TelegramBotConfig {
-    pub mongo_url: String,
-    pub mongo_db_name: String,
     pub api_token: String,
     admin_chat_ids: String,
     pub max_validators_per_chat: u16,

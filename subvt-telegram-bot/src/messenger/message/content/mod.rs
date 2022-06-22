@@ -160,15 +160,6 @@ impl MessageType {
                 self.fill_validators_summary_context(&mut context, validator_summaries);
                 "validators_summary.html"
             }
-            Self::EnterMigrationCode => "enter_migration_code.html",
-            Self::MigrationChatNotFound => "migration_chat_not_found.html",
-            Self::MigrationInvalidCode => "migration_invalid_code.html",
-            Self::MigrationNoValidatorFound => "migration_no_validator_found.html",
-            Self::MigrationAlreadyMigrated => "migration_already_migrated.html",
-            Self::MigrationSuccessful(validator_count) => {
-                context.insert("migrated_validator_count", validator_count);
-                "migration_successful.html"
-            }
         };
         renderer.render(template_name, &context).unwrap()
     }
