@@ -137,10 +137,8 @@ impl Service for NotificationProcessor {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        log::info!("Reset pending and failed notifications.");
-        self.postgres
-            .reset_pending_and_failed_notifications()
-            .await?;
+        log::info!("Reset pending notifications.");
+        self.postgres.reset_pending_notifications().await?;
         log::info!("Start notification processors.");
         self.start_hourly_and_daily_notification_processor()?;
         let networks = self.network_map.values().collect_vec();

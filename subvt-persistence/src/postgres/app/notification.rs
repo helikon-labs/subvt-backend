@@ -195,12 +195,29 @@ impl PostgreSQLAppStorage {
         Ok(notifications)
     }
 
-    pub async fn reset_pending_and_failed_notifications(&self) -> anyhow::Result<()> {
+    pub async fn reset_pending_notifications(&self) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+            UPDATE app_notification
+            SET processing_started_at = NULL
+            WHERE processing_started_at IS NOT NULL
+            AND sent_at IS NULL
+            AND failed_at IS NULL
+            "#,
+        )
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn reset_failed_notifications(&self) -> anyhow::Result<()> {
         sqlx::query(
             r#"
             UPDATE app_notification
             SET processing_started_at = NULL, failed_at = NULL
-            WHERE sent_at IS NULL
+            WHERE processing_started_at IS NOT NULL
+            AND sent_at IS NULL
+            AND failed_at IS NOT NULL
             "#,
         )
         .execute(&self.connection_pool)
