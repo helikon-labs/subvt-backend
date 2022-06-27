@@ -162,7 +162,7 @@ impl Messenger {
         let params = SendMessageParams {
             chat_id: ChatId::Integer(chat_id),
             text: message_type.get_content(&self.renderer),
-            parse_mode: Some(frankenstein::ParseMode::Html),
+            parse_mode: Some(ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
             disable_notification: None,
@@ -240,7 +240,7 @@ impl Messenger {
             text: self
                 .renderer
                 .render("settings_prompt.html", &Context::new())?,
-            parse_mode: Some(frankenstein::ParseMode::Html),
+            parse_mode: Some(ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
             reply_markup: Some(inline_keyboard),
@@ -273,7 +273,7 @@ impl Messenger {
                 context.insert("total_count", &total_count);
                 self.renderer.render("select_nft.html", &context)?
             },
-            parse_mode: Some(frankenstein::ParseMode::Html),
+            parse_mode: Some(ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
             reply_markup: Some(self.get_nft_collection_keyboard(

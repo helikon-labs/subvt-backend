@@ -1,3 +1,5 @@
+#!/bin/bash
+
 docker-compose -p subvt_kusama_data_services -f 01-docker-compose-kusama-data.yml up -d
 docker-compose -p subvt_polkadot_data_services -f 02-docker-compose-polkadot-data.yml up -d
 docker-compose -p subvt_app_data_services -f 03-docker-compose-app-data.yml up -d

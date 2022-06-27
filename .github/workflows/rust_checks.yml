@@ -50,5 +50,7 @@ jobs:
           args: --all-targets -- -D warnings -W clippy::cognitive_complexity
       - name: Test
         uses: actions-rs/cargo@v1
+        env:
+          SUBVT_ENV: 'test'
         with:
           command: test
