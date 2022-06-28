@@ -1,7 +1,7 @@
 use crate::query::Query;
-use crate::{messenger::message::MessageType, TelegramBot};
+use crate::{messenger::message::MessageType, Messenger, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_nomination_summary_query(
         &self,
         chat_id: i64,

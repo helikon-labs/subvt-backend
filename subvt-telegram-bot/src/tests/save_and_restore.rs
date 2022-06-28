@@ -1,8 +1,10 @@
-use crate::{TelegramBot, DEFAULT_RULES};
+use crate::messenger::MockMessenger;
+use crate::tests::new_test_bot;
+use crate::{MessengerImpl, TelegramBot, DEFAULT_RULES};
 
 #[tokio::test]
 async fn test_save_new_chat() {
-    let bot = TelegramBot::new().await.unwrap();
+    let bot = new_test_bot(MockMessenger::new()).await.unwrap();
     let chat_id = 1;
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot
@@ -34,7 +36,7 @@ async fn test_save_new_chat() {
 
 #[tokio::test]
 async fn test_restore_chat_and_user() {
-    let bot = TelegramBot::new().await.unwrap();
+    let bot: TelegramBot<MessengerImpl> = TelegramBot::<MessengerImpl>::new().await.unwrap();
     let chat_id = 2;
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     let user_id = bot

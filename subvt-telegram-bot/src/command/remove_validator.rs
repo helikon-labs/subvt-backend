@@ -1,8 +1,8 @@
 //! `/remove` command processor.
 use crate::query::QueryType;
-use crate::{Query, TelegramBot};
+use crate::{Messenger, Query, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Removes a selected validator from the chat. If there's a single validator on the chat
     //! there'll be no prompt, the single validator gets removed.
     pub(crate) async fn process_remove_validator_command(

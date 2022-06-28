@@ -1,5 +1,5 @@
 use crate::query::{Query, QueryType};
-use crate::TelegramBot;
+use crate::{Messenger, TelegramBot};
 
 mod broadcast;
 mod nfts;
@@ -15,7 +15,7 @@ mod settings;
 mod settings_navigate;
 mod validator_info;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub async fn process_query(
         &self,
         chat_id: i64,

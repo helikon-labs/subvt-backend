@@ -1,8 +1,8 @@
 use crate::query::Query;
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, Messenger, TelegramBot};
 use subvt_governance::polkassembly;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_referendum_details_query(
         &self,
         chat_id: i64,

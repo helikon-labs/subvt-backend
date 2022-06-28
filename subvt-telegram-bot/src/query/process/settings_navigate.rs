@@ -1,7 +1,7 @@
 use crate::query::SettingsSubSection;
-use crate::TelegramBot;
+use crate::{Messenger, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_settings_navigate_query(
         &self,
         chat_id: i64,

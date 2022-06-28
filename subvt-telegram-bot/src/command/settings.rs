@@ -1,7 +1,7 @@
 //! `/settings` command processor.
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, Messenger, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Users utilize this command to configure all notifications.
     pub(crate) async fn process_settings_command(&self, chat_id: i64) -> anyhow::Result<()> {
         // close last settings message

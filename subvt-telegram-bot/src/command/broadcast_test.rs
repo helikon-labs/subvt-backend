@@ -1,7 +1,7 @@
 //! `/broadcasttest` command processor.
-use crate::{MessageType, TelegramBot, CONFIG};
+use crate::{MessageType, Messenger, TelegramBot, CONFIG};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! This command is used by the chat admin(s) to test the broadcast messages.
     //! Sends the broadcast message to the admin chats, so they get a chance to confirm the content
     //! before it gets broadcast.

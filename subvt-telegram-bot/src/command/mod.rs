@@ -1,6 +1,6 @@
 //! Telegram bot command processing happens here. All the commands are `match`ed and processed in
 //! the `process_command` function below and the corresponding command modules.
-use crate::{query::QueryType, MessageType, TelegramBot};
+use crate::{query::QueryType, MessageType, Messenger, TelegramBot};
 use async_recursion::async_recursion;
 use subvt_governance::polkassembly;
 
@@ -15,7 +15,7 @@ mod settings;
 mod summary;
 mod validators;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     #[async_recursion]
     pub async fn process_command(
         &self,

@@ -1,7 +1,7 @@
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, Messenger, TelegramBot};
 use subvt_types::telegram::TelegramChatState;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_report_feature_request_query(
         &self,
         chat_id: i64,

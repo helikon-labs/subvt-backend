@@ -1,7 +1,7 @@
 //! `/networkstatus` command processor.
-use crate::{MessageType, TelegramBot};
+use crate::{MessageType, Messenger, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Fetches the current live network status from the network Redis instance and
     //! sends it to the chat.
     pub(crate) async fn process_network_status_command(&self, chat_id: i64) -> anyhow::Result<()> {

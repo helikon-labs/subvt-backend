@@ -1,8 +1,8 @@
 use crate::query::Query;
-use crate::{messenger::message::MessageType, TelegramBot};
+use crate::{messenger::message::MessageType, Messenger, TelegramBot};
 use subvt_utility::text::get_condensed_address;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_payouts_query(
         &self,
         chat_id: i64,

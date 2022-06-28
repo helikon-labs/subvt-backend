@@ -1,8 +1,9 @@
 //! Telegram bot. Former 1KV Telegram Bot (https://github.com/helikon-labs/polkadot-kusama-1kv-telegram-bot)
 //! migrated to the SubVT backend (https://github.com/helikon-labs/subvt-backend/tree/development).
+use crate::messenger::Messenger;
 use crate::{
     api::AsyncApi,
-    messenger::{message::MessageType, Messenger},
+    messenger::{message::MessageType, MessengerImpl},
     query::Query,
 };
 use async_trait::async_trait;
@@ -25,7 +26,7 @@ use subvt_types::telegram::TelegramChatState;
 
 pub mod api;
 mod command;
-mod messenger;
+pub mod messenger;
 mod metrics;
 mod query;
 #[cfg(test)]
@@ -193,7 +194,7 @@ pub enum TelegramBotError {
     Error(String),
 }
 
-pub struct TelegramBot {
+pub struct TelegramBot<M: Messenger + Send + Sync> {
     /// SubVT application deployment Postgres helper.
     app_postgres: PostgreSQLAppStorage,
     /// SubVT network deployment Postgres helper.
@@ -203,29 +204,28 @@ pub struct TelegramBot {
     /// Telegram API helper.
     api: AsyncApi,
     /// Telegram messenger struct.
-    messenger: Messenger,
+    messenger: M,
 }
 
-impl TelegramBot {
-    pub async fn new() -> anyhow::Result<Self> {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
+    pub async fn new() -> anyhow::Result<TelegramBot<MessengerImpl>> {
         let app_postgres =
             PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
         let network_postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
         let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
-        let messenger = Messenger::new()?;
         Ok(TelegramBot {
             app_postgres,
             network_postgres,
             redis,
             api,
-            messenger,
+            messenger: MessengerImpl::new()?,
         })
     }
 }
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     async fn reset_chat_state(&self, telegram_chat_id: i64) -> anyhow::Result<()> {
         self.network_postgres
             .set_chat_state(telegram_chat_id, TelegramChatState::Default)
@@ -468,7 +468,7 @@ impl TelegramBot {
 }
 
 #[async_trait(?Send)]
-impl Service for TelegramBot {
+impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
     fn get_metrics_server_addr() -> (&'static str, u16) {
         (
             CONFIG.metrics.host.as_str(),

@@ -1,8 +1,8 @@
 use crate::query::{Query, SettingsEditQueryType, SettingsSubSection};
-use crate::TelegramBot;
+use crate::{Messenger, TelegramBot};
 use subvt_types::app::{NotificationPeriodType, NotificationTypeCode};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     async fn process_notification_on_off_setting_query(
         &self,
         user_id: u32,

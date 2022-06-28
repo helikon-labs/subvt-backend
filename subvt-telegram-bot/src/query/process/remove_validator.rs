@@ -1,7 +1,7 @@
 use crate::query::Query;
-use crate::{messenger::message::MessageType, TelegramBot, CONFIG};
+use crate::{messenger::message::MessageType, Messenger, TelegramBot, CONFIG};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_remove_validator_query(
         &self,
         chat_id: i64,

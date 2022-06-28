@@ -1,8 +1,8 @@
 //! `/payouts` command processor.
 use crate::query::QueryType;
-use crate::{Query, TelegramBot};
+use crate::{Messenger, Query, TelegramBot};
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Sends the user the payouts report for a selected validator. The report is a chart that
     //! displays the total paid out amount by the validator per month in the native token.
     pub(crate) async fn process_payouts_command(

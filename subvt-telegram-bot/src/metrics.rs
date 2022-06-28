@@ -1,6 +1,6 @@
 //! Telegram bot Prometheus metrics.
 use crate::query::QueryType;
-use crate::TelegramBot;
+use crate::{Messenger, TelegramBot};
 use once_cell::sync::Lazy;
 use subvt_metrics::registry::{IntCounter, IntCounterVec, IntGauge};
 
@@ -74,7 +74,10 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
     METER.with_label_values(&[label])
 }
 
-impl TelegramBot {
+impl<M> TelegramBot<M>
+where
+    M: Messenger + Send + Sync,
+{
     /// Update total chat count Prometheus metric.
     pub(crate) async fn update_metrics_chat_count(&self) -> anyhow::Result<()> {
         chat_count().set(self.network_postgres.get_chat_count().await? as i64);

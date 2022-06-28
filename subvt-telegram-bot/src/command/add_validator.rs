@@ -2,13 +2,13 @@
 use super::{MessageType, TelegramBot};
 use crate::{
     query::{Query, QueryType},
-    CONFIG,
+    Messenger, CONFIG,
 };
 use subvt_types::app::UserValidator;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Processes the `/add` command that is used to add a validator to a chat.
     pub(crate) async fn process_add_validator_command(
         &self,

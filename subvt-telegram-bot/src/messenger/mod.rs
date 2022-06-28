@@ -17,12 +17,15 @@ use crate::messenger::keyboard::{
 };
 use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
+use async_trait::async_trait;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncTelegramApi, ChatId, DeleteMessageParams, EditMessageResponse,
     EditMessageTextParams, Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup,
     SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
+#[cfg(test)]
+use mockall::automock;
 use std::path::Path;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -37,15 +40,15 @@ pub mod message;
 const FORBIDDEN_ERROR_CODE: u64 = 403;
 
 /// Telegram messenger.
-pub struct Messenger {
+pub struct MessengerImpl {
     /// Async Telegram API.
     api: AsyncApi,
     /// Template renderer.
     renderer: Tera,
 }
 
-impl Messenger {
-    pub fn new() -> anyhow::Result<Messenger> {
+impl MessengerImpl {
+    pub fn new() -> anyhow::Result<MessengerImpl> {
         // init the renderer with the template collection
         let renderer = Tera::new(&format!(
             "{}{}telegram{}dialog{}*.html",
@@ -56,12 +59,66 @@ impl Messenger {
         ))?;
         // init the async Telegram API
         let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
-        Ok(Messenger { api, renderer })
+        Ok(MessengerImpl { api, renderer })
     }
 }
 
-impl Messenger {
-    pub async fn answer_callback_query(
+#[cfg_attr(test, automock)]
+#[async_trait]
+pub trait Messenger {
+    async fn answer_callback_query(
+        &self,
+        callback_query_id: &str,
+        text: Option<String>,
+    ) -> anyhow::Result<MethodResponse<bool>>;
+
+    async fn delete_message(
+        &self,
+        chat_id: i64,
+        message_id: i32,
+    ) -> anyhow::Result<MethodResponse<bool>>;
+
+    async fn send_image(
+        &self,
+        app_postgres: &PostgreSQLAppStorage,
+        network_postgres: &PostgreSQLNetworkStorage,
+        chat_id: i64,
+        path: &Path,
+    ) -> anyhow::Result<MethodResponse<TelegramMessage>>;
+
+    async fn send_message(
+        &self,
+        app_postgres: &PostgreSQLAppStorage,
+        network_postgres: &PostgreSQLNetworkStorage,
+        chat_id: i64,
+        message_type: Box<MessageType>,
+    ) -> anyhow::Result<MethodResponse<TelegramMessage>>;
+
+    async fn update_settings_message(
+        &self,
+        chat_id: i64,
+        settings_message_id: i32,
+        sub_section: SettingsSubSection,
+        notification_rules: &[UserNotificationRule],
+    ) -> anyhow::Result<EditMessageResponse>;
+
+    #[allow(clippy::too_many_arguments)]
+    async fn update_nfts_message(
+        &self,
+        chat_id: i64,
+        message_id: i32,
+        validator_id: u64,
+        total_count: usize,
+        collection_page: NFTCollection,
+        page_index: usize,
+        has_prev: bool,
+        has_next: bool,
+    ) -> anyhow::Result<EditMessageResponse>;
+}
+
+#[async_trait]
+impl Messenger for MessengerImpl {
+    async fn answer_callback_query(
         &self,
         callback_query_id: &str,
         text: Option<String>,
@@ -79,7 +136,7 @@ impl Messenger {
         }
     }
 
-    pub async fn delete_message(
+    async fn delete_message(
         &self,
         chat_id: i64,
         message_id: i32,
@@ -94,7 +151,7 @@ impl Messenger {
         }
     }
 
-    pub async fn send_image(
+    async fn send_image(
         &self,
         app_postgres: &PostgreSQLAppStorage,
         network_postgres: &PostgreSQLNetworkStorage,
@@ -132,7 +189,7 @@ impl Messenger {
     }
 
     /// Send a message with content indicated by the `message_type` parameter.
-    pub async fn send_message(
+    async fn send_message(
         &self,
         app_postgres: &PostgreSQLAppStorage,
         network_postgres: &PostgreSQLNetworkStorage,
@@ -216,7 +273,7 @@ impl Messenger {
 
     /// Inline keyboard displayed for the `/settings` command doesn't get recreated after every
     /// option change, but it gets updated after every change.
-    pub async fn update_settings_message(
+    async fn update_settings_message(
         &self,
         chat_id: i64,
         settings_message_id: i32,
@@ -280,7 +337,7 @@ impl Messenger {
 
     /// `/nfts` command produces a paged list. This function manages the paging.
     #[allow(clippy::too_many_arguments)]
-    pub async fn update_nfts_message(
+    async fn update_nfts_message(
         &self,
         chat_id: i64,
         message_id: i32,

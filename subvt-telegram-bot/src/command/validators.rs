@@ -1,10 +1,10 @@
 //! A utility command to send the user the validator selection for the selected command,
 //! such as `/rewards` or `/validatorinfo`.
 use crate::query::QueryType;
-use crate::{MessageType, Query, TelegramBot};
+use crate::{MessageType, Messenger, Query, TelegramBot};
 use std::cmp::Ordering;
 
-impl TelegramBot {
+impl<M: Messenger + Send + Sync> TelegramBot<M> {
     //! Send the user a list of all validators on the chat, so they can select one for the selected
     //! operation such as `/rewards`, or `/validatorinfo`.
     pub(crate) async fn process_validators_command(
