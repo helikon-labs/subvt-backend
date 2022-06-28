@@ -284,39 +284,17 @@ impl TelegramBot {
 
     /// Works after each Telegram update to see if the user exists/deleted. Created/undeletes
     /// as necessary.
-    async fn save_or_restore_chat(&self, message: &Message) -> anyhow::Result<()> {
-        if !self
-            .network_postgres
-            .chat_exists_by_id(message.chat.id)
-            .await?
-        {
-            if self
-                .network_postgres
-                .chat_is_deleted(message.chat.id)
-                .await?
-            {
-                let app_user_id = self
-                    .network_postgres
-                    .get_chat_app_user_id(message.chat.id)
-                    .await?;
+    async fn save_or_restore_chat(&self, chat_id: i64) -> anyhow::Result<()> {
+        if !self.network_postgres.chat_exists_by_id(chat_id).await? {
+            if self.network_postgres.chat_is_deleted(chat_id).await? {
+                let app_user_id = self.network_postgres.get_chat_app_user_id(chat_id).await?;
                 self.app_postgres.undelete_user(app_user_id).await?;
-                self.network_postgres.undelete_chat(message.chat.id).await?;
-                let app_user_id = self
-                    .network_postgres
-                    .get_chat_app_user_id(message.chat.id)
-                    .await?;
-                self.app_postgres
-                    .undelete_user_notification_rules(app_user_id)
-                    .await?;
+                self.network_postgres.undelete_chat(chat_id).await?;
             } else {
-                let app_user_id = self.create_app_user(message.chat.id).await?;
-                log::info!(
-                    "Save new chat {}. App user id {}.",
-                    message.chat.id,
-                    app_user_id
-                );
+                let app_user_id = self.create_app_user(chat_id).await?;
+                log::info!("Save new chat {}. App user id {}.", chat_id, app_user_id);
                 self.network_postgres
-                    .save_chat(app_user_id, message.chat.id, &TelegramChatState::Default)
+                    .save_chat(app_user_id, chat_id, &TelegramChatState::Default)
                     .await?;
             }
             self.update_metrics_chat_count().await?;
@@ -523,7 +501,7 @@ impl Service for TelegramBot {
                         match update.content {
                             // process message
                             frankenstein::UpdateContent::Message(message) => {
-                                self.save_or_restore_chat(&message).await?;
+                                self.save_or_restore_chat(message.chat.id).await?;
                                 tokio::spawn(async move {
                                     if let Err(error) = self.process_message(&message).await {
                                         log::error!(
@@ -547,7 +525,7 @@ impl Service for TelegramBot {
                             frankenstein::UpdateContent::CallbackQuery(callback_query) => {
                                 if let Some(callback_data) = callback_query.data {
                                     if let Some(message) = callback_query.message {
-                                        self.save_or_restore_chat(&message).await?;
+                                        self.save_or_restore_chat(message.chat.id).await?;
                                         tokio::spawn(async move {
                                             let query: Query = if let Ok(query) =
                                                 serde_json::from_str(&callback_data)

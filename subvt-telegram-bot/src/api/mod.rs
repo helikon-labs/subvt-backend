@@ -40,8 +40,12 @@ pub struct AsyncApi {
 impl AsyncApi {
     pub fn new(api_key: &str) -> Self {
         let api_url = format!("{}{}", BASE_API_URL, api_key);
+        AsyncApi::new_with_url(api_url.as_str())
+    }
+
+    pub fn new_with_url(url: &str) -> Self {
         Self {
-            api_url,
+            api_url: url.to_string(),
             client: Client::builder().build(HttpsConnector::new()),
             multipart_client: Client::builder().build(HttpsConnector::new()),
         }
@@ -91,7 +95,7 @@ impl AsyncTelegramApi for AsyncApi {
     type Error = Error;
 
     async fn request<
-        T1: serde::ser::Serialize + std::fmt::Debug + std::marker::Send,
+        T1: serde::ser::Serialize + std::fmt::Debug + Send,
         T2: serde::de::DeserializeOwned,
     >(
         &self,
@@ -115,7 +119,7 @@ impl AsyncTelegramApi for AsyncApi {
     }
 
     async fn request_with_form_data<
-        T1: serde::ser::Serialize + std::fmt::Debug + std::marker::Send,
+        T1: serde::ser::Serialize + std::fmt::Debug + Send,
         T2: serde::de::DeserializeOwned,
     >(
         &self,
@@ -148,5 +152,58 @@ impl AsyncTelegramApi for AsyncApi {
             .map_err(|e| Error::Encode(format!("{:?}", e)))?;
         let response = self.multipart_client.request(request).await?;
         Self::parse_response(response).await
+    }
+}
+
+#[cfg(test)]
+mod async_tests {
+    use super::AsyncApi;
+    use super::Error;
+    use frankenstein::{api_traits::AsyncTelegramApi, ErrorResponse, SendMessageParams};
+
+    #[tokio::test]
+    async fn async_send_message_success() {
+        let response_string = "{\"ok\":true,\"result\":{\"message_id\":2746,\"from\":{\"id\":1276618370,\"is_bot\":true,\"first_name\":\"test_el_bot\",\"username\":\"el_mon_test_bot\"},\"date\":1618207352,\"chat\":{\"id\":275808073,\"type\":\"private\",\"username\":\"Ayrat555\",\"first_name\":\"Ayrat\",\"last_name\":\"Badykov\"},\"text\":\"Hello!\"}}";
+        let params = SendMessageParams::builder()
+            .chat_id(275808073)
+            .text("Hello!")
+            .build();
+        let _m = mockito::mock("POST", "/sendMessage")
+            .with_status(200)
+            .with_body(response_string)
+            .create();
+        let api = AsyncApi::new_with_url(mockito::server_url().as_str());
+
+        let response = api.send_message(&params).await.unwrap();
+
+        let json = serde_json::to_string(&response).unwrap();
+        assert_eq!(response_string, json);
+    }
+
+    #[tokio::test]
+    async fn send_message_failure() {
+        let response_string =
+            "{\"ok\":false,\"description\":\"Bad Request: chat not found\",\"error_code\":400}";
+        let params = SendMessageParams::builder()
+            .chat_id(1)
+            .text("Hello!")
+            .build();
+        let _m = mockito::mock("POST", "/sendMessage")
+            .with_status(400)
+            .with_body(response_string)
+            .create();
+        let api = AsyncApi::new_with_url(mockito::server_url().as_str());
+
+        if let Err(Error::Api(ErrorResponse {
+            ok: false,
+            description,
+            error_code: 400,
+            parameters: None,
+        })) = api.send_message(&params).await
+        {
+            assert_eq!("Bad Request: chat not found".to_string(), description);
+        } else {
+            panic!("Error was expected but there is none");
+        }
     }
 }
