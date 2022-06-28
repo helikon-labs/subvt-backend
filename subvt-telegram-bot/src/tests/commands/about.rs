@@ -1,7 +1,6 @@
-use super::super::util::data::get_telegram_response_message;
 use crate::messenger::message::MessageType;
-use crate::tests::new_test_bot;
-use crate::tests::MockMessenger;
+use crate::messenger::MockMessenger;
+use crate::tests::util::{data::get_telegram_response_message, new_test_bot};
 use frankenstein::MethodResponse;
 
 #[allow(clippy::borrowed_box)]

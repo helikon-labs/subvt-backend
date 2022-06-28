@@ -1,5 +1,5 @@
 use crate::messenger::MockMessenger;
-use crate::tests::new_test_bot;
+use crate::tests::util::new_test_bot;
 
 #[tokio::test]
 async fn test_add_validator() {
