@@ -1,5 +1,20 @@
 //! This module handles the sending of all the messages to a Telegram chat.
 use crate::api::{AsyncApi, Error};
+use crate::messenger::keyboard::{
+    broadcast_confirm::get_broadcast_confirm_keyboard,
+    contact_type::get_contact_type_keyboard,
+    nft::get_nft_collection_keyboard,
+    nomination_summary::get_nomination_summary_keyboard,
+    referendum_list::get_referendum_list_keyboard,
+    settings::{
+        active_inactive::get_active_inactive_settings_keyboard,
+        democracy::get_democracy_settings_keyboard, get_settings_keyboard,
+        nomination::get_nomination_settings_keyboard, onekv::get_onekv_settings_keyboard,
+        period::get_period_settings_keyboard,
+        validator_activity::get_validator_activity_settings_keyboard,
+    },
+    validator_list::get_validator_list_keyboard,
+};
 use crate::query::{SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use frankenstein::{
@@ -127,20 +142,26 @@ impl Messenger {
         // some messages need an inline keyboard, such as selection from the validator list,
         // selection from the NFT list, etc.
         let inline_keyboard = match &*message_type {
-            MessageType::BroadcastConfirm => self.get_broadcast_confirm_keyboard()?,
+            MessageType::BroadcastConfirm => get_broadcast_confirm_keyboard()?,
             MessageType::ValidatorList {
                 validators,
                 query_type,
-            } => self.get_validator_list_keyboard(validators, query_type)?,
+            } => get_validator_list_keyboard(&self.renderer, validators, query_type)?,
             MessageType::NominationSummary {
                 chat_validator_id,
                 validator_details,
-            } => self.get_nomination_summary_keyboard(*chat_validator_id, validator_details)?,
+            } => get_nomination_summary_keyboard(
+                &self.renderer,
+                *chat_validator_id,
+                validator_details,
+            )?,
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
-                self.get_settings_keyboard()?,
+                get_settings_keyboard(&self.renderer)?,
             )),
-            MessageType::RefererendumList(posts) => self.get_referendum_list_keyboard(posts)?,
-            MessageType::SelectContactType => self.get_contact_type_keyboard()?,
+            MessageType::RefererendumList(posts) => {
+                get_referendum_list_keyboard(&self.renderer, posts)?
+            }
+            MessageType::SelectContactType => get_contact_type_keyboard(&self.renderer)?,
             MessageType::NFTs {
                 validator_id,
                 collection_page,
@@ -149,7 +170,8 @@ impl Messenger {
                 has_next,
                 ..
             } => Some(ReplyMarkup::InlineKeyboardMarkup(
-                self.get_nft_collection_keyboard(
+                get_nft_collection_keyboard(
+                    &self.renderer,
                     *validator_id,
                     collection_page,
                     *page_index,
@@ -202,31 +224,36 @@ impl Messenger {
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<EditMessageResponse> {
         let inline_keyboard = match sub_section {
-            SettingsSubSection::Root => self.get_settings_keyboard()?,
+            SettingsSubSection::Root => get_settings_keyboard(&self.renderer)?,
             SettingsSubSection::ValidatorActivity => {
-                self.get_validator_activity_settings_keyboard(notification_rules)?
+                get_validator_activity_settings_keyboard(&self.renderer, notification_rules)?
             }
             SettingsSubSection::ActiveInactive => {
-                self.get_active_inactive_settings_keyboard(notification_rules)?
+                get_active_inactive_settings_keyboard(&self.renderer, notification_rules)?
             }
-            SettingsSubSection::BlockAuthorship => self.get_period_settings_keyboard(
+            SettingsSubSection::BlockAuthorship => get_period_settings_keyboard(
+                &self.renderer,
                 SettingsEditQueryType::BlockAuthorship,
                 NotificationTypeCode::ChainValidatorBlockAuthorship,
                 SettingsSubSection::ValidatorActivity,
                 notification_rules,
             )?,
             SettingsSubSection::Democracy => {
-                self.get_democracy_settings_keyboard(notification_rules)?
+                get_democracy_settings_keyboard(&self.renderer, notification_rules)?
             }
-            SettingsSubSection::OneKV => self.get_onekv_settings_keyboard(notification_rules)?,
-            SettingsSubSection::Nominations => self.get_nomination_settings_keyboard()?,
-            SettingsSubSection::NewNomination => self.get_period_settings_keyboard(
+            SettingsSubSection::OneKV => {
+                get_onekv_settings_keyboard(&self.renderer, notification_rules)?
+            }
+            SettingsSubSection::Nominations => get_nomination_settings_keyboard(&self.renderer)?,
+            SettingsSubSection::NewNomination => get_period_settings_keyboard(
+                &self.renderer,
                 SettingsEditQueryType::NewNomination,
                 NotificationTypeCode::ChainValidatorNewNomination,
                 SettingsSubSection::Nominations,
                 notification_rules,
             )?,
-            SettingsSubSection::LostNomination => self.get_period_settings_keyboard(
+            SettingsSubSection::LostNomination => get_period_settings_keyboard(
+                &self.renderer,
                 SettingsEditQueryType::LostNomination,
                 NotificationTypeCode::ChainValidatorLostNomination,
                 SettingsSubSection::Nominations,
@@ -276,7 +303,8 @@ impl Messenger {
             parse_mode: Some(ParseMode::Html),
             entities: None,
             disable_web_page_preview: Some(true),
-            reply_markup: Some(self.get_nft_collection_keyboard(
+            reply_markup: Some(get_nft_collection_keyboard(
+                &self.renderer,
                 validator_id,
                 &collection_page,
                 page_index,

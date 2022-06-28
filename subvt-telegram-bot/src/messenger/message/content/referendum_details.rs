@@ -9,7 +9,7 @@ use subvt_utility::text::get_condensed_address;
 use tera::Context;
 
 impl MessageType {
-    pub(crate) fn fill_referendum_details_context(
+    pub(in crate::messenger::message) fn fill_referendum_details_context(
         &self,
         context: &mut Context,
         post: &ReferendumPost,

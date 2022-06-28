@@ -9,7 +9,7 @@ use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
 use tera::Context;
 
 impl MessageType {
-    pub(crate) fn fill_validator_info_context(
+    pub(in crate::messenger::message) fn fill_validator_info_context(
         &self,
         context: &mut Context,
         address: &str,

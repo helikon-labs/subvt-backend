@@ -8,7 +8,7 @@ use subvt_utility::numeric::format_decimal;
 use tera::Context;
 
 impl MessageType {
-    pub(crate) fn fill_nomination_details_context(
+    pub(in crate::messenger::message) fn fill_nomination_details_context(
         &self,
         context: &mut Context,
         validator_details: &ValidatorDetails,

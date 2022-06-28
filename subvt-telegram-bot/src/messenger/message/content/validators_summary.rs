@@ -4,7 +4,7 @@ use subvt_types::telegram::TelegramChatValidatorSummary;
 use tera::Context;
 
 impl MessageType {
-    pub(crate) fn fill_validators_summary_context(
+    pub(in crate::messenger::message) fn fill_validators_summary_context(
         &self,
         context: &mut Context,
         validator_summaries: &Vec<TelegramChatValidatorSummary>,

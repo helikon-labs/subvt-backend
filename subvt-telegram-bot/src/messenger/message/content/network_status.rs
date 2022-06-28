@@ -7,7 +7,7 @@ use subvt_utility::numeric::format_decimal;
 use tera::Context;
 
 impl MessageType {
-    pub(crate) fn fill_network_status_context(
+    pub(in crate::messenger::message) fn fill_network_status_context(
         &self,
         context: &mut Context,
         network_status: &NetworkStatus,
