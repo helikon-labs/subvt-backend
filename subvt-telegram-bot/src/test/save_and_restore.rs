@@ -1,5 +1,5 @@
 use crate::messenger::MockMessenger;
-use crate::tests::util::{get_random_chat_id, new_test_bot};
+use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::{MessengerImpl, TelegramBot, DEFAULT_RULES};
 
 #[tokio::test]

@@ -15,12 +15,63 @@ pub struct Redis {
 
 impl Redis {
     pub fn new() -> anyhow::Result<Self> {
-        let client = redis::Client::open(CONFIG.redis.url.as_str())?;
+        let client = Client::open(CONFIG.redis.url.as_str())?;
         Ok(Redis { client })
     }
 }
 
 impl Redis {
+    pub async fn set_finalized_block_number(
+        &self,
+        finalized_block_number: u64,
+    ) -> anyhow::Result<()> {
+        let mut connection = self.client.get_async_connection().await?;
+        redis::cmd("SET")
+            .arg(format!(
+                "subvt:{}:validators:finalized_block_number",
+                CONFIG.substrate.chain
+            ))
+            .arg(finalized_block_number)
+            .query_async(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn add_validator_account_id_to_active_set(
+        &self,
+        finalized_block_number: u64,
+        account_id: &AccountId,
+    ) -> anyhow::Result<()> {
+        let mut connection = self.client.get_async_connection().await?;
+        redis::cmd("SADD")
+            .arg(format!(
+                "subvt:{}:validators:{}:active:account_id_set",
+                CONFIG.substrate.chain, finalized_block_number,
+            ))
+            .arg(account_id.to_string())
+            .query_async(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn set_active_validator_details(
+        &self,
+        finalized_block_number: u64,
+        validator_details: &ValidatorDetails,
+    ) -> anyhow::Result<()> {
+        let mut connection = self.client.get_async_connection().await?;
+        let validator_details_json = serde_json::to_string(validator_details)?;
+        redis::cmd("SET")
+            .arg(format!(
+                "subvt:{}:validators:{}:active:validator:{}",
+                CONFIG.substrate.chain, finalized_block_number, validator_details.account.id,
+            ))
+            .arg(validator_details_json)
+            .query_async(&mut connection)
+            .await?;
+        Ok(())
+    }
+
     pub async fn get_finalized_block_number(&self) -> anyhow::Result<Option<u64>> {
         let key = format!(
             "subvt:{}:validators:finalized_block_number",

@@ -4,6 +4,7 @@ use rand::Rng;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
+use subvt_types::crypto::AccountId;
 
 pub mod data;
 
@@ -23,6 +24,16 @@ pub async fn new_test_bot(messenger: MockMessenger) -> anyhow::Result<TelegramBo
 }
 
 pub fn get_random_chat_id() -> i64 {
+    let mut rng = rand::thread_rng();
+    rng.gen()
+}
+
+pub fn get_random_account_id() -> AccountId {
+    let mut rng = rand::thread_rng();
+    AccountId::new(rng.gen())
+}
+
+pub fn get_random_block_number() -> u64 {
     let mut rng = rand::thread_rng();
     rng.gen()
 }

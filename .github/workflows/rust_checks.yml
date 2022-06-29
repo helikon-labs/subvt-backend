@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Run Docker network Redis
+        run: docker run -d -t -p 6379:6379 redis:7.0
       - name: Run Docker network PostgreSQL
         run: docker run -d -t -p 15432:5432 helikon/subvt-network-postgres:latest
       - name: Run Docker app PostgreSQL
@@ -53,4 +55,4 @@ jobs:
         env:
           SUBVT_ENV: 'test'
         with:
-          command: test
+          command: test -- --test-threads=1

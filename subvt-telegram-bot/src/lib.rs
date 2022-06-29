@@ -30,7 +30,7 @@ pub mod messenger;
 mod metrics;
 mod query;
 #[cfg(test)]
-mod tests;
+mod test;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();

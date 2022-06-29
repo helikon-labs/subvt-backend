@@ -26,7 +26,7 @@ fi
 trap cleanup EXIT
 echo "🏗 SubVT Telegram Bot setup started."
 echo "🔼 Start the network Redis container and volume."
-docker run --name subvt_test_network_redis --platform linux/amd64 -d -p 6379:6379 -v subvt_test_network_redis_data:/data redis:7.0.0
+docker run --name subvt_test_network_redis --platform linux/amd64 -d -p 6379:6379 -v subvt_test_network_redis_data:/data redis:7.0
 echo "🔼 Start the network PostgreSQL container and volume."
 docker run --name subvt_test_network_postgres --platform linux/amd64 -d -p 15432:5432 -v subvt_test_network_postgres_data:/var/lib/postgresql/data helikon/subvt-network-postgres:latest
 echo "🔼 Start the app PostgreSQL container and volume."
@@ -34,6 +34,6 @@ docker run --name subvt_test_app_postgres --platform linux/amd64 -d -p 25432:543
 echo "😴 Sleep for 30 seconds until the database migrations are completed..."
 sleep 30
 echo "🟢 Start testing."
-SUBVT_ENV=test cargo test -- --show-output
+SUBVT_ENV=test cargo test -- --show-output --test-threads=1
 echo "✅ Testing completed successfully."
 exit 0
