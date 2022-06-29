@@ -55,4 +55,5 @@ jobs:
         env:
           SUBVT_ENV: 'test'
         with:
-          command: test -- --test-threads=1
+          command: test
+          args: -- --test-threads=1
