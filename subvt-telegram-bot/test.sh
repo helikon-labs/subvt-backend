@@ -8,6 +8,10 @@ function cleanup()
     docker stop subvt_test_app_postgres
     docker rm subvt_test_app_postgres
     docker volume rm subvt_test_app_postgres_data
+    echo "🔽 Stop and remove the network Redis container."
+    docker stop subvt_test_network_redis
+    docker rm subvt_test_network_redis
+    docker volume rm subvt_test_network_redis_data
     echo "🔽 Stop and remove the network PostgreSQL container and volume."
     docker stop subvt_test_network_postgres
     docker rm subvt_test_network_postgres
@@ -21,6 +25,8 @@ if ! docker info > /dev/null 2>&1; then
 fi
 trap cleanup EXIT
 echo "🏗 SubVT Telegram Bot setup started."
+echo "🔼 Start the network Redis container and volume."
+docker run --name subvt_test_network_redis --platform linux/amd64 -d -p 6379:6379 -v subvt_test_network_redis_data:/data redis:7.0.0
 echo "🔼 Start the network PostgreSQL container and volume."
 docker run --name subvt_test_network_postgres --platform linux/amd64 -d -p 15432:5432 -v subvt_test_network_postgres_data:/var/lib/postgresql/data helikon/subvt-network-postgres:latest
 echo "🔼 Start the app PostgreSQL container and volume."

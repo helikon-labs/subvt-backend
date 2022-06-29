@@ -1,17 +1,17 @@
 use crate::messenger::message::MessageType;
 use crate::messenger::MockMessenger;
-use crate::tests::util::{data::get_telegram_response_message, new_test_bot};
+use crate::tests::util::{data::get_telegram_response_message, get_random_chat_id, new_test_bot};
 use frankenstein::MethodResponse;
 
-#[allow(clippy::borrowed_box)]
 #[tokio::test]
+#[allow(clippy::borrowed_box)]
 async fn test_about() {
+    let chat_id = get_random_chat_id();
     let response = MethodResponse {
         ok: true,
         result: get_telegram_response_message(),
         description: None,
     };
-    let chat_id = 1;
     let mut messenger = MockMessenger::new();
     messenger
         .expect_send_message()

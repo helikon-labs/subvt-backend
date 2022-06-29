@@ -1,5 +1,6 @@
 use crate::messenger::MockMessenger;
 use crate::{AsyncApi, TelegramBot, CONFIG};
+use rand::Rng;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
@@ -19,4 +20,9 @@ pub async fn new_test_bot(messenger: MockMessenger) -> anyhow::Result<TelegramBo
         api,
         messenger,
     })
+}
+
+pub fn get_random_chat_id() -> i64 {
+    let mut rng = rand::thread_rng();
+    rng.gen()
 }

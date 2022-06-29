@@ -1,11 +1,11 @@
 use crate::messenger::MockMessenger;
-use crate::tests::util::new_test_bot;
+use crate::tests::util::{get_random_chat_id, new_test_bot};
 use crate::{MessengerImpl, TelegramBot, DEFAULT_RULES};
 
 #[tokio::test]
 async fn test_save_new_chat() {
+    let chat_id = get_random_chat_id();
     let bot = new_test_bot(MockMessenger::new()).await.unwrap();
-    let chat_id = 1;
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot
         .network_postgres

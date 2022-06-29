@@ -39,30 +39,6 @@ pub mod message;
 
 const FORBIDDEN_ERROR_CODE: u64 = 403;
 
-/// Telegram messenger.
-pub struct MessengerImpl {
-    /// Async Telegram API.
-    api: AsyncApi,
-    /// Template renderer.
-    renderer: Tera,
-}
-
-impl MessengerImpl {
-    pub fn new() -> anyhow::Result<MessengerImpl> {
-        // init the renderer with the template collection
-        let renderer = Tera::new(&format!(
-            "{}{}telegram{}dialog{}*.html",
-            CONFIG.notification_processor.template_dir_path,
-            std::path::MAIN_SEPARATOR,
-            std::path::MAIN_SEPARATOR,
-            std::path::MAIN_SEPARATOR,
-        ))?;
-        // init the async Telegram API
-        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
-        Ok(MessengerImpl { api, renderer })
-    }
-}
-
 #[cfg_attr(test, automock)]
 #[async_trait]
 pub trait Messenger {
@@ -114,6 +90,30 @@ pub trait Messenger {
         has_prev: bool,
         has_next: bool,
     ) -> anyhow::Result<EditMessageResponse>;
+}
+
+/// Telegram messenger.
+pub struct MessengerImpl {
+    /// Async Telegram API.
+    api: AsyncApi,
+    /// Template renderer.
+    renderer: Tera,
+}
+
+impl MessengerImpl {
+    pub fn new() -> anyhow::Result<MessengerImpl> {
+        // init the renderer with the template collection
+        let renderer = Tera::new(&format!(
+            "{}{}telegram{}dialog{}*.html",
+            CONFIG.notification_processor.template_dir_path,
+            std::path::MAIN_SEPARATOR,
+            std::path::MAIN_SEPARATOR,
+            std::path::MAIN_SEPARATOR,
+        ))?;
+        // init the async Telegram API
+        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
+        Ok(MessengerImpl { api, renderer })
+    }
 }
 
 #[async_trait]
