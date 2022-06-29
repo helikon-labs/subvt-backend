@@ -1,6 +1,7 @@
 mod about;
 mod add_validator;
 mod cancel;
+mod democracy;
 mod help;
 mod invalid;
 mod network_status;
