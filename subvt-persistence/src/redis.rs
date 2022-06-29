@@ -160,7 +160,18 @@ impl Redis {
         Ok(Some(serde_json::from_str(&validator_json_string)?))
     }
 
-    pub async fn get_current_network_status(&self) -> anyhow::Result<NetworkStatus> {
+    pub async fn set_network_status(&self, network_status: &NetworkStatus) -> anyhow::Result<()> {
+        let mut connection = self.client.get_async_connection().await?;
+        let network_status_json = serde_json::to_string(network_status)?;
+        redis::cmd("SET")
+            .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
+            .arg(network_status_json)
+            .query_async(&mut connection)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_network_status(&self) -> anyhow::Result<NetworkStatus> {
         let mut connection = self.client.get_async_connection().await?;
         let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
         let status_json_string: String = redis::cmd("GET")

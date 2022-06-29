@@ -504,6 +504,7 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                                 self.save_or_restore_chat(message.chat.id).await?;
                                 tokio::spawn(async move {
                                     if let Err(error) = self.process_message(&message).await {
+                                        println!("ERRRRR {:?}", error);
                                         log::error!(
                                             "Error while processing message #{}: {:?}",
                                             message.message_id,

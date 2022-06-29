@@ -13,7 +13,7 @@ async fn test_about() {
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(**message_type, MessageType::About)
         })
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot.process_command(chat_id, "/about", &[]).await.is_ok());

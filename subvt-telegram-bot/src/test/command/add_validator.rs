@@ -13,7 +13,7 @@ async fn test_add_validator_no_address() {
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(**message_type, MessageType::AddValidator)
         })
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot.process_command(chat_id, "/add", &[]).await.is_ok());
@@ -33,7 +33,7 @@ async fn test_add_validator_invalid_address() {
                 _ => false,
             },
         )
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot
@@ -57,7 +57,7 @@ async fn test_add_non_existent_validator() {
                 _ => false,
             },
         )
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot
@@ -84,7 +84,7 @@ async fn test_add_validator_duplicate() {
                 _ => false,
             },
         )
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     add_validator_to_redis(&bot.redis, &account_id)
@@ -119,13 +119,13 @@ async fn test_add_validator_successful() {
                 _ => false,
             },
         )
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     messenger
         .expect_send_message()
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(**message_type, MessageType::ValidatorAdded)
         })
-        .return_once(move |_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     add_validator_to_redis(&bot.redis, &account_id)
         .await

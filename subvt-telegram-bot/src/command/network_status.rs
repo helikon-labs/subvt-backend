@@ -11,7 +11,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 &self.network_postgres,
                 chat_id,
                 Box::new(MessageType::NetworkStatus(
-                    self.redis.get_current_network_status().await?,
+                    self.redis.get_network_status().await?,
                 )),
             )
             .await?;
