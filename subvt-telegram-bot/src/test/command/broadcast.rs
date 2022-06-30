@@ -5,6 +5,8 @@ use crate::test::util::{get_random_chat_id, new_test_bot};
 
 static ADMIN_CHAT_ID: i64 = 1234567890;
 
+/// /broadcast command can only be called by the chat admin. This function tests the successful
+/// result of the call.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_broadcasttest() {
@@ -23,6 +25,8 @@ async fn test_broadcasttest() {
         .is_ok());
 }
 
+/// Tests the case of calling the /broadcast and /broadcasttest commands from an
+/// unauthorized chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_broadcast_and_broadcasttest_non_admin() {
@@ -47,6 +51,9 @@ async fn test_broadcast_and_broadcasttest_non_admin() {
         .is_ok());
 }
 
+/// Test the calling of the /broadcast command by an authorized chat. This command is replied
+/// with a confirmation message that asks whether the admin is sure about broadcasting the
+/// message to all chats.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_broadcast() {

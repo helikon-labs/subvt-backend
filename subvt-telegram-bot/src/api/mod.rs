@@ -1,8 +1,8 @@
 //! Frankenstein Telegram async API trait implementation. Mostly adopted from the original
 //! implementation in the original crate @ https://github.com/ayrat555/frankenstein/blob/master/src/api/async_telegram_api_impl.rs.
 use async_trait::async_trait;
-use frankenstein::api_traits::AsyncTelegramApi;
 use frankenstein::api_traits::ErrorResponse;
+use frankenstein::async_telegram_api::AsyncTelegramApi;
 use hyper::{body::Buf, client::HttpConnector, Body, Client, Request, Response};
 use hyper_multipart_rfc7578::client::multipart::{Body as MultipartBody, Form as MultipartForm};
 use hyper_tls::HttpsConnector;
@@ -159,10 +159,13 @@ impl AsyncTelegramApi for AsyncApi {
 mod async_tests {
     use super::AsyncApi;
     use super::Error;
-    use frankenstein::{api_traits::AsyncTelegramApi, ErrorResponse, SendMessageParams};
+    use frankenstein::async_telegram_api::AsyncTelegramApi;
+    use frankenstein::{ErrorResponse, SendMessageParams};
 
+    /// Test async Telegram API implementation for successful message sending through a mock
+    /// HTTP layer.
     #[tokio::test]
-    async fn async_send_message_success() {
+    async fn test_async_send_message_success() {
         let response_string = "{\"ok\":true,\"result\":{\"message_id\":2746,\"from\":{\"id\":1276618370,\"is_bot\":true,\"first_name\":\"test_el_bot\",\"username\":\"el_mon_test_bot\"},\"date\":1618207352,\"chat\":{\"id\":275808073,\"type\":\"private\",\"username\":\"Ayrat555\",\"first_name\":\"Ayrat\",\"last_name\":\"Badykov\"},\"text\":\"Hello!\"}}";
         let params = SendMessageParams::builder()
             .chat_id(275808073)
@@ -180,8 +183,10 @@ mod async_tests {
         assert_eq!(response_string, json);
     }
 
+    /// Test async Telegram API implementation for message sending failure through a mock
+    /// HTTP layer.
     #[tokio::test]
-    async fn send_message_failure() {
+    async fn test_send_message_failure() {
         let response_string =
             "{\"ok\":false,\"description\":\"Bad Request: chat not found\",\"error_code\":400}";
         let params = SendMessageParams::builder()

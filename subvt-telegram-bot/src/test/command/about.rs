@@ -1,8 +1,10 @@
+///! /about command tests.
 use crate::messenger::message::MessageType;
 use crate::messenger::MockMessenger;
 use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 
+/// Tests the /about command.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_about() {

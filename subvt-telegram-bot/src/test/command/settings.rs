@@ -3,6 +3,7 @@ use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::MessageType;
 
+/// /settings command test.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_settings() {

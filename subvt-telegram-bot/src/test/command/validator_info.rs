@@ -5,6 +5,8 @@ use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot}
 use crate::MessageType;
 use rand::Rng;
 
+/// Test when the user calls /validatorinfo (alias /vi) when there are no validators
+/// added to the chat yet.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_validator_info_no_validator() {
@@ -26,6 +28,7 @@ async fn test_validator_info_no_validator() {
     assert!(bot.process_command(chat_id, "/vi", &[]).await.is_ok());
 }
 
+/// Test /validatorinfo with a single validator on the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_validator_info_single_validator() {
@@ -57,6 +60,7 @@ async fn test_validator_info_single_validator() {
         .is_ok());
 }
 
+/// Test /validatorinfo when there are multiple validators on the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_validator_info_multiple_validators() {

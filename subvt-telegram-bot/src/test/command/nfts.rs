@@ -4,6 +4,8 @@ use crate::test::util::data::{get_telegram_bool_response, get_telegram_message_r
 use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot};
 use subvt_types::crypto::AccountId;
 
+/// Tests the case when the user calls the /nfts method before adding any validators to
+/// the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nfts_no_validator() {
@@ -20,6 +22,8 @@ async fn test_nfts_no_validator() {
     assert!(bot.process_command(chat_id, "/nfts", &[]).await.is_ok());
 }
 
+/// User has called the /nfts command, and has a single validator added to the chat,
+/// but the validator stash doesn't have any NFTs owned by it. Data is provided by sub.id.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nfts_single_validator_no_nfts() {
@@ -50,6 +54,7 @@ async fn test_nfts_single_validator_no_nfts() {
     assert!(bot.process_command(chat_id, "/nfts", &[]).await.is_ok());
 }
 
+/// Tests the successful result of the /nfts command with a validator stash address with NFTs.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nfts_single_validator_with_nfts() {

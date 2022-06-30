@@ -3,9 +3,10 @@ use crate::messenger::MockMessenger;
 use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 
+/// Tests the /cancel command, which is used to interrupt a flow, eg. the validator addition flow.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
-async fn test_start() {
+async fn test_cancel() {
     let chat_id = get_random_chat_id();
     let mut messenger = MockMessenger::new();
     messenger

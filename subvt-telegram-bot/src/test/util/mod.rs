@@ -1,3 +1,4 @@
+//! Test utilities.
 use crate::messenger::MockMessenger;
 use crate::{AsyncApi, TelegramBot, CONFIG};
 use rand::Rng;

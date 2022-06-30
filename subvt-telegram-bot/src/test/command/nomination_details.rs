@@ -5,6 +5,8 @@ use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot}
 use crate::MessageType;
 use rand::Rng;
 
+/// Tests the case when the user calls the /nominationdetails (alias /nd) command
+/// before adding any validators to the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nomination_details_no_validator() {
@@ -26,6 +28,7 @@ async fn test_nomination_details_no_validator() {
     assert!(bot.process_command(chat_id, "/nd", &[]).await.is_ok());
 }
 
+/// Tests /nominationdetails command for a chat with a single validator.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nomination_details_single_validator() {
@@ -59,6 +62,7 @@ async fn test_nomination_details_single_validator() {
         .is_ok());
 }
 
+/// Tests /nominationdetails for a single validator that doesn't exist in the Redis database.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nomination_details_single_non_existent_validator() {
@@ -83,6 +87,8 @@ async fn test_nomination_details_single_non_existent_validator() {
         .is_ok());
 }
 
+/// Tests /nominationdetails where the user has multiple validators added to the chat - should
+/// respond with a list of validators for the user to pick one from.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_nomination_details_multiple_validators() {

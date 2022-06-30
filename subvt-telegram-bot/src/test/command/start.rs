@@ -3,6 +3,7 @@ use crate::messenger::MockMessenger;
 use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 
+/// /start command gets called by Telegram automatically at the beginning of a new chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_start() {

@@ -5,6 +5,7 @@ use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot}
 use crate::MessageType;
 use rand::Rng;
 
+/// Tests /remove command with no validator added to the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_remove_no_validator() {
@@ -21,6 +22,7 @@ async fn test_remove_no_validator() {
     assert!(bot.process_command(chat_id, "/remove", &[]).await.is_ok());
 }
 
+/// Tests /remove command with a single validator added to the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_remove_single_validator() {
@@ -46,6 +48,8 @@ async fn test_remove_single_validator() {
     assert!(bot.process_command(chat_id, "/remove", &[]).await.is_ok());
 }
 
+/// Tests /remove command with multiple validators on the chat - user should receive
+/// a list of validators to pick the one to remove.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_remove_multiple_validators() {

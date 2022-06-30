@@ -3,6 +3,8 @@ use crate::test::util::data::{add_validator_to_redis, get_telegram_message_respo
 use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot};
 use crate::MessageType;
 
+/// Tests the case when the user enters the /add command without following it
+/// by the stash address.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_add_validator_no_address() {
@@ -19,6 +21,7 @@ async fn test_add_validator_no_address() {
     assert!(bot.process_command(chat_id, "/add", &[]).await.is_ok());
 }
 
+/// Tests the case when the user enters an invalid SS58 address following the /add command.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_add_validator_invalid_address() {
@@ -42,6 +45,8 @@ async fn test_add_validator_invalid_address() {
         .is_ok());
 }
 
+/// Tests when the user tries to add a validator that doesn't exist in the Redis database,
+/// which is updated by the SubVT validator list updater component.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_add_non_existent_validator() {
@@ -66,6 +71,7 @@ async fn test_add_non_existent_validator() {
         .is_ok());
 }
 
+/// Tests the case of trying to add a validator that already exists in the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_add_validator_duplicate() {
@@ -100,6 +106,7 @@ async fn test_add_validator_duplicate() {
         .is_ok());
 }
 
+/// Test the successful addition of a validator to a chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_add_validator_successful() {

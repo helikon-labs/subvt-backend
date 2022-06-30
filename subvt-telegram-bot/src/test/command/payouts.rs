@@ -5,6 +5,8 @@ use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot}
 use crate::MessageType;
 use rand::Rng;
 
+/// Tests the case when the user calls the /payouts command before adding
+/// any validators to the chat.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_payouts_no_validator() {
@@ -21,6 +23,8 @@ async fn test_payouts_no_validator() {
     assert!(bot.process_command(chat_id, "/payouts", &[]).await.is_ok());
 }
 
+/// Tests calling the /payouts command with a single validator on the chat that has no
+/// payouts yet.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_payouts_single_validator_no_payouts() {
@@ -45,6 +49,8 @@ async fn test_payouts_single_validator_no_payouts() {
     assert!(bot.process_command(chat_id, "/payouts", &[]).await.is_ok());
 }
 
+/// Tests calling the /payouts command with multiple single validator on the chat - the
+/// user should receive the list of validators to pick one from.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_payouts_multiple_validators() {

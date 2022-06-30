@@ -3,6 +3,8 @@ use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::MessageType;
 
+/// Tests the initial reply to the /contact command, which helps the user to submit
+/// bug reports and feature requests.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_contact() {

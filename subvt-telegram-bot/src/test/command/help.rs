@@ -3,6 +3,7 @@ use crate::messenger::MockMessenger;
 use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 
+/// Tests the response to the /help command, which display a list of all commands.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_help() {

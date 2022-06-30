@@ -4,6 +4,8 @@ use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::MessageType;
 use subvt_types::subvt::NetworkStatus;
 
+/// Tests the successsful /network command (alias /networkstatus), which displays
+/// network status data such as staking values, block heights, etc.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_get_network_status_success() {

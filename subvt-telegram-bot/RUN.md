@@ -27,7 +27,10 @@ Follow the steps below to run the SubVT backend on Docker Compose.
    10. `TMP_DIR`: Set this to the full path of an arbitrary temporary folder. This folder is going to be used for the temporary storage of the chart image files before they get sent to the Telegram chat they're prepared for.
    11. `PROMETHEUS_DIR`: Set this to the full path of the [_prometheus](../_prometheus) directory in the SubVT source root directory.
    12. `TEMPLATE_DIR`: Set this to the full path of the [_template](../_template) directory in the SubVT source root directory. This directory contains the notification template files.
-8. Run the script [up.sh](../_docker/compose/up.sh). This is going to fetch the latest images from Docker Hub, configure your containers and run the whole system.
+8. Run the script [up.sh](../_docker/compose/up.sh). You may need to run it with `sudo` privileges on Linux systems. This script is going to:
+   1. Fetch the latest images from Docker Hub.
+   2. Configure your containers.
+   3. Run the whole SubVT backend system for Polkadot and Kusama, including the Telegram bots.
 9. Your bots should be available for chat after the successful completion of the previous step.
 
 # Stopping the Bot

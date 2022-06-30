@@ -2,6 +2,8 @@ use crate::messenger::MockMessenger;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::{MessengerImpl, TelegramBot, DEFAULT_RULES};
 
+/// Tests the persistence of a brand new chat along with the app user, notification rules and
+/// channels.
 #[tokio::test]
 async fn test_save_new_chat() {
     let chat_id = get_random_chat_id();
@@ -34,6 +36,7 @@ async fn test_save_new_chat() {
     );
 }
 
+/// Tests the deletion and restoration of a chat along with the respective SubVT applization user.
 #[tokio::test]
 async fn test_restore_chat_and_user() {
     let bot: TelegramBot<MessengerImpl> = TelegramBot::<MessengerImpl>::new().await.unwrap();

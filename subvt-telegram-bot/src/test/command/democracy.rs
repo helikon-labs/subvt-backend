@@ -3,6 +3,8 @@ use crate::test::util::data::get_telegram_message_response;
 use crate::test::util::{get_random_chat_id, new_test_bot};
 use crate::MessageType;
 
+/// Tests the /democracy command, which gives a list of all open referenda to the user.
+/// The response could be that there are no open referenda.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_democracy() {
