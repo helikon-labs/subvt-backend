@@ -9,10 +9,18 @@ pub fn get_telegram_response_message() -> Message {
     Message::builder().message_id(0).date(0).chat(chat).build()
 }
 
-pub fn get_telegram_response() -> MethodResponse<Message> {
+pub fn get_telegram_message_response() -> MethodResponse<Message> {
     MethodResponse {
         ok: true,
         result: get_telegram_response_message(),
+        description: None,
+    }
+}
+
+pub fn get_telegram_bool_response(result: bool) -> MethodResponse<bool> {
+    MethodResponse {
+        ok: true,
+        result,
         description: None,
     }
 }

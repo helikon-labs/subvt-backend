@@ -1,5 +1,10 @@
 [network_postgres]
 port = 15432
+pool_max_connections = 2
 
 [app_postgres]
 port = 25432
+pool_max_connections = 2
+
+[telegram_bot]
+admin_chat_ids = "1234567890"

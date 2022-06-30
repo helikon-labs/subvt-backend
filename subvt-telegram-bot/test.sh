@@ -20,7 +20,7 @@ function cleanup()
 }
 
 if ! docker info > /dev/null 2>&1; then
-  echo "🐳 This script uses docker, and it isn't running - please start Docker and try again!"
+  echo "🐳 This script uses Docker, and it isn't running - please start Docker and try again!"
   exit 1
 fi
 trap cleanup EXIT
@@ -31,7 +31,7 @@ echo "🔼 Start the network PostgreSQL container and volume."
 docker run --name subvt_test_network_postgres --platform linux/amd64 -d -p 15432:5432 -v subvt_test_network_postgres_data:/var/lib/postgresql/data helikon/subvt-network-postgres:latest
 echo "🔼 Start the app PostgreSQL container and volume."
 docker run --name subvt_test_app_postgres --platform linux/amd64 -d -p 25432:5432 -v subvt_test_app_postgres_data:/var/lib/postgresql/data helikon/subvt-app-postgres:latest
-echo "😴 Sleep for 30 seconds until the database migrations are completed..."
+echo "😴 Sleep for 30 seconds to make sure that database migrations are complete..."
 sleep 30
 echo "🟢 Start testing."
 SUBVT_ENV=test cargo test -- --show-output --test-threads=1

@@ -1,6 +1,6 @@
 use crate::messenger::MockMessenger;
 use crate::query::QueryType;
-use crate::test::util::data::{add_validator_to_redis, get_telegram_response};
+use crate::test::util::data::{add_validator_to_redis, get_telegram_message_response};
 use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot};
 use crate::MessageType;
 use rand::Rng;
@@ -15,7 +15,7 @@ async fn test_rewards_no_validator() {
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(**message_type, MessageType::NoValidatorsOnChat)
         })
-        .returning(|_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     assert!(bot.process_command(chat_id, "/rewards", &[]).await.is_ok());
@@ -32,7 +32,7 @@ async fn test_rewards_single_validator_no_rewards() {
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(&**message_type, MessageType::NoRewardsFound)
         })
-        .returning(|_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     add_validator_to_redis(&bot.redis, &account_id)
@@ -65,7 +65,7 @@ async fn test_rewards_multiple_validators() {
                 _ => false,
             },
         )
-        .returning(|_, _, _, _| Ok(get_telegram_response()));
+        .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
     for _ in 0..validator_count {
