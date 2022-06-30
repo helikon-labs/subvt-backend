@@ -10,7 +10,7 @@ Please follow the steps to run the tests for the SubVT Telegram Bot.
 2. Clone this repository `git clone https://github.com/helikon-labs/subvt-backend.git`.
 3. Go to the bot's source [directory](.) `cd subvt-backend/subvt-telegram-bot`.
 4. Make the test helper shell script executable by running `chmod +x test.sh`.
-5. Run the test helper shell script [test.sh](./test.sh). You may need to run it with `sudo` privileges on Linux systems.
+5. Run the test helper shell script [test.sh](./test.sh). Docker may require you to run it with `sudo` privileges on Linux systems.
 6. Helper script is going to:
    1. Start the necessary containers.
    2. Build the project for testing.
@@ -19,7 +19,7 @@ Please follow the steps to run the tests for the SubVT Telegram Bot.
 
 ## Test Cases
 
-Please see the test function commants in the files listed below for test case descriptions.
+Please see the test function comments in the files listed below for test case descriptions.
 
 | File                                                                                 | Test Case                                               |
 |--------------------------------------------------------------------------------------|---------------------------------------------------------|
