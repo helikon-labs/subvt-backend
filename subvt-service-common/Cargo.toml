@@ -1,6 +1,6 @@
 [package]
 name = "subvt-service-common"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 rust-version = "1.60.0"
 
@@ -9,7 +9,7 @@ actix-web = "4.1.0"
 anyhow = "1.0"
 async-trait = "0.1.56"
 log = "0.4.16"
-serde_json = "1.0.81"
+serde_json = "1.0.82"
 sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.24" }
 subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
