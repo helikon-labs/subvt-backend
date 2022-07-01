@@ -3,7 +3,7 @@ proc-macro = true
 
 [package]
 name = "subvt-proc-macro"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 rust-version = "1.60.0"
 
