@@ -1,6 +1,7 @@
 use parity_scale_codec::Decode;
 use polkadot_runtime_parachains::scheduler::{AssignmentKind, CoreAssignment};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 struct Id(pub u32);
@@ -9,6 +10,16 @@ struct Id(pub u32);
 pub enum ParaAssignmentKind {
     Parathread,
     Parachain,
+}
+
+impl Display for ParaAssignmentKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            Self::Parathread => "parathread",
+            Self::Parachain => "parachain",
+        };
+        write!(f, "{}", str)
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]

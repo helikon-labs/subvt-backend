@@ -24,8 +24,8 @@ use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
     metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era,
     EraRewardPoints, EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo, Nomination,
-    RewardDestination, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
-    ValidatorStake,
+    RewardDestination, ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties,
+    ValidatorPreferences, ValidatorStake,
 };
 /// Substrate client structure and its functions.
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
@@ -600,11 +600,15 @@ impl SubstrateClient {
                     }
                     map
                 };
-                let para_core_assignments = self.get_para_core_assignments(block_hash).await?;
-                for assignment in &para_core_assignments {
-                    if let Some(group) = para_validator_group_map.get(&assignment.group_index) {
-                        for account_id in group {
-                            para_core_assignment_map.insert(*account_id, Some(assignment.clone()));
+                if let Some(para_core_assignments) =
+                    self.get_para_core_assignments(block_hash).await?
+                {
+                    for assignment in &para_core_assignments {
+                        if let Some(group) = para_validator_group_map.get(&assignment.group_index) {
+                            for account_id in group {
+                                para_core_assignment_map
+                                    .insert(*account_id, Some(assignment.clone()));
+                            }
                         }
                     }
                 }
@@ -1157,14 +1161,33 @@ impl SubstrateClient {
     pub async fn get_para_core_assignments(
         &self,
         block_hash: &str,
-    ) -> anyhow::Result<Vec<ParaCoreAssignment>> {
+    ) -> anyhow::Result<Option<Vec<ParaCoreAssignment>>> {
         let params = get_rpc_storage_plain_params("ParaScheduler", "Scheduled", Some(block_hash));
-        let availability_core_vector_hex_string: String =
+        let maybe_availability_core_vector_hex_string: Option<String> =
             self.ws_client.request("state_getStorage", params).await?;
-        let assignments = ParaCoreAssignment::from_core_assignment_vector_hex_string(
-            &availability_core_vector_hex_string,
-        )?;
-        Ok(assignments)
+        if let Some(availability_core_vector_hex_string) = maybe_availability_core_vector_hex_string
+        {
+            let assignments = ParaCoreAssignment::from_core_assignment_vector_hex_string(
+                &availability_core_vector_hex_string,
+            )?;
+            Ok(Some(assignments))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_para_votes(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Option<ScrapedOnChainVotes>> {
+        let params = get_rpc_storage_plain_params("ParaInherent", "OnChainVotes", Some(block_hash));
+        let maybe_votes_hex_string: Option<String> =
+            self.ws_client.request("state_getStorage", params).await?;
+        if let Some(hex_string) = maybe_votes_hex_string {
+            Ok(Some(decode_hex_string(&hex_string)?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Validator preferences map at a given block.

@@ -17,6 +17,7 @@ use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::metadata::MetadataVersion;
+use subvt_types::substrate::ValidityAttestation;
 use subvt_types::{
     crypto::AccountId,
     substrate::{Era, EraStakers, ValidatorStake},
@@ -197,21 +198,33 @@ impl BlockProcessor {
                     .get_paras_active_validator_indices(&block_hash)
                     .await?
                 {
-                    let para_validator_account_ids: Vec<&AccountId> = para_validator_indices
-                        .iter()
-                        .filter_map(|index| active_validator_account_ids.get(*index as usize))
-                        .collect();
                     log::info!(
                         "Persist {} session para validators.",
-                        para_validator_account_ids.len()
+                        para_validator_indices.len()
                     );
-                    postgres
-                        .save_session_para_validators(
-                            active_era.index,
-                            current_epoch_index,
-                            &para_validator_account_ids,
-                        )
+                    let para_validator_groups = substrate_client
+                        .get_para_validator_groups(&block_hash)
                         .await?;
+                    for (group_index, group_para_validator_indices) in
+                        para_validator_groups.iter().enumerate()
+                    {
+                        for group_para_validator_index in group_para_validator_indices {
+                            let active_validator_index =
+                                para_validator_indices[*group_para_validator_index as usize];
+                            let active_validator_account_id =
+                                active_validator_account_ids[active_validator_index as usize];
+                            postgres
+                                .save_session_para_validator(
+                                    active_era.index,
+                                    current_epoch_index,
+                                    &active_validator_account_id,
+                                    active_validator_index,
+                                    group_index as u32,
+                                    *group_para_validator_index,
+                                )
+                                .await?;
+                        }
+                    }
                 } else {
                     log::info!("Parachains not active at this block height.");
                 }
@@ -414,6 +427,40 @@ impl BlockProcessor {
                             .await?;
                     }
                 },
+            }
+        }
+        // para core assignments
+        if let Some(para_core_assignments) = substrate_client
+            .get_para_core_assignments(&block_hash)
+            .await?
+        {
+            for para_core_assignment in &para_core_assignments {
+                postgres
+                    .save_para_core_assignment(&block_hash, para_core_assignment)
+                    .await?;
+            }
+        }
+        // para votes
+        if let Some(votes) = substrate_client.get_para_votes(&block_hash).await? {
+            let session_index: u32 = votes.session;
+            for backing in votes.backing_validators_per_candidate {
+                let para_id: u32 = backing.0.descriptor.para_id.into();
+                for validator_vote in backing.1 {
+                    let para_validator_index = validator_vote.0 .0;
+                    let is_explicit = match validator_vote.1 {
+                        ValidityAttestation::Implicit(_) => false,
+                        ValidityAttestation::Explicit(_) => true,
+                    };
+                    postgres
+                        .save_para_vote(
+                            &block_hash,
+                            session_index,
+                            para_id,
+                            para_validator_index,
+                            is_explicit,
+                        )
+                        .await?;
+                }
             }
         }
         // notify

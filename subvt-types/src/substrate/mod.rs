@@ -7,6 +7,7 @@ use frame_support::traits::ConstU32;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
+pub use polkadot_primitives::v2::{ScrapedOnChainVotes, ValidityAttestation};
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
