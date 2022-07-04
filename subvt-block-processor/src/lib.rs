@@ -32,6 +32,8 @@ lazy_static! {
     static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
+static PARA_VALIDATOR_GROUP_SIZE: u32 = 5;
+
 #[derive(Default)]
 pub struct BlockProcessor;
 
@@ -445,21 +447,44 @@ impl BlockProcessor {
             let session_index: u32 = votes.session;
             for backing in votes.backing_validators_per_candidate {
                 let para_id: u32 = backing.0.descriptor.para_id.into();
+                // get scheduled para validators from previous block
+                let mut voted_para_validator_indices = vec![];
                 for validator_vote in backing.1 {
                     let para_validator_index = validator_vote.0 .0;
                     let is_explicit = match validator_vote.1 {
                         ValidityAttestation::Implicit(_) => false,
                         ValidityAttestation::Explicit(_) => true,
                     };
+                    voted_para_validator_indices.push(para_validator_index);
                     postgres
                         .save_para_vote(
                             &block_hash,
                             session_index,
                             para_id,
                             para_validator_index,
-                            is_explicit,
+                            Some(is_explicit),
                         )
                         .await?;
+                }
+                let para_validator_group_index = voted_para_validator_indices[0] / 5;
+                let group_para_validator_indices: Vec<u32> = ((para_validator_group_index
+                    * PARA_VALIDATOR_GROUP_SIZE)
+                    ..(para_validator_group_index * PARA_VALIDATOR_GROUP_SIZE
+                        + PARA_VALIDATOR_GROUP_SIZE))
+                    .collect();
+                // save missing votes
+                for group_para_validator_index in group_para_validator_indices {
+                    if !voted_para_validator_indices.contains(&group_para_validator_index) {
+                        postgres
+                            .save_para_vote(
+                                &block_hash,
+                                session_index,
+                                para_id,
+                                group_para_validator_index,
+                                None,
+                            )
+                            .await?;
+                    }
                 }
             }
         }

@@ -263,12 +263,14 @@ impl PostgreSQLNetworkStorage {
         session_index: u32,
         para_id: u32,
         para_validator_index: u32,
-        is_explicit: bool,
+        is_explicit: Option<bool>,
     ) -> anyhow::Result<i32> {
         let result: (i32,) = sqlx::query_as(
             r#"
                 INSERT INTO sub_para_vote (block_hash, session_index, para_id, para_validator_index, is_explicit)
                 VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT(block_hash, para_id, para_validator_index) DO UPDATE
+                SET is_explicit = EXCLUDED.is_explicit
                 RETURNING id
                 "#,
         )
@@ -280,41 +282,6 @@ impl PostgreSQLNetworkStorage {
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0)
-    }
-
-    pub async fn save_session_para_validators(
-        &self,
-        era_index: u32,
-        session_index: u64,
-        validator_account_ids: &[&AccountId],
-    ) -> anyhow::Result<()> {
-        let mut transaction = self.connection_pool.begin().await?;
-        for validator_account_id in validator_account_ids {
-            sqlx::query(
-                r#"
-                INSERT INTO sub_account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                "#,
-            )
-            .bind(validator_account_id.to_string())
-            .execute(&mut transaction)
-            .await?;
-            sqlx::query(
-                r#"
-                    INSERT INTO sub_session_para_validator (era_index, session_index, validator_account_id)
-                    VALUES ($1, $2, $3)
-                    ON CONFLICT (session_index, validator_account_id) DO NOTHING
-                    "#,
-            )
-                .bind(era_index)
-                .bind(session_index as i64)
-                .bind(validator_account_id.to_string())
-                .execute(&mut transaction)
-                .await?;
-        }
-        transaction.commit().await?;
-        Ok(())
     }
 
     pub async fn era_exists(&self, era_index: u32) -> anyhow::Result<bool> {
