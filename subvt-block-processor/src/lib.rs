@@ -441,15 +441,21 @@ impl BlockProcessor {
                     .save_para_core_assignment(&block_hash, para_core_assignment)
                     .await?;
             }
+            log::debug!(
+                "Processed {} para core scheduler assignments.",
+                para_core_assignments.len()
+            );
         }
         // para votes
         if let Some(votes) = substrate_client.get_para_votes(&block_hash).await? {
             let session_index: u32 = votes.session;
-            for backing in votes.backing_validators_per_candidate {
+            let mut total_vote_count = 0;
+            for backing in &votes.backing_validators_per_candidate {
                 let para_id: u32 = backing.0.descriptor.para_id.into();
                 // get scheduled para validators from previous block
+                total_vote_count += backing.1.len();
                 let mut voted_para_validator_indices = vec![];
-                for validator_vote in backing.1 {
+                for validator_vote in &backing.1 {
                     let para_validator_index = validator_vote.0 .0;
                     let is_explicit = match validator_vote.1 {
                         ValidityAttestation::Implicit(_) => false,
@@ -466,13 +472,13 @@ impl BlockProcessor {
                         )
                         .await?;
                 }
+                // save missing votes
                 let para_validator_group_index = voted_para_validator_indices[0] / 5;
                 let group_para_validator_indices: Vec<u32> = ((para_validator_group_index
                     * PARA_VALIDATOR_GROUP_SIZE)
                     ..(para_validator_group_index * PARA_VALIDATOR_GROUP_SIZE
                         + PARA_VALIDATOR_GROUP_SIZE))
                     .collect();
-                // save missing votes
                 for group_para_validator_index in group_para_validator_indices {
                     if !voted_para_validator_indices.contains(&group_para_validator_index) {
                         postgres
@@ -487,6 +493,11 @@ impl BlockProcessor {
                     }
                 }
             }
+            log::debug!(
+                "Processed {} para votes for {} paras.",
+                total_vote_count,
+                votes.backing_validators_per_candidate.len(),
+            );
         }
         // notify
         postgres

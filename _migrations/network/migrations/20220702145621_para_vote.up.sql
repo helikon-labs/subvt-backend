@@ -18,3 +18,7 @@ CREATE TABLE IF NOT EXISTS sub_para_vote
 
 CREATE INDEX IF NOT EXISTS sub_para_vote_idx_block_hash
     ON sub_para_vote (block_hash);
+CREATE INDEX IF NOT EXISTS sub_para_vote_idx_is_explicit
+    ON sub_para_vote (is_explicit);
+CREATE INDEX IF NOT EXISTS sub_para_vote_idx_session_index_para_validator_index
+    ON sub_para_vote (session_index, para_validator_index);
