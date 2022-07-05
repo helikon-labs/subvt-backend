@@ -6,12 +6,30 @@
 
 Please follow the steps to run the tests for the SubVT Telegram Bot.
 
-1. Make sure you have [Docker](https://www.docker.com/) installed on your system.
-2. Clone this repository `git clone https://github.com/helikon-labs/subvt-backend.git`.
-3. Go to the bot's source [directory](.) `cd subvt-backend/subvt-telegram-bot`.
-4. Make the test helper shell script executable by running `chmod +x test.sh`.
-5. Run the test helper shell script [test.sh](./test.sh). Docker may require you to run it with `sudo` privileges on Linux systems.
-6. Helper script is going to:
+1. Install Rust by following the instructions on the [official site](https://www.rust-lang.org/tools/install).
+2. Run the following commands to install the Rust nightly toolchain, update Rust, add the WASM target required to
+build some of the Polkadot components and set the stable toolchain as default.
+
+   ```
+   rustup toolchain install nightly
+   rustup update
+   rustup target add wasm32-unknown-unknown --toolchain nightly
+   rustup default stable
+   ```
+
+3. Make sure you don't have the `WASM_BUILD_TOOLCHAIN` environment variable set. You can check this by running the
+following command in your terminal and checking that the output is empty.
+
+   ```
+   echo $WASM_BUILD_TOOLCHAIN
+   ```
+
+4. Make sure you have [Docker](https://www.docker.com/) installed on your system.
+5. Clone this repository `git clone https://github.com/helikon-labs/subvt-backend.git`.
+6. Go to the bot's source [directory](.) `cd subvt-backend/subvt-telegram-bot`.
+7. Make the test helper shell script executable by running `chmod +x test.sh`.
+8. Run the test helper shell script [test.sh](./test.sh). Docker may require you to run it with `sudo` privileges on Linux systems.
+9. Helper script is going to:
    1. Start the necessary containers.
    2. Build the project for testing.
    3. Run the tests and display results.
