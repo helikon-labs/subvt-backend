@@ -17,6 +17,18 @@ DO $$ BEGIN
         	chilling_count INTEGER
         );
     END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type t
+        JOIN pg_class c ON c.oid = t.typrelid
+        JOIN pg_attribute a ON a.attrelid = c.oid
+        WHERE t.typname = 'sub_era_report'
+        AND a.attname = 'active_validator_count'
+    ) THEN
+        ALTER TYPE sub_era_report ADD ATTRIBUTE active_validator_count INTEGER;
+        ALTER TYPE sub_era_report ADD ATTRIBUTE inactive_validator_count INTEGER;
+    END IF;
 END $$;
 
 CREATE OR REPLACE FUNCTION sub_get_era_report (era_index_param bigint)
@@ -44,6 +56,18 @@ BEGIN
 	AND EPS.extrinsic_index = ER.extrinsic_index
 	AND EPS.nesting_index = ER.nesting_index
 	AND EPS.is_successful = true;
+
+	SELECT COUNT(DISTINCT EV.validator_account_id)
+    FROM sub_era_validator EV
+    INTO result_record.active_validator_count
+    WHERE EV.era_index = era_index_param
+    AND EV.is_active = TRUE;
+
+    SELECT COUNT(DISTINCT EV.validator_account_id)
+    FROM sub_era_validator EV
+    INTO result_record.inactive_validator_count
+    WHERE EV.era_index = era_index_param
+    AND EV.is_active = FALSE;
 	
 	SELECT COUNT(DISTINCT EVO.id)
 	FROM sub_event_validator_offline EVO, sub_block B

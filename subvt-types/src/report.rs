@@ -30,6 +30,8 @@ pub struct EraReport {
     pub total_reward_points: Option<u128>,
     pub total_reward: u128,
     pub total_stake: Option<u128>,
+    pub active_validator_count: u32,
+    pub inactive_validator_count: u32,
     pub active_nominator_count: Option<u64>,
     pub offline_offence_count: u64,
     pub slashed_amount: u128,
