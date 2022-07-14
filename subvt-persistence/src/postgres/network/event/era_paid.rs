@@ -20,7 +20,7 @@ impl PostgreSQLNetworkStorage {
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(era_index)
+            .bind(era_index as i64)
             .bind(validator_payout.to_string())
             .bind(remainder.to_string())
             .execute(&self.connection_pool)
@@ -45,7 +45,7 @@ impl PostgreSQLNetworkStorage {
         .bind(maybe_nesting_index)
         .bind(block_hash)
         .bind(event_index)
-        .bind(era_index)
+        .bind(era_index as i64)
         .execute(&self.connection_pool)
         .await?;
         Ok(())

@@ -19,7 +19,7 @@ impl PostgreSQLNetworkStorage {
             .bind(block_hash)
             .bind(extrinsic_index)
             .bind(event_index)
-            .bind(era_index)
+            .bind(era_index as i64)
             .bind(validator_account_id.to_string())
             .execute(&self.connection_pool)
             .await?;

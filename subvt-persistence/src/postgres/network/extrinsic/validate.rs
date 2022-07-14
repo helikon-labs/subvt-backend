@@ -53,7 +53,7 @@ impl PostgreSQLNetworkStorage {
             .bind(maybe_nesting_index)
             .bind(stash_account_id.to_string())
             .bind(controller_account_id.to_string())
-            .bind(validator_preferences.commission_per_billion)
+            .bind(validator_preferences.commission_per_billion as i64)
             .bind(validator_preferences.blocks_nominations)
             .bind(is_successful)
             .fetch_optional(&self.connection_pool)

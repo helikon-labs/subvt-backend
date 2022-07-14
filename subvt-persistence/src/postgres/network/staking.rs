@@ -52,7 +52,7 @@ impl PostgreSQLNetworkStorage {
             RETURNING index
             "#,
         )
-            .bind(era.index)
+            .bind(era.index as i64)
             .bind(era.start_timestamp as i64)
             .bind(era.end_timestamp as i64)
             .bind(nominator_count)
@@ -80,7 +80,7 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(index as i64)
-        .bind(era_index)
+        .bind(era_index as i64)
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
@@ -142,12 +142,12 @@ impl PostgreSQLNetworkStorage {
                 ON CONFLICT (era_index, validator_account_id) DO NOTHING
                 "#,
             )
-                .bind(era_index)
+                .bind(era_index as i64)
                 .bind(validator_account_id.to_string())
                 .bind(maybe_controller_account_id.map(|id| id.to_string()))
                 .bind(maybe_active_validator_index.is_some())
                 .bind(maybe_active_validator_index.map(|index| index as i64))
-                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.commission_per_billion))
+                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.commission_per_billion as i64))
                 .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.blocks_nominations))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.total_stake.to_string()))
@@ -191,7 +191,7 @@ impl PostgreSQLNetworkStorage {
                     ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
                     "#,
                 )
-                    .bind(era_stakers.era.index)
+                    .bind(era_stakers.era.index as i64)
                     .bind(validator_stake.account.id.to_string())
                     .bind(nominator_stake.account.id.to_string())
                     .bind(nominator_stake.stake.to_string())
@@ -222,12 +222,12 @@ impl PostgreSQLNetworkStorage {
                     RETURNING id
                     "#,
         )
-            .bind(era_index)
+            .bind(era_index as i64)
             .bind(session_index as i64)
             .bind(validator_account_id.to_string())
-            .bind(active_validator_index)
-            .bind(para_validator_group_index)
-            .bind(para_validator_index)
+            .bind(active_validator_index as i64)
+            .bind(para_validator_group_index as i64)
+            .bind(para_validator_index as i64)
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0)
@@ -248,10 +248,10 @@ impl PostgreSQLNetworkStorage {
                 "#,
         )
             .bind(block_hash)
-            .bind(assignment.core_index)
-            .bind(assignment.para_id)
+            .bind(assignment.core_index as i64)
+            .bind(assignment.para_id as i64)
             .bind(format!("{}", assignment.para_assignment_kind))
-            .bind(assignment.group_index)
+            .bind(assignment.group_index as i64)
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0)
@@ -275,9 +275,9 @@ impl PostgreSQLNetworkStorage {
                 "#,
         )
             .bind(block_hash)
-            .bind(session_index)
-            .bind(para_id)
-            .bind(para_validator_index)
+            .bind(session_index as i64)
+            .bind(para_id as i64)
+            .bind(para_validator_index as i64)
             .bind(is_explicit)
             .fetch_one(&self.connection_pool)
             .await?;
@@ -291,7 +291,7 @@ impl PostgreSQLNetworkStorage {
             WHERE index = $1
             "#,
         )
-        .bind(era_index)
+        .bind(era_index as i64)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
@@ -309,8 +309,8 @@ impl PostgreSQLNetworkStorage {
             RETURNING index
             "#,
         )
-        .bind(total_reward_points)
-        .bind(era_index)
+        .bind(total_reward_points as i64)
+        .bind(era_index as i64)
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
@@ -333,7 +333,7 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(total_validator_reward.to_string())
-        .bind(era_index)
+        .bind(era_index as i64)
         .fetch_optional(&self.connection_pool)
         .await?;
         if let Some(result) = maybe_result {
@@ -356,8 +356,8 @@ impl PostgreSQLNetworkStorage {
                 WHERE era_index = $2 AND validator_account_id = $3
                 "#,
             )
-            .bind(reward_points)
-            .bind(era_index)
+            .bind(reward_points as i64)
+            .bind(era_index as i64)
             .bind(validator_account_id.to_string())
             .execute(&mut transaction)
             .await?;
