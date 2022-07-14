@@ -174,17 +174,15 @@ impl BlockProcessor {
             )
         };
         let active_era = substrate_client.get_active_era(&block_hash).await?;
-        let current_epoch_index = substrate_client
-            .get_current_epoch_index(&block_hash)
-            .await?;
+        let current_epoch = substrate_client.get_current_epoch(&block_hash).await?;
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(&block_hash)
             .await?;
-        if last_epoch_index != current_epoch_index || last_era_index != active_era.index {
+        if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
             let era_stakers = substrate_client
                 .get_era_stakers(&active_era, true, &block_hash)
                 .await?;
-            if last_epoch_index != current_epoch_index {
+            if last_epoch_index != current_epoch.index {
                 log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
                 let total_stake = substrate_client
                     .get_era_total_stake(active_era.index, &block_hash)
@@ -193,7 +191,7 @@ impl BlockProcessor {
                     .save_era(&active_era, total_stake, &era_stakers)
                     .await?;
                 postgres
-                    .save_epoch(current_epoch_index, active_era.index)
+                    .save_epoch(&current_epoch, active_era.index)
                     .await?;
                 // save session para validators
                 if let Some(para_validator_indices) = substrate_client
@@ -218,7 +216,7 @@ impl BlockProcessor {
                             postgres
                                 .save_session_para_validator(
                                     active_era.index,
-                                    current_epoch_index,
+                                    current_epoch.index,
                                     &active_validator_account_id,
                                     active_validator_index,
                                     group_index as u32,
@@ -275,7 +273,7 @@ impl BlockProcessor {
         {
             let mut runtime_information = runtime_information.write().unwrap();
             runtime_information.era_index = active_era.index;
-            runtime_information.epoch_index = current_epoch_index;
+            runtime_information.epoch_index = current_epoch.index;
         }
         let event_results = substrate_client.get_block_events(&block_hash).await?;
         log::info!(
@@ -308,7 +306,7 @@ impl BlockProcessor {
                 &block_header,
                 block_timestamp,
                 maybe_author_account_id,
-                (active_era.index, current_epoch_index as u32),
+                (active_era.index, current_epoch.index as u32),
                 (metadata_version, runtime_version),
             )
             .await?;
@@ -330,7 +328,7 @@ impl BlockProcessor {
                     if let Err(error) = process_event(
                         substrate_client,
                         postgres,
-                        current_epoch_index,
+                        current_epoch.index,
                         &block_hash,
                         block_number,
                         block_timestamp,

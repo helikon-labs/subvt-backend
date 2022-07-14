@@ -2,7 +2,9 @@
 //! Each supported network has a separate database.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::collections::{HashMap, HashSet};
+use subvt_types::report::{EraValidator, SessionParaValidator};
 use subvt_types::substrate::paras::ParaCoreAssignment;
+use subvt_types::substrate::Epoch;
 use subvt_types::{
     crypto::AccountId,
     rdb::ValidatorInfo,
@@ -70,16 +72,20 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn save_epoch(&self, index: u64, era_index: u32) -> anyhow::Result<Option<i64>> {
+    pub async fn save_epoch(&self, epoch: &Epoch, era_index: u32) -> anyhow::Result<Option<i64>> {
         let maybe_result: Option<(i64,)> = sqlx::query_as(
             r#"
-            INSERT INTO sub_epoch (index, era_index)
-            VALUES ($1, $2)
-            ON CONFLICT (index) DO NOTHING
+            INSERT INTO sub_epoch (index, start_block_number, start_timestamp, end_timestamp, era_index)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (index) DO UPDATE
+            SET start_block_number = EXCLUDED.start_block_number, start_timestamp = EXCLUDED.start_timestamp, end_timestamp = EXCLUDED.end_timestamp
             RETURNING index
             "#,
         )
-        .bind(index as i64)
+        .bind(epoch.index as i64)
+        .bind(epoch.start_block_number as i64)
+        .bind(epoch.start_timestamp as i64)
+        .bind(epoch.end_timestamp as i64)
         .bind(era_index as i64)
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -88,6 +94,33 @@ impl PostgreSQLNetworkStorage {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn get_era_validator_by_session_index(
+        &self,
+        validator_account_id: &AccountId,
+        session_index: u64,
+    ) -> anyhow::Result<Option<EraValidator>> {
+        let era_validator: Option<(i64, bool, Option<i64>)> = sqlx::query_as(
+            r#"
+            SELECT EV.era_index, EV.is_active, EV.active_validator_index
+            FROM sub_era_validator EV
+            INNER JOIN sub_epoch E
+                ON E.era_index = EV.era_index
+            WHERE E.index = $1
+            AND EV.validator_account_id = $2
+            "#,
+        )
+        .bind(session_index as i64)
+        .bind(validator_account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(era_validator.map(|ev| EraValidator {
+            era_index: ev.0 as u64,
+            validator_account_id: *validator_account_id,
+            is_active: ev.1,
+            active_validator_index: ev.2.map(|index| index as u64),
+        }))
     }
 
     pub async fn save_era_validators(
@@ -203,6 +236,31 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
+    pub async fn get_session_para_validator(
+        &self,
+        session_index: u64,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<Option<SessionParaValidator>> {
+        let session_para_validator: Option<(i64, i64)> = sqlx::query_as(
+            r#"
+            SELECT para_validator_group_index, para_validator_index
+            FROM sub_session_para_validator
+            WHERE session_index = $1
+            AND validator_account_id = $2
+            "#,
+        )
+        .bind(session_index as i64)
+        .bind(validator_account_id.to_string())
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(session_para_validator.map(|ev| SessionParaValidator {
+            session_index,
+            validator_account_id: *validator_account_id,
+            para_validator_group_index: ev.0 as u64,
+            para_validator_index: ev.1 as u64,
+        }))
+    }
+
     pub async fn save_session_para_validator(
         &self,
         era_index: u32,
@@ -255,6 +313,18 @@ impl PostgreSQLNetworkStorage {
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0)
+    }
+
+    pub async fn get_min_para_vote_session_index(&self) -> anyhow::Result<u64> {
+        let min_session_index: (i64,) = sqlx::query_as(
+            r#"
+            SELECT MIN(session_index)
+            FROM sub_para_vote
+            "#,
+        )
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(min_session_index.0 as u64)
     }
 
     pub async fn save_para_vote(

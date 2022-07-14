@@ -12,6 +12,11 @@ CREATE TABLE IF NOT EXISTS sub_session_para_validator
             REFERENCES sub_era (index)
             ON DELETE CASCADE
             ON UPDATE CASCADE,
+    CONSTRAINT sub_session_para_validator_fk_epoch
+        FOREIGN KEY (session_index)
+            REFERENCES sub_epoch (index)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE,
     CONSTRAINT sub_session_para_validator_fk_account
         FOREIGN KEY (validator_account_id)
             REFERENCES sub_account (id)

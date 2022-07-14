@@ -1,6 +1,5 @@
 //!  Public reporting REST services.
 use actix_web::dev::Service as _;
-use actix_web::web::Data;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use futures_util::future::FutureExt;
@@ -15,15 +14,16 @@ use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 
 mod metrics;
+mod session;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-type ResultResponse = Result<HttpResponse, InternalServerError>;
+pub(crate) type ResultResponse = Result<HttpResponse, InternalServerError>;
 
 #[derive(Clone)]
-struct ServiceState {
+pub(crate) struct ServiceState {
     postgres: Arc<PostgreSQLNetworkStorage>,
 }
 
@@ -137,7 +137,7 @@ impl Service for ReportService {
         log::info!("Starting HTTP service.");
         let server = HttpServer::new(move || {
             App::new()
-                .app_data(Data::new(ServiceState {
+                .app_data(web::Data::new(ServiceState {
                     postgres: postgres.clone(),
                 }))
                 .wrap_fn(|request, service| {
@@ -165,6 +165,8 @@ impl Service for ReportService {
                 })
                 .service(era_validator_report_service)
                 .service(era_report_service)
+                .service(session::session_validator_report_service)
+                .service(session::session_validator_para_vote_service)
         })
         .workers(10)
         .disable_signals()
