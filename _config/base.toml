@@ -79,6 +79,7 @@ refresh_seconds = 300
 
 [report]
 max_era_index_range = 100
+max_session_index_range = 100
 
 [plotter]
 tmp_dir_path = "/path/to/the/temporary/image/dir"

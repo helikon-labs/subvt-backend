@@ -14,6 +14,7 @@ pub mod extrinsic;
 pub mod nft;
 pub mod notify;
 pub mod onekv;
+pub mod para;
 pub mod report;
 pub mod staking;
 pub mod telegram;

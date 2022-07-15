@@ -31,7 +31,7 @@ pub mod event;
 pub mod extrinsic;
 pub mod legacy;
 pub mod metadata;
-pub mod paras;
+pub mod para;
 
 #[derive(Default)]
 pub struct LastRuntimeUpgradeInfo {

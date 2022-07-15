@@ -155,6 +155,7 @@ pub struct OneKVConfig {
 #[derive(Clone, Debug, Deserialize)]
 pub struct ReportConfig {
     pub max_era_index_range: u32,
+    pub max_session_index_range: u32,
 }
 
 /// Telemetry processor configuration.

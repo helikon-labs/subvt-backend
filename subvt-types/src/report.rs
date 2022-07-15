@@ -91,11 +91,19 @@ pub struct ParaVote {
     pub vote: ParaVoteType,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct HeartbeatEvent {
+    pub block: BlockSummary,
+    pub event_index: u32,
+    pub im_online_key: String,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SessionValidatorReport {
     pub session: Epoch,
     pub is_active: bool,
     pub validator_index: Option<u64>,
+    pub heartbeat_event: Option<HeartbeatEvent>,
     pub blocks_authored: Option<Vec<BlockSummary>>,
     pub para_validator_group_index: Option<u64>,
     pub para_validator_index: Option<u64>,
@@ -109,4 +117,16 @@ pub struct SessionValidatorParaVoteReport {
     pub para_validator_index: Option<u64>,
     pub para_votes_summary: Option<ParaVotesSummary>,
     pub para_votes: Option<Vec<ParaVote>>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct SessionParaVoteReport {
+    pub para_id: u64,
+    pub para_votes_summary: ParaVotesSummary,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct SessionParasVoteReport {
+    pub session: Epoch,
+    pub paras: Vec<SessionParaVoteReport>,
 }

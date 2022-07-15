@@ -3,7 +3,7 @@
 //! by other services that require it.
 
 use crate::crypto::AccountId;
-use crate::substrate::paras::ParaCoreAssignment;
+use crate::substrate::para::ParaCoreAssignment;
 use crate::substrate::{
     Account, Balance, Epoch, Era, InactiveNominationsSummary, Nomination, RewardDestination, Stake,
     StakeSummary, ValidatorPreferences, ValidatorStake,

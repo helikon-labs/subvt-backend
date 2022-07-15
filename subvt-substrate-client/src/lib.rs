@@ -19,7 +19,7 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::error::DecodeError;
-use subvt_types::substrate::paras::ParaCoreAssignment;
+use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
     metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era,
