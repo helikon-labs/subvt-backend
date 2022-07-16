@@ -106,6 +106,7 @@ pub enum NotificationTypeCode {
     ChainValidatorActiveNextSession,
     ChainValidatorBlockAuthorship,
     ChainValidatorChilled,
+    ChainValidatorCommissionChanged,
     ChainValidatorIdentityChanged,
     ChainValidatorInactive,
     ChainValidatorInactiveNextSession,
@@ -151,6 +152,9 @@ impl Display for NotificationTypeCode {
                 "chain_validator_nomination_amount_change"
             }
             NotificationTypeCode::ChainValidatorChilled => "chain_validator_chilled",
+            NotificationTypeCode::ChainValidatorCommissionChanged => {
+                "chain_validator_commission_changed"
+            }
             NotificationTypeCode::ChainValidatorActive => "chain_validator_active",
             NotificationTypeCode::ChainValidatorActiveNextSession => {
                 "chain_validator_active_next_session"
@@ -228,6 +232,9 @@ impl From<&str> for NotificationTypeCode {
                 NotificationTypeCode::ChainValidatorNominationAmountChange
             }
             "chain_validator_chilled" => NotificationTypeCode::ChainValidatorChilled,
+            "chain_validator_commission_changed" => {
+                NotificationTypeCode::ChainValidatorCommissionChanged
+            }
             "chain_validator_active" => NotificationTypeCode::ChainValidatorActive,
             "chain_validator_active_next_session" => {
                 NotificationTypeCode::ChainValidatorActiveNextSession

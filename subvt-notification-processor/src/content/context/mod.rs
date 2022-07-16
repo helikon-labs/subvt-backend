@@ -1,6 +1,7 @@
 //! This module and sub-modules set the context of notification templates for various notification
 //! types.
 use crate::content::context::block_authorship::set_block_authorship_grouped_context;
+use crate::content::context::commission::set_commission_changed_context;
 use crate::content::context::democracy::{
     set_democracy_cancelled_context, set_democracy_delegated_context,
     set_democracy_not_passed_context, set_democracy_passed_context, set_democracy_proposed_context,
@@ -34,6 +35,7 @@ use tera::Context;
 
 mod basic;
 mod block_authorship;
+mod commission;
 mod controller;
 mod democracy;
 mod identity;
@@ -97,6 +99,9 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::ChainValidatorChilled => {
             set_validator_chilled_context(notification, &mut context);
+        }
+        NotificationTypeCode::ChainValidatorCommissionChanged => {
+            set_commission_changed_context(notification, &mut context);
         }
         NotificationTypeCode::ChainValidatorOfflineOffence => {
             set_offline_offence_context(notification, &mut context);

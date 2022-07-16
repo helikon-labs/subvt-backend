@@ -74,3 +74,10 @@ pub struct OneKVOnlineStatusChange {
     pub online_since: u64,
     pub offline_since: u64,
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CommissionChange {
+    pub validator_account_id: AccountId,
+    pub previous_commission_per_billion: u32,
+    pub current_commission_per_billion: u32,
+}

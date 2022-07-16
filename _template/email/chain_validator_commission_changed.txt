@@ -1,0 +1,3 @@
+{{ validator_display }}
+💷 has new commission rate of {{ current_commission_per_cent }}%.
+Previous commission was {{ prev_commission_per_cent }}%.

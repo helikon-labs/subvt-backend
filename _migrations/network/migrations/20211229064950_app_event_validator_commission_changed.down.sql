@@ -1,0 +1,1 @@
+DROP TABLE sub_app_event_validator_commission_changed CASCADE;

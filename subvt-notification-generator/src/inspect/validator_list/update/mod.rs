@@ -10,6 +10,7 @@ use subvt_types::subvt::ValidatorDetails;
 
 mod active;
 mod active_next_session;
+mod commission;
 mod identity;
 mod inactive;
 mod inactive_next_session;
@@ -105,6 +106,14 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_identity_change(
+            network_postgres.clone(),
+            app_postgres.clone(),
+            finalized_block_number,
+            last,
+            &current,
+        )
+        .await?;
+        self.inspect_commission_change(
             network_postgres.clone(),
             app_postgres.clone(),
             finalized_block_number,

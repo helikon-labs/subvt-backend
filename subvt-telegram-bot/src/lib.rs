@@ -65,6 +65,11 @@ lazy_static! {
             0,
         ),
         (
+            NotificationTypeCode::ChainValidatorCommissionChanged,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
             NotificationTypeCode::ChainValidatorIdentityChanged,
             NotificationPeriodType::Immediate,
             0,

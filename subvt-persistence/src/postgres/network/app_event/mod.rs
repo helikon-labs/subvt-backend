@@ -2,6 +2,7 @@
 //! lost/new/changed nomination, etc.
 pub mod active;
 pub mod active_next_session;
+pub mod commission_changed;
 pub mod identity_changed;
 pub mod inactive;
 pub mod inactive_next_session;
