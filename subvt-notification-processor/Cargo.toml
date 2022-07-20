@@ -17,7 +17,7 @@ futures-util = "0.3.21"
 itertools = "0.10.3"
 job_scheduler = "1.2.1"
 lazy_static = "1.4.0"
-lettre = { version = "0.10.0", default-features = true, features = ["tokio1-native-tls"]}
+lettre = { version = "0.10.1", default-features = true, features = ["tokio1-native-tls"]}
 lettre_email = "0.9.4"
 log = "0.4.16"
 once_cell = "1.13"
