@@ -2591,7 +2591,7 @@ dependencies = [
  "jsonrpsee-http-client",
  "jsonrpsee-http-server",
  "jsonrpsee-proc-macros",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "jsonrpsee-wasm-client",
  "jsonrpsee-ws-client",
  "jsonrpsee-ws-server",
@@ -2611,7 +2611,7 @@ dependencies = [
  "gloo-net",
  "http",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "pin-project",
  "rustls-native-certs",
  "soketto",
@@ -2639,7 +2639,7 @@ dependencies = [
  "futures-util",
  "globset",
  "hyper",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "lazy_static",
  "parking_lot 0.12.1",
  "rand 0.8.5",
@@ -2664,7 +2664,7 @@ dependencies = [
  "hyper",
  "hyper-rustls",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -2683,7 +2683,7 @@ dependencies = [
  "futures-util",
  "hyper",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "serde",
  "serde_json",
  "tokio",
@@ -2717,6 +2717,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee-types"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1e88f208ac5004389f0063e87bd7463f5e864ff1ac40484f80e8432976ffa0a"
+dependencies = [
+ "anyhow",
+ "beef",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "jsonrpsee-wasm-client"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2724,7 +2738,7 @@ checksum = "d1fcb257e9b60de22ec3c151106ad1e089ab1c0691d25e3282f1cc7a0c7ba651"
 dependencies = [
  "jsonrpsee-client-transport",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
 ]
 
 [[package]]
@@ -2735,7 +2749,7 @@ checksum = "ee043cb5dd0d51d3eb93432e998d5bae797691a7b10ec4a325e036bcdb48c48a"
 dependencies = [
  "jsonrpsee-client-transport",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
 ]
 
 [[package]]
@@ -2747,7 +2761,7 @@ dependencies = [
  "futures-channel",
  "futures-util",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.14.0",
  "serde_json",
  "soketto",
  "tokio",
@@ -6875,7 +6889,7 @@ dependencies = [
  "hex",
  "jsonrpsee",
  "jsonrpsee-core",
- "jsonrpsee-types",
+ "jsonrpsee-types 0.15.0",
  "lazy_static",
  "log",
  "parity-scale-codec",
