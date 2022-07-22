@@ -6,5 +6,8 @@ pool_max_connections = 2
 port = 25432
 pool_max_connections = 2
 
+[http]
+request_timeout_seconds = 120
+
 [telegram_bot]
 admin_chat_ids = "1234567890"
