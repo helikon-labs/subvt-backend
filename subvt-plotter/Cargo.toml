@@ -19,5 +19,5 @@ subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 svg = "0.10.0"
-tiny-skia = "0.6.6"
+tiny-skia = "0.7.0"
 usvg = "0.23.0"
