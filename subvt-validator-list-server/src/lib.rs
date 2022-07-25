@@ -67,14 +67,7 @@ impl ValidatorListServer {
             "subscribe_validatorList",
             "subscribe_validatorList",
             "unsubscribe_validatorList",
-            move |_params, pending, _| {
-                let mut sink = match pending.accept() {
-                    Some(sink) => sink,
-                    _ => {
-                        log::warn!("Cannot accept new subscription: connection closed.");
-                        return;
-                    }
-                };
+            move |_params, mut sink, _| {
                 log::info!("New subscription.");
                 metrics::subscription_count().inc();
                 let mut bus_receiver = bus.lock().unwrap().add_rx();
@@ -123,6 +116,7 @@ impl ValidatorListServer {
                         }
                     }
                 });
+                Ok(())
             },
         )?;
         Ok(rpc_ws_server.start(rpc_module)?)

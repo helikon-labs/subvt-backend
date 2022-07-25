@@ -96,26 +96,19 @@ impl ValidatorDetailsServer {
             "subscribe_validatorDetails",
             "subscribe_validatorDetails",
             "unsubscribe_validatorDetails",
-            move |params, pending, _| {
+            move |params, mut sink, _| {
                 let account_id = match params.one::<String>() {
                     Ok(param) => {
                         if let Ok(account_id) = AccountId::from_str(&param) {
                             account_id
                         } else {
-                            pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
-                            return;
+                            let _ = sink.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
+                            return Ok(());
                         }
                     }
                     Err(_) => {
-                        pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
-                        return;
-                    }
-                };
-                let mut sink = match pending.accept() {
-                    Some(sink) => sink,
-                    _ => {
-                        log::warn!("Cannot accept new subscription: connection closed.");
-                        return;
+                        let _ = sink.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
+                        return Ok(());
                     }
                 };
                 log::info!("New subscription {}.", account_id);
@@ -130,7 +123,7 @@ impl ValidatorDetailsServer {
                             log::error!("Error while fetching validator details: {:?}", error);
                             let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
                             let _ = sink.send(&error_message);
-                            return;
+                            return Ok(());
                         }
                     };
                     let _ = sink.send(&ValidatorDetailsUpdate {
@@ -259,6 +252,7 @@ impl ValidatorDetailsServer {
                         }
                     }
                 });
+                Ok(())
             },
         )?;
         Ok(rpc_ws_server.start(rpc_module)?)

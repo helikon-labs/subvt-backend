@@ -82,14 +82,12 @@ async fn test_add_validator_duplicate() {
     let mut messenger = MockMessenger::new();
     messenger
         .expect_send_message()
-        .withf(
-            move |_, _, _, message_type: &Box<MessageType>| match &**message_type {
-                MessageType::ValidatorExistsOnChat(_duplicate_address) => {
-                    true // duplicate_address == &address
-                }
-                _ => false,
-            },
-        )
+        .withf(move |_, _, _, message_type: &Box<MessageType>| {
+            matches!(
+                &**message_type,
+                MessageType::ValidatorExistsOnChat(_duplicate_address)
+            )
+        })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
     assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
