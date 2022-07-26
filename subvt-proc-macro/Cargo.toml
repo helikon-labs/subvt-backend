@@ -8,6 +8,6 @@ edition = "2021"
 rust-version = "1.60.0"
 
 [dependencies]
-proc-macro2 = "1.0.40"
+proc-macro2 = "1.0.42"
 syn = "1.0.98"
 quote = "1.0.19"
