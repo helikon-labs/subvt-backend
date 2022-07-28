@@ -661,24 +661,13 @@ impl From<&Stake> for StakeSummary {
 }
 
 #[derive(Clone, Decode, Debug, Deserialize, Encode, Eq, Hash, PartialEq, Serialize)]
+#[serde(tag = "destination_type", content = "destination")]
 pub enum RewardDestination {
     Staked,
     Stash,
     Controller,
     Account(AccountId),
     None,
-}
-
-impl Display for RewardDestination {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Staked => f.write_str("Staked"),
-            Self::Stash => f.write_str("Stash"),
-            Self::Controller => f.write_str("Controller"),
-            Self::Account(account_id) => f.write_str(&format!("Account({})", account_id)),
-            Self::None => f.write_str("None"),
-        }
-    }
 }
 
 impl Default for RewardDestination {

@@ -26,6 +26,7 @@ async fn test_nfts_no_validator() {
 /// but the validator stash doesn't have any NFTs owned by it. Data is provided by sub.id.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
+#[ignore]
 async fn test_nfts_single_validator_no_nfts() {
     let chat_id = get_random_chat_id();
     let account_id = get_random_account_id();
@@ -57,6 +58,7 @@ async fn test_nfts_single_validator_no_nfts() {
 /// Tests the successful result of the /nfts command with a validator stash address with NFTs.
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
+#[ignore]
 async fn test_nfts_single_validator_with_nfts() {
     let chat_id = get_random_chat_id();
     let account_id =
