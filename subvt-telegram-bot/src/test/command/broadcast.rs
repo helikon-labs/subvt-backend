@@ -18,11 +18,10 @@ async fn test_broadcasttest() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(ADMIN_CHAT_ID).await.is_ok());
-    assert!(bot
-        .process_command(ADMIN_CHAT_ID, "/broadcasttest", &[])
+    bot.save_or_restore_chat(ADMIN_CHAT_ID).await.unwrap();
+    bot.process_command(ADMIN_CHAT_ID, "/broadcasttest", &[])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Tests the case of calling the /broadcast and /broadcasttest commands from an
@@ -40,15 +39,13 @@ async fn test_broadcast_and_broadcasttest_non_admin() {
         .times(2)
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/broadcast", &[])
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/broadcast", &[])
         .await
-        .is_ok());
-    assert!(bot
-        .process_command(chat_id, "/broadcasttest", &[])
+        .unwrap();
+    bot.process_command(chat_id, "/broadcasttest", &[])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Test the calling of the /broadcast command by an authorized chat. This command is replied
@@ -65,9 +62,8 @@ async fn test_broadcast() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(ADMIN_CHAT_ID).await.is_ok());
-    assert!(bot
-        .process_command(ADMIN_CHAT_ID, "/broadcast", &[])
+    bot.save_or_restore_chat(ADMIN_CHAT_ID).await.unwrap();
+    bot.process_command(ADMIN_CHAT_ID, "/broadcast", &[])
         .await
-        .is_ok());
+        .unwrap();
 }

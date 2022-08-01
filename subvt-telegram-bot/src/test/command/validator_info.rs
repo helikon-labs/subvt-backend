@@ -20,12 +20,11 @@ async fn test_validator_info_no_validator() {
         .times(2)
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/validatorinfo", &[])
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/validatorinfo", &[])
         .await
-        .is_ok());
-    assert!(bot.process_command(chat_id, "/vi", &[]).await.is_ok());
+        .unwrap();
+    bot.process_command(chat_id, "/vi", &[]).await.unwrap();
 }
 
 /// Test /validatorinfo with a single validator on the chat.
@@ -49,15 +48,14 @@ async fn test_validator_info_single_validator() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     bot.network_postgres
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot
-        .process_command(chat_id, "/validatorinfo", &[])
+    bot.process_command(chat_id, "/validatorinfo", &[])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Test /validatorinfo when there are multiple validators on the chat.
@@ -84,7 +82,7 @@ async fn test_validator_info_multiple_validators() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     for _ in 0..validator_count {
         let account_id = get_random_account_id();
         bot.network_postgres
@@ -92,8 +90,7 @@ async fn test_validator_info_multiple_validators() {
             .await
             .unwrap();
     }
-    assert!(bot
-        .process_command(chat_id, "/validatorinfo", &[])
+    bot.process_command(chat_id, "/validatorinfo", &[])
         .await
-        .is_ok());
+        .unwrap();
 }

@@ -19,8 +19,8 @@ async fn test_payouts_no_validator() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot.process_command(chat_id, "/payouts", &[]).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/payouts", &[]).await.unwrap();
 }
 
 /// Tests calling the /payouts command with a single validator on the chat that has no
@@ -38,7 +38,7 @@ async fn test_payouts_single_validator_no_payouts() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     add_validator_to_redis(&bot.redis, &account_id)
         .await
         .unwrap();
@@ -46,7 +46,7 @@ async fn test_payouts_single_validator_no_payouts() {
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot.process_command(chat_id, "/payouts", &[]).await.is_ok());
+    bot.process_command(chat_id, "/payouts", &[]).await.unwrap();
 }
 
 /// Tests calling the /payouts command with multiple single validator on the chat - the
@@ -73,7 +73,7 @@ async fn test_payouts_multiple_validators() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     for _ in 0..validator_count {
         let account_id = get_random_account_id();
         bot.network_postgres
@@ -81,5 +81,5 @@ async fn test_payouts_multiple_validators() {
             .await
             .unwrap();
     }
-    assert!(bot.process_command(chat_id, "/payouts", &[]).await.is_ok());
+    bot.process_command(chat_id, "/payouts", &[]).await.unwrap();
 }

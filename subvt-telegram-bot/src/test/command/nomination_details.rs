@@ -20,12 +20,11 @@ async fn test_nomination_details_no_validator() {
         .times(2)
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/nominationdetails", &[])
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/nominationdetails", &[])
         .await
-        .is_ok());
-    assert!(bot.process_command(chat_id, "/nd", &[]).await.is_ok());
+        .unwrap();
+    bot.process_command(chat_id, "/nd", &[]).await.unwrap();
 }
 
 /// Tests /nominationdetails command for a chat with a single validator.
@@ -48,7 +47,7 @@ async fn test_nomination_details_single_validator() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     add_validator_to_redis(&bot.redis, &account_id)
         .await
         .unwrap();
@@ -56,10 +55,9 @@ async fn test_nomination_details_single_validator() {
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot
-        .process_command(chat_id, "/nominationdetails", &[])
+    bot.process_command(chat_id, "/nominationdetails", &[])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Tests /nominationdetails for a single validator that doesn't exist in the Redis database.
@@ -76,15 +74,14 @@ async fn test_nomination_details_single_non_existent_validator() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     bot.network_postgres
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot
-        .process_command(chat_id, "/nominationdetails", &[])
+    bot.process_command(chat_id, "/nominationdetails", &[])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Tests /nominationdetails where the user has multiple validators added to the chat - should
@@ -112,7 +109,7 @@ async fn test_nomination_details_multiple_validators() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     for _ in 0..validator_count {
         let account_id = get_random_account_id();
         bot.network_postgres
@@ -120,8 +117,7 @@ async fn test_nomination_details_multiple_validators() {
             .await
             .unwrap();
     }
-    assert!(bot
-        .process_command(chat_id, "/nominationdetails", &[])
+    bot.process_command(chat_id, "/nominationdetails", &[])
         .await
-        .is_ok());
+        .unwrap();
 }

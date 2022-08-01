@@ -23,10 +23,9 @@ async fn test_get_network_status_success() {
         .set_network_status(&NetworkStatus::default())
         .await
         .unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot.process_command(chat_id, "/network", &[]).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/networkstatus", &[])
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/network", &[]).await.unwrap();
+    bot.process_command(chat_id, "/networkstatus", &[])
         .await
-        .is_ok());
+        .unwrap();
 }

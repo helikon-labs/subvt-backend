@@ -17,8 +17,8 @@ async fn test_add_validator_no_address() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot.process_command(chat_id, "/add", &[]).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/add", &[]).await.unwrap();
 }
 
 /// Tests the case when the user enters an invalid SS58 address following the /add command.
@@ -38,11 +38,10 @@ async fn test_add_validator_invalid_address() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/add", &[invalid_address.to_string()])
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/add", &[invalid_address.to_string()])
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Tests when the user tries to add a validator that doesn't exist in the Redis database,
@@ -64,11 +63,10 @@ async fn test_add_non_existent_validator() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/add", &command_args)
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/add", &command_args)
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Tests the case of trying to add a validator that already exists in the chat.
@@ -90,7 +88,7 @@ async fn test_add_validator_duplicate() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     add_validator_to_redis(&bot.redis, &account_id)
         .await
         .unwrap();
@@ -98,10 +96,9 @@ async fn test_add_validator_duplicate() {
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot
-        .process_command(chat_id, "/add", &command_args)
+    bot.process_command(chat_id, "/add", &command_args)
         .await
-        .is_ok());
+        .unwrap();
 }
 
 /// Test the successful addition of a validator to a chat.
@@ -135,9 +132,8 @@ async fn test_add_validator_successful() {
     add_validator_to_redis(&bot.redis, &account_id)
         .await
         .unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot
-        .process_command(chat_id, "/add", &command_args)
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/add", &command_args)
         .await
-        .is_ok());
+        .unwrap();
 }

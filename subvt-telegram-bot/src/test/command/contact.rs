@@ -17,6 +17,6 @@ async fn test_contact() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot.process_command(chat_id, "/contact", &[]).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/contact", &[]).await.unwrap();
 }

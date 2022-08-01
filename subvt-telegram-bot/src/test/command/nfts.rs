@@ -18,8 +18,8 @@ async fn test_nfts_no_validator() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
-    assert!(bot.process_command(chat_id, "/nfts", &[]).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
+    bot.process_command(chat_id, "/nfts", &[]).await.unwrap();
 }
 
 /// User has called the /nfts command, and has a single validator added to the chat,
@@ -47,12 +47,12 @@ async fn test_nfts_single_validator_no_nfts() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     bot.network_postgres
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot.process_command(chat_id, "/nfts", &[]).await.is_ok());
+    bot.process_command(chat_id, "/nfts", &[]).await.unwrap();
 }
 
 /// Tests the successful result of the /nfts command with a validator stash address with NFTs.
@@ -80,10 +80,10 @@ async fn test_nfts_single_validator_with_nfts() {
         })
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     bot.network_postgres
         .add_validator_to_chat(chat_id, &account_id, &account_id.to_ss58_check(), &None)
         .await
         .unwrap();
-    assert!(bot.process_command(chat_id, "/nfts", &[]).await.is_ok());
+    bot.process_command(chat_id, "/nfts", &[]).await.unwrap();
 }

@@ -8,7 +8,7 @@ use crate::{MessengerImpl, TelegramBot, DEFAULT_RULES};
 async fn test_save_new_chat() {
     let chat_id = get_random_chat_id();
     let bot = new_test_bot(MockMessenger::new()).await.unwrap();
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     assert!(bot
         .network_postgres
         .chat_exists_by_id(chat_id)
@@ -41,18 +41,18 @@ async fn test_save_new_chat() {
 async fn test_restore_chat_and_user() {
     let bot: TelegramBot<MessengerImpl> = TelegramBot::<MessengerImpl>::new().await.unwrap();
     let chat_id = 2;
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     let user_id = bot
         .network_postgres
         .get_chat_app_user_id(chat_id)
         .await
         .unwrap();
     assert!(!bot.network_postgres.chat_is_deleted(chat_id).await.unwrap());
-    assert!(bot.network_postgres.delete_chat(chat_id).await.is_ok());
-    assert!(bot.app_postgres.delete_user(user_id).await.is_ok());
+    bot.network_postgres.delete_chat(chat_id).await.unwrap();
+    bot.app_postgres.delete_user(user_id).await.unwrap();
     assert!(bot.network_postgres.chat_is_deleted(chat_id).await.unwrap());
     assert!(!bot.app_postgres.user_exists_by_id(user_id).await.unwrap());
-    assert!(bot.save_or_restore_chat(chat_id).await.is_ok());
+    bot.save_or_restore_chat(chat_id).await.unwrap();
     assert!(bot
         .network_postgres
         .chat_exists_by_id(chat_id)
