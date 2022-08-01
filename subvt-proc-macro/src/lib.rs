@@ -1,4 +1,5 @@
 //! SubVT procedural macros.
+#![warn(clippy::disallowed_types)]
 mod diff;
 
 use proc_macro::TokenStream;

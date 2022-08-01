@@ -1,13 +1,14 @@
 //! Connects to the WebSocket feed stream of the given Telemetry and stores the feed data in
 //! the time series database (TimeScaleDB on PostgreSQL). Can be configured to connect to the
 //! W3F or Polkadot Telemetry servers.
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_lock::Mutex;
 use async_trait::async_trait;
 use async_tungstenite::{tokio::connect_async, tungstenite::Message};
 use futures::{SinkExt, StreamExt};
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::sync::mpsc::{self, Receiver, Sender};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;

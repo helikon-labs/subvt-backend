@@ -5,6 +5,7 @@
 //! Supports two RPC methods: `subscribe_validatorList` and `unsubscribe_validatorList`.
 //! Gives the complete list at first connection, then publishes only the changed validators' fields
 //! after each update from `subvt-validator-list-updater`.
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
@@ -12,7 +13,7 @@ use clap::{arg, Command};
 use futures_util::StreamExt as _;
 use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
 use lazy_static::lazy_static;
-use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet, FxHasher};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex, RwLock};
@@ -146,7 +147,9 @@ impl Service for ValidatorListServer {
         });
         let mut last_finalized_block_number = 0;
         let bus = Arc::new(Mutex::new(Bus::new(100)));
-        let validator_map = Arc::new(RwLock::new(HashMap::<AccountId, ValidatorDetails>::new()));
+        let validator_map = Arc::new(RwLock::new(
+            HashMap::<AccountId, ValidatorDetails>::default(),
+        ));
 
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str()).context(format!(
             "Cannot connect to Redis at URL {}.",
@@ -240,7 +243,7 @@ impl Service for ValidatorListServer {
                     if let Some(validator) = validator_map.get(&validator_account_id) {
                         // check hash, if different, fetch, calculate and add to list
                         let summary_hash = {
-                            let mut hasher = DefaultHasher::new();
+                            let mut hasher = FxHasher::default();
                             ValidatorSummary::from(validator).hash(&mut hasher);
                             hasher.finish()
                         };

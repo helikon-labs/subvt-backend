@@ -1,4 +1,5 @@
 //! SubVT Substrate client implementation.
+#![warn(clippy::disallowed_types)]
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_map_key,
@@ -9,9 +10,8 @@ use jsonrpsee::{
     ws_client::WsClientBuilder,
 };
 use parity_scale_codec::Decode;
+use rustc_hash::{FxHashMap as HashMap, FxHasher};
 use sp_core::storage::{StorageChangeSet, StorageKey};
-use std::collections::hash_map::DefaultHasher;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
@@ -337,13 +337,13 @@ impl SubstrateClient {
         account_ids: &[AccountId],
         block_hash: &str,
     ) -> anyhow::Result<HashMap<AccountId, AccountId>> {
-        let mut map = HashMap::new();
+        let mut map = HashMap::default();
         let keys: Vec<String> = account_ids
             .iter()
             .map(|account_id| get_storage_map_key(&self.metadata, "Staking", "Bonded", account_id))
             .collect();
         if keys.is_empty() {
-            return Ok(HashMap::new());
+            return Ok(HashMap::default());
         }
         for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
             let chunk_values: Vec<StorageChangeSet<String>> = self
@@ -394,7 +394,7 @@ impl SubstrateClient {
             .collect();
         log::trace!("Got {} keys for super accounts.", keys.len());
         if keys.is_empty() {
-            return Ok(HashMap::new());
+            return Ok(HashMap::default());
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
@@ -405,7 +405,7 @@ impl SubstrateClient {
             values[0].changes.len()
         );
         let mut parent_account_map: HashMap<AccountId, (AccountId, Option<String>)> =
-            HashMap::new();
+            HashMap::default();
         for (storage_key, storage_data) in values[0].changes.iter() {
             if let Some(data) = storage_data {
                 let account_id = self.account_id_from_storage_key(storage_key);
@@ -441,14 +441,14 @@ impl SubstrateClient {
             .collect();
         log::trace!("Got {} storage keys for identities.", keys.len());
         if keys.is_empty() {
-            return Ok(HashMap::new());
+            return Ok(HashMap::default());
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
             .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
             .await?;
         log::trace!("Got {} optional identities.", values[0].changes.len());
-        let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::new();
+        let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::default();
         for (storage_key, storage_data) in values[0].changes.iter() {
             let account_id = self.account_id_from_storage_key(storage_key);
             if let Some(data) = storage_data {
@@ -561,18 +561,18 @@ impl SubstrateClient {
             all_keys.len()
         );
         log::debug!("Get complete account, active and para-validator info for all validators.");
-        let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::new();
+        let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
             let active_validator_account_ids =
                 self.get_active_validator_account_ids(block_hash).await?;
             log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
-                HashMap::new();
+                HashMap::default();
             if let Some(para_validator_indices) =
                 self.get_paras_active_validator_indices(block_hash).await?
             {
                 let para_validator_index_map = {
-                    let mut map: HashMap<u32, AccountId> = HashMap::new();
+                    let mut map: HashMap<u32, AccountId> = HashMap::default();
                     for (para_validator_index, validator_index) in
                         para_validator_indices.iter().enumerate()
                     {
@@ -586,7 +586,7 @@ impl SubstrateClient {
                     map
                 };
                 let para_validator_group_map = {
-                    let mut map: HashMap<u32, Vec<AccountId>> = HashMap::new();
+                    let mut map: HashMap<u32, Vec<AccountId>> = HashMap::default();
                     let para_validator_groups = self.get_para_validator_groups(block_hash).await?;
                     for (group_index, group) in para_validator_groups.iter().enumerate() {
                         map.insert(
@@ -751,7 +751,7 @@ impl SubstrateClient {
                 "Got {} nomination storage keys. Accessing storage.",
                 all_keys.len()
             );
-            let mut nomination_map: HashMap<AccountId, Nomination> = HashMap::new();
+            let mut nomination_map: HashMap<AccountId, Nomination> = HashMap::default();
             for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
@@ -798,7 +798,7 @@ impl SubstrateClient {
                     nominator_stash_account_id,
                 ));
             }
-            let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::new();
+            let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::default();
             for chunk in controller_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
@@ -855,7 +855,7 @@ impl SubstrateClient {
             }
             for validator in validator_map.values_mut() {
                 validator.nominations.sort_by_key(|nomination| {
-                    let mut hasher = DefaultHasher::new();
+                    let mut hasher = FxHasher::default();
                     nomination.stash_account.id.hash(&mut hasher);
                     hasher.finish()
                 });
@@ -1224,7 +1224,7 @@ impl SubstrateClient {
                 break;
             }
         }
-        let mut validator_prefs_map: HashMap<AccountId, ValidatorPreferences> = HashMap::new();
+        let mut validator_prefs_map: HashMap<AccountId, ValidatorPreferences> = HashMap::default();
         for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
             let chunk_values: Vec<StorageChangeSet<String>> = self
                 .ws_client

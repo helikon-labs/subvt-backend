@@ -1,5 +1,5 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use subvt_types::report::{ParaVote, ParaVoteType, SessionParaVoteReport};
 
 impl PostgreSQLNetworkStorage {
@@ -56,7 +56,7 @@ impl PostgreSQLNetworkStorage {
         .bind(session_index as i64)
         .fetch_all(&self.connection_pool)
         .await?;
-        let mut report_map: HashMap<u64, SessionParaVoteReport> = HashMap::new();
+        let mut report_map: HashMap<u64, SessionParaVoteReport> = HashMap::default();
         for para_vote_count in &para_vote_counts {
             let para_id = para_vote_count.0 as u64;
             let report = report_map.entry(para_id).or_insert(SessionParaVoteReport {

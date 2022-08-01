@@ -1,5 +1,5 @@
 //! Updates the complete 1KV data for the network (only Polkadot and Kusama) on the database.
-
+#![warn(clippy::disallowed_types)]
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use subvt_config::Config;

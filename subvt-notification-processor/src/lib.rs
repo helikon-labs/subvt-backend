@@ -1,4 +1,5 @@
 //! Sends the persisted notifications to various channels (email, APNS, FCM, SMS, GSM, Telegram).
+#![warn(clippy::disallowed_types)]
 use crate::content::ContentProvider;
 // use crate::sender::apns::APNSSender;
 use crate::sender::email::EmailSender;
@@ -8,7 +9,7 @@ use crate::sender::NotificationSender;
 use async_trait::async_trait;
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -108,7 +109,7 @@ impl NotificationProcessor {
         postgres: &PostgreSQLAppStorage,
     ) -> anyhow::Result<HashMap<u32, Network>> {
         let networks = postgres.get_networks().await?;
-        let mut network_map = HashMap::new();
+        let mut network_map = HashMap::default();
         for network in networks {
             network_map.insert(network.id, network.clone());
         }

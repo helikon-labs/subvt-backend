@@ -1,6 +1,6 @@
 //! Contains the notification processing logic.
 use crate::{metrics, NotificationProcessor};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use subvt_types::app::{
     Notification, NotificationChannel, NotificationPeriodType, NotificationTypeCode,
 };
@@ -165,7 +165,7 @@ impl NotificationProcessor {
                     notifications.len(),
                     period_type
                 );
-                let mut notification_groups = HashMap::new();
+                let mut notification_groups = HashMap::default();
                 for notification in &notifications {
                     let key = (
                         notification.network_id,

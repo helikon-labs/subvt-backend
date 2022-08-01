@@ -1,5 +1,5 @@
+use rustc_hash::FxHashMap as HashMap;
 use serde::{Deserialize, Deserializer};
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 

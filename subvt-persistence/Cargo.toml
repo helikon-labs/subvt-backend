@@ -12,6 +12,7 @@ lazy_static = "1.4.0"
 log = "0.4.16"
 parity-scale-codec = "3.1.5"
 redis = { version = "0.21.5", features = ["tokio-comp"] }
+rustc-hash = "1.1.0"
 serde = { version = "1.0" }
 serde_json = "1.0"
 subvt-config = { path = "../subvt-config" }

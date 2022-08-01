@@ -3,7 +3,7 @@ use crate::{PlotterError, CONFIG};
 use chrono::Datelike;
 use itertools::Itertools;
 use rand::Rng;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
 use subvt_utility::numeric::format_decimal;
@@ -12,7 +12,7 @@ fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32
     if rewards.is_empty() {
         return Err(PlotterError::EmptyData.into());
     }
-    let mut monthly_rewards: HashMap<u32, Balance> = HashMap::new();
+    let mut monthly_rewards: HashMap<u32, Balance> = HashMap::default();
     for reward in rewards {
         let era_start = reward.0.get_start_date_time();
         let month_index = era_start.month0() + (era_start.year() as u32) * 12;

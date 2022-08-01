@@ -1,5 +1,5 @@
 //! Utility functions.
-
+#![warn(clippy::disallowed_types)]
 use parity_scale_codec::Decode;
 
 pub mod numeric;

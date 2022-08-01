@@ -1,7 +1,7 @@
 //! Storage related to a network supported by SubVT.
 //! Each supported network has a separate database.
 use crate::postgres::network::PostgreSQLNetworkStorage;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use subvt_types::{
     crypto::AccountId,
     rdb::ValidatorInfo,
@@ -36,7 +36,7 @@ impl PostgreSQLNetworkStorage {
         era_stakers: &EraStakers,
     ) -> anyhow::Result<Option<i64>> {
         let nominator_count = {
-            let mut nominator_account_id_set: HashSet<AccountId> = HashSet::new();
+            let mut nominator_account_id_set: HashSet<AccountId> = HashSet::default();
             for validator_stake in &era_stakers.stakers {
                 for nominator_stake in &validator_stake.nominators {
                     nominator_account_id_set.insert(nominator_stake.account.id);

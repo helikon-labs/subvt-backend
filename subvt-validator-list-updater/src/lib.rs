@@ -1,12 +1,13 @@
 //! Updates the Redis database with the complete validator list after every block.
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_lock::RwLock;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
 use redis::Pipeline;
-use std::collections::{hash_map::DefaultHasher, HashSet};
+use rustc_hash::{FxHashSet as HashSet, FxHasher};
 use std::hash::{Hash, Hasher};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -82,13 +83,13 @@ impl ValidatorListUpdater {
             );
             // calculate hash
             let hash = {
-                let mut hasher = DefaultHasher::new();
+                let mut hasher = FxHasher::default();
                 validator.hash(&mut hasher);
                 hasher.finish()
             };
             // calculate summary hash
             let summary_hash = {
-                let mut hasher = DefaultHasher::new();
+                let mut hasher = FxHasher::default();
                 ValidatorSummary::from(validator).hash(&mut hasher);
                 hasher.finish()
             };

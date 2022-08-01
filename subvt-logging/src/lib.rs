@@ -1,5 +1,5 @@
 //! Logging configuration and initializer.
-
+#![warn(clippy::disallowed_types)]
 use env_logger::{Builder, Env, Target, WriteStyle};
 use std::str::FromStr;
 

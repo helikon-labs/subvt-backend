@@ -1,5 +1,5 @@
 use crate::NotificationGenerator;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -33,7 +33,7 @@ impl NotificationGenerator {
             .map(|nomination| &nomination.stash_account.id)
             .cloned()
             .collect();
-        let mut current_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
+        let mut current_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::default();
         for nomination in &current.nominations {
             current_nomination_map.insert(&nomination.stash_account.id, nomination);
         }
@@ -50,7 +50,7 @@ impl NotificationGenerator {
         )
         .await?;
         // lost nominations
-        let mut last_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::new();
+        let mut last_nomination_map: HashMap<&AccountId, &Nomination> = HashMap::default();
         for nomination in &last.nominations {
             last_nomination_map.insert(&nomination.stash_account.id, nomination);
         }

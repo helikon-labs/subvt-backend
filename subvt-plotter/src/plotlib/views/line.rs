@@ -5,7 +5,7 @@ use crate::plotlib::components::DatumRepresentation;
 use crate::plotlib::views::datum::PointDatum;
 use crate::plotlib::views::View;
 use crate::plotlib::{LineSeries, Scale};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::fmt::Display;
 use svg::node::element::Group;
 use svg::node::Node;
@@ -34,7 +34,7 @@ impl<'a, T: Display, U: Display> LineSeriesView<'a, T, U> {
             entries: Vec::new(),
             keys: Vec::new(),
             colors: Color::color_scheme_10(),
-            color_map: HashMap::new(),
+            color_map: HashMap::default(),
             x_scale: None,
             y_scale: None,
             custom_data_label: String::new(),
@@ -172,7 +172,7 @@ impl<'a, T: Display, U: Display> LineSeriesView<'a, T, U> {
     /// Extract the list of keys to use when stacking and coloring the bars.
     fn extract_keys(data: &[impl PointDatum<T, U>]) -> Vec<String> {
         let mut keys = Vec::new();
-        let mut map = HashMap::new();
+        let mut map = HashMap::default();
 
         for datum in data.iter() {
             match map.insert(datum.get_key(), 0) {

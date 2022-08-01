@@ -4,13 +4,10 @@ use crate::substrate::{argument::Argument, Chain, LastRuntimeUpgradeInfo};
 use core::convert::TryInto;
 use frame_metadata::{decode_different::DecodeDifferent, RuntimeMetadata, RuntimeMetadataPrefixed};
 use parity_scale_codec::{Decode, Encode, Error as CodecError};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use scale_info::form::PortableForm;
 use std::fmt::{Display, Formatter};
-use std::{
-    collections::{HashMap, HashSet},
-    convert::TryFrom,
-    str::FromStr,
-};
+use std::{convert::TryFrom, str::FromStr};
 
 /// Metadata error.
 #[derive(Debug, thiserror::Error)]
@@ -393,7 +390,7 @@ impl Display for ArgumentMeta {
 
 impl ArgumentMeta {
     pub fn get_primitive_name_set(&self) -> HashSet<String> {
-        let mut result = HashSet::new();
+        let mut result = HashSet::default();
         match self {
             Self::Primitive(name) => {
                 result.insert(name.clone());
@@ -544,11 +541,11 @@ fn convert<B: 'static, O: 'static>(dd: DecodeDifferent<B, O>) -> Result<O, Conve
 
 mod v12 {
     use super::{
-        convert, ArgumentMeta, ConversionError, ModuleCallMetadata, ModuleConstantMetadata,
-        ModuleEventMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
+        convert, ArgumentMeta, ConversionError, HashMap, ModuleCallMetadata,
+        ModuleConstantMetadata, ModuleEventMetadata, ModuleMetadata, StorageEntryType,
+        StorageMetadata,
     };
     use frame_metadata::v12::RuntimeMetadataV12;
-    use std::collections::HashMap;
 
     fn convert_event(
         index: usize,
@@ -602,20 +599,20 @@ mod v12 {
     pub fn convert_modules(
         meta: RuntimeMetadataV12,
     ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
-        let mut modules = HashMap::new();
+        let mut modules = HashMap::default();
         for module in convert(meta.modules)?.into_iter() {
             let module_index = module.index;
             let module_name = convert(module.name.clone())?.to_string();
 
             // constants
-            let mut constant_map = HashMap::new();
+            let mut constant_map = HashMap::default();
             for constant in convert(module.constants)?.into_iter() {
                 let constant_meta = convert_constant(constant)?;
                 constant_map.insert(constant_meta.name.clone(), constant_meta);
             }
 
             // storage
-            let mut storage_map = HashMap::new();
+            let mut storage_map = HashMap::default();
             if let Some(storage) = module.storage {
                 let storage = convert(storage)?;
                 let module_prefix = convert(storage.prefix)?.to_string();
@@ -627,7 +624,7 @@ mod v12 {
                 }
             }
             // calls
-            let mut call_map = HashMap::new();
+            let mut call_map = HashMap::default();
             if let Some(calls) = module.calls {
                 for (index, module_call) in convert(calls)?.into_iter().enumerate() {
                     let mut call = ModuleCallMetadata {
@@ -646,14 +643,14 @@ mod v12 {
                 }
             }
             // events
-            let mut event_map = HashMap::new();
+            let mut event_map = HashMap::default();
             if let Some(events) = module.event {
                 for (index, event) in convert(events)?.into_iter().enumerate() {
                     event_map.insert(index as u8, convert_event(index, event)?);
                 }
             }
 
-            let mut error_map = HashMap::new();
+            let mut error_map = HashMap::default();
             for (index, error) in convert(module.errors)?.into_iter().enumerate() {
                 error_map.insert(index as u8, convert_error(error)?);
             }
@@ -712,11 +709,11 @@ mod v12 {
 
 mod v13 {
     use super::{
-        convert, ArgumentMeta, ConversionError, ModuleCallMetadata, ModuleConstantMetadata,
-        ModuleEventMetadata, ModuleMetadata, StorageEntryType, StorageMetadata,
+        convert, ArgumentMeta, ConversionError, HashMap, ModuleCallMetadata,
+        ModuleConstantMetadata, ModuleEventMetadata, ModuleMetadata, StorageEntryType,
+        StorageMetadata,
     };
     use frame_metadata::v13::RuntimeMetadataV13;
-    use std::collections::HashMap;
 
     fn convert_event(
         index: usize,
@@ -770,20 +767,20 @@ mod v13 {
     pub fn convert_modules(
         meta: RuntimeMetadataV13,
     ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
-        let mut modules = HashMap::new();
+        let mut modules = HashMap::default();
         for module in convert(meta.modules)?.into_iter() {
             let module_index = module.index;
             let module_name = convert(module.name.clone())?.to_string();
 
             // constants
-            let mut constant_map = HashMap::new();
+            let mut constant_map = HashMap::default();
             for constant in convert(module.constants)?.into_iter() {
                 let constant_meta = convert_constant(constant)?;
                 constant_map.insert(constant_meta.name.clone(), constant_meta);
             }
 
             // storage
-            let mut storage_map = HashMap::new();
+            let mut storage_map = HashMap::default();
             if let Some(storage) = module.storage {
                 let storage = convert(storage)?;
                 let module_prefix = convert(storage.prefix)?.to_string();
@@ -795,7 +792,7 @@ mod v13 {
                 }
             }
             // calls
-            let mut call_map = HashMap::new();
+            let mut call_map = HashMap::default();
             if let Some(calls) = module.calls {
                 for (index, module_call) in convert(calls)?.into_iter().enumerate() {
                     let mut call = ModuleCallMetadata {
@@ -814,14 +811,14 @@ mod v13 {
                 }
             }
             // events
-            let mut event_map = HashMap::new();
+            let mut event_map = HashMap::default();
             if let Some(events) = module.event {
                 for (index, event) in convert(events)?.into_iter().enumerate() {
                     event_map.insert(index as u8, convert_event(index, event)?);
                 }
             }
 
-            let mut error_map = HashMap::new();
+            let mut error_map = HashMap::default();
             for (index, error) in convert(module.errors)?.into_iter().enumerate() {
                 error_map.insert(index as u8, convert_error(error)?);
             }
@@ -880,13 +877,12 @@ mod v13 {
 
 mod v14 {
     use super::{
-        ArgumentMeta, ModuleCallMetadata, ModuleConstantMetadata, ModuleEventMetadata,
+        ArgumentMeta, HashMap, ModuleCallMetadata, ModuleConstantMetadata, ModuleEventMetadata,
         ModuleMetadata, StorageEntryType, StorageMetadata,
     };
     use frame_metadata::v14::RuntimeMetadataV14;
     use scale_info::form::PortableForm;
     use scale_info::{Type, TypeDef};
-    use std::collections::HashMap;
     use std::str::FromStr;
 
     fn convert_type(meta: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
@@ -913,7 +909,7 @@ mod v14 {
         meta: &RuntimeMetadataV14,
         calls_ty: &Type<PortableForm>,
     ) -> HashMap<u8, ModuleCallMetadata> {
-        let mut call_map = HashMap::new();
+        let mut call_map = HashMap::default();
         match calls_ty.type_def() {
             TypeDef::Variant(variant) => {
                 for call_variant in variant.variants() {
@@ -952,7 +948,7 @@ mod v14 {
         meta: &RuntimeMetadataV14,
         events_ty: &Type<PortableForm>,
     ) -> HashMap<u8, ModuleEventMetadata> {
-        let mut event_map = HashMap::new();
+        let mut event_map = HashMap::default();
         match events_ty.type_def() {
             TypeDef::Variant(variant) => {
                 for event_variant in variant.variants() {
@@ -988,7 +984,7 @@ mod v14 {
     }
 
     fn convert_errors(errors_ty: &Type<PortableForm>) -> HashMap<u8, String> {
-        let mut error_map = HashMap::new();
+        let mut error_map = HashMap::default();
         match errors_ty.type_def() {
             TypeDef::Variant(variant) => {
                 for error_variant in variant.variants() {
@@ -1003,12 +999,12 @@ mod v14 {
     pub fn convert_modules(
         meta: RuntimeMetadataV14,
     ) -> Result<HashMap<u8, ModuleMetadata>, super::MetadataError> {
-        let mut modules = HashMap::new();
+        let mut modules = HashMap::default();
         for pallet in &meta.pallets {
             let module_index = pallet.index;
             let module_name = &pallet.name;
             // constants
-            let mut constant_map = HashMap::new();
+            let mut constant_map = HashMap::default();
             for constant in &pallet.constants {
                 let ty = meta.types.resolve(constant.ty.id()).unwrap();
                 // name type value documentation
@@ -1021,7 +1017,7 @@ mod v14 {
                 constant_map.insert(constant.name.clone(), constant_meta);
             }
             // storage
-            let mut storage_map = HashMap::new();
+            let mut storage_map = HashMap::default();
             if let Some(storage_meta) = &pallet.storage {
                 for entry in &storage_meta.entries {
                     let module_prefix = storage_meta.prefix.clone();
@@ -1044,7 +1040,7 @@ mod v14 {
                     .expect("Cannot access module call type.");
                 convert_calls(&meta, calls_type)
             } else {
-                HashMap::new()
+                HashMap::default()
             };
             // events
             let event_map = if let Some(events_meta) = &pallet.event {
@@ -1054,7 +1050,7 @@ mod v14 {
                     .expect("Cannot access module event type.");
                 convert_events(&meta, events_type)
             } else {
-                HashMap::new()
+                HashMap::default()
             };
             // errors
             let error_map = if let Some(errors_meta) = &pallet.error {
@@ -1064,7 +1060,7 @@ mod v14 {
                     .expect("Cannot access module error type.");
                 convert_errors(errors_type)
             } else {
-                HashMap::new()
+                HashMap::default()
             };
             modules.insert(
                 module_index,

@@ -1,13 +1,14 @@
 //! Application REST interface. Contains services such as user registration, network list,
 //! notification channels, user validator registration, user notification rules persistence
 //! and deletion, etc.
+#![warn(clippy::disallowed_types)]
 use crate::auth::{data::AuthenticatedUser, service::AuthServiceFactory};
 use actix_web::web::Data;
 use actix_web::{delete, get, post, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
+use rustc_hash::FxHashSet as HashSet;
 use serde::Deserialize;
-use std::collections::HashSet;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;

@@ -7,7 +7,7 @@ rust-version = "1.60.0"
 [dependencies]
 actix-web = "4.1.0"
 anyhow = "1.0"
-async-trait = "0.1.56"
+async-trait = "0.1"
 futures-util = "0.3.21"
 lazy_static = "1.4.0"
 log = "0.4.16"

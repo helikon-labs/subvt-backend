@@ -6,7 +6,7 @@ use crate::plotlib::components::DatumRepresentation;
 use crate::plotlib::scales::ScaleType;
 use crate::plotlib::views::View;
 use crate::plotlib::{BarDatum, Scale};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use svg::node::element::Group;
 use svg::node::Node;
 
@@ -34,7 +34,7 @@ impl<'a> HorizontalBarView<'a> {
             entries: Vec::new(),
             keys: Vec::new(),
             colors: Color::color_scheme_10(),
-            color_map: HashMap::new(),
+            color_map: HashMap::default(),
             x_scale: None,
             y_scale: None,
             custom_data_label: String::new(),
@@ -110,7 +110,7 @@ impl<'a> HorizontalBarView<'a> {
 
         // HashMap to group all data related to a category. This is needed when there
         // are many data entries under a single category as in a stacked bar chart.
-        let mut categories: HashMap<String, Vec<(&String, f32)>> = HashMap::new();
+        let mut categories: HashMap<String, Vec<(&String, f32)>> = HashMap::default();
 
         // Organize entries based on the order of the keys first, since displayed data
         // should keep the order defined in the `keys` attribute.
@@ -184,7 +184,7 @@ impl<'a> HorizontalBarView<'a> {
     /// Extract the list of keys to use when stacking and coloring the bars.
     fn extract_keys(data: &[impl BarDatum]) -> Vec<String> {
         let mut keys = Vec::new();
-        let mut map = HashMap::new();
+        let mut map = HashMap::default();
 
         for datum in data.iter() {
             match map.insert(datum.get_key(), 0) {

@@ -1,6 +1,6 @@
 //! Storage related to SubVT application users.
 use crate::postgres::app::PostgreSQLAppStorage;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 use std::str::FromStr;
 use subvt_types::app::db::{
     PostgresUserNotificationChannel, PostgresUserNotificationRule, PostgresUserValidator,

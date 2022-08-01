@@ -6,7 +6,7 @@ use crate::{metrics, NotificationGenerator, CONFIG};
 use anyhow::Context;
 use futures_util::StreamExt as _;
 use redis::aio::Connection as RedisConnection;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -152,7 +152,7 @@ impl NotificationGenerator {
             // keep this to avoid duplicate block processing
             let mut last_finalized_block_number = 0;
             // keep track of validators
-            let mut validator_map: HashMap<String, ValidatorDetails> = HashMap::new();
+            let mut validator_map: HashMap<String, ValidatorDetails> = HashMap::default();
             let last_active_era_index = AtomicU32::new(0);
             let mut pubsub_stream = redis_pubsub_connection.on_message();
             let error: anyhow::Error = loop {

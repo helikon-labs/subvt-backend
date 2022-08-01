@@ -1,7 +1,7 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
 use redis::aio::Connection as RedisConnection;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::str::FromStr;
 use std::sync::Arc;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;

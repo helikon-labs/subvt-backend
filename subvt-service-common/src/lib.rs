@@ -1,5 +1,6 @@
 //! Service common traits and functions.
 //! All SubVT services (executables) adhere to this protocol.
+#![warn(clippy::disallowed_types)]
 use async_trait::async_trait;
 use std::str::FromStr;
 use subvt_config::Config;

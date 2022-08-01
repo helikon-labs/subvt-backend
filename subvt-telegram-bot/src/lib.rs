@@ -1,5 +1,6 @@
 //! Telegram bot. Former 1KV Telegram Bot (https://github.com/helikon-labs/polkadot-kusama-1kv-telegram-bot)
 //! migrated to the SubVT backend (https://github.com/helikon-labs/subvt-backend/tree/development).
+#![warn(clippy::disallowed_types)]
 use crate::messenger::Messenger;
 use crate::{
     api::AsyncApi,
@@ -11,7 +12,7 @@ pub use frankenstein::{AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
 use frankenstein::{ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -239,7 +240,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         app_user_id: u32,
         channel_id: u32,
     ) -> anyhow::Result<()> {
-        let mut channel_id_set = HashSet::new();
+        let mut channel_id_set = HashSet::default();
         channel_id_set.insert(channel_id);
         for rule in DEFAULT_RULES.iter() {
             self.app_postgres
@@ -249,7 +250,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     (None, None),
                     (Some(CONFIG.substrate.network_id), true),
                     (&rule.1, rule.2),
-                    (&HashSet::new(), &channel_id_set, &[]),
+                    (&HashSet::default(), &channel_id_set, &[]),
                 )
                 .await?;
         }
@@ -274,7 +275,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 target: chat_id.to_string(),
             })
             .await?;
-        let mut channel_id_set = HashSet::new();
+        let mut channel_id_set = HashSet::default();
         channel_id_set.insert(channel_id);
         // create notification rules
         self.create_default_notification_rules(app_user_id, channel_id)

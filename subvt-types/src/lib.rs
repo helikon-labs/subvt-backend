@@ -1,4 +1,5 @@
 //! SubVT types. Refer to module documentations for details.
+#![warn(clippy::disallowed_types)]
 pub mod app;
 pub mod crypto;
 pub mod err;

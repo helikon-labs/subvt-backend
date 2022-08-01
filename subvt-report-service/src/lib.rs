@@ -1,4 +1,5 @@
 //!  Public reporting REST services.
+#![warn(clippy::disallowed_types)]
 use actix_web::dev::Service as _;
 use actix_web::{web, App, HttpResponse, HttpServer};
 use async_trait::async_trait;

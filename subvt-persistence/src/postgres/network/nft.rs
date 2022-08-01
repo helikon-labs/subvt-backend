@@ -58,7 +58,7 @@ impl PostgreSQLNetworkStorage {
         page_index: usize,
         page_size: usize,
     ) -> anyhow::Result<NFTCollection> {
-        let mut collection = NFTCollection::new();
+        let mut collection = NFTCollection::default();
         let records: Vec<(String, String, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>)> = sqlx::query_as(
             r#"
             SELECT id, chain, owner_account_id, content_type, name, description, url, image_url FROM sub_nft

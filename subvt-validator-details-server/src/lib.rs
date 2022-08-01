@@ -4,6 +4,7 @@
 //! `subscribe_validatorDetails` accepts a single parameter: 0x-prefixed hex-encoded account id
 //! of the validator. Gives the complete details at first connection, then publishes only the
 //! changed fields after each update from `subvt-validator-list-updater`.
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;

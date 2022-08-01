@@ -1,6 +1,6 @@
 //! Updates the Redis database after every block with network status data.
 //! Subscribes to the new blocks using the Substrate client in `subvt-substrate-client`.
-
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_trait::async_trait;
 use chrono::Utc;

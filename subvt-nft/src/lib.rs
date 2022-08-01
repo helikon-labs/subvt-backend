@@ -1,3 +1,4 @@
+#![warn(clippy::disallowed_types)]
 use lazy_static::lazy_static;
 use subvt_config::Config;
 use subvt_types::sub_id::NFTCollection;

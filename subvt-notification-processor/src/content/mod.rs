@@ -1,7 +1,7 @@
 //! Templated notification content provider.
 use crate::content::context::{get_grouped_renderer_context, get_renderer_context};
 use crate::CONFIG;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use subvt_types::app::{Network, Notification, NotificationChannel};
 use tera::Tera;
 
@@ -114,7 +114,7 @@ impl ContentProvider {
     }
 
     pub fn new(network_map: HashMap<u32, Network>) -> anyhow::Result<ContentProvider> {
-        let mut renderer_map = HashMap::new();
+        let mut renderer_map = HashMap::default();
         renderer_map.insert(NotificationChannel::APNS, get_tera("push_notification")?);
         renderer_map.insert(NotificationChannel::Email, get_tera("email")?);
         renderer_map.insert(NotificationChannel::FCM, get_tera("push_notification")?);

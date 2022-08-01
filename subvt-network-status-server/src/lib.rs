@@ -1,6 +1,6 @@
 //! Subscribes to the network status data on Redis and publishes the data through
 //! websocket pub/sub.
-
+#![warn(clippy::disallowed_types)]
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;

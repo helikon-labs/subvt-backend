@@ -2,7 +2,7 @@ use crate::{NotificationGenerator, CONFIG};
 use anyhow::Context;
 use chrono::Utc;
 use redis::aio::Connection as RedisConnection;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;

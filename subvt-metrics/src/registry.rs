@@ -23,26 +23,26 @@ pub fn register_gauge(prefix: &str, name: &str, help: &str) -> prometheus::Resul
     Ok(gauge)
 }
 
+#[allow(clippy::disallowed_types)]
 pub fn register_gauge_vec(
     prefix: &str,
     name: &str,
     help: &str,
     label_names: &[&str],
 ) -> prometheus::Result<GaugeVec> {
-    let gauge =
-        prometheus::GaugeVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
+    let gauge = GaugeVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
     register(gauge.clone())?;
     Ok(gauge)
 }
 
+#[allow(clippy::disallowed_types)]
 pub fn register_int_gauge_vec(
     prefix: &str,
     name: &str,
     help: &str,
     label_names: &[&str],
 ) -> prometheus::Result<IntGaugeVec> {
-    let gauge =
-        prometheus::IntGaugeVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
+    let gauge = IntGaugeVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
     register(gauge.clone())?;
     Ok(gauge)
 }
@@ -57,14 +57,14 @@ pub fn register_int_counter(
     Ok(gauge)
 }
 
+#[allow(clippy::disallowed_types)]
 pub fn register_int_counter_vec(
     prefix: &str,
     name: &str,
     help: &str,
     label_names: &[&str],
 ) -> prometheus::Result<IntCounterVec> {
-    let gauge =
-        prometheus::IntCounterVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
+    let gauge = IntCounterVec::new(opts!(format!("{}::{}", prefix, name), help), label_names)?;
     register(gauge.clone())?;
     Ok(gauge)
 }

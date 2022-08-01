@@ -5,6 +5,7 @@
 //! finishing of the processing of a block is signalled by the processor by means of PostgreSQL
 //! notifications.
 //! 3. Regular Telemetry checks (this is work in progress still).
+#![warn(clippy::disallowed_types)]
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use serde::Serialize;

@@ -1,6 +1,5 @@
 use crate::plotlib::scales::{Scale, ScaleType};
-use std::collections::HashMap;
-use std::collections::HashSet;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 /// The scale to represent categorical data.
 #[derive(Debug)]
@@ -38,7 +37,7 @@ impl ScaleBand {
             domain: Vec::new(),
             range: vec![0, 1],
             offsets: Vec::new(),
-            index: HashMap::new(),
+            index: HashMap::default(),
             step: 1f32,
             bandwidth: 1f32,
             padding_inner: 0.1,
@@ -67,7 +66,7 @@ impl ScaleBand {
     pub fn set_domain(mut self, range: Vec<String>) -> Self {
         // Deduplicate the domain range and keep order of entries.
         let mut unique = Vec::new();
-        let mut set: HashSet<String> = HashSet::new();
+        let mut set: HashSet<String> = HashSet::default();
 
         for el in range.into_iter() {
             let clone = el.clone();

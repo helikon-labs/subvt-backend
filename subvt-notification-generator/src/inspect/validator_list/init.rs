@@ -1,6 +1,6 @@
 use anyhow::Context;
 use redis::aio::Connection as RedisConnection;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use subvt_types::subvt::ValidatorDetails;
 
 /// Does the initial population of the cached validator map.

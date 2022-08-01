@@ -1,11 +1,11 @@
 //! Indexes historical block data into the PostreSQL database instance.
-
+#![warn(clippy::disallowed_types)]
 use crate::event::process_event;
 use async_lock::Mutex;
 use async_trait::async_trait;
 use lazy_static::lazy_static;
 use once_cell::sync::OnceCell;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
@@ -61,7 +61,7 @@ impl BlockProcessor {
             .get_bonded_account_id_map(&all_validator_account_ids, block_hash)
             .await?;
         let validator_stake_map = {
-            let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::new();
+            let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::default();
             for validator_stake in &era_stakers.stakers {
                 validator_stake_map.insert(validator_stake.account.id, validator_stake.clone());
             }
@@ -105,7 +105,7 @@ impl BlockProcessor {
         postgres
             .update_era_reward_points(era_index, era_reward_points.total)
             .await?;
-        let mut era_reward_points_map: HashMap<AccountId, u32> = HashMap::new();
+        let mut era_reward_points_map: HashMap<AccountId, u32> = HashMap::default();
         era_reward_points
             .individual
             .iter()
@@ -311,7 +311,8 @@ impl BlockProcessor {
             )
             .await?;
         // process/persist events
-        let mut extrinsic_event_map: HashMap<u32, Vec<(usize, SubstrateEvent)>> = HashMap::new();
+        let mut extrinsic_event_map: HashMap<u32, Vec<(usize, SubstrateEvent)>> =
+            HashMap::default();
         for (index, event_result) in event_results.iter().enumerate() {
             match event_result {
                 Ok(event) => {
