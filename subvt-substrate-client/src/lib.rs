@@ -39,6 +39,7 @@ const KEY_QUERY_PAGE_SIZE: usize = 1000;
 
 /// The client.
 pub struct SubstrateClient {
+    network_id: u32,
     pub chain: Chain,
     pub metadata: Metadata,
     pub system_properties: SystemProperties,
@@ -86,6 +87,7 @@ impl SubstrateClient {
             ws_client.request("system_properties", None).await?;
         log::info!("Got system properties. {:?}", system_properties);
         Ok(Self {
+            network_id: config.substrate.network_id,
             chain,
             metadata,
             system_properties,
@@ -632,6 +634,7 @@ impl SubstrateClient {
                     account.id,
                     ValidatorDetails {
                         account: account.clone(),
+                        network_id: self.network_id,
                         is_active,
                         is_para_validator,
                         para_core_assignment,

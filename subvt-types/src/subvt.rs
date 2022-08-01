@@ -49,6 +49,7 @@ pub struct NetworkStatusUpdate {
 pub struct ValidatorDetails {
     #[diff_key]
     pub account: Account,
+    pub network_id: u32,
     pub controller_account_id: AccountId,
     pub preferences: ValidatorPreferences,
     pub self_stake: Stake,
@@ -98,6 +99,7 @@ pub struct ValidatorSummary {
     #[diff_key]
     pub account_id: AccountId,
     pub address: String,
+    pub network_id: u32,
     pub controller_account_id: AccountId,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<String>,
@@ -151,6 +153,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
         ValidatorSummary {
             account_id: validator.account.id,
             address: validator.account.address.clone(),
+            network_id: validator.network_id,
             controller_account_id: validator.controller_account_id,
             display: validator.account.get_display(),
             parent_display: validator.account.get_parent_display(),
