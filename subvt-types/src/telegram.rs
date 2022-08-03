@@ -74,7 +74,7 @@ impl TelegramChatValidatorSummary {
         token_format_decimal_points: usize,
     ) -> TelegramChatValidatorSummary {
         let self_stake_formatted = format_decimal(
-            validator_details.self_stake.total_amount,
+            validator_details.self_stake.active_amount,
             token_decimals,
             token_format_decimal_points,
         );
