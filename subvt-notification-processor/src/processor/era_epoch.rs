@@ -30,8 +30,8 @@ impl NotificationProcessor {
         ))?;
         let mut data_connection = redis.get_async_connection().await?;
         let mut pubsub_connection = redis.get_async_connection().await?.into_pubsub();
-        let mut active_era_index = 0;
-        let mut current_epoch_index = 0;
+        let mut maybe_active_era_index: Option<u32> = None;
+        let mut maybe_current_epoch_index: Option<u64> = None;
         pubsub_connection
             .subscribe(format!(
                 "subvt:{}:network_status:publish:best_block_number",
@@ -52,8 +52,16 @@ impl NotificationProcessor {
                 network.display,
                 status.best_block_number,
             );
+
             // process epoch notifications if epoch has changed
-            if current_epoch_index != status.current_epoch.index {
+            let epoch_index = match maybe_current_epoch_index {
+                Some(epoch_index) => epoch_index,
+                None => {
+                    maybe_current_epoch_index = Some(status.current_epoch.index);
+                    status.current_epoch.index
+                }
+            };
+            if epoch_index != status.current_epoch.index {
                 let epoch_number_in_era =
                     (status.current_epoch.index % CONFIG.substrate.epochs_per_era as u64) + 1;
                 log::info!(
@@ -82,11 +90,18 @@ impl NotificationProcessor {
                         );
                     }
                 }
-
-                current_epoch_index = status.current_epoch.index;
+                maybe_current_epoch_index = Some(status.current_epoch.index);
             }
-            // process era notifications if epoch has changed
-            if active_era_index != status.active_era.index {
+
+            // process era notifications if era has changed
+            let era_index = match maybe_active_era_index {
+                Some(era_index) => era_index,
+                None => {
+                    maybe_active_era_index = Some(status.active_era.index);
+                    status.active_era.index
+                }
+            };
+            if era_index != status.active_era.index {
                 log::info!(
                     "New {} era #{}. Check for notifications.",
                     network.display,
@@ -111,7 +126,7 @@ impl NotificationProcessor {
                         );
                     }
                 }
-                active_era_index = status.active_era.index;
+                maybe_active_era_index = Some(status.active_era.index);
             }
         }
     }
