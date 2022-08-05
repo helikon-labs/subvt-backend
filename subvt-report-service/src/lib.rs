@@ -8,11 +8,13 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_persistence::redis::Redis;
 use subvt_service_common::{err::InternalServerError, Service};
 
 mod era;
 mod metrics;
 mod session;
+mod validator;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -23,6 +25,7 @@ pub(crate) type ResultResponse = Result<HttpResponse, InternalServerError>;
 #[derive(Clone)]
 pub(crate) struct ServiceState {
     postgres: Arc<PostgreSQLNetworkStorage>,
+    redis: Arc<Redis>,
 }
 
 async fn on_server_ready() {
@@ -45,11 +48,13 @@ impl Service for ReportService {
         let postgres = Arc::new(
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
         );
+        let redis = Arc::new(Redis::new()?);
         log::info!("Starting HTTP service.");
         let server = HttpServer::new(move || {
             App::new()
                 .app_data(web::Data::new(ServiceState {
                     postgres: postgres.clone(),
+                    redis: redis.clone(),
                 }))
                 .wrap_fn(|request, service| {
                     metrics::request_counter().inc();
@@ -79,6 +84,8 @@ impl Service for ReportService {
                 .service(session::validator::session_validator_report_service)
                 .service(session::validator::session_validator_para_vote_service)
                 .service(session::para::session_paras_vote_summaries_service)
+                .service(validator::validator_summary_service)
+                .service(validator::validator_details_service)
         })
         .workers(10)
         .disable_signals()

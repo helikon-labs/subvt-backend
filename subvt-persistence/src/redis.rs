@@ -121,6 +121,45 @@ impl Redis {
             || inactive_account_ids.contains(&account_id.to_string()))
     }
 
+    pub async fn fetch_validator_summary(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<Option<ValidatorDetails>> {
+        if !self.validator_exists_by_account_id(account_id).await? {
+            return Ok(None);
+        }
+        let mut connection = self.client.get_async_connection().await?;
+        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
+        {
+            number
+        } else {
+            log::warn!("Finalized block number not found on Redis.");
+            return Ok(None);
+        };
+        let active_validator_key = format!(
+            "subvt:{}:validators:{}:active:validator:{}",
+            CONFIG.substrate.chain, finalized_block_number, account_id,
+        );
+        let active_validator_json_string_result: RedisResult<String> = redis::cmd("GET")
+            .arg(active_validator_key)
+            .query_async(&mut connection)
+            .await;
+        let validator_json_string = match active_validator_json_string_result {
+            Ok(validator_json_string) => validator_json_string,
+            Err(_) => {
+                let inactive_validator_key = format!(
+                    "subvt:{}:validators:{}:inactive:validator:{}",
+                    CONFIG.substrate.chain, finalized_block_number, account_id,
+                );
+                redis::cmd("GET")
+                    .arg(inactive_validator_key)
+                    .query_async(&mut connection)
+                    .await?
+            }
+        };
+        Ok(Some(serde_json::from_str(&validator_json_string)?))
+    }
+
     pub async fn fetch_validator_details(
         &self,
         account_id: &AccountId,
