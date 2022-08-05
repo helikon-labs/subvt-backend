@@ -9,7 +9,7 @@ anyhow = "1.0"
 async-lock = "2.5.0"
 async-recursion = "1.0.0"
 async-trait = "0.1"
-chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
+chrono = { version = "0.4.20", default-features = true, features = ["serde"] }
 hex = "0.4"
 lazy_static = "1.4.0"
 log = "0.4.16"

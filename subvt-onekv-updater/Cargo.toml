@@ -7,7 +7,7 @@ rust-version = "1.60.0"
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-chrono = { version = "0.4.19", default-features = true, features = ["serde"] }
+chrono = { version = "0.4.20", default-features = true, features = ["serde"] }
 lazy_static = "1.4.0"
 log = "0.4.16"
 once_cell = "1.13"

@@ -6,7 +6,7 @@ rust-version = "1.60.0"
 
 [dependencies]
 anyhow = "1.0"
-chrono = "0.4.19"
+chrono = "0.4.20"
 hex = "0.4"
 lazy_static = "1.4.0"
 log = "0.4.16"
