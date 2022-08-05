@@ -9,7 +9,7 @@ anyhow = "1.0"
 async-lock = "2.5.0"
 blake2-rfc = { version = "0.2.18", default-features = false }
 byteorder = { version = "1.4.3", default-features = false }
-chrono = "0.4.19"
+chrono = "0.4"
 frame-metadata = { version = "15.0.0", features = ["std", "v12", "v13", "v14"] }
 hex = "0.4"
 jsonrpsee = { version = "0.15.1", features = ["full"] }
