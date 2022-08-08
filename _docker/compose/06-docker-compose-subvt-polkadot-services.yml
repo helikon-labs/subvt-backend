@@ -219,6 +219,8 @@ services:
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
   subvt_polkadot_telegram_bot:
     container_name: subvt_polkadot_telegram_bot
     restart: unless-stopped

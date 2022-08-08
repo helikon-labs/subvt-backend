@@ -219,6 +219,8 @@ services:
       - SUBVT__METRICS__HOST=0.0.0.0
       # postgres
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
+      # redis
+      - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
   subvt_kusama_telegram_bot:
     container_name: subvt_kusama_telegram_bot
     restart: unless-stopped
