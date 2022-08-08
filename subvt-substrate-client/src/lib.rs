@@ -850,7 +850,7 @@ impl SubstrateClient {
             for nomination in nomination_map.values() {
                 for account_id in nomination.target_account_ids.iter() {
                     if let Some(validator) = validator_map.get_mut(account_id) {
-                        validator.nominations.push(nomination.clone());
+                        validator.nominations.push(nomination.into());
                         validator.oversubscribed = validator.nominations.len()
                             > max_nominator_rewarded_per_validator as usize;
                     }

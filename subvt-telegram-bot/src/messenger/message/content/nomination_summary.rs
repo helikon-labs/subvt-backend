@@ -1,7 +1,7 @@
 //! Content for the `/nominationsummary` request.
 use super::MessageType;
 use crate::CONFIG;
-use subvt_types::subvt::{NominationSummary, ValidatorDetails};
+use subvt_types::subvt::{ValidatorDetails, ValidatorNominationSummary};
 use subvt_utility::numeric::format_decimal;
 use tera::Context;
 
@@ -12,7 +12,7 @@ impl MessageType {
         validator_details: &ValidatorDetails,
     ) {
         let self_stake = validator_details.self_stake.total_amount;
-        let nomination_summary: NominationSummary = validator_details.into();
+        let nomination_summary: ValidatorNominationSummary = validator_details.into();
         let self_stake_formatted = format_decimal(
             self_stake,
             CONFIG.substrate.token_decimals,

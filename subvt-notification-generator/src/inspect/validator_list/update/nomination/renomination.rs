@@ -3,9 +3,9 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
+use subvt_types::substrate::NominationSummary;
 use subvt_types::{
-    app::app_event, app::NotificationTypeCode, crypto::AccountId, substrate::Nomination,
-    subvt::ValidatorDetails,
+    app::app_event, app::NotificationTypeCode, crypto::AccountId, subvt::ValidatorDetails,
 };
 
 impl NotificationGenerator {
@@ -18,8 +18,8 @@ impl NotificationGenerator {
         finalized_block_number: u64,
         current: &ValidatorDetails,
         renominator_ids: &HashSet<AccountId>,
-        last_nomination_map: &HashMap<&AccountId, &Nomination>,
-        current_nomination_map: &HashMap<&AccountId, &Nomination>,
+        last_nomination_map: &HashMap<&AccountId, &NominationSummary>,
+        current_nomination_map: &HashMap<&AccountId, &NominationSummary>,
     ) -> anyhow::Result<()> {
         for renominator_id in renominator_ids {
             let current_nomination = *current_nomination_map.get(&renominator_id).unwrap();
@@ -49,10 +49,10 @@ impl NotificationGenerator {
                     nominator_stash_account_id: current_nomination.stash_account.id,
                     prev_active_amount: prev_nomination.stake.active_amount,
                     prev_total_amount: prev_nomination.stake.total_amount,
-                    prev_nominee_count: prev_nomination.target_account_ids.len() as u64,
+                    prev_nominee_count: prev_nomination.nominee_count as u64,
                     active_amount: current_nomination.stake.active_amount,
                     total_amount: current_nomination.stake.total_amount,
-                    nominee_count: current_nomination.target_account_ids.len() as u64,
+                    nominee_count: current_nomination.nominee_count as u64,
                     is_onekv,
                 };
                 self.generate_notifications(

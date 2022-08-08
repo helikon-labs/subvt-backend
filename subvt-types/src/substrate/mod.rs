@@ -586,6 +586,25 @@ impl From<&IdentityRegistration> for IdentityRegistrationSummary {
 pub type SuperAccountId = (AccountId, Data);
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct NominationSummary {
+    pub stash_account: Account,
+    pub submission_era_index: u32,
+    pub nominee_count: u16,
+    pub stake: Stake,
+}
+
+impl From<&Nomination> for NominationSummary {
+    fn from(nomination: &Nomination) -> NominationSummary {
+        NominationSummary {
+            stash_account: nomination.stash_account.clone(),
+            submission_era_index: nomination.submission_era_index,
+            nominee_count: nomination.target_account_ids.len() as u16,
+            stake: nomination.stake.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Nomination {
     pub stash_account: Account,
     pub submission_era_index: u32,
@@ -615,8 +634,8 @@ pub struct InactiveNominationsSummary {
     pub total_amount: Balance,
 }
 
-impl From<&Vec<Nomination>> for InactiveNominationsSummary {
-    fn from(nominations: &Vec<Nomination>) -> InactiveNominationsSummary {
+impl From<&Vec<NominationSummary>> for InactiveNominationsSummary {
+    fn from(nominations: &Vec<NominationSummary>) -> InactiveNominationsSummary {
         InactiveNominationsSummary {
             nomination_count: nominations.len() as u16,
             total_amount: nominations.iter().fold(0, |a, b| a + b.stake.active_amount),

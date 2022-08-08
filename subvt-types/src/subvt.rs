@@ -5,8 +5,8 @@
 use crate::crypto::AccountId;
 use crate::substrate::para::ParaCoreAssignment;
 use crate::substrate::{
-    Account, Balance, Epoch, Era, InactiveNominationsSummary, Nomination, RewardDestination, Stake,
-    StakeSummary, ValidatorPreferences, ValidatorStake,
+    Account, Balance, Epoch, Era, InactiveNominationsSummary, NominationSummary, RewardDestination,
+    Stake, StakeSummary, ValidatorPreferences, ValidatorStake,
 };
 use serde::{Deserialize, Serialize};
 use std::convert::From;
@@ -58,7 +58,7 @@ pub struct ValidatorDetails {
     pub queued_session_keys: Option<String>,
     pub is_active: bool,
     pub active_next_session: bool,
-    pub nominations: Vec<Nomination>,
+    pub nominations: Vec<NominationSummary>,
     pub oversubscribed: bool,
     pub active_era_count: u64,
     pub inactive_era_count: u64,
@@ -143,7 +143,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
             } else {
                 Vec::new()
             };
-        let inactive_nominations: Vec<Nomination> = validator
+        let inactive_nominations: Vec<NominationSummary> = validator
             .nominations
             .iter()
             .cloned()
@@ -211,14 +211,14 @@ impl From<&ValidatorStake> for ValidatorStakeSummary {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct NominationSummary {
+pub struct ValidatorNominationSummary {
     pub active_nominator_count: usize,
     pub active_nomination_total: Balance,
     pub inactive_nominator_count: usize,
     pub inactive_nomination_total: Balance,
 }
 
-impl From<&ValidatorDetails> for NominationSummary {
+impl From<&ValidatorDetails> for ValidatorNominationSummary {
     fn from(validator_details: &ValidatorDetails) -> Self {
         let (
             active_nominator_count,
@@ -258,7 +258,7 @@ impl From<&ValidatorDetails> for NominationSummary {
                 inactive_nomination_total,
             )
         };
-        NominationSummary {
+        ValidatorNominationSummary {
             active_nominator_count,
             active_nomination_total,
             inactive_nominator_count,

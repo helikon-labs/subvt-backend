@@ -1,5 +1,5 @@
 use crate::crypto::AccountId;
-use crate::subvt::{NominationSummary, ValidatorDetails};
+use crate::subvt::{ValidatorDetails, ValidatorNominationSummary};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -78,7 +78,7 @@ impl TelegramChatValidatorSummary {
             token_decimals,
             token_format_decimal_points,
         );
-        let nomination_summary: NominationSummary = validator_details.into();
+        let nomination_summary: ValidatorNominationSummary = validator_details.into();
         let active_nomination_formatted = format_decimal(
             nomination_summary.active_nomination_total,
             token_decimals,

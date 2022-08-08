@@ -6,7 +6,7 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::app_event;
 use subvt_types::app::NotificationTypeCode;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::{Balance, Nomination};
+use subvt_types::substrate::{Balance, NominationSummary};
 use subvt_types::subvt::ValidatorDetails;
 
 impl NotificationGenerator {
@@ -19,7 +19,7 @@ impl NotificationGenerator {
         finalized_block_number: u64,
         current: &ValidatorDetails,
         lost_nominator_ids: &HashSet<AccountId>,
-        last_nomination_map: &HashMap<&AccountId, &Nomination>,
+        last_nomination_map: &HashMap<&AccountId, &NominationSummary>,
     ) -> anyhow::Result<()> {
         for lost_nominator_id in lost_nominator_ids {
             let lost_nomination = *last_nomination_map.get(&lost_nominator_id).unwrap();
@@ -46,7 +46,7 @@ impl NotificationGenerator {
                 nominator_stash_account_id: lost_nomination.stash_account.id,
                 active_amount: lost_nomination.stake.active_amount,
                 total_amount: lost_nomination.stake.total_amount,
-                nominee_count: lost_nomination.target_account_ids.len() as u64,
+                nominee_count: lost_nomination.nominee_count as u64,
                 is_onekv,
             };
             for rule in rules {
