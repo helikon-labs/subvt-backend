@@ -1,6 +1,7 @@
 use crate::{ResultResponse, ServiceState, CONFIG};
 use actix_web::{get, web, HttpResponse};
 use serde::Deserialize;
+use std::str::FromStr;
 use std::sync::Arc;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::report::{
@@ -17,7 +18,7 @@ async fn validate_params(
     min_para_vote_session_index: u64,
 ) -> Result<(AccountId, u64, u64), HttpResponse> {
     // check valid address
-    let account_id = match AccountId::from_ss58_check(ss58_address) {
+    let account_id = match AccountId::from_str(ss58_address) {
         Ok(account_id) => account_id,
         Err(_) => {
             return Err(HttpResponse::BadRequest().json(ServiceError::from(

@@ -2,6 +2,7 @@ use crate::messenger::message::MessageType;
 use crate::messenger::MockMessenger;
 use crate::test::util::data::{get_telegram_bool_response, get_telegram_message_response};
 use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot};
+use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 
 /// Tests the case when the user calls the /nfts method before adding any validators to
@@ -62,7 +63,7 @@ async fn test_nfts_single_validator_no_nfts() {
 async fn test_nfts_single_validator_with_nfts() {
     let chat_id = get_random_chat_id();
     let account_id =
-        AccountId::from_ss58_check("GC8fuEZG4E5epGf5KGXtcDfvrc6HXE7GJ5YnbiqSpqdQYLg").unwrap();
+        AccountId::from_str("GC8fuEZG4E5epGf5KGXtcDfvrc6HXE7GJ5YnbiqSpqdQYLg").unwrap();
     let mut messenger = MockMessenger::new();
     messenger
         .expect_send_message()

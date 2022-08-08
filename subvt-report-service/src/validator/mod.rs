@@ -9,7 +9,7 @@ use subvt_types::subvt::ValidatorSummary;
 fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, HttpResponse> {
     let account_id = match AccountId::from_str(ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(_) => match AccountId::from_ss58_check(ss58_address_or_account_id) {
+        Err(_) => match AccountId::from_str(ss58_address_or_account_id) {
             Ok(account_id) => account_id,
             Err(_) => {
                 return Err(HttpResponse::BadRequest()

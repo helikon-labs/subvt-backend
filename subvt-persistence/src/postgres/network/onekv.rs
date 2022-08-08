@@ -32,10 +32,9 @@ impl PostgreSQLNetworkStorage {
         candidate_details: &OneKVCandidateDetails,
         history_record_count: i64,
     ) -> anyhow::Result<i32> {
-        let validator_account_id = AccountId::from_ss58_check(&candidate_details.stash_address)?;
+        let validator_account_id = AccountId::from_str(&candidate_details.stash_address)?;
         let kusama_account_id = if !candidate_details.kusama_stash_address.is_empty() {
-            let kusama_account_id =
-                AccountId::from_ss58_check(&candidate_details.kusama_stash_address)?;
+            let kusama_account_id = AccountId::from_str(&candidate_details.kusama_stash_address)?;
             Some(kusama_account_id)
         } else {
             None
@@ -258,9 +257,9 @@ impl PostgreSQLNetworkStorage {
         nominator: &OneKVNominator,
         history_record_count: i64,
     ) -> anyhow::Result<i32> {
-        let account_id = AccountId::from_ss58_check(&nominator.address)?;
-        let stash_account_id = AccountId::from_ss58_check(&nominator.stash_address)?;
-        let proxy_account_id = AccountId::from_ss58_check(&nominator.proxy_address)?;
+        let account_id = AccountId::from_str(&nominator.address)?;
+        let stash_account_id = AccountId::from_str(&nominator.stash_address)?;
+        let proxy_account_id = AccountId::from_str(&nominator.proxy_address)?;
         self.save_account(&account_id).await?;
         self.save_account(&stash_account_id).await?;
         self.save_account(&proxy_account_id).await?;
@@ -287,7 +286,7 @@ impl PostgreSQLNetworkStorage {
         // persist nominees
         let mut transaction = self.connection_pool.begin().await?;
         for nominee in &nominator.nominees {
-            let stash_account_id = AccountId::from_ss58_check(&nominee.stash_address)?;
+            let stash_account_id = AccountId::from_str(&nominee.stash_address)?;
             self.save_account(&stash_account_id).await?;
             sqlx::query(
                 r#"

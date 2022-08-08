@@ -1,6 +1,7 @@
 //! Telemetry-related storage. Used by the `subvt-telemetry-processor` crate, and other crates
 //! that query the telemetry data (validator details, notification generator, etc.).
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::telemetry::{NodeDetails, NodeHardware, NodeLocation, NodeStats};
 
@@ -88,7 +89,7 @@ impl PostgreSQLNetworkStorage {
         location: &Option<NodeLocation>,
     ) -> anyhow::Result<()> {
         let account_id_str = if let Some(address) = &node_details.controller_address {
-            if let Ok(account_id) = AccountId::from_ss58_check(address) {
+            if let Ok(account_id) = AccountId::from_str(address) {
                 Some(account_id.to_string())
             } else {
                 None

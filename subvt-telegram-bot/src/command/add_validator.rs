@@ -4,6 +4,7 @@ use crate::{
     query::{Query, QueryType},
     Messenger, CONFIG,
 };
+use std::str::FromStr;
 use subvt_types::app::UserValidator;
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
@@ -47,7 +48,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         }
         for address in args {
             // check valid address
-            match AccountId::from_ss58_check(address) {
+            match AccountId::from_str(address) {
                 // get validator details from Redis
                 Ok(account_id) => {
                     if let Some(validator) = self.redis.fetch_validator_details(&account_id).await?

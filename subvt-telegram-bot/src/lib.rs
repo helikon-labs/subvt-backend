@@ -1,6 +1,7 @@
 //! Telegram bot. Former 1KV Telegram Bot (https://github.com/helikon-labs/polkadot-kusama-1kv-telegram-bot)
 //! migrated to the SubVT backend (https://github.com/helikon-labs/subvt-backend/tree/development).
 #![warn(clippy::disallowed_types)]
+
 use crate::messenger::Messenger;
 use crate::{
     api::AsyncApi,
@@ -13,6 +14,7 @@ use frankenstein::{ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
 use rustc_hash::FxHashSet as HashSet;
+use std::str::FromStr;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -348,7 +350,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 if let Some(state) = maybe_state {
                     match state {
                         TelegramChatState::AddValidator => {
-                            if AccountId::from_ss58_check(text).is_ok() {
+                            if AccountId::from_str(text).is_ok() {
                                 self.reset_chat_state(message.chat.id).await?;
                                 self.process_command(message.chat.id, "/add", &[text.to_string()])
                                     .await?;
