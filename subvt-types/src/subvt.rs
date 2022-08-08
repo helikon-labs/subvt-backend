@@ -57,7 +57,7 @@ pub struct ValidatorDetails {
     pub next_session_keys: String,
     pub queued_session_keys: Option<String>,
     pub is_active: bool,
-    pub active_next_session: bool,
+    pub is_active_next_session: bool,
     pub nominations: Vec<NominationSummary>,
     pub oversubscribed: bool,
     pub active_era_count: u64,
@@ -111,7 +111,7 @@ pub struct ValidatorSummary {
     pub preferences: ValidatorPreferences,
     pub self_stake: StakeSummary,
     pub is_active: bool,
-    pub active_next_session: bool,
+    pub is_active_next_session: bool,
     pub inactive_nominations: InactiveNominationsSummary,
     pub oversubscribed: bool,
     pub slash_count: u64,
@@ -167,7 +167,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
                 .para_core_assignment
                 .as_ref()
                 .map(|core_assignment| core_assignment.para_id),
-            active_next_session: validator.active_next_session,
+            is_active_next_session: validator.is_active_next_session,
             inactive_nominations: InactiveNominationsSummary::from(&inactive_nominations),
             oversubscribed: validator.oversubscribed,
             slash_count: validator.slash_count,

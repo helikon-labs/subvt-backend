@@ -73,7 +73,7 @@ After the initial subscription, the server is going to publish to the client a l
                         "active_amount": 100000000000
                     },
                     "is_active": true,
-                    "active_next_session": true,
+                    "is_active_next_session": true,
                     "inactive_nominations": {
                         "nomination_count": 1,
                         "total_amount": 80000000000000000

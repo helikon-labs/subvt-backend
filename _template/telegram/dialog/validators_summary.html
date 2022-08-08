@@ -1,7 +1,7 @@
 {% if validator_summaries | length == 0 %}None of the chat's validators were found in the active and inactive validator sets.{% else %}Below is a summary of all the validators added to the chat. You can use /validatorinfo and /nominationdetails commands to display detailed information.{% for validator_summary in validator_summaries %}
 
 <strong>{{ validator_summary.display }}</strong>
-{% if validator_summary.is_active %}🚀 Active now{% else %}{% if validator_summary.active_next_session %}▶️{% else %}⏸{% endif %} Not active now{% endif %}, {% if validator_summary.active_next_session %}active{% else %}not active{% endif %} next session{% if validator_summary.is_para_validator %}
+{% if validator_summary.is_active %}🚀 Active now{% else %}{% if validator_summary.is_active_next_session %}▶️{% else %}⏸{% endif %} Not active now{% endif %}, {% if validator_summary.is_active_next_session %}active{% else %}not active{% endif %} next session{% if validator_summary.is_para_validator %}
 ⭐️ Paravalidator{% endif %}
 👤 Self Stake: <strong>{{ validator_summary.self_stake_formatted }} {{ token_ticker }}</strong>
 🟢️️ Active nom.s ({{ validator_summary.active_nominator_count }}): <strong>{{ validator_summary.active_nomination_formatted }} {{ token_ticker }}</strong>

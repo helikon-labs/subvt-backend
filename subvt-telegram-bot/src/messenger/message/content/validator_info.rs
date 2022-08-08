@@ -43,7 +43,7 @@ impl MessageType {
             context.insert("is_para_validator", &validator_details.is_para_validator);
             context.insert(
                 "is_active_next_session",
-                &validator_details.active_next_session,
+                &validator_details.is_active_next_session,
             );
             context.insert(
                 "commission",

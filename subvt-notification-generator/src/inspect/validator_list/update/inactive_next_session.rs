@@ -14,7 +14,7 @@ impl NotificationGenerator {
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
-        if !current.active_next_session && last.active_next_session {
+        if !current.is_active_next_session && last.is_active_next_session {
             log::debug!("Inactive next session: {}", current.account.address,);
             let rules = app_postgres
                 .get_notification_rules_for_validator(
