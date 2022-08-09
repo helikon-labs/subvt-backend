@@ -51,7 +51,11 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             match AccountId::from_str(address) {
                 // get validator details from Redis
                 Ok(account_id) => {
-                    if let Some(validator) = self.redis.fetch_validator_details(&account_id).await?
+                    let block = self.redis.get_finalized_block_summary().await?;
+                    if let Some(validator) = self
+                        .redis
+                        .fetch_validator_details(block.number, &account_id)
+                        .await?
                     {
                         if self
                             .network_postgres

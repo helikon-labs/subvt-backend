@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
+use subvt_types::report::{ValidatorDetailsReport, ValidatorSummaryReport};
 use subvt_types::subvt::ValidatorSummary;
 
 fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, HttpResponse> {
@@ -34,8 +35,16 @@ pub(crate) async fn validator_summary_service(
         Ok(account_id) => account_id,
         Err(response) => return Ok(response),
     };
-    if let Some(validator_details) = data.redis.fetch_validator_details(&account_id).await? {
-        Ok(HttpResponse::Ok().json(ValidatorSummary::from(&validator_details)))
+    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    if let Some(validator_details) = data
+        .redis
+        .fetch_validator_details(finalized_block.number, &account_id)
+        .await?
+    {
+        Ok(HttpResponse::Ok().json(ValidatorSummaryReport {
+            finalized_block,
+            validator_summary: ValidatorSummary::from(&validator_details),
+        }))
     } else {
         Ok(HttpResponse::NotFound().json(ServiceError::from("Validator not found.")))
     }
@@ -50,8 +59,16 @@ pub(crate) async fn validator_details_service(
         Ok(account_id) => account_id,
         Err(response) => return Ok(response),
     };
-    if let Some(validator_details) = data.redis.fetch_validator_details(&account_id).await? {
-        Ok(HttpResponse::Ok().json(validator_details))
+    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    if let Some(validator_details) = data
+        .redis
+        .fetch_validator_details(finalized_block.number, &account_id)
+        .await?
+    {
+        Ok(HttpResponse::Ok().json(ValidatorDetailsReport {
+            finalized_block,
+            validator_details,
+        }))
     } else {
         Ok(HttpResponse::NotFound().json(ServiceError::from("Validator not found.")))
     }

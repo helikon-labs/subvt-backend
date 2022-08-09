@@ -34,6 +34,8 @@ impl ValidatorListUpdater {
     async fn update_redis(
         active_era: &Era,
         finalized_block_number: u64,
+        finalized_block_hash: &str,
+        finalized_block_timestamp: u64,
         validators: &[ValidatorDetails],
     ) -> anyhow::Result<()> {
         // get redis connection
@@ -119,6 +121,18 @@ impl ValidatorListUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(finalized_block_number);
+        redis_cmd_pipeline
+            .arg(format!(
+                "subvt:{}:validators:finalized_block_hash",
+                CONFIG.substrate.chain
+            ))
+            .arg(finalized_block_hash);
+        redis_cmd_pipeline
+            .arg(format!(
+                "subvt:{}:validators:finalized_block_timestamp",
+                CONFIG.substrate.chain
+            ))
+            .arg(finalized_block_timestamp);
         // set era
         redis_cmd_pipeline
             .arg(format!("{}:active_era", prefix))
@@ -193,6 +207,7 @@ impl ValidatorListUpdater {
             .get_block_hash(finalized_block_number)
             .await
             .context("Error while fetching finalized block hash.")?;
+        let finalized_block_timestamp = client.get_block_timestamp(&finalized_block_hash).await?;
         let active_era = client.get_active_era(&finalized_block_hash).await?;
         // validator account ids
         let mut validators = client
@@ -229,8 +244,14 @@ impl ValidatorListUpdater {
         }
         log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();
-        ValidatorListUpdater::update_redis(&active_era, finalized_block_number, &validators)
-            .await?;
+        ValidatorListUpdater::update_redis(
+            &active_era,
+            finalized_block_number,
+            &finalized_block_hash,
+            finalized_block_timestamp,
+            &validators,
+        )
+        .await?;
         let elapsed = start.elapsed();
         log::info!("Redis updated. Took {} ms.", elapsed.as_millis());
         {

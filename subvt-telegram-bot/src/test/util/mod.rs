@@ -33,8 +33,3 @@ pub fn get_random_account_id() -> AccountId {
     let mut rng = rand::thread_rng();
     AccountId::new(rng.gen())
 }
-
-pub fn get_random_block_number() -> u64 {
-    let mut rng = rand::thread_rng();
-    rng.gen()
-}

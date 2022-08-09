@@ -2,6 +2,7 @@
 //! validator reports.
 use crate::crypto::AccountId;
 use crate::substrate::{Epoch, Era};
+use crate::subvt::{ValidatorDetails, ValidatorSummary};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -129,4 +130,16 @@ pub struct SessionParaVoteReport {
 pub struct SessionParasVoteReport {
     pub session: Epoch,
     pub paras: Vec<SessionParaVoteReport>,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorSummaryReport {
+    pub finalized_block: BlockSummary,
+    pub validator_summary: ValidatorSummary,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorDetailsReport {
+    pub finalized_block: BlockSummary,
+    pub validator_details: ValidatorDetails,
 }

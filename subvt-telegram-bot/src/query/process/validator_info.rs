@@ -19,7 +19,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             {
                 let maybe_validator_details = self
                     .redis
-                    .fetch_validator_details(&validator.account_id)
+                    .fetch_validator_details(
+                        self.redis.get_finalized_block_summary().await?.number,
+                        &validator.account_id,
+                    )
                     .await?;
                 if let Some(validator_details) = &maybe_validator_details {
                     self.network_postgres

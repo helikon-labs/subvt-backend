@@ -1,5 +1,7 @@
 use crate::messenger::MockMessenger;
-use crate::test::util::data::{add_validator_to_redis, get_telegram_message_response};
+use crate::test::util::data::{
+    add_validator_to_redis, get_telegram_message_response, set_redis_finalized_block,
+};
 use crate::test::util::{get_random_account_id, get_random_chat_id, new_test_bot};
 use crate::MessageType;
 
@@ -63,6 +65,7 @@ async fn test_add_non_existent_validator() {
         )
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
     let bot = new_test_bot(messenger).await.unwrap();
+    set_redis_finalized_block(&bot.redis).await.unwrap();
     bot.save_or_restore_chat(chat_id).await.unwrap();
     bot.process_command(chat_id, "/add", &command_args)
         .await

@@ -24,7 +24,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         for chat_validator in chat_validators {
             if let Some(validator_details) = &self
                 .redis
-                .fetch_validator_details(&chat_validator.account_id)
+                .fetch_validator_details(
+                    self.redis.get_finalized_block_summary().await?.number,
+                    &chat_validator.account_id,
+                )
                 .await?
             {
                 let mut validator_summary = TelegramChatValidatorSummary::from(

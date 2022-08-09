@@ -3,6 +3,7 @@ use lazy_static::lazy_static;
 use redis::{Client, RedisResult};
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
+use subvt_types::report::BlockSummary;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
 
 lazy_static! {
@@ -21,17 +22,27 @@ impl Redis {
 }
 
 impl Redis {
-    pub async fn set_finalized_block_number(
+    pub async fn set_finalized_block_summary(
         &self,
-        finalized_block_number: u64,
+        block_summary: &BlockSummary,
     ) -> anyhow::Result<()> {
         let mut connection = self.client.get_async_connection().await?;
-        redis::cmd("SET")
+        redis::cmd("MSET")
             .arg(format!(
                 "subvt:{}:validators:finalized_block_number",
                 CONFIG.substrate.chain
             ))
-            .arg(finalized_block_number)
+            .arg(block_summary.number)
+            .arg(format!(
+                "subvt:{}:validators:finalized_block_hash",
+                CONFIG.substrate.chain
+            ))
+            .arg(&block_summary.hash)
+            .arg(format!(
+                "subvt:{}:validators:finalized_block_timestamp",
+                CONFIG.substrate.chain
+            ))
+            .arg(block_summary.timestamp)
             .query_async(&mut connection)
             .await?;
         Ok(())
@@ -72,38 +83,40 @@ impl Redis {
         Ok(())
     }
 
-    pub async fn get_finalized_block_number(&self) -> anyhow::Result<Option<u64>> {
-        let key = format!(
+    pub async fn get_finalized_block_summary(&self) -> anyhow::Result<BlockSummary> {
+        let number_key = format!(
             "subvt:{}:validators:finalized_block_number",
             CONFIG.substrate.chain
         );
+        let hash_key = format!(
+            "subvt:{}:validators:finalized_block_hash",
+            CONFIG.substrate.chain
+        );
+        let timestamp_key = format!(
+            "subvt:{}:validators:finalized_block_timestamp",
+            CONFIG.substrate.chain
+        );
         let mut connection = self.client.get_async_connection().await?;
-        if let Ok(finalized_block_number) = redis::cmd("GET")
-            .arg(key)
+        let (number, hash, timestamp) = redis::cmd("MGET")
+            .arg(&[number_key, hash_key, timestamp_key])
             .query_async(&mut connection)
-            .await
-        {
-            Ok(Some(finalized_block_number))
-        } else {
-            Ok(None)
-        }
+            .await?;
+        Ok(BlockSummary {
+            number,
+            hash,
+            timestamp,
+        })
     }
 
     pub async fn validator_exists_by_account_id(
         &self,
         account_id: &AccountId,
     ) -> anyhow::Result<bool> {
-        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
-        {
-            number
-        } else {
-            log::warn!("Finalized block number does not exist on Redis.");
-            return Ok(false);
-        };
+        let block_summary = self.get_finalized_block_summary().await?;
         let mut connection = self.client.get_async_connection().await?;
         let active_set_key = format!(
             "subvt:{}:validators:{}:active:account_id_set",
-            CONFIG.substrate.chain, finalized_block_number
+            CONFIG.substrate.chain, block_summary.number
         );
         let active_account_ids: Vec<String> = redis::cmd("SMEMBERS")
             .arg(active_set_key)
@@ -111,7 +124,7 @@ impl Redis {
             .await?;
         let inactive_set_key = format!(
             "subvt:{}:validators:{}:inactive:account_id_set",
-            CONFIG.substrate.chain, finalized_block_number
+            CONFIG.substrate.chain, block_summary.number
         );
         let inactive_account_ids: Vec<String> = redis::cmd("SMEMBERS")
             .arg(inactive_set_key)
@@ -121,60 +134,15 @@ impl Redis {
             || inactive_account_ids.contains(&account_id.to_string()))
     }
 
-    pub async fn fetch_validator_summary(
-        &self,
-        account_id: &AccountId,
-    ) -> anyhow::Result<Option<ValidatorDetails>> {
-        if !self.validator_exists_by_account_id(account_id).await? {
-            return Ok(None);
-        }
-        let mut connection = self.client.get_async_connection().await?;
-        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
-        {
-            number
-        } else {
-            log::warn!("Finalized block number not found on Redis.");
-            return Ok(None);
-        };
-        let active_validator_key = format!(
-            "subvt:{}:validators:{}:active:validator:{}",
-            CONFIG.substrate.chain, finalized_block_number, account_id,
-        );
-        let active_validator_json_string_result: RedisResult<String> = redis::cmd("GET")
-            .arg(active_validator_key)
-            .query_async(&mut connection)
-            .await;
-        let validator_json_string = match active_validator_json_string_result {
-            Ok(validator_json_string) => validator_json_string,
-            Err(_) => {
-                let inactive_validator_key = format!(
-                    "subvt:{}:validators:{}:inactive:validator:{}",
-                    CONFIG.substrate.chain, finalized_block_number, account_id,
-                );
-                redis::cmd("GET")
-                    .arg(inactive_validator_key)
-                    .query_async(&mut connection)
-                    .await?
-            }
-        };
-        Ok(Some(serde_json::from_str(&validator_json_string)?))
-    }
-
     pub async fn fetch_validator_details(
         &self,
+        finalized_block_number: u64,
         account_id: &AccountId,
     ) -> anyhow::Result<Option<ValidatorDetails>> {
         if !self.validator_exists_by_account_id(account_id).await? {
             return Ok(None);
         }
         let mut connection = self.client.get_async_connection().await?;
-        let finalized_block_number = if let Some(number) = self.get_finalized_block_number().await?
-        {
-            number
-        } else {
-            log::warn!("Finalized block number not found on Redis.");
-            return Ok(None);
-        };
         let active_validator_key = format!(
             "subvt:{}:validators:{}:active:validator:{}",
             CONFIG.substrate.chain, finalized_block_number, account_id,
