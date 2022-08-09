@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
-use subvt_types::report::{ValidatorDetailsReport, ValidatorSummaryReport};
+use subvt_types::report::{ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport};
 use subvt_types::subvt::ValidatorSummary;
 
 fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, HttpResponse> {
@@ -72,4 +72,48 @@ pub(crate) async fn validator_details_service(
     } else {
         Ok(HttpResponse::NotFound().json(ServiceError::from("Validator not found.")))
     }
+}
+
+#[get("/validator/list")]
+pub(crate) async fn validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
+    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    let mut validators = data
+        .redis
+        .get_validator_list(finalized_block.number, true)
+        .await?;
+    let mut inactive_validators = data
+        .redis
+        .get_validator_list(finalized_block.number, false)
+        .await?;
+    validators.append(&mut inactive_validators);
+    Ok(HttpResponse::Ok().json(ValidatorListReport {
+        finalized_block,
+        validators,
+    }))
+}
+
+#[get("/validator/list/active")]
+pub(crate) async fn active_validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
+    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    Ok(HttpResponse::Ok().json(ValidatorListReport {
+        finalized_block: finalized_block.clone(),
+        validators: data
+            .redis
+            .get_validator_list(finalized_block.number, true)
+            .await?,
+    }))
+}
+
+#[get("/validator/list/inactive")]
+pub(crate) async fn inactive_validator_list_service(
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    Ok(HttpResponse::Ok().json(ValidatorListReport {
+        finalized_block: finalized_block.clone(),
+        validators: data
+            .redis
+            .get_validator_list(finalized_block.number, false)
+            .await?,
+    }))
 }

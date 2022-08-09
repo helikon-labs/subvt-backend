@@ -143,3 +143,9 @@ pub struct ValidatorDetailsReport {
     pub finalized_block: BlockSummary,
     pub validator_details: ValidatorDetails,
 }
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorListReport {
+    pub finalized_block: BlockSummary,
+    pub validators: Vec<ValidatorSummary>,
+}

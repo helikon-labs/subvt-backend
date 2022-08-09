@@ -1,10 +1,11 @@
 use anyhow::Context;
 use lazy_static::lazy_static;
 use redis::{Client, RedisResult};
+use rustc_hash::FxHashSet as HashSet;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
 use subvt_types::report::BlockSummary;
-use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
+use subvt_types::subvt::{NetworkStatus, ValidatorDetails, ValidatorSummary};
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
@@ -189,5 +190,47 @@ impl Redis {
         let status: NetworkStatus = serde_json::from_str(&status_json_string)
             .context("Can't deserialize network status json.")?;
         Ok(status)
+    }
+
+    pub async fn get_validator_list(
+        &self,
+        finalized_block_number: u64,
+        is_active: bool,
+    ) -> anyhow::Result<Vec<ValidatorSummary>> {
+        let mut connection = self.client.get_async_connection().await?;
+        let prefix = format!(
+            "subvt:{}:validators:{}:{}",
+            CONFIG.substrate.chain,
+            finalized_block_number,
+            if is_active { "active" } else { "inactive" }
+        );
+        let validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
+            .arg(format!("{}:account_id_set", prefix))
+            .query_async(&mut connection)
+            .await
+            .context("Can't read validator account ids from Redis.")?;
+        let keys: Vec<String> = validator_account_ids
+            .iter()
+            .map(|account_id| {
+                format!(
+                    "subvt:{}:validators:{}:{}:validator:{}",
+                    CONFIG.substrate.chain,
+                    finalized_block_number,
+                    if is_active { "active" } else { "inactive" },
+                    account_id,
+                )
+            })
+            .collect();
+        let validator_json_strings: Vec<String> = redis::cmd("MGET")
+            .arg(&keys)
+            .query_async(&mut connection)
+            .await
+            .context("Can't read validator JSON string from Redis.")?;
+        let mut result = Vec::new();
+        for validator_json_string in &validator_json_strings {
+            let validator_details: ValidatorDetails = serde_json::from_str(validator_json_string)?;
+            result.push(ValidatorSummary::from(&validator_details))
+        }
+        Ok(result)
     }
 }
