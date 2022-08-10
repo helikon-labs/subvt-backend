@@ -11,7 +11,6 @@ pub enum TelegramChatState {
     AddValidator,
     EnterBugReport,
     EnterFeatureRequest,
-    EnterMigrationCode,
 }
 
 impl FromStr for TelegramChatState {
@@ -23,7 +22,6 @@ impl FromStr for TelegramChatState {
             "AddValidator" => Ok(Self::AddValidator),
             "EnterBugReport" => Ok(Self::EnterBugReport),
             "EnterFeatureRequest" => Ok(Self::EnterFeatureRequest),
-            "EnterMigrationCode" => Ok(Self::EnterMigrationCode),
             _ => panic!("Unknown state: {}", state),
         }
     }
@@ -36,7 +34,6 @@ impl Display for TelegramChatState {
             TelegramChatState::AddValidator => "AddValidator",
             TelegramChatState::EnterBugReport => "EnterBugReport",
             TelegramChatState::EnterFeatureRequest => "EnterFeatureRequest",
-            TelegramChatState::EnterMigrationCode => "EnterMigrationCode",
         };
         write!(f, "{}", display)
     }
@@ -108,19 +105,6 @@ impl TelegramChatValidatorSummary {
             missing_referendum_votes: vec![],
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OneKVBotChat {
-    pub chat_id: i64,
-    pub block_notification_period: i64,
-    pub unclaimed_payout_notification_period: i64,
-    pub send_new_nomination_notifications: bool,
-    pub send_chilling_event_notifications: bool,
-    pub send_offline_event_notifications: bool,
-    pub migration_code: String,
-    pub is_migrated: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]

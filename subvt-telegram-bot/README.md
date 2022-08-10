@@ -25,13 +25,13 @@ and reports as documented below.
 - `/contact` - Send a bug report or feature request to the dev team.
 - `/democracy` - View the referenda being voted and your validators' votes.
 - `/help` - View the list of all commands.
-- `/migrate` - Migrate your validators from the deprecated 1KV bot.
 - `/networkstatus` - View the current network status information, alias `/network`.
 - `/nfts` - View the NFTs owned by a validator's stash account.
 - `/nominations` - View a summary of nominations, alias `/n`.
 - `/nominationdetails` - View nomination details, alias `/nd`.
 - `/payouts` - View monthly nominator payouts report.
 - `/remove` - Remove a validator from the chat.
+- `/removeall` - Remove all validators from the chat.
 - `/rewards` - View monthly validator rewards (ie income) report.
 - `/settings` - Configure notifications.
 - `/summary` - View a summary of all your validators.
