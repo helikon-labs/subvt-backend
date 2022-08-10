@@ -74,7 +74,7 @@ Please see the test function comments in the files listed below for test case de
 | [./src/test/command/payouts.rs](./src/test/command/payouts.rs)                       | `test_payouts_multiple_validators`                      |
 |                                                                                      | `test_payouts_no_validator`                             |
 |                                                                                      | `test_payouts_single_validator_no_payouts`              |
-| [./src/test/command/remove.rs](./src/test/command/remove.rs)                         | `test_remove_multiple_validators`                       |
+| [./src/test/command/remove.rs](./src/test/command/remove_validators)                         | `test_remove_multiple_validators`                       |
 |                                                                                      | `test_remove_no_validator`                              |
 |                                                                                      | `test_remove_single_validator`                          |
 | [./src/test/command/rewards.rs](./src/test/command/rewards.rs)                       | `test_rewards_multiple_validators`                      |

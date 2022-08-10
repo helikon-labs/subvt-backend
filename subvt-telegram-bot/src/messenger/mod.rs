@@ -1,7 +1,7 @@
 //! This module handles the sending of all the messages to a Telegram chat.
 use crate::api::{AsyncApi, Error};
 use crate::messenger::keyboard::{
-    broadcast_confirm::get_broadcast_confirm_keyboard,
+    confirmation::get_confirmation_keyboard,
     contact_type::get_contact_type_keyboard,
     nft::get_nft_collection_keyboard,
     nomination_summary::get_nomination_summary_keyboard,
@@ -15,7 +15,7 @@ use crate::messenger::keyboard::{
     },
     validator_list::get_validator_list_keyboard,
 };
-use crate::query::{SettingsEditQueryType, SettingsSubSection};
+use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use async_trait::async_trait;
 use frankenstein::{
@@ -199,7 +199,12 @@ impl Messenger for MessengerImpl {
         // some messages need an inline keyboard, such as selection from the validator list,
         // selection from the NFT list, etc.
         let inline_keyboard = match &*message_type {
-            MessageType::BroadcastConfirm => get_broadcast_confirm_keyboard()?,
+            MessageType::BroadcastConfirm => {
+                get_confirmation_keyboard(QueryType::ConfirmBroadcast)?
+            }
+            MessageType::RemoveAllValidatorsConfirm => {
+                get_confirmation_keyboard(QueryType::RemoveAllValidators)?
+            }
             MessageType::ValidatorList {
                 validators,
                 query_type,

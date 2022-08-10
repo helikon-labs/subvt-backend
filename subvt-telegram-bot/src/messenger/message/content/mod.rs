@@ -32,7 +32,7 @@ impl MessageType {
             Self::BadRequest => "bad_request.html",
             Self::GenericError => "generic_error.html",
             Self::Broadcast => "broadcast.html",
-            Self::BroadcastConfirm => "broadcast_confirm.html",
+            Self::BroadcastConfirm => "confirm.html",
             Self::UnknownCommand(command) => {
                 context.insert("command", command);
                 "unknown_command.html"
@@ -100,6 +100,7 @@ impl MessageType {
                 );
                 "nomination_details.html"
             }
+            Self::AllValidatorsRemoved => "all_validators_removed.html",
             Self::ValidatorRemoved(validator) => {
                 let display = if let Some(display) = &validator.display {
                     display.clone()
@@ -120,6 +121,7 @@ impl MessageType {
                 context.insert("chain", &CONFIG.substrate.chain);
                 "no_referenda_found.html"
             }
+            Self::RemoveAllValidatorsConfirm => "confirm.html",
             Self::RefererendumList(_) => "select_referendum.html",
             Self::ReferendumNotFound(id) => {
                 context.insert("referendum_id", &id);

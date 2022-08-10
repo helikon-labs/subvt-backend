@@ -3,7 +3,6 @@
 //! and deletion, etc.
 #![warn(clippy::disallowed_types)]
 use crate::auth::{data::AuthenticatedUser, service::AuthServiceFactory};
-use actix_web::web::Data;
 use actix_web::{delete, get, post, web, App, HttpRequest, HttpResponse, HttpServer};
 use async_trait::async_trait;
 use lazy_static::lazy_static;
@@ -450,7 +449,7 @@ impl Service for AppService {
         log::debug!("Starting HTTP service.");
         let server = HttpServer::new(move || {
             App::new()
-                .app_data(Data::new(ServiceState {
+                .app_data(web::Data::new(ServiceState {
                     postgres: postgres.clone(),
                 }))
                 .app_data(web::JsonConfig::default().error_handler(|err, _req| {

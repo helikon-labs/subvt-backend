@@ -9,6 +9,7 @@ mod broadcast;
 mod broadcast_test;
 mod network_status;
 mod payouts;
+mod remove_all_validators;
 mod remove_validator;
 mod rewards;
 mod settings;
@@ -164,6 +165,13 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     .save_chat_command_log(chat_id, command)
                     .await?;
                 self.process_remove_validator_command(chat_id, args).await?;
+            }
+            "/removeall" => {
+                crate::metrics::command_call_counter(command).inc();
+                self.network_postgres
+                    .save_chat_command_log(chat_id, command)
+                    .await?;
+                self.process_remove_all_validators_command(chat_id).await?;
             }
             "/contact" => {
                 crate::metrics::command_call_counter(command).inc();

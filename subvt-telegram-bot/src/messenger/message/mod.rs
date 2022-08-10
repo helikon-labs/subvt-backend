@@ -50,6 +50,8 @@ pub enum MessageType {
         onekv_nominator_account_ids: Vec<AccountId>,
     },
     ValidatorRemoved(TelegramChatValidator),
+    RemoveAllValidatorsConfirm,
+    AllValidatorsRemoved,
     Settings,
     NetworkStatus(NetworkStatus),
     NoPayoutsFound,

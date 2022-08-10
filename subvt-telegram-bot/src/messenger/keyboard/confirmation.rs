@@ -1,16 +1,16 @@
-//! Keyboard for the confirmation of the `/broadcast` request.
+//! Keyboard for the confirmation of a request. Displays Yes/No buttons.
 use crate::query::QueryType;
 use crate::Query;
 use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 
-pub fn get_broadcast_confirm_keyboard() -> anyhow::Result<Option<ReplyMarkup>> {
+pub fn get_confirmation_keyboard(query_type: QueryType) -> anyhow::Result<Option<ReplyMarkup>> {
     let rows = vec![
         vec![InlineKeyboardButton {
             text: "Yes".to_string(),
             url: None,
             login_url: None,
             callback_data: Some(serde_json::to_string(&Query {
-                query_type: QueryType::ConfirmBroadcast,
+                query_type,
                 parameter: None,
             })?),
             web_app: None,

@@ -1,5 +1,5 @@
 //! Module that manages the creation of different types of inline keyboards.
-pub mod broadcast_confirm;
+pub mod confirmation;
 pub mod contact_type;
 pub mod nft;
 pub mod nomination_summary;
