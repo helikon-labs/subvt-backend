@@ -13,7 +13,7 @@ bus = "2.2.4"
 chrono = "0.4"
 clap = "3.2"
 env_logger = "0.9.0"
-futures-util = "0.3.21"
+futures-util = "0.3.23"
 jsonrpsee = { version = "0.15.1", features = ["full"] }
 lazy_static = "1.4.0"
 log = "0.4.16"
