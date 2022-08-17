@@ -490,7 +490,7 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
             match result {
                 Ok(response) => {
                     for update in response.result {
-                        update_params.offset = Some(update.update_id + 1);
+                        update_params.offset = Some((update.update_id + 1).into());
                         match update.content {
                             // process message
                             frankenstein::UpdateContent::Message(message) => {

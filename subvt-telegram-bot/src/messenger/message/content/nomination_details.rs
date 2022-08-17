@@ -14,7 +14,7 @@ impl MessageType {
         validator_details: &ValidatorDetails,
         onekv_nominator_account_ids: &[AccountId],
     ) {
-        let self_stake = validator_details.self_stake.total_amount;
+        let self_stake = validator_details.self_stake.active_amount;
         let self_stake_formatted = format_decimal(
             self_stake,
             CONFIG.substrate.token_decimals,
