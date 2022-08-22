@@ -117,6 +117,8 @@ pub enum NotificationTypeCode {
     ChainValidatorSessionKeysChanged,
     ChainValidatorSetController,
     ChainValidatorUnclaimedPayout,
+    ChainValidatorStartedParaValidating,
+    ChainValidatorStoppedParaValidating,
     OneKVValidatorBinaryVersionChange,
     OneKVValidatorLocationChange,
     OneKVValidatorRankChange,
@@ -174,6 +176,12 @@ impl Display for NotificationTypeCode {
                 "chain_validator_identity_changed"
             }
             NotificationTypeCode::ChainValidatorPayoutStakers => "chain_validator_payout_stakers",
+            NotificationTypeCode::ChainValidatorStartedParaValidating => {
+                "chain_validator_started_para_validating"
+            }
+            NotificationTypeCode::ChainValidatorStoppedParaValidating => {
+                "chain_validator_stopped_para_validating"
+            }
             NotificationTypeCode::TelemetryValidatorOffline => "telemetry_validator_offline",
             NotificationTypeCode::TelemetryValidatorBinaryOutOfDate => {
                 "telemetry_validator_binary_out_of_date"
@@ -251,6 +259,12 @@ impl From<&str> for NotificationTypeCode {
                 NotificationTypeCode::ChainValidatorIdentityChanged
             }
             "chain_validator_payout_stakers" => NotificationTypeCode::ChainValidatorPayoutStakers,
+            "chain_validator_started_para_validating" => {
+                NotificationTypeCode::ChainValidatorStartedParaValidating
+            }
+            "chain_validator_stopped_para_validating" => {
+                NotificationTypeCode::ChainValidatorStoppedParaValidating
+            }
             "telemetry_validator_offline" => NotificationTypeCode::TelemetryValidatorOffline,
             "telemetry_validator_binary_out_of_date" => {
                 NotificationTypeCode::TelemetryValidatorBinaryOutOfDate

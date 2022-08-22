@@ -118,6 +118,16 @@ lazy_static! {
             0,
         ),
         (
+            NotificationTypeCode::ChainValidatorStartedParaValidating,
+            NotificationPeriodType::Off,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorStoppedParaValidating,
+            NotificationPeriodType::Off,
+            0,
+        ),
+        (
             NotificationTypeCode::OneKVValidatorBinaryVersionChange,
             NotificationPeriodType::Immediate,
             0,

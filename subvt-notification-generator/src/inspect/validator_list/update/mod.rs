@@ -14,6 +14,7 @@ mod identity;
 mod inactive;
 mod inactive_next_session;
 mod nomination;
+mod para_validation;
 mod session_keys;
 
 impl NotificationGenerator {
@@ -120,6 +121,8 @@ impl NotificationGenerator {
             &current,
         )
         .await?;
+        self.inspect_para_validating(app_postgres.clone(), finalized_block_number, last, &current)
+            .await?;
         Ok(Some(current))
     }
 }

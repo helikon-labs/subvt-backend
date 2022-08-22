@@ -21,6 +21,8 @@ INSERT INTO app_notification_type(code) VALUES('chain_validator_set_controller')
 INSERT INTO app_notification_type(code) VALUES('chain_validator_session_keys_changed') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('chain_validator_identity_changed') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('chain_validator_payout_stakers') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_started_para_validating') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('chain_validator_stopped_para_validating') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_offline') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_binary_out_of_date') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_peer_count_low') ON CONFLICT(code) DO NOTHING;
@@ -133,6 +135,8 @@ INSERT INTO app_notification_param_type(
 -- chain_validator_session_keys_changed :: no param
 -- chain_validator_identity_changed :: no param
 -- chain_validator_reward_payout :: no param
+-- chain_validator_started_para_validating :: no param
+-- chain_validator_stopped_para_validating :: no param
 -- telemetry_validator_offline
 INSERT INTO app_notification_param_type(
     notification_type_code,

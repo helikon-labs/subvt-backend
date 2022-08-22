@@ -119,6 +119,8 @@ pub(crate) fn get_renderer_context(
         NotificationTypeCode::ChainValidatorPayoutStakers => {
             set_payout_context(network, notification, &mut context);
         }
+        NotificationTypeCode::ChainValidatorStartedParaValidating => (),
+        NotificationTypeCode::ChainValidatorStoppedParaValidating => (),
         NotificationTypeCode::OneKVValidatorBinaryVersionChange => {
             set_onekv_binary_version_changed_context(notification, &mut context);
         }

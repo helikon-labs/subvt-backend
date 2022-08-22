@@ -24,70 +24,61 @@ pub(crate) fn get_validator_activity_settings_keyboard(
             "settings_item_block_authorship.html",
             QueryType::SettingsNavigate(SettingsSubSection::BlockAuthorship),
         )?,
+        get_settings_button(
+            renderer,
+            "settings_item_para_validation.html",
+            QueryType::SettingsNavigate(SettingsSubSection::ParaValidation),
+        )?,
     ];
-    if let Some(item) = get_notification_on_off_button(
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorChilled,
         "settings_item_chilled.html",
         SettingsEditQueryType::Chilled,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorSetController,
         "settings_item_set_controller.html",
         SettingsEditQueryType::SetController,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorIdentityChanged,
         "settings_item_id_changed.html",
         SettingsEditQueryType::IdentityChanged,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorOfflineOffence,
         "settings_item_offline_offence.html",
         SettingsEditQueryType::OfflineOffence,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorPayoutStakers,
         "settings_item_payout_stakers.html",
         SettingsEditQueryType::PayoutStakers,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorSessionKeysChanged,
         "settings_item_session_keys_changed.html",
         SettingsEditQueryType::SessionKeysChanged,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::ChainValidatorUnclaimedPayout,
         "settings_item_unclaimed_payout.html",
         SettingsEditQueryType::UnclaimedPayout,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
+    )?);
 
     rows.push(get_settings_button(
         renderer,

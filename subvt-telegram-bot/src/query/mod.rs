@@ -70,6 +70,8 @@ pub enum SettingsSubSection {
     #[serde(rename = "BA")]
     BlockAuthorship,
     #[serde(rename = "D")]
+    ParaValidation,
+    #[serde(rename = "PV")]
     Democracy,
     #[serde(rename = "OKV")]
     OneKV,
@@ -106,6 +108,10 @@ pub enum SettingsEditQueryType {
     NewNomination,
     #[serde(rename = "LN")]
     LostNomination,
+    #[serde(rename = "STAPV")]
+    StartedParaValidating,
+    #[serde(rename = "STOPV")]
+    StoppedParaValidating,
     #[serde(rename = "DC")]
     DemocracyCancelled,
     #[serde(rename = "DD")]

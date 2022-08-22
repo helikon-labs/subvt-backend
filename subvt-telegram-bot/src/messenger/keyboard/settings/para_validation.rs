@@ -4,41 +4,27 @@ use frankenstein::InlineKeyboardMarkup;
 use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
 use tera::Tera;
 
-pub(crate) fn get_active_inactive_settings_keyboard(
+pub(crate) fn get_para_validation_settings_keyboard(
     renderer: &Tera,
     notification_rules: &[UserNotificationRule],
 ) -> anyhow::Result<InlineKeyboardMarkup> {
     let mut rows = vec![get_settings_button(
         renderer,
-        "settings_active_inactive_title.html",
+        "settings_para_validation_title.html",
         QueryType::NoOp,
     )?];
     rows.push(get_notification_on_off_button(
         renderer,
-        NotificationTypeCode::ChainValidatorActive,
-        "settings_item_active.html",
-        SettingsEditQueryType::Active,
+        NotificationTypeCode::ChainValidatorStartedParaValidating,
+        "settings_item_started_para_validating.html",
+        SettingsEditQueryType::StartedParaValidating,
         notification_rules,
     )?);
     rows.push(get_notification_on_off_button(
         renderer,
-        NotificationTypeCode::ChainValidatorActiveNextSession,
-        "settings_item_active_next_session.html",
-        SettingsEditQueryType::ActiveNextSession,
-        notification_rules,
-    )?);
-    rows.push(get_notification_on_off_button(
-        renderer,
-        NotificationTypeCode::ChainValidatorInactive,
-        "settings_item_inactive.html",
-        SettingsEditQueryType::Inactive,
-        notification_rules,
-    )?);
-    rows.push(get_notification_on_off_button(
-        renderer,
-        NotificationTypeCode::ChainValidatorInactiveNextSession,
-        "settings_item_inactive_next_session.html",
-        SettingsEditQueryType::InactiveNextSession,
+        NotificationTypeCode::ChainValidatorStoppedParaValidating,
+        "settings_item_stopped_para_validating.html",
+        SettingsEditQueryType::StoppedParaValidating,
         notification_rules,
     )?);
     rows.push(get_settings_button(

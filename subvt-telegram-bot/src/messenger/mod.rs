@@ -10,6 +10,7 @@ use crate::messenger::keyboard::{
         active_inactive::get_active_inactive_settings_keyboard,
         democracy::get_democracy_settings_keyboard, get_settings_keyboard,
         nomination::get_nomination_settings_keyboard, onekv::get_onekv_settings_keyboard,
+        para_validation::get_para_validation_settings_keyboard,
         period::get_period_settings_keyboard,
         validator_activity::get_validator_activity_settings_keyboard,
     },
@@ -300,6 +301,9 @@ impl Messenger for MessengerImpl {
                 SettingsSubSection::ValidatorActivity,
                 notification_rules,
             )?,
+            SettingsSubSection::ParaValidation => {
+                get_para_validation_settings_keyboard(&self.renderer, notification_rules)?
+            }
             SettingsSubSection::Democracy => {
                 get_democracy_settings_keyboard(&self.renderer, notification_rules)?
             }

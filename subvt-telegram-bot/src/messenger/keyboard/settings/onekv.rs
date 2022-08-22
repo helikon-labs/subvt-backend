@@ -13,51 +13,41 @@ pub(crate) fn get_onekv_settings_keyboard(
         "settings_onekv_title.html",
         QueryType::NoOp,
     )?];
-    if let Some(item) = get_notification_on_off_button(
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::OneKVValidatorBinaryVersionChange,
         "settings_item_onekv_binary_version_change.html",
         SettingsEditQueryType::OneKVBinaryVersionChange,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::OneKVValidatorLocationChange,
         "settings_item_onekv_location_change.html",
         SettingsEditQueryType::OneKVLocationChange,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::OneKVValidatorOnlineStatusChange,
         "settings_item_onekv_online_status_change.html",
         SettingsEditQueryType::OneKVOnlineStatusChange,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::OneKVValidatorRankChange,
         "settings_item_onekv_rank_change.html",
         SettingsEditQueryType::OneKVRankChange,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::OneKVValidatorValidityChange,
         "settings_item_onekv_validity_change.html",
         SettingsEditQueryType::OneKVValidityChange,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
+    )?);
     rows.push(get_settings_button(
         renderer,
         "back.html",

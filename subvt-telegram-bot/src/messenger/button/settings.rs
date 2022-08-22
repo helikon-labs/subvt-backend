@@ -32,31 +32,28 @@ pub(crate) fn get_notification_on_off_button(
     template_file_name: &str,
     edit_type: SettingsEditQueryType,
     notification_rules: &[UserNotificationRule],
-) -> anyhow::Result<Option<Vec<InlineKeyboardButton>>> {
-    if let Some(rule) = notification_rules
+) -> anyhow::Result<Vec<InlineKeyboardButton>> {
+    let is_on = notification_rules
         .iter()
         .find(|rule| rule.notification_type.code == notification_type_code.to_string())
-    {
-        let is_on = rule.period_type == NotificationPeriodType::Immediate;
-        let mut context = Context::new();
-        context.insert("is_on", &is_on);
-        Ok(Some(vec![InlineKeyboardButton {
-            text: renderer.render(template_file_name, &context)?,
-            url: None,
-            login_url: None,
-            callback_data: Some(serde_json::to_string(&Query {
-                query_type: QueryType::SettingsEdit(edit_type),
-                parameter: Some(serde_json::to_string(&!is_on)?),
-            })?),
-            web_app: None,
-            switch_inline_query: None,
-            switch_inline_query_current_chat: None,
-            callback_game: None,
-            pay: None,
-        }]))
-    } else {
-        Ok(None)
-    }
+        .map(|rule| rule.period_type == NotificationPeriodType::Immediate)
+        .unwrap_or(false);
+    let mut context = Context::new();
+    context.insert("is_on", &is_on);
+    Ok(vec![InlineKeyboardButton {
+        text: renderer.render(template_file_name, &context)?,
+        url: None,
+        login_url: None,
+        callback_data: Some(serde_json::to_string(&Query {
+            query_type: QueryType::SettingsEdit(edit_type),
+            parameter: Some(serde_json::to_string(&!is_on)?),
+        })?),
+        web_app: None,
+        switch_inline_query: None,
+        switch_inline_query_current_chat: None,
+        callback_game: None,
+        pay: None,
+    }])
 }
 
 pub(crate) fn get_notification_period_button(

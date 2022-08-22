@@ -7,6 +7,7 @@ pub(crate) mod active_inactive;
 pub(crate) mod democracy;
 pub(crate) mod nomination;
 pub(crate) mod onekv;
+pub(crate) mod para_validation;
 pub(crate) mod period;
 pub(crate) mod validator_activity;
 

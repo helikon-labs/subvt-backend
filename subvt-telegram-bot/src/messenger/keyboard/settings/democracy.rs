@@ -13,87 +13,69 @@ pub(crate) fn get_democracy_settings_keyboard(
         "settings_democracy_title.html",
         QueryType::NoOp,
     )?];
-    if let Some(item) = get_notification_on_off_button(
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyProposed,
         "settings_item_democracy_proposed.html",
         SettingsEditQueryType::DemocracyProposed,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracySeconded,
         "settings_item_democracy_seconded.html",
         SettingsEditQueryType::DemocracySeconded,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyStarted,
         "settings_item_democracy_started.html",
         SettingsEditQueryType::DemocracyStarted,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyCancelled,
         "settings_item_democracy_cancelled.html",
         SettingsEditQueryType::DemocracyCancelled,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyPassed,
         "settings_item_democracy_passed.html",
         SettingsEditQueryType::DemocracyPassed,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyNotPassed,
         "settings_item_democracy_not_passed.html",
         SettingsEditQueryType::DemocracyNotPassed,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyVoted,
         "settings_item_democracy_voted.html",
         SettingsEditQueryType::DemocracyVoted,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyDelegated,
         "settings_item_democracy_delegated.html",
         SettingsEditQueryType::DemocracyDelegated,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
-    if let Some(item) = get_notification_on_off_button(
+    )?);
+    rows.push(get_notification_on_off_button(
         renderer,
         NotificationTypeCode::DemocracyUndelegated,
         "settings_item_democracy_undelegated.html",
         SettingsEditQueryType::DemocracyUndelegated,
         notification_rules,
-    )? {
-        rows.push(item);
-    }
+    )?);
 
     rows.push(get_settings_button(
         renderer,

@@ -1,15 +1,70 @@
 use crate::query::{Query, SettingsEditQueryType, SettingsSubSection};
-use crate::{Messenger, TelegramBot};
-use subvt_types::app::{NotificationPeriodType, NotificationTypeCode};
+use crate::{Messenger, TelegramBot, CONFIG};
+use rustc_hash::FxHashSet as HashSet;
+use subvt_types::app::{NotificationChannel, NotificationPeriodType, NotificationTypeCode};
 
 impl<M: Messenger + Send + Sync> TelegramBot<M> {
+    async fn create_rule_if_not_exists(
+        &self,
+        user_id: u32,
+        type_code: NotificationTypeCode,
+    ) -> anyhow::Result<()> {
+        let user_notification_rules = self
+            .app_postgres
+            .get_user_notification_rules(user_id)
+            .await?;
+        let rule_exists = user_notification_rules
+            .iter()
+            .filter(|rule| rule.notification_type.code == type_code.to_string())
+            .any(|rule| {
+                rule.notification_channels
+                    .iter()
+                    .any(|channel| channel.channel == NotificationChannel::Telegram)
+            });
+        if rule_exists {
+            return Ok(());
+        }
+        log::debug!(
+            "Create non-existent rule {} for user {}.",
+            type_code.to_string(),
+            user_id,
+        );
+        let telegram_channel_id = self
+            .app_postgres
+            .get_user_notification_channels(user_id)
+            .await?
+            .iter()
+            .find(|a| a.channel == NotificationChannel::Telegram)
+            .unwrap_or_else(|| {
+                panic!(
+                    "User {} does not have a Telegram notification channel.",
+                    user_id
+                )
+            })
+            .id;
+        let mut channel_id_set = HashSet::default();
+        channel_id_set.insert(telegram_channel_id);
+        self.app_postgres
+            .save_user_notification_rule(
+                user_id,
+                &type_code.to_string(),
+                (None, None),
+                (Some(CONFIG.substrate.network_id), true),
+                (&NotificationPeriodType::Off, 0),
+                (&HashSet::default(), &channel_id_set, &[]),
+            )
+            .await?;
+        Ok(())
+    }
+
     async fn process_notification_on_off_setting_query(
         &self,
         user_id: u32,
         query: &Query,
         type_code: NotificationTypeCode,
     ) -> anyhow::Result<()> {
-        let on: bool = serde_json::from_str(query.parameter.as_ref().unwrap_or_else(|| {
+        self.create_rule_if_not_exists(user_id, type_code).await?;
+        let is_on: bool = serde_json::from_str(query.parameter.as_ref().unwrap_or_else(|| {
             panic!(
                 "Expecting on/off param for {} notification setting.",
                 type_code
@@ -19,7 +74,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             .update_user_notification_rule_period(
                 user_id,
                 type_code,
-                if on {
+                if is_on {
                     NotificationPeriodType::Immediate
                 } else {
                     NotificationPeriodType::Off
@@ -31,7 +86,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             .update_user_pending_notifications_period_by_type(
                 user_id,
                 type_code,
-                if on {
+                if is_on {
                     NotificationPeriodType::Immediate
                 } else {
                     NotificationPeriodType::Off
@@ -48,6 +103,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         query: &Query,
         type_code: NotificationTypeCode,
     ) -> anyhow::Result<()> {
+        self.create_rule_if_not_exists(user_id, type_code).await?;
         let period_data: (NotificationPeriodType, u16) = serde_json::from_str(
             query.parameter.as_ref().unwrap_or_else(||
                 panic!("Expecting period type and period param for block authorship notification setting action.")
@@ -200,6 +256,24 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 )
                 .await?;
                 SettingsSubSection::LostNomination
+            }
+            SettingsEditQueryType::StartedParaValidating => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ChainValidatorStartedParaValidating,
+                )
+                .await?;
+                SettingsSubSection::ParaValidation
+            }
+            SettingsEditQueryType::StoppedParaValidating => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ChainValidatorStoppedParaValidating,
+                )
+                .await?;
+                SettingsSubSection::ParaValidation
             }
             SettingsEditQueryType::DemocracyCancelled => {
                 self.process_notification_on_off_setting_query(
