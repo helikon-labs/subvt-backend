@@ -17,18 +17,15 @@ pub struct OneKVCandidate {
 #[derive(Clone, Debug)]
 pub struct OneKVCandidateSummary {
     pub record_id: u32,
-    pub onekv_id: String,
     pub discovered_at: u64,
     pub name: String,
     pub nominated_at: Option<u64>,
     pub offline_since: u64,
-    pub online_since: u64,
     pub rank: Option<u64>,
+    pub fault_count: u64,
     pub total_score: Option<f64>,
     pub aggregate_score: Option<f64>,
-    pub telemetry_id: Option<u32>,
     pub validity: Vec<OneKVValidity>,
-    pub version: Option<String>,
     pub location: Option<String>,
     pub democracy_vote_count: u32,
     pub council_votes: Vec<String>,
@@ -44,38 +41,26 @@ impl OneKVCandidateSummary {
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OneKVCandidateDetails {
-    #[serde(rename(deserialize = "_id"))]
-    pub id: String,
     pub identity: OneKVIdentity,
-    pub bonded: Option<u128>,
     pub commission: f32,
-    pub controller: String,
     pub discovered_at: u64,
-    pub fault_events: Vec<OneKVFaultEvent>,
     pub inclusion: f32,
     #[serde(rename(deserialize = "active"))]
     pub is_active: bool,
     #[serde(rename(deserialize = "kusamaStash"))]
     pub kusama_stash_address: String,
-    pub last_valid: Option<u64>,
     pub name: String,
     pub nominated_at: Option<u64>,
     pub offline_accumulated: u64,
     pub offline_since: u64,
-    pub online_since: u64,
-    pub node_refs: i64,
     pub rank: i64,
-    pub rank_events: Vec<OneKVRankEvent>,
-    pub reward_destination: String,
+    #[serde(rename(deserialize = "faults"))]
+    pub fault_count: i64,
     pub score: Option<OneKVScore>,
-    pub span_inclusion: f32,
     #[serde(rename(deserialize = "stash"))]
     pub stash_address: String,
-    pub telemetry_id: Option<u32>,
     pub unclaimed_eras: Option<Vec<u32>>,
-    #[serde(rename(deserialize = "invalidity"))]
     pub validity: Vec<OneKVValidity>,
-    pub version: Option<String>,
     pub location: Option<String>,
     pub democracy_vote_count: u32,
     pub democracy_votes: Vec<u32>,
@@ -110,27 +95,12 @@ pub struct OneKVScore {
     #[serde(rename(deserialize = "councilStake"))]
     pub council_stake: Option<f64>,
     pub democracy: Option<f64>,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OneKVFaultEvent {
-    #[serde(rename(deserialize = "_id"))]
-    pub id: String,
-    #[serde(rename(deserialize = "prevRank"))]
-    pub previous_rank: Option<i32>,
-    pub reason: String,
-    pub when: u64,
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OneKVRankEvent {
-    #[serde(rename(deserialize = "_id"))]
-    pub id: String,
-    pub active_era: u32,
-    pub start_era: u32,
-    pub when: u64,
+    pub asn: Option<f64>,
+    pub country: Option<f64>,
+    #[serde(rename(deserialize = "nominatorStake"))]
+    pub nominator_stake: Option<f64>,
+    pub provider: Option<f64>,
+    pub region: Option<f64>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]

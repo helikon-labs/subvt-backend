@@ -4,7 +4,6 @@ use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::subvt::ValidatorDetails;
 
-mod binary_version;
 mod location;
 mod online;
 mod rank;
@@ -22,14 +21,6 @@ impl NotificationGenerator {
         if current.onekv_candidate_record_id.is_none() {
             return Ok(());
         }
-        self.inspect_onekv_binary_version_change(
-            network_postgres.clone(),
-            app_postgres.clone(),
-            finalized_block_number,
-            last,
-            current,
-        )
-        .await?;
         self.inspect_onekv_rank_change(
             network_postgres.clone(),
             app_postgres.clone(),

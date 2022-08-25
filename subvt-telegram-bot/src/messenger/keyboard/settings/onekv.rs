@@ -15,13 +15,6 @@ pub(crate) fn get_onekv_settings_keyboard(
     )?];
     rows.push(get_notification_on_off_button(
         renderer,
-        NotificationTypeCode::OneKVValidatorBinaryVersionChange,
-        "settings_item_onekv_binary_version_change.html",
-        SettingsEditQueryType::OneKVBinaryVersionChange,
-        notification_rules,
-    )?);
-    rows.push(get_notification_on_off_button(
-        renderer,
         NotificationTypeCode::OneKVValidatorLocationChange,
         "settings_item_onekv_location_change.html",
         SettingsEditQueryType::OneKVLocationChange,

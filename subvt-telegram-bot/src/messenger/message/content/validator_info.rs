@@ -75,9 +75,6 @@ impl MessageType {
                 "onekv_discovered_at",
                 &discovered_at.format(date_time_format).to_string(),
             );
-            if let Some(version) = &onekv_summary.version {
-                context.insert("onekv_version", version);
-            }
             if let Some(nominated_at) = onekv_summary.nominated_at {
                 let nominated_at = Utc::timestamp(&Utc, nominated_at as i64 / 1000, 0);
                 context.insert(
@@ -85,14 +82,7 @@ impl MessageType {
                     &nominated_at.format(date_time_format).to_string(),
                 );
             }
-            if onekv_summary.online_since > 0 {
-                let online_since =
-                    Utc::timestamp(&Utc, onekv_summary.online_since as i64 / 1000, 0);
-                context.insert(
-                    "onekv_online_since",
-                    &online_since.format(date_time_format).to_string(),
-                );
-            } else if onekv_summary.offline_since > 0 {
+            if onekv_summary.offline_since > 0 {
                 let offline_since =
                     Utc::timestamp(&Utc, onekv_summary.offline_since as i64 / 1000, 0);
                 context.insert(
@@ -103,6 +93,7 @@ impl MessageType {
             if let Some(rank) = onekv_summary.rank {
                 context.insert("onekv_rank", &rank);
             }
+            context.insert("onekv_fault_count", &onekv_summary.fault_count);
             if let Some(score) = onekv_summary.total_score {
                 context.insert("onekv_score", &(score as u64));
             }

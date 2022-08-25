@@ -119,7 +119,6 @@ pub enum NotificationTypeCode {
     ChainValidatorUnclaimedPayout,
     ChainValidatorStartedParaValidating,
     ChainValidatorStoppedParaValidating,
-    OneKVValidatorBinaryVersionChange,
     OneKVValidatorLocationChange,
     OneKVValidatorRankChange,
     OneKVValidatorValidityChange,
@@ -202,9 +201,6 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::TelemetryValidatorUploadBwLow => {
                 "telemetry_validator_upload_bw_low"
             }
-            NotificationTypeCode::OneKVValidatorBinaryVersionChange => {
-                "onekv_validator_binary_version_change"
-            }
             NotificationTypeCode::OneKVValidatorRankChange => "onekv_validator_rank_change",
             NotificationTypeCode::OneKVValidatorLocationChange => "onekv_validator_location_change",
             NotificationTypeCode::OneKVValidatorValidityChange => "onekv_validator_validity_change",
@@ -284,9 +280,6 @@ impl From<&str> for NotificationTypeCode {
             }
             "telemetry_validator_upload_bw_low" => {
                 NotificationTypeCode::TelemetryValidatorUploadBwLow
-            }
-            "onekv_validator_binary_version_change" => {
-                NotificationTypeCode::OneKVValidatorBinaryVersionChange
             }
             "onekv_validator_rank_change" => NotificationTypeCode::OneKVValidatorRankChange,
             "onekv_validator_location_change" => NotificationTypeCode::OneKVValidatorLocationChange,

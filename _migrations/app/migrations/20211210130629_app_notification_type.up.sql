@@ -31,7 +31,6 @@ INSERT INTO app_notification_type(code) VALUES('telemetry_validator_lagging') ON
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_finality_lagging') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_download_bw_low') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('telemetry_validator_upload_bw_low') ON CONFLICT(code) DO NOTHING;
-INSERT INTO app_notification_type(code) VALUES('onekv_validator_binary_version_change') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_rank_change') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_location_change') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('onekv_validator_validity_change') ON CONFLICT(code) DO NOTHING;
@@ -411,7 +410,6 @@ INSERT INTO app_notification_param_type(
     false,
     'Notification happens if the validator''s upload bandwidth is lower than this value in kilobits per second for this many seconds.'
 ) ON CONFLICT(notification_type_code, code) DO NOTHING;
--- onekv_validator_binary_version_change :: no param
 -- onekv_validator_rank_change :: no param
 -- onekv_validator_location_change :: no param
 -- onekv_validator_validity_change :: no param

@@ -15,6 +15,9 @@ impl NotificationGenerator {
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
+        if current.onekv_is_valid.is_none() || last.onekv_is_valid.is_none() {
+            return Ok(());
+        }
         if current.onekv_is_valid != last.onekv_is_valid {
             log::debug!(
                 "1KV validity of {} changed from {} to {}.",

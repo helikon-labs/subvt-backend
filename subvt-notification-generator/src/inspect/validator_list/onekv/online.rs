@@ -15,34 +15,21 @@ impl NotificationGenerator {
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
-        let (last_online_since, last_offline_since, current_online_since, current_offline_since) =
-            match (
-                last.onekv_online_since,
-                last.onekv_offline_since,
-                current.onekv_online_since,
-                current.onekv_offline_since,
-            ) {
-                (
-                    Some(last_online_since),
-                    Some(last_offline_since),
-                    Some(current_online_since),
-                    Some(current_offline_since),
-                ) => (
-                    last_online_since,
-                    last_offline_since,
-                    current_online_since,
-                    current_offline_since,
-                ),
+        let (last_offline_since, current_offline_since) =
+            match (last.onekv_offline_since, current.onekv_offline_since) {
+                (Some(last_offline_since), Some(current_offline_since)) => {
+                    (last_offline_since, current_offline_since)
+                }
                 _ => return Ok(()),
             };
-        if (current_online_since > 0 && last_online_since == 0)
-            || (current_offline_since > 0 && last_offline_since == 0)
+        if (current_offline_since > 0 && last_offline_since == 0)
+            || (current_offline_since == 0 && last_offline_since > 0)
         {
             log::debug!(
-                "1KV online status (online_since, offline_since) of {} changed from {:?} to {:?}.",
+                "1KV online status (offline_since) of {} changed from {} to {}.",
                 current.account.address,
-                (last_online_since, last_offline_since),
-                (current_online_since, current_offline_since),
+                last_offline_since,
+                current_offline_since,
             );
             let rules = app_postgres
                 .get_notification_rules_for_validator(
@@ -58,17 +45,12 @@ impl NotificationGenerator {
                 &Some(current.account.id),
                 Some(&app_event::OneKVOnlineStatusChange {
                     validator_account_id: current.account.id,
-                    online_since: current_online_since,
                     offline_since: current_offline_since,
                 }),
             )
             .await?;
             network_postgres
-                .save_onekv_online_status_change_event(
-                    &current.account.id,
-                    current_online_since,
-                    current_offline_since,
-                )
+                .save_onekv_online_status_change_event(&current.account.id, current_offline_since)
                 .await?;
         }
         Ok(())

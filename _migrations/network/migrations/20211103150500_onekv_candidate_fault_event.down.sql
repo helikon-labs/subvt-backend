@@ -1,1 +1,0 @@
-DROP TABLE sub_onekv_candidate_fault_event CASCADE;

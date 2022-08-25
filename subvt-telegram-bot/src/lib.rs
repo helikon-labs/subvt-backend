@@ -128,11 +128,6 @@ lazy_static! {
             0,
         ),
         (
-            NotificationTypeCode::OneKVValidatorBinaryVersionChange,
-            NotificationPeriodType::Immediate,
-            0,
-        ),
-        (
             NotificationTypeCode::OneKVValidatorLocationChange,
             NotificationPeriodType::Immediate,
             0,

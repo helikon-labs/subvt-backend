@@ -81,15 +81,11 @@ pub struct ValidatorDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_candidate_record_id: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub onekv_binary_version: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_rank: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_location: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_is_valid: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub onekv_online_since: Option<u64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_offline_since: Option<u64>,
 }

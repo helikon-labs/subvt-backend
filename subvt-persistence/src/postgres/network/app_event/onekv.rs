@@ -2,28 +2,6 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn save_onekv_binary_version_change_event(
-        &self,
-        validator_account_id: &AccountId,
-        prev_version: &Option<String>,
-        current_version: &Option<String>,
-    ) -> anyhow::Result<u32> {
-        self.save_account(validator_account_id).await?;
-        let result: (i32,) = sqlx::query_as(
-            r#"
-            INSERT INTO sub_app_event_onekv_binary_version_change (validator_account_id, prev_version, current_version)
-            VALUES ($1, $2, $3)
-            RETURNING id
-            "#,
-        )
-            .bind(validator_account_id.to_string())
-            .bind(prev_version)
-            .bind(current_version)
-            .fetch_one(&self.connection_pool)
-            .await?;
-        Ok(result.0 as u32)
-    }
-
     pub async fn save_onekv_rank_change_event(
         &self,
         validator_account_id: &AccountId,
@@ -91,19 +69,17 @@ impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_online_status_change_event(
         &self,
         validator_account_id: &AccountId,
-        online_since: u64,
         offline_since: u64,
     ) -> anyhow::Result<u32> {
         self.save_account(validator_account_id).await?;
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_app_event_onekv_online_status_change (validator_account_id, online_since, offline_since)
-            VALUES ($1, $2, $3)
+            INSERT INTO sub_app_event_onekv_online_status_change (validator_account_id, offline_since)
+            VALUES ($1, $2)
             RETURNING id
             "#,
         )
         .bind(validator_account_id.to_string())
-        .bind(online_since as i64)
         .bind(offline_since as i64)
         .fetch_one(&self.connection_pool)
         .await?;

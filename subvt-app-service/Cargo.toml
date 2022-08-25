@@ -1,8 +1,8 @@
 [package]
 name = "subvt-app-service"
-version = "0.12.2"
+version = "0.13.0"
 edition = "2021"
-rust-version = "1.60.0"
+rust-version = "1.63.0"
 
 [dependencies]
 actix-http = "3.2.1"

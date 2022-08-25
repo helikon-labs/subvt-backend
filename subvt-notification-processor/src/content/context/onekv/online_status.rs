@@ -11,13 +11,7 @@ pub(crate) fn set_onekv_online_status_changed_context(
             notification_data_json.as_str(),
         ) {
             let date_time_format = "%b %d, %Y %H:%M UTC";
-            if event.online_since > 0 {
-                let online_since = Utc::timestamp(&Utc, event.online_since as i64 / 1000, 0);
-                context.insert(
-                    "online_since",
-                    &online_since.format(date_time_format).to_string(),
-                );
-            } else if event.offline_since > 0 {
+            if event.offline_since > 0 {
                 let offline_since = Utc::timestamp(&Utc, event.offline_since as i64 / 1000, 0);
                 context.insert(
                     "offline_since",

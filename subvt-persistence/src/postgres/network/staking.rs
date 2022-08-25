@@ -20,11 +20,9 @@ type PostgresValidatorInfo = (
     Option<i64>,
     Option<bool>,
     Option<i32>,
-    Option<String>,
     Option<i64>,
     Option<String>,
     Option<bool>,
-    Option<i64>,
     Option<i64>,
 );
 
@@ -325,7 +323,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<ValidatorInfo> {
         let validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
-            SELECT discovered_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_binary_version, onekv_rank, onekv_location, onekv_is_valid, onekv_online_since, onekv_offline_since
+            SELECT discovered_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, onekv_candidate_record_id, onekv_rank, onekv_location, onekv_is_valid, onekv_offline_since
             FROM sub_get_validator_info($1, $2, $3, $4)
             "#
         )
@@ -355,12 +353,10 @@ impl PostgreSQLNetworkStorage {
             reward_points: validator_info.7.map(|value| value as u64),
             heartbeat_received: validator_info.8,
             onekv_candidate_record_id: validator_info.9.map(|value| value as u32),
-            onekv_binary_version: validator_info.10,
-            onekv_rank: validator_info.11.map(|value| value as u64),
-            onekv_location: validator_info.12,
-            onekv_is_valid: validator_info.13,
-            onekv_online_since: validator_info.14.map(|value| value as u64),
-            onekv_offline_since: validator_info.15.map(|value| value as u64),
+            onekv_rank: validator_info.10.map(|value| value as u64),
+            onekv_location: validator_info.11,
+            onekv_is_valid: validator_info.12,
+            onekv_offline_since: validator_info.13.map(|value| value as u64),
         })
     }
 }

@@ -132,8 +132,6 @@ pub enum SettingsEditQueryType {
     DemocracyVoted,
     #[serde(rename = "OKVR")]
     OneKVRankChange,
-    #[serde(rename = "OKVB")]
-    OneKVBinaryVersionChange,
     #[serde(rename = "OKVV")]
     OneKVValidityChange,
     #[serde(rename = "OKVL")]

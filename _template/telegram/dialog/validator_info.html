@@ -16,16 +16,15 @@
 ☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}{% else %}🙄 There is currently no active or waiting validator with address <pre>{{ condensed_address }}</pre>. Please make sure the validator still has a <pre>validate</pre> intention.{% endif %}{% if is_onekv %}
 
 <strong>Thousand Validators Info</strong>
-🏷 {{ onekv_name }}{% if onekv_online_since %}
-🟢️ Online since {{ onekv_online_since }}{% endif %}{% if onekv_offline_since %}
-🔴️ Offline since {{ onekv_offline_since }}{% endif %}
+🏷 {{ onekv_name }}
+{% if onekv_offline_since %}🔴️ Offline since {{ onekv_offline_since }}{% else %}🟢️ Online{% endif %}
 {% if onekv_is_valid %}✅ Valid 1KV validator{% else %}❌ Invalid 1KV validator:{% for onekv_invalidity_reason in onekv_invalidity_reasons %}
 - {{ onekv_invalidity_reason }}{% endfor %}{% endif %}{% if onekv_rank %}
 📈 Rank {{ onekv_rank }}{% endif %}{% if onekv_score %}
-📊 Score {{ onekv_score }}{% endif %}{% if onekv_nominated_at %}
+📊 Score {{ onekv_score }}{% endif %}
+🆘 {% if onekv_fault_count == 0 %}No{% else %}{{ onekv_fault_count }}{% endif %} offline fault{% if onekv_fault_count != 1 %}s{% endif %} {% if onekv_nominated_at %}
 💎 Last 1KV nomination {{ onekv_nominated_at }}{% endif %}{% if onekv_location %}
-🌍 {{ onekv_location }}{% endif %}{% if onekv_version %}
-🧬 Running <pre>{{ onekv_version }}{% endif %}</pre>
+🌍 {{ onekv_location }}{% endif %}
 📡 Discovered {{ onekv_discovered_at }}
 🗳 {{ onekv_democracy_vote_count }} democracy vote{% if onekv_democracy_vote_count != 1 %}s{% endif %}{% if onekv_democracy_vote_count == 0 %} 😕{% endif %}
 👥 Backs {{ onekv_council_vote_count }} councillor{% if onekv_council_vote_count != 1 %}s{% endif %}{% if onekv_council_vote_count == 0 %} 😕{% endif %}

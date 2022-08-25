@@ -41,13 +41,6 @@ pub struct NominationAmountChange {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct OneKVBinaryVersionChange {
-    pub validator_account_id: AccountId,
-    pub prev_version: Option<String>,
-    pub current_version: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OneKVRankChange {
     pub validator_account_id: AccountId,
     pub prev_rank: Option<u64>,
@@ -71,6 +64,5 @@ pub struct OneKVValidityChange {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OneKVOnlineStatusChange {
     pub validator_account_id: AccountId,
-    pub online_since: u64,
     pub offline_since: u64,
 }

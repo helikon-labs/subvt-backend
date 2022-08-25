@@ -17,7 +17,6 @@ use crate::content::context::{
     new_nomination::set_new_nomination_context,
     offline_offence::set_offline_offence_context,
     onekv::{
-        binary_version::set_onekv_binary_version_changed_context,
         location::set_onekv_location_changed_context,
         online_status::set_onekv_online_status_changed_context,
         rank::set_onekv_rank_changed_context, validity::set_onekv_validity_changed_context,
@@ -121,9 +120,6 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::ChainValidatorStartedParaValidating => (),
         NotificationTypeCode::ChainValidatorStoppedParaValidating => (),
-        NotificationTypeCode::OneKVValidatorBinaryVersionChange => {
-            set_onekv_binary_version_changed_context(notification, &mut context);
-        }
         NotificationTypeCode::OneKVValidatorRankChange => {
             set_onekv_rank_changed_context(notification, &mut context);
         }

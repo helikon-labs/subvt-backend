@@ -365,15 +365,6 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 .await?;
                 SettingsSubSection::OneKV
             }
-            SettingsEditQueryType::OneKVBinaryVersionChange => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::OneKVValidatorBinaryVersionChange,
-                )
-                .await?;
-                SettingsSubSection::OneKV
-            }
             SettingsEditQueryType::OneKVValidityChange => {
                 self.process_notification_on_off_setting_query(
                     user_id,
