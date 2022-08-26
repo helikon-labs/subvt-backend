@@ -63,9 +63,11 @@ impl NotificationGenerator {
                     Some(&event),
                 )
                 .await?;
+                /* stop saving this event :: causing extreme storage
                 network_postgres
                     .save_nomination_amount_change_event(&event)
                     .await?;
+                 */
             }
         }
         Ok(())
