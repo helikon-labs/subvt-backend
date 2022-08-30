@@ -39,9 +39,10 @@ use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
+pub use polkadot_primitives::v2::BlockNumber;
 use polkadot_primitives::v2::{
-    Balance, BlockNumber, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id,
-    InherentData, PvfCheckStatement, ValidationCode, ValidationCodeHash, ValidatorSignature,
+    Balance, CandidateReceipt, CoreIndex, GroupIndex, HeadData, HrmpChannelId, Id, InherentData,
+    PvfCheckStatement, ValidationCode, ValidationCodeHash, ValidatorSignature,
 };
 use polkadot_runtime::MaxAdditionalFields;
 use polkadot_runtime_common::assigned_slots::SlotLeasePeriodStart;
@@ -650,14 +651,12 @@ impl Argument {
         extrinsic_signature: &Option<crate::substrate::extrinsic::Signature>,
         bytes: &mut &[u8],
     ) -> anyhow::Result<Self, ArgumentDecodeError> {
-        use ArgumentDecodeError::*;
-
         match argument_meta {
             ArgumentMeta::Vec(argument_meta) => {
                 let length: Compact<u32> = match Decode::decode(bytes) {
                     Ok(length) => length,
                     Err(_) => {
-                        return Err(DecodeError(
+                        return Err(ArgumentDecodeError::DecodeError(
                             "Cannot decode length for vector argument.".to_string(),
                         ));
                     }
@@ -686,7 +685,9 @@ impl Argument {
                     )?;
                     Ok(Argument::Option(Box::new(Some(argument))))
                 }
-                _ => Err(DecodeError("Unexpected first byte for Option.".to_string())),
+                _ => Err(ArgumentDecodeError::DecodeError(
+                    "Unexpected first byte for Option.".to_string(),
+                )),
             },
             ArgumentMeta::Tuple(argument_metas) => {
                 let mut result: Vec<Argument> = Vec::new();

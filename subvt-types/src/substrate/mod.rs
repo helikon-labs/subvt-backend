@@ -4,6 +4,7 @@
 use crate::crypto::AccountId;
 use chrono::{DateTime, TimeZone, Utc};
 use frame_support::traits::ConstU32;
+pub use pallet_democracy::Voting as DemocracyVoting;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, StakingLedger, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};

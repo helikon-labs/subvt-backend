@@ -18,13 +18,14 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::crypto::AccountId;
+use subvt_types::substrate::argument::BlockNumber;
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
-    metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, Epoch, Era,
-    EraRewardPoints, EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo, Nomination,
-    RewardDestination, ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties,
+    metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, DemocracyVoting,
+    Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo,
+    Nomination, RewardDestination, ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties,
     ValidatorPreferences, ValidatorStake,
 };
 /// Substrate client structure and its functions.
@@ -1257,6 +1258,30 @@ impl SubstrateClient {
             }
         }
         Ok(validator_prefs_map)
+    }
+
+    pub async fn get_democracy_voting_of(
+        &self,
+        account_id: &AccountId,
+        block_hash: Option<&str>,
+    ) -> anyhow::Result<Option<DemocracyVoting<Balance, AccountId, BlockNumber>>> {
+        let storage_key = get_storage_map_key(&self.metadata, "Democracy", "VotingOf", account_id);
+        let chunk_values: Vec<StorageChangeSet<String>> = self
+            .ws_client
+            .request(
+                "state_queryStorageAt",
+                rpc_params!(vec![storage_key], block_hash),
+            )
+            .await?;
+        if let Some(value) = chunk_values.get(0) {
+            if let Some((_, Some(data))) = value.changes.get(0) {
+                let mut bytes: &[u8] = &data.0;
+                let voting: DemocracyVoting<Balance, AccountId, BlockNumber> =
+                    Decode::decode(&mut bytes)?;
+                return Ok(Some(voting));
+            }
+        }
+        Ok(None)
     }
 
     async fn subscribe_to_blocks<F>(
