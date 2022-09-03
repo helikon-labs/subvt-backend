@@ -284,7 +284,7 @@ impl BlockHeader {
         let mut validator_index: Option<usize> = None;
         for log_string in &self.digest.logs {
             let log_hex_string = log_string.trim_start_matches("0x");
-            let mut log_bytes: &[u8] = &hex::decode(&log_hex_string).unwrap();
+            let mut log_bytes: &[u8] = &hex::decode(log_hex_string).unwrap();
             let digest_item: DigestItem = Decode::decode(&mut log_bytes).unwrap();
             match digest_item {
                 DigestItem::PreRuntime(consensus_engine_id, bytes) => {

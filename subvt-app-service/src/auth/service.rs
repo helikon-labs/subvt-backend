@@ -66,7 +66,7 @@ impl<S> AuthService<S> {
         let signature = if let Some(signature) = signature_header
             .to_str()
             .ok()
-            .and_then(|hex| hex::decode(&hex.trim_start_matches("0x")).ok())
+            .and_then(|hex| hex::decode(hex.trim_start_matches("0x")).ok())
             .and_then(|bytes| Signature::parse_der(&bytes).ok())
         {
             signature

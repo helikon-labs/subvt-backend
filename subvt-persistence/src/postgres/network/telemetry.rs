@@ -166,7 +166,7 @@ impl PostgreSQLNetworkStorage {
                 SET download_bandwidth = EXCLUDED.download_bandwidth, upload_bandwidth = EXCLUDED.upload_bandwidth
                 "#,
             )
-                .bind(&date_time)
+                .bind(date_time)
                 .bind(node_id as i64)
                 .bind(data.1[i] as f64)
                 .bind(data.0[i] as f64)

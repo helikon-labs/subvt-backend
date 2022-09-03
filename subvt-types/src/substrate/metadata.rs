@@ -57,7 +57,7 @@ pub struct Metadata {
 impl Metadata {
     pub fn from(hex_string: &str) -> anyhow::Result<Metadata> {
         let metadata_hex_string = hex_string.trim_start_matches("0x");
-        let mut metadata_hex_decoded: &[u8] = &hex::decode(&metadata_hex_string)?;
+        let mut metadata_hex_decoded: &[u8] = &hex::decode(metadata_hex_string)?;
         let metadata_prefixed: RuntimeMetadataPrefixed =
             RuntimeMetadataPrefixed::decode(&mut metadata_hex_decoded)?;
         let mut metadata: Metadata = metadata_prefixed.try_into()?;
