@@ -4,6 +4,7 @@ use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_map_key,
 };
+use async_recursion::async_recursion;
 use jsonrpsee::{
     core::client::{Client, ClientT, Subscription, SubscriptionClientT},
     rpc_params,
@@ -17,8 +18,12 @@ use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
+use subvt_types::app::event::democracy::AccountVote;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::argument::BlockNumber;
+use subvt_types::substrate::democracy::{
+    get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote,
+};
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
@@ -1279,6 +1284,77 @@ impl SubstrateClient {
                 let voting: DemocracyVoting<Balance, AccountId, BlockNumber> =
                     Decode::decode(&mut bytes)?;
                 return Ok(Some(voting));
+            }
+        }
+        Ok(None)
+    }
+
+    #[async_recursion]
+    pub async fn get_account_referendum_vote(
+        &self,
+        account_id: &AccountId,
+        referendum_index: u32,
+        block_hash: Option<&'async_recursion str>,
+    ) -> anyhow::Result<Option<ReferendumVote>> {
+        let maybe_vote = self.get_democracy_voting_of(account_id, block_hash).await?;
+        if let Some(vote) = maybe_vote {
+            match vote {
+                DemocracyVoting::Direct { votes, .. } => {
+                    if let Some(referendum_vote) =
+                        votes.iter().find(|vote| vote.0 == referendum_index)
+                    {
+                        let vote = match referendum_vote.1 {
+                            AccountVote::Standard { vote, balance } => ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index,
+                                direct_vote: Some(DirectVote {
+                                    aye: if vote.aye { Some(balance) } else { None },
+                                    nay: if !vote.aye { Some(balance) } else { None },
+                                    conviction: Some(get_democracy_conviction_u8(&vote.conviction)),
+                                }),
+                                delegated_vote: None,
+                            },
+                            AccountVote::Split { aye, nay } => ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index,
+                                direct_vote: Some(DirectVote {
+                                    aye: Some(aye),
+                                    nay: Some(nay),
+                                    conviction: None,
+                                }),
+                                delegated_vote: None,
+                            },
+                        };
+                        return Ok(Some(vote));
+                    }
+                }
+                DemocracyVoting::Delegating {
+                    balance,
+                    target,
+                    conviction,
+                    ..
+                } => {
+                    if let Some(delegate_vote) = self
+                        .get_account_referendum_vote(&target, referendum_index, block_hash)
+                        .await?
+                    {
+                        if let Some(delegate_direct_vote) = delegate_vote.direct_vote {
+                            let vote = ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index,
+                                direct_vote: None,
+                                delegated_vote: Some(DelegatedVote {
+                                    target_account_id: target,
+                                    balance,
+                                    conviction: get_democracy_conviction_u8(&conviction),
+                                    delegate_account_id: target,
+                                    vote: delegate_direct_vote,
+                                }),
+                            };
+                            return Ok(Some(vote));
+                        }
+                    }
+                }
             }
         }
         Ok(None)

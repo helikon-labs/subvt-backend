@@ -111,3 +111,76 @@ async fn test_get_democracy_voting_delegated() {
         }
     }
 }
+
+#[tokio::test]
+async fn test_get_account_democracy_vote_direct() {
+    let config = Config::test().expect("Cannot get test config.");
+    let referendum_index = 227;
+    let substrate_client = SubstrateClient::new(&config)
+        .await
+        .expect("Cannot initialize client.");
+    let address = "GC8fuEZG4E5epGf5KGXtcDfvrc6HXE7GJ5YnbiqSpqdQYLg";
+    let account_id = AccountId::from_str(address).expect("Cannot create account id.");
+    let block_number = 14_333_000;
+    let block_hash = substrate_client
+        .get_block_hash(block_number)
+        .await
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+    let vote = substrate_client
+        .get_account_referendum_vote(&account_id, referendum_index, Some(&block_hash))
+        .await
+        .unwrap_or_else(|_| panic!("Error while trying to get democracy voting."))
+        .unwrap();
+    assert_eq!(referendum_index, vote.referendum_index);
+    assert!(vote.delegated_vote.is_none());
+    if let Some(direct_vote) = vote.direct_vote {
+        assert_eq!(direct_vote.conviction.unwrap_or(100), 0);
+        assert_eq!(direct_vote.aye.unwrap_or(0), 115_000_000_000_000);
+    } else {
+        panic!(
+            "Expected direct vote for referendum #{} by {}.",
+            referendum_index, address
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_get_account_democracy_vote_delegated() {
+    let config = Config::test().expect("Cannot get test config.");
+    let referendum_index = 227;
+    let substrate_client = SubstrateClient::new(&config)
+        .await
+        .expect("Cannot initialize client.");
+    let address = "GpyTMuLmG3ADWRxhZpHQh5rqMgNpFoNUyxA1DJAXfvsQ2Ly";
+    let account_id = AccountId::from_str(address).expect("Cannot create account id.");
+    let block_number = 14_333_000;
+    let block_hash = substrate_client
+        .get_block_hash(block_number)
+        .await
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+    let vote = substrate_client
+        .get_account_referendum_vote(&account_id, referendum_index, Some(&block_hash))
+        .await
+        .unwrap_or_else(|_| panic!("Error while trying to get democracy voting."))
+        .unwrap();
+    assert_eq!(referendum_index, vote.referendum_index);
+    assert!(vote.direct_vote.is_none());
+    if let Some(delegated_vote) = vote.delegated_vote {
+        assert_eq!(delegated_vote.conviction, 0);
+        assert_eq!(
+            delegated_vote.target_account_id.to_ss58_check(),
+            "5CMiFyio1HrefWXAKB8kBmPn6dYa1SjJUwYYtyVXSPeys6nH",
+        );
+        assert_eq!(
+            delegated_vote.delegate_account_id.to_ss58_check(),
+            "5CMiFyio1HrefWXAKB8kBmPn6dYa1SjJUwYYtyVXSPeys6nH",
+        );
+        assert_eq!(delegated_vote.vote.aye.unwrap_or(0), 20_000_000_000_000);
+        assert_eq!(delegated_vote.vote.conviction.unwrap_or(0), 3);
+    } else {
+        panic!(
+            "Expected delegate vote for referendum #{} by {}.",
+            referendum_index, address
+        );
+    }
+}
