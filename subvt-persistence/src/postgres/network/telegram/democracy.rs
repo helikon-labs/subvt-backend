@@ -4,7 +4,7 @@ use subvt_types::app::event::democracy::DemocracyVotedEvent;
 use subvt_types::crypto::AccountId;
 
 impl PostgreSQLNetworkStorage {
-    pub async fn get_account_vote_for_referendum(
+    pub async fn get_account_direct_vote_for_referendum(
         &self,
         account_id: &AccountId,
         referendum_index: u32,
@@ -33,7 +33,7 @@ impl PostgreSQLNetworkStorage {
     }
 
     #[allow(clippy::type_complexity)]
-    pub async fn get_chat_validator_votes_for_referendum(
+    pub async fn get_chat_validator_direct_votes_for_referendum(
         &self,
         telegram_chat_id: i64,
         referendum_index: u32,

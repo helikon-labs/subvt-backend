@@ -6844,6 +6844,7 @@ version = "0.13.1"
 dependencies = [
  "anyhow",
  "async-lock",
+ "async-recursion",
  "blake2-rfc",
  "byteorder",
  "chrono",
@@ -6898,6 +6899,7 @@ dependencies = [
  "subvt-persistence",
  "subvt-plotter",
  "subvt-service-common",
+ "subvt-substrate-client",
  "subvt-types",
  "subvt-utility",
  "tera",

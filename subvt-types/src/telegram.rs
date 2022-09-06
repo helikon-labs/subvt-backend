@@ -39,7 +39,7 @@ impl Display for TelegramChatState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TelegramChatValidator {
     pub id: u64,
     pub account_id: AccountId,

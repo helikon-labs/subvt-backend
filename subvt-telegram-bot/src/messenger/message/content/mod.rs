@@ -129,15 +129,9 @@ impl MessageType {
             }
             Self::ReferendumDetails {
                 post,
-                chat_validators,
-                validator_votes,
+                chat_validator_votes,
             } => {
-                self.fill_referendum_details_context(
-                    &mut context,
-                    post,
-                    chat_validators,
-                    validator_votes,
-                );
+                self.fill_referendum_details_context(&mut context, post, chat_validator_votes);
                 "referendum_details.html"
             }
             Self::SelectContactType => "select_contact_type.html",

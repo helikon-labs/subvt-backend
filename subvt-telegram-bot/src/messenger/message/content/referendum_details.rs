@@ -1,8 +1,8 @@
 //! Content for a selected open referendum.
 use crate::MessageType;
 use crate::CONFIG;
-use subvt_types::app::event::democracy::DemocracyVotedEvent;
 use subvt_types::governance::polkassembly::ReferendumPost;
+use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::get_condensed_address;
@@ -13,8 +13,7 @@ impl MessageType {
         &self,
         context: &mut Context,
         post: &ReferendumPost,
-        chat_validators: &[TelegramChatValidator],
-        validator_votes: &[DemocracyVotedEvent],
+        chat_validator_votes: &[(TelegramChatValidator, Option<ReferendumVote>)],
     ) {
         context.insert("chain", &CONFIG.substrate.chain);
         context.insert("referendum_id", &post.onchain_link.onchain_referendum_id);
@@ -39,46 +38,78 @@ impl MessageType {
         // validator votes
         let mut validators_without_vote = vec![];
         let mut context_validator_votes = vec![];
-        for validator in chat_validators {
-            if let Some(validator_vote) = validator_votes
-                .iter()
-                .find(|vote| vote.account_id == validator.account_id)
-            {
-                context_validator_votes.push((
-                    validator
-                        .display
-                        .clone()
-                        .unwrap_or_else(|| get_condensed_address(&validator.address, None)),
-                    if let Some(balance) = validator_vote.aye_balance {
-                        format_decimal(
-                            balance,
-                            CONFIG.substrate.token_decimals,
-                            CONFIG.substrate.token_format_decimal_points,
-                        )
-                    } else {
-                        "".to_string()
-                    },
-                    if let Some(balance) = validator_vote.nay_balance {
-                        format_decimal(
-                            balance,
-                            CONFIG.substrate.token_decimals,
-                            CONFIG.substrate.token_format_decimal_points,
-                        )
-                    } else {
-                        "".to_string()
-                    },
-                    if let Some(conviction) = validator_vote.conviction {
-                        conviction
-                    } else {
-                        0
-                    },
-                ));
+        for validator_vote in chat_validator_votes {
+            if let Some(vote) = validator_vote.1 {
+                if let Some(direct_vote) = vote.direct_vote {
+                    context_validator_votes.push((
+                        validator_vote.0.display.clone().unwrap_or_else(|| {
+                            get_condensed_address(&validator_vote.0.address, None)
+                        }),
+                        false,
+                        if let Some(balance) = direct_vote.aye {
+                            format_decimal(
+                                balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        if let Some(balance) = direct_vote.nay {
+                            format_decimal(
+                                balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        if let Some(conviction) = direct_vote.conviction {
+                            conviction
+                        } else {
+                            0
+                        },
+                    ));
+                } else if let Some(delegated_vote) = vote.delegated_vote {
+                    context_validator_votes.push((
+                        validator_vote.0.display.clone().unwrap_or_else(|| {
+                            get_condensed_address(&validator_vote.0.address, None)
+                        }),
+                        true,
+                        if delegated_vote.vote.aye.is_some() {
+                            format_decimal(
+                                delegated_vote.balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        if delegated_vote.vote.nay.is_some() {
+                            format_decimal(
+                                delegated_vote.balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        delegated_vote.conviction,
+                    ));
+                } else {
+                    validators_without_vote.push(
+                        validator_vote.0.display.clone().unwrap_or_else(|| {
+                            get_condensed_address(&validator_vote.0.address, None)
+                        }),
+                    );
+                }
             } else {
                 validators_without_vote.push(
-                    validator
+                    validator_vote
+                        .0
                         .display
                         .clone()
-                        .unwrap_or_else(|| get_condensed_address(&validator.address, None)),
+                        .unwrap_or_else(|| get_condensed_address(&validator_vote.0.address, None)),
                 );
             };
         }

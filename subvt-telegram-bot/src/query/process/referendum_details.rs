@@ -1,6 +1,8 @@
 use crate::query::Query;
 use crate::{MessageType, Messenger, TelegramBot};
 use subvt_governance::polkassembly;
+use subvt_types::substrate::democracy::ReferendumVote;
+use subvt_types::telegram::TelegramChatValidator;
 
 impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_referendum_details_query(
@@ -13,13 +15,22 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             self.messenger.delete_message(chat_id, message_id).await?;
         }
         if let Some(id_str) = &query.parameter {
-            let referendum_id: u32 = id_str.parse()?;
-            if let Some(post) = polkassembly::fetch_referendum_details(referendum_id).await? {
+            let referendum_index: u32 = id_str.parse()?;
+            if let Some(post) = polkassembly::fetch_referendum_details(referendum_index).await? {
                 let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
-                let validator_votes = self
-                    .network_postgres
-                    .get_chat_validator_votes_for_referendum(chat_id, referendum_id)
-                    .await?;
+                let mut chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)> =
+                    vec![];
+                for chat_validator in &chat_validators {
+                    let vote = self
+                        .substrate_client
+                        .get_account_referendum_vote(
+                            &chat_validator.account_id,
+                            referendum_index,
+                            None,
+                        )
+                        .await?;
+                    chat_validator_votes.push((chat_validator.clone(), vote));
+                }
                 self.messenger
                     .send_message(
                         &self.app_postgres,
@@ -27,8 +38,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         chat_id,
                         Box::new(MessageType::ReferendumDetails {
                             post,
-                            chat_validators,
-                            validator_votes,
+                            chat_validator_votes,
                         }),
                     )
                     .await?;
@@ -38,7 +48,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         &self.app_postgres,
                         &self.network_postgres,
                         chat_id,
-                        Box::new(MessageType::ReferendumNotFound(referendum_id)),
+                        Box::new(MessageType::ReferendumNotFound(referendum_index)),
                     )
                     .await?;
             }

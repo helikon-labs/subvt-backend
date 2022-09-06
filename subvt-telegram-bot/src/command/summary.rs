@@ -37,10 +37,11 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 );
                 for open_referendum in &open_referenda {
                     if self
-                        .network_postgres
-                        .get_account_vote_for_referendum(
+                        .substrate_client
+                        .get_account_referendum_vote(
                             &chat_validator.account_id,
                             open_referendum.onchain_link.onchain_referendum_id,
+                            None,
                         )
                         .await?
                         .is_none()

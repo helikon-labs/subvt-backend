@@ -30,6 +30,7 @@ subvt-nft = { path = "../subvt-nft" }
 subvt-plotter = { path = "../subvt-plotter" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
+subvt-substrate-client = { path = "../subvt-substrate-client" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.16.0"
