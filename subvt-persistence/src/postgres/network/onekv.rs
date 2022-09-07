@@ -3,9 +3,7 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use chrono::NaiveDateTime;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
-use subvt_types::onekv::{
-    OneKVCandidateDetails, OneKVCandidateSummary, OneKVNominator, OneKVValidity,
-};
+use subvt_types::onekv::{OneKVCandidate, OneKVCandidateSummary, OneKVNominator, OneKVValidity};
 
 type PostgresCandidateSummary = (
     i32,
@@ -26,12 +24,12 @@ type PostgresCandidateSummary = (
 impl PostgreSQLNetworkStorage {
     pub async fn save_onekv_candidate(
         &self,
-        candidate_details: &OneKVCandidateDetails,
+        candidate: &OneKVCandidate,
         history_record_count: i64,
     ) -> anyhow::Result<i32> {
-        let validator_account_id = AccountId::from_str(&candidate_details.stash_address)?;
-        let kusama_account_id = if !candidate_details.kusama_stash_address.is_empty() {
-            let kusama_account_id = AccountId::from_str(&candidate_details.kusama_stash_address)?;
+        let validator_account_id = AccountId::from_str(&candidate.stash_address)?;
+        let kusama_account_id = if !candidate.kusama_stash_address.is_empty() {
+            let kusama_account_id = AccountId::from_str(&candidate.kusama_stash_address)?;
             Some(kusama_account_id)
         } else {
             None
@@ -46,50 +44,50 @@ impl PostgreSQLNetworkStorage {
         )
             .bind(validator_account_id.to_string())
             .bind(kusama_account_id.map(|account_id| account_id.to_string()))
-            .bind(candidate_details.discovered_at as i64)
-            .bind(candidate_details.inclusion)
-            .bind(candidate_details.commission)
-            .bind(candidate_details.is_active)
-            .bind(&candidate_details.unclaimed_eras.as_ref().map(|v| v.iter().map(|i| *i  as i64).collect::<Vec<i64>>()))
-            .bind(candidate_details.nominated_at.map(|last_valid| last_valid as i64))
-            .bind(candidate_details.offline_accumulated as i64)
-            .bind(candidate_details.offline_since as i64)
-            .bind(&candidate_details.name)
-            .bind(&candidate_details.location)
-            .bind(candidate_details.rank)
-            .bind(candidate_details.is_valid())
-            .bind(candidate_details.fault_count)
-            .bind(candidate_details.democracy_vote_count as i64)
-            .bind(&candidate_details.democracy_votes.iter().map(|i| *i  as i64).collect::<Vec<i64>>())
-            .bind(&candidate_details.council_stake)
-            .bind(&candidate_details.council_votes)
-            .bind(candidate_details.score.as_ref().map(|score| score.updated_at as i64))
-            .bind(candidate_details.score.as_ref().map(|score| score.total))
-            .bind(candidate_details.score.as_ref().map(|score| score.aggregate))
-            .bind(candidate_details.score.as_ref().map(|score| score.inclusion))
-            .bind(candidate_details.score.as_ref().map(|score| score.discovered))
-            .bind(candidate_details.score.as_ref().map(|score| score.nominated))
-            .bind(candidate_details.score.as_ref().map(|score| score.rank))
-            .bind(candidate_details.score.as_ref().map(|score| score.unclaimed))
-            .bind(candidate_details.score.as_ref().map(|score| score.bonded))
-            .bind(candidate_details.score.as_ref().map(|score| score.faults))
-            .bind(candidate_details.score.as_ref().map(|score| score.offline))
-            .bind(candidate_details.score.as_ref().map(|score| score.randomness))
-            .bind(candidate_details.score.as_ref().map(|score| score.span_inclusion))
-            .bind(candidate_details.score.as_ref().map(|score| score.location))
-            .bind(candidate_details.score.as_ref().map(|score| score.council_stake))
-            .bind(candidate_details.score.as_ref().map(|score| score.democracy))
-            .bind(candidate_details.score.as_ref().map(|score| score.asn))
-            .bind(candidate_details.score.as_ref().map(|score| score.country))
-            .bind(candidate_details.score.as_ref().map(|score| score.nominator_stake))
-            .bind(candidate_details.score.as_ref().map(|score| score.provider))
-            .bind(candidate_details.score.as_ref().map(|score| score.region))
+            .bind(candidate.discovered_at as i64)
+            .bind(candidate.inclusion)
+            .bind(candidate.commission)
+            .bind(candidate.is_active)
+            .bind(&candidate.unclaimed_eras.as_ref().map(|v| v.iter().map(|i| *i  as i64).collect::<Vec<i64>>()))
+            .bind(candidate.nominated_at.map(|last_valid| last_valid as i64))
+            .bind(candidate.offline_accumulated as i64)
+            .bind(candidate.offline_since as i64)
+            .bind(&candidate.name)
+            .bind(&candidate.location)
+            .bind(candidate.rank)
+            .bind(candidate.is_valid())
+            .bind(candidate.fault_count)
+            .bind(candidate.democracy_vote_count as i64)
+            .bind(&candidate.democracy_votes.iter().map(|i| *i  as i64).collect::<Vec<i64>>())
+            .bind(&candidate.council_stake)
+            .bind(&candidate.council_votes)
+            .bind(candidate.score.as_ref().map(|score| score.updated_at as i64))
+            .bind(candidate.score.as_ref().map(|score| score.total))
+            .bind(candidate.score.as_ref().map(|score| score.aggregate))
+            .bind(candidate.score.as_ref().map(|score| score.inclusion))
+            .bind(candidate.score.as_ref().map(|score| score.discovered))
+            .bind(candidate.score.as_ref().map(|score| score.nominated))
+            .bind(candidate.score.as_ref().map(|score| score.rank))
+            .bind(candidate.score.as_ref().map(|score| score.unclaimed))
+            .bind(candidate.score.as_ref().map(|score| score.bonded))
+            .bind(candidate.score.as_ref().map(|score| score.faults))
+            .bind(candidate.score.as_ref().map(|score| score.offline))
+            .bind(candidate.score.as_ref().map(|score| score.randomness))
+            .bind(candidate.score.as_ref().map(|score| score.span_inclusion))
+            .bind(candidate.score.as_ref().map(|score| score.location))
+            .bind(candidate.score.as_ref().map(|score| score.council_stake))
+            .bind(candidate.score.as_ref().map(|score| score.democracy))
+            .bind(candidate.score.as_ref().map(|score| score.asn))
+            .bind(candidate.score.as_ref().map(|score| score.country))
+            .bind(candidate.score.as_ref().map(|score| score.nominator_stake))
+            .bind(candidate.score.as_ref().map(|score| score.provider))
+            .bind(candidate.score.as_ref().map(|score| score.region))
             .fetch_one(&self.connection_pool)
             .await?;
 
         // persist validity records and rank events
         let mut transaction = self.connection_pool.begin().await?;
-        for validity in &candidate_details.validity {
+        for validity in &candidate.validity {
             sqlx::query(
                 r#"
                 INSERT INTO sub_onekv_candidate_validity (onekv_id, onekv_candidate_id, validator_account_id, details, is_valid, ty, validity_updated_at)

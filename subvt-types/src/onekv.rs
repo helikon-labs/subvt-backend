@@ -7,40 +7,6 @@ use subvt_proc_macro::Diff;
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OneKVCandidate {
-    #[serde(rename(deserialize = "kusamaStash"))]
-    pub kusama_stash_address: String,
-    #[serde(rename(deserialize = "stash"))]
-    pub stash_address: String,
-    pub score: Option<OneKVScore>,
-}
-
-#[derive(Clone, Debug)]
-pub struct OneKVCandidateSummary {
-    pub record_id: u32,
-    pub discovered_at: u64,
-    pub name: String,
-    pub nominated_at: Option<u64>,
-    pub offline_since: u64,
-    pub rank: Option<u64>,
-    pub fault_count: u64,
-    pub total_score: Option<f64>,
-    pub aggregate_score: Option<f64>,
-    pub validity: Vec<OneKVValidity>,
-    pub location: Option<String>,
-    pub democracy_vote_count: u32,
-    pub council_votes: Vec<String>,
-    pub record_created_at: u64,
-}
-
-impl OneKVCandidateSummary {
-    pub fn is_valid(&self) -> bool {
-        self.validity.iter().all(|validity| validity.is_valid)
-    }
-}
-
-#[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct OneKVCandidateDetails {
     pub identity: OneKVIdentity,
     pub commission: f32,
     pub discovered_at: u64,
@@ -68,7 +34,31 @@ pub struct OneKVCandidateDetails {
     pub council_votes: Vec<String>,
 }
 
-impl OneKVCandidateDetails {
+impl OneKVCandidate {
+    pub fn is_valid(&self) -> bool {
+        self.validity.iter().all(|validity| validity.is_valid)
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct OneKVCandidateSummary {
+    pub record_id: u32,
+    pub discovered_at: u64,
+    pub name: String,
+    pub nominated_at: Option<u64>,
+    pub offline_since: u64,
+    pub rank: Option<u64>,
+    pub fault_count: u64,
+    pub total_score: Option<f64>,
+    pub aggregate_score: Option<f64>,
+    pub validity: Vec<OneKVValidity>,
+    pub location: Option<String>,
+    pub democracy_vote_count: u32,
+    pub council_votes: Vec<String>,
+    pub record_created_at: u64,
+}
+
+impl OneKVCandidateSummary {
     pub fn is_valid(&self) -> bool {
         self.validity.iter().all(|validity| validity.is_valid)
     }

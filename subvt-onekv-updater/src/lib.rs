@@ -5,7 +5,7 @@ use lazy_static::lazy_static;
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
-use subvt_types::onekv::{OneKVCandidate, OneKVCandidateDetails, OneKVNominator};
+use subvt_types::onekv::{OneKVCandidate, OneKVNominator};
 
 mod metrics;
 
@@ -44,62 +44,20 @@ impl OneKVUpdater {
         metrics::candidate_list_fetch_time_ms()
             .observe(candidate_list_start.elapsed().as_millis() as f64);
         metrics::last_run_candidate_count().set(candidates.len() as i64);
-        log::info!(
-            "Fetched {} candidates. Fetch candidate details.",
-            candidates.len()
-        );
+        log::info!("Fetched {} candidates. Save them.", candidates.len());
 
         // get details for each candidate
-        let mut candidate_details_success_count: usize = 0;
         for (index, candidate) in candidates.iter().enumerate() {
-            let candidate_details_start = std::time::Instant::now();
-            let response_result = self
-                .http_client
-                .get(&format!(
-                    "{}{}",
-                    CONFIG.onekv.candidate_details_endpoint, candidate.stash_address
-                ))
-                .send()
-                .await;
-            metrics::candidate_details_fetch_time_ms()
-                .observe(candidate_details_start.elapsed().as_millis() as f64);
-            let response = match response_result {
-                Ok(response) => response,
-                Err(error) => {
-                    log::error!(
-                        "Error while fetching details for candidate {}:{:?}",
-                        candidate.stash_address,
-                        error
-                    );
-                    continue;
-                }
-            };
-
-            let candidate_details_result: reqwest::Result<OneKVCandidateDetails> =
-                response.json().await;
-            let mut candidate_details = match candidate_details_result {
-                Ok(candidate_details) => candidate_details,
-                Err(error) => {
-                    log::error!(
-                        "Error while deserializing details JSON for candidate {}:{:?}",
-                        candidate.stash_address,
-                        error
-                    );
-                    continue;
-                }
-            };
-            candidate_details.score = candidate.score.clone();
             let save_result = postgres
                 .save_onekv_candidate(
-                    &candidate_details,
+                    candidate,
                     CONFIG.onekv.candidate_history_record_count as i64,
                 )
                 .await;
             match save_result {
                 Ok(_) => {
-                    candidate_details_success_count += 1;
                     log::info!(
-                        "Fetched and persisted candidate {} of {} :: {}.",
+                        "Persisted candidate {} of {} :: {}.",
                         index + 1,
                         candidates.len(),
                         candidate.stash_address,
@@ -114,10 +72,6 @@ impl OneKVUpdater {
                 }
             }
         }
-        metrics::last_run_candidate_details_fetch_success_count()
-            .set(candidate_details_success_count as i64);
-        metrics::last_run_candidate_details_fetch_error_count()
-            .set((candidates.len() - candidate_details_success_count) as i64);
         log::info!("1KV update completed.");
         Ok(())
     }
@@ -186,8 +140,6 @@ impl Service for OneKVUpdater {
             metrics::last_run_timestamp_ms().set(chrono::Utc::now().timestamp_millis());
             if let Err(error) = self.update_candidates(&postgres).await {
                 metrics::last_run_candidate_count().set(0);
-                metrics::last_run_candidate_details_fetch_success_count().set(0);
-                metrics::last_run_candidate_details_fetch_error_count().set(0);
                 log::error!("1KV candidates update has failed: {:?}", error);
             }
             log::info!("Update 1KV nominators.");

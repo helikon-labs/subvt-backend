@@ -181,7 +181,7 @@ pub struct NotificationProcessorConfig {
     pub email_smtp_server_url: String,
     pub email_smtp_server_tls_port: u16,
     // Apple Push Notification Service
-    pub apns_key_location: String,
+    pub apns_key_path: String,
     pub apns_key_id: String,
     pub apns_team_id: String,
     pub apns_topic: String,
