@@ -20,7 +20,6 @@ use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::Service;
-use subvt_substrate_client::SubstrateClient;
 use subvt_types::app::{
     NotificationChannel, NotificationPeriodType, NotificationTypeCode, User,
     UserNotificationChannel,
@@ -210,8 +209,6 @@ pub struct TelegramBot<M: Messenger + Send + Sync> {
     network_postgres: PostgreSQLNetworkStorage,
     /// SubVT application deployment Redis helper.
     redis: Redis,
-    /// Substrate client.
-    substrate_client: SubstrateClient,
     /// Telegram API helper.
     api: AsyncApi,
     /// Telegram messenger struct.
@@ -224,14 +221,12 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
         let network_postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
-        let substrate_client = SubstrateClient::new(&CONFIG).await?;
         let redis = Redis::new()?;
         let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
         Ok(TelegramBot {
             app_postgres,
             network_postgres,
             redis,
-            substrate_client,
             api,
             messenger: MessengerImpl::new()?,
         })

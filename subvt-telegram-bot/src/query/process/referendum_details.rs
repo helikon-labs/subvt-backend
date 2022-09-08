@@ -1,6 +1,7 @@
 use crate::query::Query;
-use crate::{MessageType, Messenger, TelegramBot};
+use crate::{MessageType, Messenger, TelegramBot, CONFIG};
 use subvt_governance::polkassembly;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::telegram::TelegramChatValidator;
 
@@ -20,9 +21,9 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
                 let mut chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)> =
                     vec![];
+                let substrate_client = SubstrateClient::new(&CONFIG).await?;
                 for chat_validator in &chat_validators {
-                    let vote = self
-                        .substrate_client
+                    let vote = substrate_client
                         .get_account_referendum_vote(
                             &chat_validator.account_id,
                             referendum_index,
