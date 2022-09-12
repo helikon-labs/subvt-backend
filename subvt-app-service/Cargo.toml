@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.63.0"
 
 [dependencies]
-actix-http = "3.2.1"
+actix-http = "3.2.2"
 actix-service = "2.0.2"
 actix-web = "4.1.0"
 anyhow = "1.0"
