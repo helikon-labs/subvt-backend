@@ -35,4 +35,4 @@ subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.16.0"
 thiserror = "1.0"
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.21", features = ["full"] }
