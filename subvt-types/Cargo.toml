@@ -27,7 +27,7 @@ pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch
 pallet-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.28" }
 parity-scale-codec = { version = "3.1.5", default-features = false, features = ["derive", "full"] }
-polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.28" }
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.29" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.28" }
 polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.28" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.28" }
