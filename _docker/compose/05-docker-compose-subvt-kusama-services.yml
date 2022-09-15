@@ -255,6 +255,8 @@ services:
       # plotter
       - SUBVT__PLOTTER__TMP_DIR_PATH=/subvt/tmp
       - SUBVT__PLOTTER__FONT_DIR_PATH=/subvt/font
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
 networks:
   subvt_kusama:
     name: subvt_kusama
