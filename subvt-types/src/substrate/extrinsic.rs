@@ -65,7 +65,7 @@ impl MultisigExtrinsic {
                     ),
                     call: Box::new(get_argument_primitive!(&arguments[3], Call)),
                     store_call: get_argument_primitive!(&arguments[4], Bool),
-                    max_weight: get_argument_primitive!(&arguments[5], Weight),
+                    max_weight: get_argument_primitive!(&arguments[5], Weight).ref_time(),
                 }))
             }
             "as_multi_threshold_1" => {

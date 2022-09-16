@@ -753,7 +753,9 @@ impl Argument {
                             name, decode_error
                         ))),
                     }
-                } else if name == "<T::Lookup as StaticLookup>::Source" {
+                } else if name == "<T::Lookup as StaticLookup>::Source"
+                    || name == "AccountIdLookupOf<T>"
+                {
                     if metadata.is_signer_address_multi(chain) {
                         match MultiAddress::decode(&mut *bytes) {
                             Ok(multi_address) => {
