@@ -17,7 +17,7 @@ pub struct OneKVCandidate {
     pub kusama_stash_address: String,
     pub name: String,
     pub nominated_at: Option<u64>,
-    pub offline_accumulated: u64,
+    pub offline_accumulated: i64,
     pub offline_since: u64,
     pub rank: i64,
     #[serde(rename(deserialize = "faults"))]

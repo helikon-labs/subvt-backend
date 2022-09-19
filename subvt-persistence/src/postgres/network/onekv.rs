@@ -50,7 +50,7 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.is_active)
             .bind(&candidate.unclaimed_eras.as_ref().map(|v| v.iter().map(|i| *i  as i64).collect::<Vec<i64>>()))
             .bind(candidate.nominated_at.map(|last_valid| last_valid as i64))
-            .bind(candidate.offline_accumulated as i64)
+            .bind(candidate.offline_accumulated)
             .bind(candidate.offline_since as i64)
             .bind(&candidate.name)
             .bind(&candidate.location)

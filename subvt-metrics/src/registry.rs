@@ -18,7 +18,7 @@ fn register<C: Collector + 'static>(c: C) -> prometheus::Result<()> {
 }
 
 pub fn register_gauge(prefix: &str, name: &str, help: &str) -> prometheus::Result<Gauge> {
-    let gauge = prometheus::Gauge::new(format!("{}::{}", prefix, name), help)?;
+    let gauge = Gauge::new(format!("{}::{}", prefix, name), help)?;
     register(gauge.clone())?;
     Ok(gauge)
 }
@@ -52,7 +52,7 @@ pub fn register_int_counter(
     name: &str,
     help: &str,
 ) -> prometheus::Result<IntCounter> {
-    let gauge = prometheus::IntCounter::new(format!("{}::{}", prefix, name), help)?;
+    let gauge = IntCounter::new(format!("{}::{}", prefix, name), help)?;
     register(gauge.clone())?;
     Ok(gauge)
 }
@@ -70,7 +70,7 @@ pub fn register_int_counter_vec(
 }
 
 pub fn register_int_gauge(prefix: &str, name: &str, help: &str) -> prometheus::Result<IntGauge> {
-    let gauge = prometheus::IntGauge::new(format!("{}::{}", prefix, name), help)?;
+    let gauge = IntGauge::new(format!("{}::{}", prefix, name), help)?;
     register(gauge.clone())?;
     Ok(gauge)
 }
@@ -81,7 +81,7 @@ pub fn register_histogram(
     help: &str,
     buckets: Vec<f64>,
 ) -> prometheus::Result<Histogram> {
-    let histogram = prometheus::Histogram::with_opts(
+    let histogram = Histogram::with_opts(
         HistogramOpts::new(format!("{}::{}", prefix, name), help).buckets(buckets),
     )?;
     register(histogram.clone())?;
@@ -95,7 +95,7 @@ pub fn register_histogram_vec(
     label_names: &[&str],
     buckets: Vec<f64>,
 ) -> prometheus::Result<HistogramVec> {
-    let gauge = prometheus::HistogramVec::new(
+    let gauge = HistogramVec::new(
         HistogramOpts::new(format!("{}::{}", prefix, name), help).buckets(buckets),
         label_names,
     )?;

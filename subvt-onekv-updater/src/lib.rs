@@ -34,19 +34,24 @@ impl Default for OneKVUpdater {
 impl OneKVUpdater {
     async fn update_candidates(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         log::info!("Fetch candidate list.");
+        metrics::last_candidate_list_fetch_timestamp_ms()
+            .set(chrono::Utc::now().timestamp_millis());
         let candidate_list_start = std::time::Instant::now();
         let response = self
             .http_client
             .get(&CONFIG.onekv.candidate_list_endpoint)
             .send()
             .await?;
-        let candidates: Vec<OneKVCandidate> = response.json().await?;
         metrics::candidate_list_fetch_time_ms()
             .observe(candidate_list_start.elapsed().as_millis() as f64);
-        metrics::last_run_candidate_count().set(candidates.len() as i64);
+        let candidates: Vec<OneKVCandidate> = response.json().await?;
+        metrics::last_candidate_list_fetch_success_status().set(1);
+        metrics::last_candidate_count().set(candidates.len() as i64);
         log::info!("Fetched {} candidates. Save them.", candidates.len());
 
         // get details for each candidate
+        let mut success_count = 0;
+        let mut error_count = 0;
         for (index, candidate) in candidates.iter().enumerate() {
             let save_result = postgres
                 .save_onekv_candidate(
@@ -56,6 +61,7 @@ impl OneKVUpdater {
                 .await;
             match save_result {
                 Ok(_) => {
+                    success_count += 1;
                     log::info!(
                         "Persisted candidate {} of {} :: {}.",
                         index + 1,
@@ -64,6 +70,7 @@ impl OneKVUpdater {
                     );
                 }
                 Err(error) => {
+                    error_count += 1;
                     log::error!(
                         "Error while persisting details of candidate {}:{:?}",
                         candidate.stash_address,
@@ -72,6 +79,8 @@ impl OneKVUpdater {
                 }
             }
         }
+        metrics::last_candidate_persist_success_count().set(success_count);
+        metrics::last_candidate_persist_error_count().set(error_count);
         log::info!("1KV update completed.");
         Ok(())
     }
@@ -80,6 +89,8 @@ impl OneKVUpdater {
 impl OneKVUpdater {
     async fn update_nominators(&self, postgres: &PostgreSQLNetworkStorage) -> anyhow::Result<()> {
         log::info!("Fetch nominator list.");
+        metrics::last_nominator_list_fetch_timestamp_ms()
+            .set(chrono::Utc::now().timestamp_millis());
         let start = std::time::Instant::now();
         let response = self
             .http_client
@@ -89,7 +100,11 @@ impl OneKVUpdater {
         metrics::nominator_list_fetch_time_ms().observe(start.elapsed().as_millis() as f64);
         let nominators: Vec<OneKVNominator> = response.json().await?;
         log::info!("Fetched {} nominators.", nominators.len());
-        metrics::last_run_nominator_count().set(nominators.len() as i64);
+        metrics::last_nominator_list_fetch_success_status().set(1);
+        metrics::last_nominator_count().set(nominators.len() as i64);
+
+        let mut success_count = 0;
+        let mut error_count = 0;
         for (index, nominator) in nominators.iter().enumerate() {
             let save_result = postgres
                 .save_onekv_nominator(
@@ -99,6 +114,7 @@ impl OneKVUpdater {
                 .await;
             match save_result {
                 Ok(_) => {
+                    success_count += 1;
                     log::info!(
                         "Persisted nominator {} of {} :: {}.",
                         index + 1,
@@ -107,6 +123,7 @@ impl OneKVUpdater {
                     );
                 }
                 Err(error) => {
+                    error_count += 1;
                     log::error!(
                         "Error while persisting nominator {}:{:?}",
                         nominator.address,
@@ -115,6 +132,8 @@ impl OneKVUpdater {
                 }
             }
         }
+        metrics::last_nominator_persist_success_count().set(success_count);
+        metrics::last_nominator_persist_error_count().set(error_count);
         Ok(())
     }
 }
@@ -139,12 +158,14 @@ impl Service for OneKVUpdater {
             log::info!("Update 1KV candidates.");
             metrics::last_run_timestamp_ms().set(chrono::Utc::now().timestamp_millis());
             if let Err(error) = self.update_candidates(&postgres).await {
-                metrics::last_run_candidate_count().set(0);
+                metrics::last_candidate_count().set(0);
+                metrics::last_candidate_list_fetch_success_status().set(0);
                 log::error!("1KV candidates update has failed: {:?}", error);
             }
             log::info!("Update 1KV nominators.");
             if let Err(error) = self.update_nominators(&postgres).await {
-                metrics::last_run_nominator_count().set(0);
+                metrics::last_nominator_count().set(0);
+                metrics::last_nominator_list_fetch_success_status().set(0);
                 log::error!("1KV nominators update has failed: {:?}", error);
             }
             log::info!("Sleep for {} seconds.", CONFIG.onekv.refresh_seconds);
