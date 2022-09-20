@@ -1,1 +1,1 @@
-⏸ {{ validator_display }} is not anymore active
+⏸ {{ validator_display }} is no longer active

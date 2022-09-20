@@ -1,2 +1,2 @@
 {{ validator_display }}
-⏸ is not anymore an active validator.
+⏸ is no longer an active validator.
