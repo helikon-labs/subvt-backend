@@ -25,7 +25,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 17,
-  "iteration": 1663656815902,
+  "iteration": 1663674243108,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -2358,7 +2358,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 4,
         "x": 0,
         "y": 43
       },
@@ -2392,6 +2392,69 @@
         }
       ],
       "title": "Candidate List",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeAsIsoNoDateIfToday"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 4,
+        "y": 43
+      },
+      "id": 112,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_candidate_list_successful_fetch_timestamp_ms",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Candidate List Success",
       "type": "stat"
     },
     {
@@ -2437,7 +2500,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 3,
+        "x": 8,
         "y": 43
       },
       "id": 104,
@@ -2499,7 +2562,7 @@
       "gridPos": {
         "h": 3,
         "w": 3,
-        "x": 7,
+        "x": 12,
         "y": 43
       },
       "id": 38,
@@ -2561,7 +2624,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 10,
+        "x": 15,
         "y": 43
       },
       "id": 105,
@@ -2627,7 +2690,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 14,
+        "x": 19,
         "y": 43
       },
       "id": 106,
@@ -2688,7 +2751,7 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 3,
+        "w": 4,
         "x": 0,
         "y": 46
       },
@@ -2722,6 +2785,69 @@
         }
       ],
       "title": "Nominator List",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeAsIsoNoDateIfToday"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 4,
+        "y": 46
+      },
+      "id": 113,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_list_successful_fetch_timestamp_ms",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominator List Success",
       "type": "stat"
     },
     {
@@ -2767,7 +2893,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 3,
+        "x": 8,
         "y": 46
       },
       "id": 108,
@@ -2829,7 +2955,7 @@
       "gridPos": {
         "h": 3,
         "w": 3,
-        "x": 7,
+        "x": 12,
         "y": 46
       },
       "id": 109,
@@ -2891,7 +3017,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 10,
+        "x": 15,
         "y": 46
       },
       "id": 110,
@@ -2957,7 +3083,7 @@
       "gridPos": {
         "h": 3,
         "w": 4,
-        "x": 14,
+        "x": 19,
         "y": 46
       },
       "id": 111,
@@ -3360,8 +3486,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3426,8 +3551,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3491,8 +3615,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3557,8 +3680,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3640,8 +3762,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3701,8 +3822,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               }
             ]
           }
@@ -3766,8 +3886,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3832,8 +3951,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -3942,6 +4060,6 @@
   "timezone": "",
   "title": "SubVT Network",
   "uid": "1-0ZgEE7z",
-  "version": 11,
+  "version": 17,
   "weekStart": ""
 }

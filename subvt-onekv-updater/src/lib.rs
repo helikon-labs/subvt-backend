@@ -164,12 +164,16 @@ impl Service for OneKVUpdater {
             if let Err(error) = self.update_candidates(&postgres).await {
                 metrics::last_candidate_count().set(0);
                 metrics::last_candidate_list_fetch_success_status().set(0);
+                metrics::last_candidate_persist_success_count().set(0);
+                metrics::last_candidate_persist_error_count().set(0);
                 log::error!("1KV candidates update has failed: {:?}", error);
             }
             log::info!("Update 1KV nominators.");
             if let Err(error) = self.update_nominators(&postgres).await {
                 metrics::last_nominator_count().set(0);
                 metrics::last_nominator_list_fetch_success_status().set(0);
+                metrics::last_nominator_persist_success_count().set(0);
+                metrics::last_nominator_persist_error_count().set(0);
                 log::error!("1KV nominators update has failed: {:?}", error);
             }
             log::info!("Sleep for {} seconds.", CONFIG.onekv.refresh_seconds);
