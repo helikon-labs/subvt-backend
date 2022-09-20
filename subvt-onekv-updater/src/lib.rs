@@ -46,6 +46,8 @@ impl OneKVUpdater {
             .observe(candidate_list_start.elapsed().as_millis() as f64);
         let candidates: Vec<OneKVCandidate> = response.json().await?;
         metrics::last_candidate_list_fetch_success_status().set(1);
+        metrics::last_candidate_list_successful_fetch_timestamp_ms()
+            .set(chrono::Utc::now().timestamp_millis());
         metrics::last_candidate_count().set(candidates.len() as i64);
         log::info!("Fetched {} candidates. Save them.", candidates.len());
 
@@ -101,6 +103,8 @@ impl OneKVUpdater {
         let nominators: Vec<OneKVNominator> = response.json().await?;
         log::info!("Fetched {} nominators.", nominators.len());
         metrics::last_nominator_list_fetch_success_status().set(1);
+        metrics::last_nominator_list_successful_fetch_timestamp_ms()
+            .set(chrono::Utc::now().timestamp_millis());
         metrics::last_nominator_count().set(nominators.len() as i64);
 
         let mut success_count = 0;

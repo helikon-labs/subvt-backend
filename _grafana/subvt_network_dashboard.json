@@ -25,7 +25,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 17,
-  "iteration": 1662553305633,
+  "iteration": 1663656815902,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -2141,6 +2141,68 @@
         "type": "prometheus",
         "uid": "${prometheus_data_source}"
       },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeAsIsoNoDateIfToday"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 40
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_run_timestamp_ms",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Last Run",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -2162,8 +2224,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 12,
-        "x": 0,
+        "w": 11,
+        "x": 3,
         "y": 40
       },
       "id": 30,
@@ -2229,8 +2291,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 12,
-        "x": 12,
+        "w": 10,
+        "x": 14,
         "y": 40
       },
       "id": 32,
@@ -2300,7 +2362,7 @@
         "x": 0,
         "y": 43
       },
-      "id": 34,
+      "id": 103,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -2323,13 +2385,91 @@
             "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
-          "expr": "subvt_onekv_updater::last_run_timestamp_ms",
+          "expr": "subvt_onekv_updater::last_candidate_list_fetch_timestamp_ms",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Last Run",
+      "title": "Candidate List",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "ERR"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 3,
+        "y": 43
+      },
+      "id": 104,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_candidate_list_fetch_success_status",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Candidate List Status",
       "type": "stat"
     },
     {
@@ -2358,8 +2498,8 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 2,
-        "x": 3,
+        "w": 3,
+        "x": 7,
         "y": 43
       },
       "id": 38,
@@ -2385,13 +2525,471 @@
             "uid": "${prometheus_data_source}"
           },
           "exemplar": true,
-          "expr": "subvt_onekv_updater::last_run_candidate_count",
+          "expr": "subvt_onekv_updater::last_candidate_count",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "title": "Total",
+      "title": "Candidates",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 10,
+        "y": 43
+      },
+      "id": 105,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_candidate_persist_success_count",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Candidates Persisted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 14,
+        "y": 43
+      },
+      "id": 106,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_candidate_persist_error_count",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Candidates Failed",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeAsIsoNoDateIfToday"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 0,
+        "y": 46
+      },
+      "id": 107,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_list_fetch_timestamp_ms",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominator List",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "ERR"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "OK"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 3,
+        "y": 46
+      },
+      "id": 108,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_list_fetch_success_status",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominator List Status",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 7,
+        "y": 46
+      },
+      "id": 109,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_count",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominators",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 10,
+        "y": 46
+      },
+      "id": 110,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_persist_success_count",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominators Persisted",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_data_source}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 14,
+        "y": 46
+      },
+      "id": 111,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "8.5.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_data_source}"
+          },
+          "exemplar": true,
+          "expr": "subvt_onekv_updater::last_nominator_persist_error_count",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Nominators Failed",
       "type": "stat"
     },
     {
@@ -2404,7 +3002,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 46
+        "y": 49
       },
       "id": 81,
       "panels": [],
@@ -2439,7 +3037,7 @@
         "h": 3,
         "w": 3,
         "x": 0,
-        "y": 47
+        "y": 50
       },
       "id": 83,
       "options": {
@@ -2503,7 +3101,7 @@
         "h": 3,
         "w": 3,
         "x": 3,
-        "y": 47
+        "y": 50
       },
       "id": 88,
       "options": {
@@ -2568,7 +3166,7 @@
         "h": 3,
         "w": 3,
         "x": 6,
-        "y": 47
+        "y": 50
       },
       "id": 85,
       "options": {
@@ -2630,7 +3228,7 @@
         "h": 3,
         "w": 3,
         "x": 9,
-        "y": 47
+        "y": 50
       },
       "id": 87,
       "options": {
@@ -2695,7 +3293,7 @@
         "h": 3,
         "w": 3,
         "x": 12,
-        "y": 47
+        "y": 50
       },
       "id": 89,
       "options": {
@@ -2739,7 +3337,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 53
       },
       "id": 64,
       "panels": [],
@@ -2778,7 +3376,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 51
+        "y": 54
       },
       "id": 66,
       "options": {
@@ -2844,7 +3442,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 51
+        "y": 54
       },
       "id": 67,
       "options": {
@@ -2905,7 +3503,7 @@
         "h": 3,
         "w": 8,
         "x": 8,
-        "y": 51
+        "y": 54
       },
       "id": 69,
       "options": {
@@ -2971,7 +3569,7 @@
         "h": 3,
         "w": 8,
         "x": 16,
-        "y": 51
+        "y": 54
       },
       "id": 70,
       "options": {
@@ -3020,7 +3618,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 54
+        "y": 57
       },
       "id": 72,
       "panels": [],
@@ -3054,7 +3652,7 @@
         "h": 3,
         "w": 4,
         "x": 0,
-        "y": 55
+        "y": 58
       },
       "id": 75,
       "options": {
@@ -3115,7 +3713,7 @@
         "h": 3,
         "w": 4,
         "x": 4,
-        "y": 55
+        "y": 58
       },
       "id": 74,
       "options": {
@@ -3184,7 +3782,7 @@
         "h": 3,
         "w": 4,
         "x": 8,
-        "y": 55
+        "y": 58
       },
       "id": 77,
       "options": {
@@ -3251,7 +3849,7 @@
         "h": 3,
         "w": 12,
         "x": 12,
-        "y": 55
+        "y": 58
       },
       "id": 79,
       "options": {
@@ -3344,6 +3942,6 @@
   "timezone": "",
   "title": "SubVT Network",
   "uid": "1-0ZgEE7z",
-  "version": 10,
+  "version": 11,
   "weekStart": ""
 }
