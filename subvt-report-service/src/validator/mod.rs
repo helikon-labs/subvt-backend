@@ -4,8 +4,10 @@ use serde::Deserialize;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
-use subvt_types::report::{ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport};
-use subvt_types::subvt::ValidatorSummary;
+use subvt_types::report::{
+    BlockSummary, ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
+};
+use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
 fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, HttpResponse> {
     let account_id = match AccountId::from_str(ss58_address_or_account_id) {
@@ -19,6 +21,34 @@ fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, Ht
         },
     };
     Ok(account_id)
+}
+
+fn get_finalized_block_summary(
+    data: &web::Data<ServiceState>,
+) -> Result<BlockSummary, HttpResponse> {
+    match data.finalized_block_summary.read() {
+        Ok(block_summary) => Ok((*block_summary).clone()),
+        Err(_) => Err(HttpResponse::InternalServerError().json(ServiceError::from(
+            "Internal Error: Cannot get finalized block.",
+        ))),
+    }
+}
+
+fn get_validator_list(
+    data: &web::Data<ServiceState>,
+    is_active: bool,
+) -> Result<Vec<ValidatorSummary>, HttpResponse> {
+    let validator_list_lock = if is_active {
+        &data.active_validator_list
+    } else {
+        &data.inactive_validator_list
+    };
+    match validator_list_lock.read() {
+        Ok(list) => Ok((*list).clone()),
+        Err(_) => Err(HttpResponse::InternalServerError().json(ServiceError::from(
+            "Internal Error: Cannot get validator list.",
+        ))),
+    }
 }
 
 #[derive(Deserialize)]
@@ -76,31 +106,44 @@ pub(crate) async fn validator_details_service(
 
 #[get("/validator/list")]
 pub(crate) async fn validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
-    let finalized_block = data.redis.get_finalized_block_summary().await?;
-    let mut validators = data
-        .redis
-        .get_validator_list(finalized_block.number, true)
-        .await?;
-    let mut inactive_validators = data
-        .redis
-        .get_validator_list(finalized_block.number, false)
-        .await?;
-    validators.append(&mut inactive_validators);
+    let finalized_block = match get_finalized_block_summary(&data) {
+        Ok(block_summary) => block_summary,
+        Err(response) => return Ok(response),
+    };
+    let mut active_validator_list = {
+        match get_validator_list(&data, true) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
+    let mut inactive_validator_list = {
+        match get_validator_list(&data, false) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
+    active_validator_list.append(&mut inactive_validator_list);
     Ok(HttpResponse::Ok().json(ValidatorListReport {
         finalized_block,
-        validators,
+        validators: active_validator_list,
     }))
 }
 
 #[get("/validator/list/active")]
 pub(crate) async fn active_validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
-    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    let finalized_block = match get_finalized_block_summary(&data) {
+        Ok(block_summary) => block_summary,
+        Err(response) => return Ok(response),
+    };
+    let active_validator_list = {
+        match get_validator_list(&data, true) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
     Ok(HttpResponse::Ok().json(ValidatorListReport {
-        finalized_block: finalized_block.clone(),
-        validators: data
-            .redis
-            .get_validator_list(finalized_block.number, true)
-            .await?,
+        finalized_block,
+        validators: active_validator_list,
     }))
 }
 
@@ -108,12 +151,54 @@ pub(crate) async fn active_validator_list_service(data: web::Data<ServiceState>)
 pub(crate) async fn inactive_validator_list_service(
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
-    let finalized_block = data.redis.get_finalized_block_summary().await?;
+    let finalized_block = match get_finalized_block_summary(&data) {
+        Ok(block_summary) => block_summary,
+        Err(response) => return Ok(response),
+    };
+    let inactive_validator_list = {
+        match get_validator_list(&data, false) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
     Ok(HttpResponse::Ok().json(ValidatorListReport {
-        finalized_block: finalized_block.clone(),
-        validators: data
-            .redis
-            .get_validator_list(finalized_block.number, false)
-            .await?,
+        finalized_block,
+        validators: inactive_validator_list,
     }))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct ValidatorSearchQueryParameters {
+    query: String,
+}
+
+#[get("/validator/search")]
+pub(crate) async fn validator_search_service(
+    query: web::Query<ValidatorSearchQueryParameters>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let mut active_validator_list = {
+        match get_validator_list(&data, true) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
+    let mut inactive_validator_list = {
+        match get_validator_list(&data, false) {
+            Ok(list) => list,
+            Err(response) => return Ok(response),
+        }
+    };
+    active_validator_list.append(&mut inactive_validator_list);
+    let list: Vec<ValidatorSearchSummary> = active_validator_list
+        .iter()
+        .filter_map(|validator_summary| {
+            if validator_summary.filter(&query.query) {
+                Some(ValidatorSearchSummary::from(validator_summary))
+            } else {
+                None
+            }
+        })
+        .collect();
+    Ok(HttpResponse::Ok().json(list))
 }

@@ -180,6 +180,28 @@ impl From<&ValidatorDetails> for ValidatorSummary {
     }
 }
 
+impl ValidatorSummary {
+    pub fn filter(&self, query: &str) -> bool {
+        let query = query.to_lowercase();
+        self.address.to_lowercase().contains(&query)
+            || self
+                .display
+                .as_ref()
+                .map(|display| display.to_lowercase().contains(&query))
+                .unwrap_or(false)
+            || self
+                .parent_display
+                .as_ref()
+                .map(|display| display.to_lowercase().contains(&query))
+                .unwrap_or(false)
+            || self
+                .child_display
+                .as_ref()
+                .map(|display| display.to_lowercase().contains(&query))
+                .unwrap_or(false)
+    }
+}
+
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct ValidatorListUpdate {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -259,6 +281,30 @@ impl From<&ValidatorDetails> for ValidatorNominationSummary {
             active_nomination_total,
             inactive_nominator_count,
             inactive_nomination_total,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct ValidatorSearchSummary {
+    pub address: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_display: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub child_display: Option<String>,
+    pub confirmed: bool,
+}
+
+impl From<&ValidatorSummary> for ValidatorSearchSummary {
+    fn from(validator_summary: &ValidatorSummary) -> ValidatorSearchSummary {
+        ValidatorSearchSummary {
+            address: validator_summary.address.clone(),
+            display: validator_summary.display.clone(),
+            parent_display: validator_summary.parent_display.clone(),
+            child_display: validator_summary.child_display.clone(),
+            confirmed: validator_summary.confirmed,
         }
     }
 }

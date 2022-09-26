@@ -6875,6 +6875,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
+ "redis",
  "serde",
  "serde_json",
  "subvt-config",
