@@ -287,6 +287,7 @@ impl From<&ValidatorDetails> for ValidatorNominationSummary {
 
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct ValidatorSearchSummary {
+    pub account_id: AccountId,
     pub address: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub display: Option<String>,
@@ -303,6 +304,7 @@ pub struct ValidatorSearchSummary {
 impl From<&ValidatorSummary> for ValidatorSearchSummary {
     fn from(validator_summary: &ValidatorSummary) -> ValidatorSearchSummary {
         ValidatorSearchSummary {
+            account_id: validator_summary.account_id,
             address: validator_summary.address.clone(),
             display: validator_summary.display.clone(),
             parent_display: validator_summary.parent_display.clone(),
