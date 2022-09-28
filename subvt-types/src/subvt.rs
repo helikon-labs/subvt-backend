@@ -295,6 +295,9 @@ pub struct ValidatorSearchSummary {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub child_display: Option<String>,
     pub confirmed: bool,
+    pub inactive_nominations: InactiveNominationsSummary,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub validator_stake: Option<ValidatorStakeSummary>,
 }
 
 impl From<&ValidatorSummary> for ValidatorSearchSummary {
@@ -305,6 +308,8 @@ impl From<&ValidatorSummary> for ValidatorSearchSummary {
             parent_display: validator_summary.parent_display.clone(),
             child_display: validator_summary.child_display.clone(),
             confirmed: validator_summary.confirmed,
+            inactive_nominations: validator_summary.inactive_nominations.clone(),
+            validator_stake: validator_summary.validator_stake.clone(),
         }
     }
 }
