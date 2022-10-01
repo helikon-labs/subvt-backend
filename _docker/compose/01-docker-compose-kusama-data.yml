@@ -9,7 +9,7 @@ services:
     entrypoint:
       - "/usr/local/bin/subvt-postgres-entrypoint.sh"
       - "-c"
-      - "max_connections=100"
+      - "max_connections=500"
       - "-c"
       - "shared_buffers=4GB"
       - "-c"
