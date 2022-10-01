@@ -14,7 +14,7 @@ use std::sync::Arc;
 use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
-use subvt_types::app::{Network, NotificationChannel};
+use subvt_types::app::{notification::NotificationChannel, Network};
 
 mod content;
 pub(crate) mod metrics;

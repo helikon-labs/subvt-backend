@@ -4,7 +4,7 @@ use subvt_types::app::event::democracy::{
     DemocracyPassedEvent, DemocracyProposedEvent, DemocracySecondedEvent, DemocracyStartedEvent,
     DemocracyVotedEvent, VoteThreshold,
 };
-use subvt_types::app::{Network, Notification};
+use subvt_types::app::{notification::Notification, Network};
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::get_condensed_address;
 use tera::Context;

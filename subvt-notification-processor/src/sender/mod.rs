@@ -1,6 +1,6 @@
 //! Notification sender trait. Implemented by senders of different notification channels.
 use async_trait::async_trait;
-use subvt_types::app::{Notification, NotificationChannel};
+use subvt_types::app::notification::{Notification, NotificationChannel};
 
 pub mod apns;
 pub mod email;

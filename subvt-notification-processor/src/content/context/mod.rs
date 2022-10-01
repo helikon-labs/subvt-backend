@@ -28,7 +28,10 @@ use crate::content::context::{
     validator_active::set_validator_active_context,
     validator_chilled::set_validator_chilled_context,
 };
-use subvt_types::app::{Network, Notification, NotificationTypeCode};
+use subvt_types::app::{
+    notification::{Notification, NotificationTypeCode},
+    Network,
+};
 use tera::Context;
 
 mod basic;

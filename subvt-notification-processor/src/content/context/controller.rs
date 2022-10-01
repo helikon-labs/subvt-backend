@@ -1,5 +1,5 @@
 use subvt_types::app::extrinsic::SetControllerExtrinsic;
-use subvt_types::app::{Network, Notification};
+use subvt_types::app::{notification::Notification, Network};
 use subvt_utility::text::get_condensed_address;
 use tera::Context;
 

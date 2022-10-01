@@ -1,4 +1,4 @@
-use subvt_types::app::{app_event, Notification};
+use subvt_types::app::{app_event, notification::Notification};
 use tera::Context;
 
 pub(crate) fn set_onekv_validity_changed_context(

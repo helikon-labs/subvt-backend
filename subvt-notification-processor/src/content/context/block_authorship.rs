@@ -1,4 +1,4 @@
-use subvt_types::app::{Block, Notification};
+use subvt_types::app::{notification::Notification, Block};
 use tera::Context;
 
 pub(crate) fn set_block_authorship_grouped_context(

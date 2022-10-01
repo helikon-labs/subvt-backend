@@ -7,7 +7,9 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::{app::NotificationTypeCode, substrate::Era, subvt::ValidatorDetails};
+use subvt_types::{
+    app::notification::NotificationTypeCode, substrate::Era, subvt::ValidatorDetails,
+};
 
 impl NotificationGenerator {
     #[allow(clippy::too_many_arguments)]

@@ -1,4 +1,4 @@
-use subvt_types::app::Notification;
+use subvt_types::app::notification::Notification;
 use subvt_utility::text::get_condensed_session_keys;
 use tera::Context;
 

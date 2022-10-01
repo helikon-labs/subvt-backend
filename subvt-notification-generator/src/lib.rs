@@ -14,7 +14,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::app::{Notification, UserNotificationRule};
+use subvt_types::app::notification::{Notification, UserNotificationRule};
 use subvt_types::crypto::AccountId;
 
 mod inspect;

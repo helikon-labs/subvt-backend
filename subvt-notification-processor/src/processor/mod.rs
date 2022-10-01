@@ -1,7 +1,7 @@
 //! Contains the notification processing logic.
 use crate::{metrics, NotificationProcessor};
 use rustc_hash::FxHashMap as HashMap;
-use subvt_types::app::{
+use subvt_types::app::notification::{
     Notification, NotificationChannel, NotificationPeriodType, NotificationTypeCode,
 };
 

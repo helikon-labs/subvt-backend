@@ -6,8 +6,11 @@ use subvt_types::app::db::{
     PostgresUserNotificationChannel, PostgresUserNotificationRule, PostgresUserValidator,
 };
 use subvt_types::app::{
-    NotificationPeriodType, NotificationTypeCode, User, UserNotificationChannel,
-    UserNotificationRule, UserNotificationRuleParameter, UserValidator,
+    notification::{
+        NotificationPeriodType, NotificationTypeCode, UserNotificationChannel,
+        UserNotificationRule, UserNotificationRuleParameter,
+    },
+    User, UserValidator,
 };
 use subvt_types::crypto::AccountId;
 

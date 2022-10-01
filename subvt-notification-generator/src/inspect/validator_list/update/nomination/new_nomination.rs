@@ -4,7 +4,7 @@ use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::app_event;
-use subvt_types::app::NotificationTypeCode;
+use subvt_types::app::notification::NotificationTypeCode;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{Balance, NominationSummary};
 use subvt_types::subvt::ValidatorDetails;

@@ -1,4 +1,4 @@
-use subvt_types::app::{event, Notification};
+use subvt_types::app::{event, notification::Notification};
 use tera::Context;
 
 pub(crate) fn set_validator_chilled_context(notification: &Notification, context: &mut Context) {

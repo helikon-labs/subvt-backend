@@ -4,7 +4,7 @@ use crate::{ContentProvider, NotificationSender, CONFIG};
 use async_trait::async_trait;
 use fcm::Client as FCMClient;
 use serde::Serialize;
-use subvt_types::app::{Notification, NotificationChannel};
+use subvt_types::app::notification::{Notification, NotificationChannel};
 
 #[derive(Serialize)]
 struct FCMMessage {

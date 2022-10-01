@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use lettre::message::{header, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
-use subvt_types::app::{Notification, NotificationChannel};
+use subvt_types::app::notification::{Notification, NotificationChannel};
 
 pub(crate) type Mailer = AsyncSmtpTransport<Tokio1Executor>;
 

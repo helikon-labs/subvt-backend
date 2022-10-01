@@ -1,7 +1,7 @@
 //! Storage related to application notifications.
 use crate::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::db::{PostgresNotification, PostgresNotificationParamType};
-use subvt_types::app::{
+use subvt_types::app::notification::{
     Notification, NotificationParamType, NotificationPeriodType, UserNotificationRule,
 };
 use subvt_types::crypto::AccountId;

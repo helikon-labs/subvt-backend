@@ -30,7 +30,7 @@ use mockall::automock;
 use std::path::Path;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
+use subvt_types::app::notification::{NotificationTypeCode, UserNotificationRule};
 use subvt_types::sub_id::NFTCollection;
 use tera::{Context, Tera};
 

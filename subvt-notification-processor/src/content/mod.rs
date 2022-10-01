@@ -2,7 +2,10 @@
 use crate::content::context::{get_grouped_renderer_context, get_renderer_context};
 use crate::CONFIG;
 use rustc_hash::FxHashMap as HashMap;
-use subvt_types::app::{Network, Notification, NotificationChannel};
+use subvt_types::app::{
+    notification::{Notification, NotificationChannel},
+    Network,
+};
 use tera::Tera;
 
 pub(crate) mod context;

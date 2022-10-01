@@ -5,7 +5,8 @@ use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::substrate::NominationSummary;
 use subvt_types::{
-    app::app_event, app::NotificationTypeCode, crypto::AccountId, subvt::ValidatorDetails,
+    app::app_event, app::notification::NotificationTypeCode, crypto::AccountId,
+    subvt::ValidatorDetails,
 };
 
 impl NotificationGenerator {

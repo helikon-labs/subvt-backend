@@ -1,7 +1,7 @@
 //! X-hourly and x-daily notification processing logic.
 use crate::NotificationProcessor;
 use chrono::{Datelike, Timelike, Utc};
-use subvt_types::app::NotificationPeriodType;
+use subvt_types::app::notification::NotificationPeriodType;
 use tokio::runtime::Builder;
 
 impl NotificationProcessor {

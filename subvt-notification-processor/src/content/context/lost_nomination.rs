@@ -1,4 +1,4 @@
-use subvt_types::app::{app_event::LostNomination, Network, Notification};
+use subvt_types::app::{app_event::LostNomination, notification::Notification, Network};
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::get_condensed_address;
 use tera::Context;

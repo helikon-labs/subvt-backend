@@ -1,5 +1,5 @@
 use chrono::{TimeZone, Utc};
-use subvt_types::app::{app_event, Notification};
+use subvt_types::app::{app_event, notification::Notification};
 use tera::Context;
 
 pub(crate) fn set_onekv_online_status_changed_context(

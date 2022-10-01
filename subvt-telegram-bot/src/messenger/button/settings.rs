@@ -2,7 +2,9 @@
 use crate::query::{Query, QueryType, SettingsEditQueryType};
 use crate::CONFIG;
 use frankenstein::InlineKeyboardButton;
-use subvt_types::app::{NotificationPeriodType, NotificationTypeCode, UserNotificationRule};
+use subvt_types::app::notification::{
+    NotificationPeriodType, NotificationTypeCode, UserNotificationRule,
+};
 use tera::{Context, Tera};
 
 pub(crate) fn get_settings_button(

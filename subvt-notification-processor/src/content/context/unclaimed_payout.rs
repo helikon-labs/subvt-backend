@@ -1,4 +1,4 @@
-use subvt_types::app::Notification;
+use subvt_types::app::notification::Notification;
 use tera::Context;
 
 pub(crate) fn set_unclaimed_payout_context(notification: &Notification, context: &mut Context) {

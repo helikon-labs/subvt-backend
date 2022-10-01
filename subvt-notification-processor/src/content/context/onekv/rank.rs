@@ -1,4 +1,4 @@
-use subvt_types::app::{app_event, Notification};
+use subvt_types::app::{app_event, notification::Notification};
 use tera::Context;
 
 pub(crate) fn set_onekv_rank_changed_context(notification: &Notification, context: &mut Context) {

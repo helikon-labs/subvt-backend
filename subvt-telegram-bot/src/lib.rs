@@ -21,8 +21,10 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::Service;
 use subvt_types::app::{
-    NotificationChannel, NotificationPeriodType, NotificationTypeCode, User,
-    UserNotificationChannel,
+    notification::{
+        NotificationChannel, NotificationPeriodType, NotificationTypeCode, UserNotificationChannel,
+    },
+    User,
 };
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;

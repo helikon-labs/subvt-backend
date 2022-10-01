@@ -1,7 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
-use subvt_types::app::NotificationTypeCode;
+use subvt_types::app::notification::NotificationTypeCode;
 use subvt_types::subvt::ValidatorDetails;
 
 impl NotificationGenerator {

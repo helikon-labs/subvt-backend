@@ -1,4 +1,7 @@
-use subvt_types::app::{Network, Notification, NotificationPeriodType};
+use subvt_types::app::{
+    notification::{Notification, NotificationPeriodType},
+    Network,
+};
 use tera::Context;
 
 pub(crate) fn set_basic_context(

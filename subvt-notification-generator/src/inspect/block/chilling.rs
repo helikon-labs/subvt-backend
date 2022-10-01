@@ -2,7 +2,7 @@ use crate::{NotificationGenerator, CONFIG};
 use std::sync::Arc;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::app::{Block, NotificationTypeCode};
+use subvt_types::app::{notification::NotificationTypeCode, Block};
 
 impl NotificationGenerator {
     /// Checks chilling events.

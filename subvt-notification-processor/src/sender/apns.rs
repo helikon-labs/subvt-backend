@@ -3,7 +3,7 @@ use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;
 use async_trait::async_trait;
-use subvt_types::app::{Notification, NotificationChannel};
+use subvt_types::app::notification::{Notification, NotificationChannel};
 
 pub(crate) struct APNSSender {
     apns_client: a2::Client,

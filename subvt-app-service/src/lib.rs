@@ -13,8 +13,10 @@ use subvt_config::Config;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_types::app::{
-    NotificationPeriodType, User, UserNotificationChannel, UserNotificationRuleParameter,
-    UserValidator,
+    notification::{
+        NotificationPeriodType, UserNotificationChannel, UserNotificationRuleParameter,
+    },
+    User, UserValidator,
 };
 use subvt_types::err::ServiceError;
 
@@ -227,6 +229,44 @@ async fn delete_user_validator(
 }
 
 #[derive(Deserialize)]
+struct CreateDefaultUserNotificationRulesRequest {
+    pub user_notification_channel_id: u32,
+}
+
+#[post("/secure/user/notification/rule/default")]
+async fn create_default_user_notification_rules(
+    input: web::Json<CreateDefaultUserNotificationRulesRequest>,
+    state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
+) -> ResultResponse {
+    let mut channel_id_set = HashSet::default();
+    channel_id_set.insert(input.user_notification_channel_id);
+    for rule in subvt_types::app::notification::rules::DEFAULT_RULES.iter() {
+        state
+            .postgres
+            .save_user_notification_rule(
+                auth.id,
+                &rule.0.to_string(),
+                (None, None),
+                (Some(CONFIG.substrate.network_id), true),
+                (&rule.1, rule.2),
+                (&HashSet::default(), &channel_id_set, &[]),
+            )
+            .await?;
+    }
+    Ok(HttpResponse::NoContent().finish())
+}
+
+/// `GET`s the list of the user's non-deleted notification rules.
+#[get("/secure/user/notification/rule")]
+async fn get_user_notification_rules(
+    state: web::Data<ServiceState>,
+    auth: AuthenticatedUser,
+) -> ResultResponse {
+    Ok(HttpResponse::Ok().json(state.postgres.get_user_notification_rules(auth.id).await?))
+}
+
+#[derive(Deserialize)]
 struct CreateUserNotificationRuleRequest {
     pub notification_type_code: String,
     pub name: Option<String>,
@@ -238,15 +278,6 @@ struct CreateUserNotificationRuleRequest {
     pub user_notification_channel_ids: HashSet<u32>,
     pub parameters: Vec<UserNotificationRuleParameter>,
     pub notes: Option<String>,
-}
-
-/// `GET`s the list of the user's non-deleted notification rules.
-#[get("/secure/user/notification/rule")]
-async fn get_user_notification_rules(
-    state: web::Data<ServiceState>,
-    auth: AuthenticatedUser,
-) -> ResultResponse {
-    Ok(HttpResponse::Ok().json(state.postgres.get_user_notification_rules(auth.id).await?))
 }
 
 /// Creates a new notification rule for the user. The new rule starts getting evaluated for possible
@@ -474,6 +505,7 @@ impl Service for AppService {
                 .service(create_user_notification_rule)
                 .service(get_user_notification_rules)
                 .service(delete_user_notification_rule)
+                .service(create_default_user_notification_rules)
         })
         .workers(10)
         .disable_signals()

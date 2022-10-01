@@ -1,7 +1,9 @@
 use crate::messenger::button::settings::{get_notification_period_button, get_settings_button};
 use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
 use frankenstein::InlineKeyboardMarkup;
-use subvt_types::app::{NotificationPeriodType, NotificationTypeCode, UserNotificationRule};
+use subvt_types::app::notification::{
+    NotificationPeriodType, NotificationTypeCode, UserNotificationRule,
+};
 use tera::Tera;
 
 pub(crate) fn get_period_settings_keyboard(

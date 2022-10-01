@@ -1,6 +1,6 @@
 //! Notification type (authorship, offences, new/lost/changed nominations, etc.) related storage.
 use crate::postgres::app::PostgreSQLAppStorage;
-use subvt_types::app::NotificationType;
+use subvt_types::app::notification::NotificationType;
 
 impl PostgreSQLAppStorage {
     pub async fn get_notification_type_by_code(

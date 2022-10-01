@@ -3,7 +3,7 @@ use crate::{metrics, NotificationProcessor, CONFIG};
 use anyhow::Context;
 use futures_util::StreamExt as _;
 use std::str::FromStr;
-use subvt_types::app::{Network, NotificationPeriodType};
+use subvt_types::app::{notification::NotificationPeriodType, Network};
 use subvt_types::substrate::Chain;
 use subvt_types::subvt::NetworkStatus;
 

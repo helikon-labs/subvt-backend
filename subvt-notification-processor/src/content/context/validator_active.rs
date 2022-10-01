@@ -1,4 +1,4 @@
-use subvt_types::app::{Network, Notification};
+use subvt_types::app::{notification::Notification, Network};
 use subvt_types::substrate::ValidatorStake;
 use subvt_utility::numeric::format_decimal;
 use tera::Context;

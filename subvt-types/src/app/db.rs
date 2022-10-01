@@ -2,8 +2,10 @@
 use crate::app::event::democracy::DemocracyVotedEvent;
 use crate::app::extrinsic::{PayoutStakersExtrinsic, SetControllerExtrinsic, ValidateExtrinsic};
 use crate::app::{
-    Block, Network, Notification, NotificationParamDataType, NotificationPeriodType,
-    UserNotificationChannel, UserValidator,
+    notification::{
+        Notification, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
+    },
+    Block, Network, UserValidator,
 };
 use crate::crypto::AccountId;
 use std::str::FromStr;

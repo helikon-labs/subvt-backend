@@ -1,7 +1,9 @@
 use crate::query::{Query, SettingsEditQueryType, SettingsSubSection};
 use crate::{Messenger, TelegramBot, CONFIG};
 use rustc_hash::FxHashSet as HashSet;
-use subvt_types::app::{NotificationChannel, NotificationPeriodType, NotificationTypeCode};
+use subvt_types::app::notification::{
+    NotificationChannel, NotificationPeriodType, NotificationTypeCode,
+};
 
 impl<M: Messenger + Send + Sync> TelegramBot<M> {
     async fn create_rule_if_not_exists(

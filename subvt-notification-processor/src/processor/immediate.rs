@@ -1,6 +1,6 @@
 //! Immediate notification processing logic.
 use crate::{NotificationProcessor, CONFIG};
-use subvt_types::app::NotificationPeriodType;
+use subvt_types::app::notification::NotificationPeriodType;
 
 impl NotificationProcessor {
     /// Checks and sends notifications that should be sent immediately.

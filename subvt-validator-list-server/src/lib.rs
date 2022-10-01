@@ -47,7 +47,7 @@ fn is_inactive() -> bool {
         .about("Serves the active or inactive validator list for the SubVT app.")
         .arg(arg!(-i --inactive "Active list is served by default. Use this flag to serve the inactive list."))
         .get_matches()
-        .is_present("inactive")
+        .get_flag("inactive")
 }
 
 impl ValidatorListServer {

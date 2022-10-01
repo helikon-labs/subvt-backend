@@ -1,7 +1,7 @@
 use crate::messenger::button::settings::{get_notification_on_off_button, get_settings_button};
 use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
 use frankenstein::InlineKeyboardMarkup;
-use subvt_types::app::{NotificationTypeCode, UserNotificationRule};
+use subvt_types::app::notification::{NotificationTypeCode, UserNotificationRule};
 use tera::Tera;
 
 pub(crate) fn get_validator_activity_settings_keyboard(

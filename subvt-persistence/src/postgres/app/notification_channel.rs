@@ -1,6 +1,6 @@
 //! Storage related to the supported notification channels (email, APNS, FCM, SMS, etc.).
 use crate::postgres::app::PostgreSQLAppStorage;
-use subvt_types::app::NotificationChannel;
+use subvt_types::app::notification::NotificationChannel;
 
 impl PostgreSQLAppStorage {
     pub async fn get_notification_channels(&self) -> anyhow::Result<Vec<NotificationChannel>> {
