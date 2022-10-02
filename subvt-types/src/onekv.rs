@@ -7,12 +7,12 @@ use subvt_proc_macro::Diff;
 #[derive(Clone, Debug, Deserialize, Diff, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OneKVCandidate {
-    pub identity: OneKVIdentity,
-    pub commission: f32,
+    pub identity: Option<OneKVIdentity>,
+    pub commission: Option<f32>,
     pub discovered_at: u64,
     pub inclusion: f32,
     #[serde(rename(deserialize = "active"))]
-    pub is_active: bool,
+    pub is_active: Option<bool>,
     #[serde(rename(deserialize = "kusamaStash"))]
     pub kusama_stash_address: String,
     pub name: String,
