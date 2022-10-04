@@ -3,7 +3,10 @@ use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::NotificationBuilder;
 use async_trait::async_trait;
+use serde::Serialize;
 use subvt_types::app::notification::{Notification, NotificationChannel};
+use subvt_types::crypto::AccountId;
+use subvt_types::substrate::Account;
 
 pub(crate) struct APNSSender {
     apns_client: a2::Client,
@@ -30,18 +33,48 @@ impl APNSSender {
     }
 }
 
+#[derive(Serialize, Debug)]
+struct APNSNotificationData {
+    network_id: u32,
+    notification_type_code: String,
+    validator_account_id: Option<String>,
+    validator_display: Option<String>,
+}
+
 impl APNSSender {
-    async fn send_inner(&self, message: &str, target: &str) -> anyhow::Result<String> {
+    async fn send_inner(
+        &self,
+        network_id: u32,
+        notification_type_code: &str,
+        maybe_validator_account_id: &Option<AccountId>,
+        maybe_validator_account: &Option<Account>,
+        message: &str,
+        target: &str,
+    ) -> anyhow::Result<String> {
         let mut builder = a2::PlainNotificationBuilder::new(message);
         builder.set_sound("default");
         // builder.set_badge(1u32);
-        let payload = builder.build(
+        let mut payload = builder.build(
             target,
             a2::NotificationOptions {
                 apns_topic: Some(CONFIG.notification_processor.apns_topic.as_ref()),
                 ..Default::default()
             },
         );
+        payload.add_custom_data(
+            "notification_data",
+            &APNSNotificationData {
+                network_id,
+                notification_type_code: notification_type_code.to_string(),
+                validator_account_id: maybe_validator_account_id
+                    .map(|account_id| account_id.to_string()),
+                validator_display: if let Some(account) = maybe_validator_account {
+                    account.get_full_display()
+                } else {
+                    None
+                },
+            },
+        )?;
         match self.apns_client.send(payload).await {
             Ok(response) => {
                 log::info!("APNS notification sent succesfully.");
@@ -68,8 +101,20 @@ impl NotificationSender for APNSSender {
                     notification.notification_type_code
                 )
             });
-        self.send_inner(&message, &notification.notification_target)
-            .await
+        let account = if let Some(json) = &notification.validator_account_json {
+            serde_json::from_str::<Account>(json).ok()
+        } else {
+            None
+        };
+        self.send_inner(
+            notification.network_id,
+            &notification.notification_type_code,
+            &notification.validator_account_id,
+            &account,
+            &message,
+            &notification.notification_target,
+        )
+        .await
     }
 
     async fn send_grouped(
@@ -95,6 +140,24 @@ impl NotificationSender for APNSSender {
                     notification_type_code
                 )
             });
-        self.send_inner(&message, target).await
+        let (account_id, account) = if let Some(notification) = notifications.first() {
+            let account = if let Some(json) = &notification.validator_account_json {
+                serde_json::from_str::<Account>(json).ok()
+            } else {
+                None
+            };
+            (notification.validator_account_id, account)
+        } else {
+            (None, None)
+        };
+        self.send_inner(
+            network_id,
+            notification_type_code,
+            &account_id,
+            &account,
+            &message,
+            target,
+        )
+        .await
     }
 }
