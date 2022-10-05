@@ -40,6 +40,16 @@ lazy_static! {
             0,
         ),
         (
+            NotificationTypeCode::ChainValidatorLostNomination,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
+            NotificationTypeCode::ChainValidatorNewNomination,
+            NotificationPeriodType::Immediate,
+            0,
+        ),
+        (
             NotificationTypeCode::ChainValidatorOfflineOffence,
             NotificationPeriodType::Immediate,
             0,
