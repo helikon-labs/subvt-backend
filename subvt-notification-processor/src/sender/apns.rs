@@ -1,6 +1,7 @@
 //! Apple Push Notification Service (APNS) sender. Sends notifications to Apple devices.
 use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
+use a2::ErrorReason;
 use async_trait::async_trait;
 use serde::Serialize;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -96,14 +97,42 @@ impl APNSSender {
             Err(error) => {
                 log::error!("APNS notification send error: {:?}.", error);
                 if let a2::Error::ResponseError(response) = &error {
-                    if response.code == 410 {
+                    if let Some(error) = &response.error {
+                        match error.reason {
+                            ErrorReason::BadDeviceToken => {
+                                log::error!(
+                                    "APNS Error: bad device token. Delete user notification APNS channel #{}.",
+                                    user_notification_channel_id
+                                );
+                                self.app_postgres
+                                    .delete_user_notification_channel(user_notification_channel_id)
+                                    .await?;
+                            }
+                            ErrorReason::DeviceTokenNotForTopic => {
+                                log::error!(
+                                    "APNS Error: device token not for topic. Delete user notification APNS channel #{}.",
+                                    user_notification_channel_id
+                                );
+                                self.app_postgres
+                                    .delete_user_notification_channel(user_notification_channel_id)
+                                    .await?;
+                            }
+                            ErrorReason::Unregistered => {
+                                log::error!(
+                                    "APNS Error: unregistered device token. Delete user notification APNS channel #{}.",
+                                    user_notification_channel_id
+                                );
+                                self.app_postgres
+                                    .delete_user_notification_channel(user_notification_channel_id)
+                                    .await?;
+                            }
+                            _ => (),
+                        }
+                    } else if response.code == 410 {
                         log::warn!(
-                            "Delete user notification APNS channel #{}",
+                            "APNS Error: no response error body. Response code 410. Delete user notification APNS channel #{}.",
                             user_notification_channel_id
                         );
-                        self.app_postgres
-                            .delete_user_notification_channel(user_notification_channel_id)
-                            .await?;
                     }
                 }
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
