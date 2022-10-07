@@ -1,5 +1,5 @@
 {{ validator_display }}{% if current_rank and prev_rank %}{% if current_rank > prev_rank %}
-📈 rank has increased from {{ prev_rank }} to {{ current_rank }}.{% else %}
-📉 rank has decreased from {{ prev_rank }} to {{ current_rank }}.{% endif %}{% else %}{% if current_rank %}
-📈 has new rank {{ current_rank }}.{% else %}
-📈 has a new rank.{% endif %}{% endif %}
+📈 1KV rank has increased from {{ prev_rank }} to {{ current_rank }}.{% else %}
+📉 1KV rank has decreased from {{ prev_rank }} to {{ current_rank }}.{% endif %}{% else %}{% if current_rank %}
+📈 1KV has new rank {{ current_rank }}.{% else %}
+📈 1KV has a new rank.{% endif %}{% endif %}

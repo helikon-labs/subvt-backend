@@ -3,6 +3,7 @@ use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use async_trait::async_trait;
 use serde::Serialize;
+use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_types::app::notification::{Notification, NotificationChannel};
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::Account;
@@ -10,6 +11,7 @@ use subvt_types::substrate::Account;
 pub(crate) struct APNSSender {
     apns_client: a2::Client,
     content_provider: ContentProvider,
+    app_postgres: PostgreSQLAppStorage,
 }
 
 impl APNSSender {
@@ -25,9 +27,12 @@ impl APNSSender {
                 a2::Endpoint::Sandbox
             },
         )?;
+        let app_postgres =
+            PostgreSQLAppStorage::new(&CONFIG, CONFIG.get_app_postgres_url()).await?;
         Ok(APNSSender {
             apns_client,
             content_provider,
+            app_postgres,
         })
     }
 }
@@ -41,6 +46,7 @@ struct APNSNotificationData {
 }
 
 impl APNSSender {
+    #[allow(clippy::too_many_arguments)]
     async fn send_inner(
         &self,
         network_id: u32,
@@ -48,6 +54,7 @@ impl APNSSender {
         maybe_validator_account_id: &Option<AccountId>,
         maybe_validator_account: &Option<Account>,
         message: &str,
+        user_notification_channel_id: u32,
         target: &str,
     ) -> anyhow::Result<String> {
         let mut payload = a2::request::payload::Payload {
@@ -87,7 +94,18 @@ impl APNSSender {
                 Ok(format!("{:?}", response))
             }
             Err(error) => {
-                log::error!("APNS notification send error: {:?}.", error,);
+                log::error!("APNS notification send error: {:?}.", error);
+                if let a2::Error::ResponseError(response) = &error {
+                    if response.code == 410 {
+                        log::warn!(
+                            "Delete user notification APNS channel #{}",
+                            user_notification_channel_id
+                        );
+                        self.app_postgres
+                            .delete_user_notification_channel(user_notification_channel_id)
+                            .await?;
+                    }
+                }
                 Err(NotificationSenderError::Error(format!("{:?}", error)).into())
             }
         }
@@ -118,6 +136,7 @@ impl NotificationSender for APNSSender {
             &notification.validator_account_id,
             &account,
             &message,
+            notification.user_notification_channel_id,
             &notification.notification_target,
         )
         .await
@@ -162,6 +181,10 @@ impl NotificationSender for APNSSender {
             &account_id,
             &account,
             &message,
+            notifications
+                .first()
+                .map(|notification| notification.user_notification_channel_id)
+                .unwrap_or(0),
             target,
         )
         .await

@@ -71,12 +71,12 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::ChainValidatorStartedParaValidating,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::ChainValidatorStoppedParaValidating,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
@@ -137,7 +137,7 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::DemocracyUndelegated,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (

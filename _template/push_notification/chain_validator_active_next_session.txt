@@ -1,2 +1,2 @@
 {{ validator_display }}
-⏩🚀 is going to be active next session
+⏩🚀 is going to be active next session.
