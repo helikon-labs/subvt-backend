@@ -9,7 +9,7 @@ impl PostgreSQLAppStorage {
     ) -> anyhow::Result<NotificationType> {
         let mut notification_type = sqlx::query_as(
             r#"
-            SELECT code
+            SELECT code, is_enabled
             FROM app_notification_type
             WHERE code = $1
             "#,
@@ -17,8 +17,9 @@ impl PostgreSQLAppStorage {
         .bind(code)
         .fetch_one(&self.connection_pool)
         .await
-        .map(|db_notification_type: (String,)| NotificationType {
+        .map(|db_notification_type: (String, bool)| NotificationType {
             code: db_notification_type.0,
+            is_enabled: db_notification_type.1,
             param_types: Vec::new(),
         })?;
         // get params
@@ -29,9 +30,9 @@ impl PostgreSQLAppStorage {
     }
 
     pub async fn get_notification_types(&self) -> anyhow::Result<Vec<NotificationType>> {
-        let db_notification_types: Vec<(String,)> = sqlx::query_as(
+        let db_notification_types: Vec<(String, bool)> = sqlx::query_as(
             r#"
-            SELECT code
+            SELECT code, is_enabled
             FROM app_notification_type
             ORDER BY code ASC
             "#,
@@ -43,6 +44,7 @@ impl PostgreSQLAppStorage {
             .cloned()
             .map(|db_notification_type| NotificationType {
                 code: db_notification_type.0,
+                is_enabled: db_notification_type.1,
                 param_types: Vec::new(),
             })
             .collect();

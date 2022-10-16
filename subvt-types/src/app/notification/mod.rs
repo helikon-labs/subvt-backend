@@ -256,6 +256,7 @@ impl From<&str> for NotificationTypeCode {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct NotificationType {
     pub code: String,
+    pub is_enabled: bool,
     pub param_types: Vec<NotificationParamType>,
 }
 
