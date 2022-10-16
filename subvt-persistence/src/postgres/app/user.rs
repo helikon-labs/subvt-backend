@@ -427,12 +427,19 @@ impl PostgreSQLAppStorage {
         } else {
             None
         };
+        // get notification type
+        let notification_type = if let Some(notification_type) = self
+            .get_notification_type_by_code(&db_notification_rule.2)
+            .await?
+        {
+            notification_type
+        } else {
+            return Ok(None);
+        };
         Ok(Some(UserNotificationRule {
             id: db_notification_rule.0 as u32,
             user_id: db_notification_rule.1 as u32,
-            notification_type: self
-                .get_notification_type_by_code(&db_notification_rule.2)
-                .await?,
+            notification_type,
             name: db_notification_rule.3,
             network: maybe_network,
             is_for_all_validators: db_notification_rule.5,

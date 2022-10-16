@@ -289,11 +289,16 @@ async fn create_user_notification_rule(
     auth: AuthenticatedUser,
 ) -> ResultResponse {
     // check notification type exists
-    if !state
+    if let Some(notification_type) = state
         .postgres
-        .notification_type_exists_by_code(&input.notification_type_code)
+        .get_notification_type_by_code(&input.notification_type_code)
         .await?
     {
+        if !notification_type.is_enabled {
+            return Ok(HttpResponse::BadRequest()
+                .json(ServiceError::from("Notification type is not enabled.")));
+        }
+    } else {
         return Ok(
             HttpResponse::NotFound().json(ServiceError::from("Notification type not found."))
         );
