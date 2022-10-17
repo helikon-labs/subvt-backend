@@ -7,8 +7,6 @@ CREATE TABLE IF NOT EXISTS app_user_validator
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     updated_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     deleted_at              TIMESTAMP WITHOUT TIME ZONE,
-    CONSTRAINT app_user_validator_u_user_network_validator
-        UNIQUE (user_id, network_id, validator_account_id),
     CONSTRAINT app_user_validator_fk_user
         FOREIGN KEY (user_id)
             REFERENCES app_user (id)
@@ -20,6 +18,14 @@ CREATE TABLE IF NOT EXISTS app_user_validator
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_validator_u_user_network_validator
+    ON app_user_validator (user_id, network_id, validator_account_id)
+    WHERE deleted_at IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_validator_u_user_network_validator_deleted
+    ON app_user_validator (user_id, network_id, validator_account_id, deleted_at)
+    WHERE deleted_at IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS app_user_validator_idx_user_id
     ON app_user_validator (user_id);

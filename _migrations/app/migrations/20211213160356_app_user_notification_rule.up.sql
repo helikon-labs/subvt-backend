@@ -31,9 +31,16 @@ CREATE TABLE IF NOT EXISTS app_user_notification_rule
         FOREIGN KEY (network_id)
             REFERENCES app_network (id)
             ON DELETE CASCADE
-            ON UPDATE CASCADE,
-    CONSTRAINT app_user_notification_rule_u_rule UNIQUE (user_id, notification_type_code, deleted_at)
+            ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_notification_rule_u_rule
+    ON app_user_notification_rule (user_id, notification_type_code)
+    WHERE deleted_at IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_notification_rule_u_rule_deleted
+    ON app_user_notification_rule (user_id, notification_type_code, deleted_at)
+    WHERE deleted_at IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS app_user_notification_rule_idx_user_id
     ON app_user_notification_rule (user_id);

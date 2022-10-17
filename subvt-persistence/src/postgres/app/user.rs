@@ -278,7 +278,7 @@ impl PostgreSQLAppStorage {
             r#"
             INSERT INTO app_user_validator (user_id, network_id, validator_account_id)
             VALUES ($1, $2, $3)
-            ON CONFLICT(user_id, network_id, validator_account_id)
+            ON CONFLICT (user_id, network_id, validator_account_id) WHERE deleted_at IS NULL
             DO UPDATE SET deleted_at = NULL, updated_at = now()
             RETURNING id
             "#,
