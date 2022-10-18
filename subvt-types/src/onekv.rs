@@ -147,5 +147,5 @@ pub struct OneKVNominee {
     pub name: String,
     #[serde(rename(deserialize = "stash"))]
     pub stash_address: String,
-    pub identity: OneKVIdentity,
+    pub identity: Option<OneKVIdentity>,
 }
