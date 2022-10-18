@@ -50,4 +50,4 @@ sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-in
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
 thiserror = "1.0"
-xcm = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.29" }
+xcm = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.30" }
