@@ -50,6 +50,7 @@ use polkadot_runtime_common::{
     auctions::AuctionIndex,
     claims::{EcdsaSignature, EthereumAddress, StatementKind},
 };
+use polkadot_runtime_parachains::disputes::slashing::DisputeProof;
 use polkadot_runtime_parachains::disputes::{DisputeLocation, DisputeResult};
 use polkadot_runtime_parachains::paras::ParaGenesisArgs;
 use polkadot_runtime_parachains::ump::{MessageId, OverweightIndex};
@@ -122,6 +123,7 @@ pub enum ArgumentPrimitive {
     DispatchInfo(DispatchInfo),
     DispatchResult(DispatchResult),
     DisputeLocation(DisputeLocation),
+    DisputeProof(Box<DisputeProof>),
     DisputeResult(DisputeResult),
     EcdsaSignature(EcdsaSignature),
     ElectionCompute(ElectionCompute),
@@ -372,6 +374,7 @@ generate_argument_primitive_decoder_impl! {[
     ("ConfigOp<Percent>", decode_config_op_percent, ConfigOpPercent),
     ("ConfigOp<Perbill>", decode_config_op_perbill, ConfigOpPerbill),
     ("CoreIndex", decode_core_index, CoreIndex),
+    ("Box<DisputeProof>", decode_dispute_proof, DisputeProof),
     ("DefunctVoter<<T::Lookup as StaticLookup>::Source>", decode_defunct_voter, DefunctVoter),
     ("Conviction", decode_democracy_conviction, DemocracyConviction),
     ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
@@ -471,7 +474,9 @@ generate_argument_primitive_decoder_impl! {[
     ("VersionedMultiLocation", decode_versioned_multi_location_2, VersionedMultiLocation),
     ("Box<VersionedXcm<()>>", decode_versioned_xcm_1, VersionedXcm),
     ("Box<VersionedXcm<T::Call>>", decode_versioned_xcm_2, VersionedXcm),
-    ("Box<VersionedXcm<<T as SysConfig>::Call>>", decode_versioned_xcm_3, VersionedXcm),
+    ("Box<VersionedXcm<T::RuntimeCall>>", decode_versioned_xcm_3, VersionedXcm),
+    ("Box<VersionedXcm<<T as SysConfig>::Call>>", decode_versioned_xcm_4, VersionedXcm),
+    ("Box<VersionedXcm<<T as SysConfig>::RuntimeCall>>", decode_versioned_xcm_5, VersionedXcm),
     ("VestingInfo<BalanceOf<T>, T::BlockNumber>", decode_vesting_info, VestingInfo),
     ("VoteWeight", decode_vote_weight, VoteWeight),
     ("Weight", decode_weight, Weight),
@@ -718,9 +723,13 @@ impl Argument {
                         name.to_string(),
                     ))
                 } else if name == "Box<<T as Config>::Call>"
+                    || name == "Box<<T as Config>::RuntimeCall>"
                     || name == "Box<<T as Trait>::Call>"
+                    || name == "Box<<T as Trait>::RuntimeCall>"
                     || name == "<T as Trait>::Call"
+                    || name == "<T as Trait>::RuntimeCall"
                     || name == "<T as Config>::Call"
+                    || name == "<T as Config>::RuntimeCall"
                     || name == "Box<<T as Config<I>>::Proposal>"
                     || name == "Box<<T as Trait<I>>::Proposal>"
                     || name == "OpaqueCall"
