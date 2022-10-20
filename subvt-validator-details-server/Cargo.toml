@@ -10,7 +10,7 @@ rust-version = "1.63.0"
 anyhow = "1.0"
 async-trait = "0.1"
 bus = "2.2.4"
-futures-util = "0.3.21"
+futures-util = "0.3.25"
 jsonrpsee = { version = "0.15.1", features = ["full"] }
 jsonrpsee-core = "0.15.1"
 lazy_static = "1.4.0"
