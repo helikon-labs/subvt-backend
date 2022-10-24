@@ -44,26 +44,31 @@ BEGIN
 	WHERE B.author_account_id = account_id_param
 	AND B.era_index = era_index_param;
 
-	SELECT COALESCE(SUM(ER.amount::bigint), 0)
-	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
-	INTO result_record.self_reward
-	WHERE EPS.era_index = era_index_param
-	AND EPS.block_hash = ER.block_hash
-	AND EPS.extrinsic_index = ER.extrinsic_index
-	AND EPS.nesting_index = ER.nesting_index
-	AND EPS.is_successful = true
-	AND ER.rewardee_account_id = account_id_param;
+	SELECT COALESCE(SUM(EV.amount::bigint), 0)
+    FROM sub_event_rewarded EV
+    INTO result_record.self_reward
+    INNER JOIN sub_extrinsic_payout_stakers EX
+    	ON EV.block_hash = EX.block_hash
+    	AND EV.extrinsic_index = EX.extrinsic_index
+    	AND COALESCE(EV.nesting_index, '') = COALESCE(EX.nesting_index, '')
+    	AND EX.validator_account_id = EV.rewardee_account_id
+    INNER JOIN sub_era E
+    	ON E.index = EX.era_index
+    	AND E.index = era_index_param
+    WHERE EV.rewardee_account_id = account_id_param;
 
-	SELECT COALESCE(SUM(ER.amount::bigint), 0)
-	FROM sub_event_rewarded ER, sub_extrinsic_payout_stakers EPS
-	INTO result_record.staker_reward
-	WHERE EPS.era_index = era_index_param
-	AND EPS.block_hash = ER.block_hash
-	AND EPS.extrinsic_index = ER.extrinsic_index
-	AND EPS.nesting_index = ER.nesting_index
-	AND EPS.is_successful = true
-	AND ER.rewardee_account_id != account_id_param
-	AND EPS.validator_account_id = account_id_param;
+    SELECT COALESCE(SUM(EV.amount::bigint), 0)
+    FROM sub_event_rewarded EV
+    INTO result_record.staker_reward
+    INNER JOIN sub_extrinsic_payout_stakers EX
+        ON EV.block_hash = EX.block_hash
+        AND EV.extrinsic_index = EX.extrinsic_index
+        AND COALESCE(EV.nesting_index, '') = COALESCE(EX.nesting_index, '')
+        AND EX.validator_account_id != EV.rewardee_account_id
+    INNER JOIN sub_era E
+        ON E.index = EX.era_index
+        AND E.index = era_index_param
+    WHERE EX.validator_account_id = account_id_param;
 
 	SELECT COUNT(DISTINCT EVO.id)
 	FROM sub_event_validator_offline EVO, sub_block B
