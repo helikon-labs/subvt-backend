@@ -245,6 +245,24 @@ impl PostgreSQLNetworkStorage {
         Ok(record_count.0 > 0)
     }
 
+    pub async fn get_era(&self, era_index: u32) -> anyhow::Result<Option<Era>> {
+        let maybe_result: Option<(i64, i64, i64)> = sqlx::query_as(
+            r#"
+            SELECT index, start_timestamp, end_timestamp
+            FROM sub_era
+            WHERE index = $1
+            "#,
+        )
+        .bind(era_index as i64)
+        .fetch_optional(&self.connection_pool)
+        .await?;
+        Ok(maybe_result.map(|era_record| Era {
+            index: era_record.0 as u32,
+            start_timestamp: era_record.1 as u64,
+            end_timestamp: era_record.2 as u64,
+        }))
+    }
+
     pub async fn update_era_reward_points(
         &self,
         era_index: u32,

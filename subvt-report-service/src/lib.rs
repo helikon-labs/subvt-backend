@@ -195,6 +195,8 @@ impl Service for ReportService {
                     })
                 })
                 .service(era::era_validator_report_service)
+                .service(era::era_active_validator_list_report_service)
+                .service(era::era_inactive_validator_list_report_service)
                 .service(era::era_report_service)
                 .service(session::validator::session_validator_report_service)
                 .service(session::validator::session_validator_para_vote_service)

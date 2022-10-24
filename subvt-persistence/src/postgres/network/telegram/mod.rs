@@ -306,7 +306,7 @@ impl PostgreSQLNetworkStorage {
             RETURNING id
             "#,
         )
-        .bind(telegram_chat_id as i64)
+        .bind(telegram_chat_id)
         .bind(&account_id.to_string())
         .bind(address)
         .bind(display)
@@ -329,7 +329,7 @@ impl PostgreSQLNetworkStorage {
             RETURNING id
             "#,
         )
-        .bind(telegram_chat_id as i64)
+        .bind(telegram_chat_id)
         .bind(account_id.to_string())
         .fetch_optional(&self.connection_pool)
         .await?;
@@ -349,7 +349,7 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(&state.to_string())
-        .bind(telegram_chat_id as i64)
+        .bind(telegram_chat_id)
         .execute(&self.connection_pool)
         .await?;
         Ok(())
@@ -439,7 +439,7 @@ impl PostgreSQLNetworkStorage {
             RETURNING id
             "#,
         )
-        .bind(telegram_chat_id as i64)
+        .bind(telegram_chat_id)
         .bind(command)
         .fetch_one(&self.connection_pool)
         .await?;
@@ -458,7 +458,7 @@ impl PostgreSQLNetworkStorage {
             RETURNING id
             "#,
         )
-        .bind(telegram_chat_id as i64)
+        .bind(telegram_chat_id)
         .bind(query)
         .fetch_one(&self.connection_pool)
         .await?;

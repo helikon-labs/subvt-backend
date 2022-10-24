@@ -920,10 +920,7 @@ impl SubstrateClient {
             }
         }
         log::info!("Fetched complete validators data.");
-        Ok(validator_map
-            .into_iter()
-            .map(|(_, validator)| validator)
-            .collect())
+        Ok(validator_map.into_values().collect())
     }
 
     /// Get the number of all validation intents at the given block.

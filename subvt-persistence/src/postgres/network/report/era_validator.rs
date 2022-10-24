@@ -1,4 +1,6 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use std::str::FromStr;
+use subvt_types::crypto::AccountId;
 use subvt_types::report::EraValidatorReport;
 use subvt_types::substrate::Era;
 
@@ -19,7 +21,29 @@ type PostgresEraValidatorReport = (
 );
 
 impl PostgreSQLNetworkStorage {
-    async fn get_single_era_validator_report(
+    pub async fn get_era_validator_account_ids(
+        &self,
+        era_index: u32,
+        is_active: bool,
+    ) -> anyhow::Result<Vec<AccountId>> {
+        let validator_account_ids: Vec<(String,)> = sqlx::query_as(
+            r#"
+            SELECT validator_account_id
+            FROM sub_era_validator
+            WHERE era_index = $1 AND is_active = $2
+            "#,
+        )
+        .bind(era_index as i64)
+        .bind(is_active)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(validator_account_ids
+            .iter()
+            .map(|record| AccountId::from_str(&record.0).unwrap())
+            .collect())
+    }
+
+    pub async fn get_single_era_validator_report(
         &self,
         era_index: u32,
         validator_account_id_hex_string: &str,
@@ -45,7 +69,9 @@ impl PostgreSQLNetworkStorage {
         };
         if let Some(era) = maybe_era {
             Ok(Some(EraValidatorReport {
-                era,
+                account_id: None,
+                address: None,
+                era: Some(era),
                 is_active: era_validator_report.2,
                 commission_per_billion: era_validator_report.3.map(|value| value as u32),
                 self_stake: super::parse_maybe_string(&era_validator_report.4)?,

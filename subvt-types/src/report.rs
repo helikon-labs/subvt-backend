@@ -5,12 +5,26 @@ use crate::substrate::{Epoch, Era};
 use crate::subvt::{ValidatorDetails, ValidatorSummary};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct EraValidatorListReport {
+    pub era: Era,
+    pub validators: Vec<EraValidatorReport>,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct EraValidatorReport {
-    pub era: Era,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub account_id: Option<AccountId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub address: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub era: Option<Era>,
     pub is_active: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub commission_per_billion: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub self_stake: Option<u128>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub total_stake: Option<u128>,
     pub block_count: u32,
     pub reward_points: Option<u128>,

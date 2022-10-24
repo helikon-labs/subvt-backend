@@ -168,8 +168,8 @@ impl PostgreSQLNetworkStorage {
             )
                 .bind(date_time)
                 .bind(node_id as i64)
-                .bind(data.1[i] as f64)
-                .bind(data.0[i] as f64)
+                .bind(data.1[i])
+                .bind(data.0[i])
                 .execute(&mut transaction)
                 .await?;
         }
