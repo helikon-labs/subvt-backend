@@ -19,10 +19,8 @@ async fn get_era_validator_list_report(
     let era = match data.postgres.get_era(era_index).await? {
         Some(era) => era,
         None => {
-            return Ok(HttpResponse::NotFound().json(ServiceError::from(&format!(
-                "Era {} not found.",
-                era_index
-            ))));
+            return Ok(HttpResponse::NotFound()
+                .json(ServiceError::from(&format!("Era {} not found.", era_index))));
         }
     };
     let account_ids = data
@@ -36,7 +34,7 @@ async fn get_era_validator_list_report(
             .get_single_era_validator_report(era_index, &account_id.to_string())
             .await?
         {
-            era_validator_reports.push(EraValidatorReport{
+            era_validator_reports.push(EraValidatorReport {
                 account_id: Some(account_id),
                 address: Some(account_id.to_ss58_check()),
                 era: None,
