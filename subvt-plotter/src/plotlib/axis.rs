@@ -134,7 +134,7 @@ impl Axis {
                 .set("font-size", "12px")
                 .set("font-family", "sans-serif")
                 .set("fill", "#222")
-                .set("transform", format!("rotate({})", rotate))
+                .set("transform", format!("rotate({rotate})"))
                 .add(TextNode::new(&self.label));
             group.append(axis_label);
         }

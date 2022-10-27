@@ -69,11 +69,11 @@ impl EmailSender {
         match self.mailer.send(message).await {
             Ok(response) => {
                 log::info!("Mail sent succesfully for notification.");
-                Ok(format!("{:?}", response))
+                Ok(format!("{response:?}"))
             }
             Err(error) => {
                 log::error!("Mail send error: {:?}.", error,);
-                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
+                Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }
     }

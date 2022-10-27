@@ -7,11 +7,12 @@ use frame_support::traits::ConstU32;
 pub use pallet_democracy::Conviction as DemocracyConviction;
 pub use pallet_democracy::Voting as DemocracyVoting;
 use pallet_identity::{Data, Judgement, Registration};
-use pallet_staking::{Exposure, StakingLedger, ValidatorPrefs};
+use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode};
 pub use polkadot_primitives::v2::{ScrapedOnChainVotes, ValidityAttestation};
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
+use sp_core::bounded::BoundedVec;
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
 use sp_staking::EraIndex;
@@ -73,7 +74,7 @@ impl FromStr for Chain {
             "kusama" | "ksm" => Ok(Self::Kusama),
             "polkadot" | "dot" => Ok(Self::Polkadot),
             "westend" | "wnd" => Ok(Self::Westend),
-            _ => panic!("Unkown chain: {}", s),
+            _ => panic!("Unkown chain: {s}"),
         }
     }
 }
@@ -156,7 +157,7 @@ impl Display for Account {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let display = if let Some(parent) = &*self.parent {
             if let Some(child_display) = &self.child_display {
-                format!("{} / {}", parent, child_display,)
+                format!("{parent} / {child_display}")
             } else {
                 self.address.clone()
             }
@@ -169,7 +170,7 @@ impl Display for Account {
         } else {
             self.address.clone()
         };
-        write!(f, "{}", display)
+        write!(f, "{display}")
     }
 }
 
@@ -203,7 +204,7 @@ impl Account {
             if let Some(identity) = &parent.identity {
                 if let Some(parent_display) = &identity.display {
                     if let Some(child_display) = &self.child_display {
-                        return Some(format!("{} / {}", parent_display, child_display));
+                        return Some(format!("{parent_display} / {child_display}"));
                     }
                 }
             }
@@ -646,6 +647,17 @@ impl From<&Vec<NominationSummary>> for InactiveNominationsSummary {
     }
 }
 
+#[derive(Decode)]
+struct StakingLedger {
+    pub stash: AccountId,
+    #[codec(compact)]
+    pub total: Balance,
+    #[codec(compact)]
+    pub active: Balance,
+    pub _unlocking: BoundedVec<UnlockChunk<Balance>, ConstU32<{ u32::MAX }>>,
+    pub _claimed_rewards: BoundedVec<EraIndex, ConstU32<{ u32::MAX }>>,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct Stake {
     pub stash_account_id: AccountId,
@@ -656,9 +668,9 @@ pub struct Stake {
 
 impl Stake {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let ledger: StakingLedger<polkadot_runtime::Runtime> = Decode::decode(&mut bytes)?;
+        let ledger: StakingLedger = Decode::decode(&mut bytes)?;
         let stake = Self {
-            stash_account_id: AccountId::new(ledger.stash.into()),
+            stash_account_id: ledger.stash,
             total_amount: ledger.total,
             active_amount: ledger.active,
             // claimed_era_indices: ledger.claimed_rewards,

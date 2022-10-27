@@ -173,9 +173,8 @@ impl FeedMessage {
             let raw_key = raw_key_value[0];
             let raw_value = raw_key_value[1];
             let action: u8 = serde_json::from_str(raw_key.get())?;
-            let msg = FeedMessage::decode(action, raw_value).with_context(|| {
-                format!("Failed to decode feed message with action {}.", action)
-            })?;
+            let msg = FeedMessage::decode(action, raw_value)
+                .with_context(|| format!("Failed to decode feed message with action {action}."))?;
             feed_messages.push(msg);
         }
         Ok(feed_messages)

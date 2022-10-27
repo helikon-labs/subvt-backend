@@ -33,7 +33,7 @@ impl Display for NotificationChannel {
             Self::Telegram => "telegram",
             Self::SMS => "sms",
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 
@@ -46,7 +46,7 @@ impl From<&str> for NotificationChannel {
             "gsm" => Self::GSM,
             "telegram" => Self::Telegram,
             "sms" => Self::SMS,
-            _ => panic!("Unkown chain: {}", s),
+            _ => panic!("Unkown chain: {s}"),
         }
     }
 }
@@ -170,7 +170,7 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::DemocracyUndelegated => "democracy_undelegated",
             NotificationTypeCode::DemocracyVoted => "democracy_voted",
         };
-        write!(f, "{}", code)
+        write!(f, "{code}")
     }
 }
 
@@ -248,7 +248,7 @@ impl From<&str> for NotificationTypeCode {
             "democracy_started" => NotificationTypeCode::DemocracyStarted,
             "democracy_undelegated" => NotificationTypeCode::DemocracyUndelegated,
             "democracy_voted" => NotificationTypeCode::DemocracyVoted,
-            _ => panic!("Unknown notification type code: {}", code),
+            _ => panic!("Unknown notification type code: {code}"),
         }
     }
 }
@@ -345,7 +345,7 @@ impl UserNotificationRuleParameter {
                     if self.value.len() < min.parse::<usize>().unwrap() {
                         return (
                             false,
-                            Some(format!("String length cannot be less than {}.", min)),
+                            Some(format!("String length cannot be less than {min}.")),
                         );
                     }
                 }
@@ -353,7 +353,7 @@ impl UserNotificationRuleParameter {
                     if self.value.len() > max.parse::<usize>().unwrap() {
                         return (
                             false,
-                            Some(format!("String length cannot be more than {}.", max)),
+                            Some(format!("String length cannot be more than {max}.")),
                         );
                     }
                 }
@@ -362,7 +362,7 @@ impl UserNotificationRuleParameter {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<i64>() {
                         if value < min.parse::<i64>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
+                            return (false, Some(format!("Cannot be less than {min}.")));
                         }
                     } else {
                         return (false, Some("Invalid integer value.".to_string()));
@@ -371,7 +371,7 @@ impl UserNotificationRuleParameter {
                 if let Some(max) = &parameter_type.max {
                     if let Ok(value) = self.value.parse::<i64>() {
                         if value > max.parse::<i64>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
+                            return (false, Some(format!("Cannot be more than {max}.")));
                         }
                     } else {
                         return (false, Some("Invalid integer value.".to_string()));
@@ -382,7 +382,7 @@ impl UserNotificationRuleParameter {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<u128>() {
                         if value < min.parse::<u128>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
+                            return (false, Some(format!("Cannot be less than {min}.")));
                         }
                     } else {
                         return (false, Some("Invalid balance value.".to_string()));
@@ -391,7 +391,7 @@ impl UserNotificationRuleParameter {
                 if let Some(max) = &parameter_type.max {
                     if let Ok(value) = self.value.parse::<u128>() {
                         if value > max.parse::<u128>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
+                            return (false, Some(format!("Cannot be more than {max}.")));
                         }
                     } else {
                         return (false, Some("Invalid balance value.".to_string()));
@@ -402,7 +402,7 @@ impl UserNotificationRuleParameter {
                 if let Some(min) = &parameter_type.min {
                     if let Ok(value) = self.value.parse::<f64>() {
                         if value < min.parse::<f64>().unwrap() {
-                            return (false, Some(format!("Cannot be less than {}.", min)));
+                            return (false, Some(format!("Cannot be less than {min}.")));
                         }
                     } else {
                         return (false, Some("Invalid float value.".to_string()));
@@ -411,7 +411,7 @@ impl UserNotificationRuleParameter {
                 if let Some(max) = &parameter_type.max {
                     if let Ok(value) = self.value.parse::<f64>() {
                         if value > max.parse::<f64>().unwrap() {
-                            return (false, Some(format!("Cannot be more than {}.", max)));
+                            return (false, Some(format!("Cannot be more than {max}.")));
                         }
                     } else {
                         return (false, Some("Invalid float value.".to_string()));

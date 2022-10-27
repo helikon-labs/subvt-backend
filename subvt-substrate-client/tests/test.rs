@@ -15,7 +15,7 @@ async fn test_get_block_hash() {
     let hash = substrate_client
         .get_block_hash(block_number)
         .await
-        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{block_number}."));
     let hash = hex::decode(hash.trim_start_matches("0x"))
         .unwrap_or_else(|_| panic!("Cannot decode hash from client."));
     let expected_hash =
@@ -35,7 +35,7 @@ async fn test_get_democracy_voting_direct() {
     let block_hash = substrate_client
         .get_block_hash(block_number)
         .await
-        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{block_number}."));
     let voting = substrate_client
         .get_democracy_voting_of(&account_id, Some(&block_hash))
         .await
@@ -77,7 +77,7 @@ async fn test_get_democracy_voting_delegated() {
     let block_hash = substrate_client
         .get_block_hash(block_number)
         .await
-        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{block_number}."));
     let voting = substrate_client
         .get_democracy_voting_of(&account_id, Some(&block_hash))
         .await
@@ -125,7 +125,7 @@ async fn test_get_account_democracy_vote_direct() {
     let block_hash = substrate_client
         .get_block_hash(block_number)
         .await
-        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{block_number}."));
     let vote = substrate_client
         .get_account_referendum_vote(&account_id, referendum_index, Some(&block_hash))
         .await
@@ -157,7 +157,7 @@ async fn test_get_account_democracy_vote_delegated() {
     let block_hash = substrate_client
         .get_block_hash(block_number)
         .await
-        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{}.", block_number));
+        .unwrap_or_else(|_| panic!("Cannot get block hash for block #{block_number}."));
     let vote = substrate_client
         .get_account_referendum_vote(&account_id, referendum_index, Some(&block_hash))
         .await

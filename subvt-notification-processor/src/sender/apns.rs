@@ -92,7 +92,7 @@ impl APNSSender {
         match self.apns_client.send(payload).await {
             Ok(response) => {
                 log::info!("APNS notification sent succesfully.");
-                Ok(format!("{:?}", response))
+                Ok(format!("{response:?}"))
             }
             Err(error) => {
                 log::error!("APNS notification send error: {:?}.", error);
@@ -135,7 +135,7 @@ impl APNSSender {
                         );
                     }
                 }
-                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
+                Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }
     }

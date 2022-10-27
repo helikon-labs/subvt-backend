@@ -374,16 +374,16 @@ pub enum ArgumentMeta {
 impl Display for ArgumentMeta {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ArgumentMeta::Primitive(name) => write!(f, "{}", name),
-            ArgumentMeta::Vec(arg) => write!(f, "Vec<{}>", arg),
+            ArgumentMeta::Primitive(name) => write!(f, "{name}"),
+            ArgumentMeta::Vec(arg) => write!(f, "Vec<{arg}>"),
             ArgumentMeta::Tuple(args) => {
                 write!(f, "(")?;
                 for arg in args {
-                    write!(f, "{}, ", arg)?;
+                    write!(f, "{arg}, ")?;
                 }
                 write!(f, ")")
             }
-            ArgumentMeta::Option(arg) => write!(f, "Option<{}>", arg),
+            ArgumentMeta::Option(arg) => write!(f, "Option<{arg}>"),
         }
     }
 }
@@ -887,7 +887,7 @@ mod v14 {
 
     fn convert_type(meta: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
         let ty = match ty.type_def() {
-            TypeDef::Primitive(primitive) => format!("{:?}", primitive).to_lowercase(),
+            TypeDef::Primitive(primitive) => format!("{primitive:?}").to_lowercase(),
             TypeDef::Composite(_) => ty.path().segments().join("::"),
             TypeDef::Sequence(sequence) => {
                 let ty = meta.types.resolve(sequence.type_param().id()).unwrap();
@@ -898,7 +898,7 @@ mod v14 {
                 format!("[{}; {}]", convert_type(meta, ty), array.len())
             }
             TypeDef::Variant(variant) => {
-                format!("{:?}", variant)
+                format!("{variant:?}")
             }
             _ => panic!("Unsupported type: {:?}", ty.type_def()),
         };
@@ -921,12 +921,12 @@ mod v14 {
                         let ty = meta.types.resolve(field.ty().id()).unwrap();
                         let argument_meta = match ty.type_def() {
                             TypeDef::Compact(_) => {
-                                ArgumentMeta::from_str(&format!("Compact<{}>", type_name))
+                                ArgumentMeta::from_str(&format!("Compact<{type_name}>"))
                             }
                             _ => ArgumentMeta::from_str(type_name),
                         }
                         .unwrap_or_else(|_| {
-                            panic!("Cannot get call argument meta for {}.", type_name)
+                            panic!("Cannot get call argument meta for {type_name}.")
                         });
                         arguments.push(argument_meta);
                     }
@@ -939,7 +939,7 @@ mod v14 {
                     call_map.insert(call_variant.index(), call_meta);
                 }
             }
-            _ => panic!("Unexpected type in calls definition: {:?}", calls_ty),
+            _ => panic!("Unexpected type in calls definition: {calls_ty:?}"),
         }
         call_map
     }
@@ -960,12 +960,12 @@ mod v14 {
                         let ty = meta.types.resolve(field.ty().id()).unwrap();
                         let argument_meta = match ty.type_def() {
                             TypeDef::Compact(_) => {
-                                ArgumentMeta::from_str(&format!("Compact<{}>", type_name))
+                                ArgumentMeta::from_str(&format!("Compact<{type_name}>"))
                             }
                             _ => ArgumentMeta::from_str(type_name),
                         }
                         .unwrap_or_else(|_| {
-                            panic!("Cannot get event argument meta for {}.", type_name)
+                            panic!("Cannot get event argument meta for {type_name}.")
                         });
                         arguments.push(argument_meta);
                     }
@@ -978,7 +978,7 @@ mod v14 {
                     event_map.insert(event_variant.index(), event_meta);
                 }
             }
-            _ => panic!("Unexpected type in events definition: {:?}", events_ty),
+            _ => panic!("Unexpected type in events definition: {events_ty:?}"),
         }
         event_map
     }
@@ -991,7 +991,7 @@ mod v14 {
                     error_map.insert(error_variant.index(), error_variant.name().to_string());
                 }
             }
-            _ => panic!("Unexpected type in errors definition: {:?}", errors_ty),
+            _ => panic!("Unexpected type in errors definition: {errors_ty:?}"),
         }
         error_map
     }

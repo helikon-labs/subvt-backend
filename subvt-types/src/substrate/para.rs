@@ -18,7 +18,7 @@ impl Display for ParaAssignmentKind {
             Self::Parathread => "parathread",
             Self::Parachain => "parachain",
         };
-        write!(f, "{}", str)
+        write!(f, "{str}")
     }
 }
 

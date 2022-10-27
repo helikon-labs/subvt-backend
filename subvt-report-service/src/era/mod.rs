@@ -20,7 +20,7 @@ async fn get_era_validator_list_report(
         Some(era) => era,
         None => {
             return Ok(HttpResponse::NotFound()
-                .json(ServiceError::from(&format!("Era {} not found.", era_index))));
+                .json(ServiceError::from(&format!("Era {era_index} not found."))));
         }
     };
     let account_ids = data

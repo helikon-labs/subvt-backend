@@ -45,8 +45,8 @@ impl ValidatorListUpdater {
             CONFIG.redis.url
         ))?;
         let prefix = format!(
-            "subvt:{}:validators:{}",
-            CONFIG.substrate.chain, finalized_block_number
+            "subvt:{}:validators:{finalized_block_number}",
+            CONFIG.substrate.chain,
         );
         let active_account_ids: HashSet<String> = validators
             .iter()
@@ -97,9 +97,9 @@ impl ValidatorListUpdater {
             };
             let validator_json_string = serde_json::to_string(validator)?;
             redis_cmd_pipeline
-                .arg(format!("{}:hash", validator_prefix))
+                .arg(format!("{validator_prefix}:hash"))
                 .arg(hash)
-                .arg(format!("{}:summary_hash", validator_prefix))
+                .arg(format!("{validator_prefix}:summary_hash"))
                 .arg(summary_hash)
                 .arg(validator_prefix)
                 .arg(validator_json_string);
@@ -107,11 +107,11 @@ impl ValidatorListUpdater {
         // set active and inactive account id sets
         redis_cmd_pipeline
             .cmd("SADD")
-            .arg(format!("{}:active:{}", prefix, "account_id_set"))
+            .arg(format!("{prefix}:active:{}", "account_id_set"))
             .arg(active_account_ids);
         redis_cmd_pipeline
             .cmd("SADD")
-            .arg(format!("{}:inactive:{}", prefix, "account_id_set"))
+            .arg(format!("{prefix}:inactive:{}", "account_id_set"))
             .arg(inactive_account_ids);
         redis_cmd_pipeline.cmd("MSET");
         // set finalized block number
@@ -135,7 +135,7 @@ impl ValidatorListUpdater {
             .arg(finalized_block_timestamp);
         // set era
         redis_cmd_pipeline
-            .arg(format!("{}:active_era", prefix))
+            .arg(format!("{prefix}:active_era"))
             .arg(serde_json::to_string(active_era)?);
         // publish event
         redis_cmd_pipeline
@@ -175,8 +175,8 @@ impl ValidatorListUpdater {
         for delete in to_delete {
             let keys: Vec<String> = redis::cmd("KEYS")
                 .arg(format!(
-                    "subvt:{}:validators:{}:*",
-                    CONFIG.substrate.chain, delete
+                    "subvt:{}:validators:{delete}:*",
+                    CONFIG.substrate.chain,
                 ))
                 .query_async(&mut redis_connection)
                 .await?;

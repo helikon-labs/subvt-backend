@@ -31,7 +31,7 @@ impl From<&str> for Environment {
             "testing" | "test" => Environment::Test,
             "production" | "prod" => Environment::Production,
             "development" | "dev" => Environment::Development,
-            _ => panic!("Unknown environment: {}", env),
+            _ => panic!("Unknown environment: {env}"),
         }
     }
 }
@@ -280,14 +280,12 @@ impl Config {
         let env = Environment::Test;
         let config = config::Config::builder()
             .set_default("env", env.to_string())?
-            .add_source(config::File::with_name(&format!("{}/base", DEV_CONFIG_DIR)))
+            .add_source(config::File::with_name(&format!("{DEV_CONFIG_DIR}/base")))
             .add_source(config::File::with_name(&format!(
-                "{}/network/{}",
-                DEV_CONFIG_DIR, DEFAULT_NETWORK
+                "{DEV_CONFIG_DIR}/network/{DEFAULT_NETWORK}"
             )))
             .add_source(config::File::with_name(&format!(
-                "{}/env/{}",
-                DEV_CONFIG_DIR,
+                "{DEV_CONFIG_DIR}/env/{}",
                 env.to_string().to_lowercase()
             )))
             .add_source(config::Environment::with_prefix("subvt").separator("__"))
@@ -307,7 +305,7 @@ impl Config {
                 std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEV_CONFIG_DIR.into());
             let config = config::Config::builder()
                 .set_default("env", env.to_string())?
-                .add_source(config::File::with_name(&format!("{}/base", config_dir)))
+                .add_source(config::File::with_name(&format!("{config_dir}/base")))
                 .add_source(config::File::with_name(&format!(
                     "{}/network/{}",
                     config_dir, network
@@ -325,7 +323,7 @@ impl Config {
                 std::env::var("SUBVT_CONFIG_DIR").unwrap_or_else(|_| DEFAULT_CONFIG_DIR.into());
             let config = config::Config::builder()
                 .set_default("env", env.to_string())?
-                .add_source(config::File::with_name(&format!("{}/base", config_dir)))
+                .add_source(config::File::with_name(&format!("{config_dir}/base")))
                 .add_source(config::File::with_name(&format!(
                     "{}/network/{}",
                     config_dir, network

@@ -39,7 +39,7 @@ pub struct AsyncApi {
 
 impl AsyncApi {
     pub fn new(api_key: &str) -> Self {
-        let api_url = format!("{}{}", BASE_API_URL, api_key);
+        let api_url = format!("{BASE_API_URL}{api_key}");
         AsyncApi::new_with_url(api_url.as_str())
     }
 
@@ -54,7 +54,7 @@ impl AsyncApi {
     pub fn encode_params<T: serde::ser::Serialize + std::fmt::Debug>(
         params: &T,
     ) -> Result<String, Error> {
-        serde_json::to_string(params).map_err(|e| Error::Encode(format!("{:?} : {:?}", e, params)))
+        serde_json::to_string(params).map_err(|e| Error::Encode(format!("{e:?} : {params:?}")))
     }
 
     async fn parse_response<T: serde::de::DeserializeOwned>(
@@ -64,11 +64,11 @@ impl AsyncApi {
         let response_body = hyper::body::aggregate(response).await?;
         if is_successful {
             Ok(serde_json::from_reader(response_body.reader())
-                .map_err(|e| Error::Decode(format!("{:?}", e)))?)
+                .map_err(|e| Error::Decode(format!("{e:?}")))?)
         } else {
             Err(Error::Api(
                 serde_json::from_reader(response_body.reader())
-                    .map_err(|e| Error::Decode(format!("{:?}", e)))?,
+                    .map_err(|e| Error::Decode(format!("{e:?}")))?,
             ))
         }
     }
@@ -102,7 +102,7 @@ impl AsyncTelegramApi for AsyncApi {
         method: &str,
         params: Option<T1>,
     ) -> Result<T2, Self::Error> {
-        let url = format!("{}/{}", self.api_url, method);
+        let url = format!("{}/{method}", self.api_url);
         let request = Request::builder()
             .method(hyper::Method::POST)
             .uri(&url)
@@ -127,11 +127,11 @@ impl AsyncTelegramApi for AsyncApi {
         params: T1,
         files: Vec<(&str, PathBuf)>,
     ) -> Result<T2, Self::Error> {
-        let url = format!("{}/{}", self.api_url, method);
+        let url = format!("{}/{method}", self.api_url);
         let mut form = MultipartForm::default();
         let json_string = Self::encode_params(&params)?;
         let json_struct: Value =
-            serde_json::from_str(&json_string).map_err(|e| Error::Encode(format!("{:?}", e)))?;
+            serde_json::from_str(&json_string).map_err(|e| Error::Encode(format!("{e:?}")))?;
         let mut file_keys = vec![];
         for (key, path) in &files {
             file_keys.push(*key);
@@ -149,7 +149,7 @@ impl AsyncTelegramApi for AsyncApi {
         let req_builder = Request::post(url);
         let request = form
             .set_body::<MultipartBody>(req_builder)
-            .map_err(|e| Error::Encode(format!("{:?}", e)))?;
+            .map_err(|e| Error::Encode(format!("{e:?}")))?;
         let response = self.multipart_client.request(request).await?;
         Self::parse_response(response).await
     }

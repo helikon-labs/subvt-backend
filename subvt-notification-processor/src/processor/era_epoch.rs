@@ -25,8 +25,8 @@ impl NotificationProcessor {
             Chain::Westend => &CONFIG.redis.westend_url,
         };
         let redis = redis::Client::open(redis_url.as_str()).context(format!(
-            "Cannot connect to {} Redis at URL {}.",
-            network.display, redis_url,
+            "Cannot connect to {} Redis at URL {redis_url}.",
+            network.display,
         ))?;
         let mut data_connection = redis.get_async_connection().await?;
         let mut pubsub_connection = redis.get_async_connection().await?.into_pubsub();

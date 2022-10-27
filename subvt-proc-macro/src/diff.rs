@@ -75,7 +75,7 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
         }
     });
     let ident = input.ident;
-    let diff_ident = syn::Ident::new(&format!("{}Diff", ident), ident.span());
+    let diff_ident = syn::Ident::new(&format!("{ident}Diff"), ident.span());
     let diff_struct = quote! {
         #[automatically_derived]
         #[derive(Clone, Debug, Default, Serialize)]

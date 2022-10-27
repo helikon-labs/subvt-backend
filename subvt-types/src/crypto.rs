@@ -130,6 +130,6 @@ impl<'de> Deserialize<'de> for AccountId {
         D: serde::Deserializer<'de>,
     {
         Self::from_str(&String::deserialize(deserializer)?)
-            .map_err(|e| serde::de::Error::custom(format!("{:?}", e)))
+            .map_err(|e| serde::de::Error::custom(format!("{e:?}")))
     }
 }

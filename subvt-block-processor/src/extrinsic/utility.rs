@@ -39,7 +39,7 @@ impl BlockProcessor {
                             index,
                             true,
                             &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                                Some(format!("{}{}", nesting_index, batch_index))
+                                Some(format!("{nesting_index}{batch_index}"))
                             } else {
                                 Some(batch_index.to_string())
                             },
@@ -71,7 +71,7 @@ impl BlockProcessor {
                             index,
                             true,
                             &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                                Some(format!("{}{}", nesting_index, batch_index))
+                                Some(format!("{nesting_index}{batch_index}"))
                             } else {
                                 Some(batch_index.to_string())
                             },
@@ -100,7 +100,7 @@ impl BlockProcessor {
                         index,
                         true,
                         &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{}{}", nesting_index, batch_index))
+                            Some(format!("{nesting_index}{batch_index}"))
                         } else {
                             Some(batch_index.to_string())
                         },

@@ -57,8 +57,8 @@ impl Redis {
         let mut connection = self.client.get_async_connection().await?;
         redis::cmd("SADD")
             .arg(format!(
-                "subvt:{}:validators:{}:active:account_id_set",
-                CONFIG.substrate.chain, finalized_block_number,
+                "subvt:{}:validators:{finalized_block_number}:active:account_id_set",
+                CONFIG.substrate.chain,
             ))
             .arg(account_id.to_string())
             .query_async(&mut connection)
@@ -75,8 +75,8 @@ impl Redis {
         let validator_details_json = serde_json::to_string(validator_details)?;
         redis::cmd("SET")
             .arg(format!(
-                "subvt:{}:validators:{}:active:validator:{}",
-                CONFIG.substrate.chain, finalized_block_number, validator_details.account.id,
+                "subvt:{}:validators:{finalized_block_number}:active:validator:{}",
+                CONFIG.substrate.chain, validator_details.account.id,
             ))
             .arg(validator_details_json)
             .query_async(&mut connection)
@@ -145,8 +145,8 @@ impl Redis {
         }
         let mut connection = self.client.get_async_connection().await?;
         let active_validator_key = format!(
-            "subvt:{}:validators:{}:active:validator:{}",
-            CONFIG.substrate.chain, finalized_block_number, account_id,
+            "subvt:{}:validators:{finalized_block_number}:active:validator:{account_id}",
+            CONFIG.substrate.chain,
         );
         let active_validator_json_string_result: RedisResult<String> = redis::cmd("GET")
             .arg(active_validator_key)
@@ -156,8 +156,8 @@ impl Redis {
             Ok(validator_json_string) => validator_json_string,
             Err(_) => {
                 let inactive_validator_key = format!(
-                    "subvt:{}:validators:{}:inactive:validator:{}",
-                    CONFIG.substrate.chain, finalized_block_number, account_id,
+                    "subvt:{}:validators:{finalized_block_number}:inactive:validator:{account_id}",
+                    CONFIG.substrate.chain,
                 );
                 redis::cmd("GET")
                     .arg(inactive_validator_key)
@@ -205,7 +205,7 @@ impl Redis {
             if is_active { "active" } else { "inactive" }
         );
         let validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
-            .arg(format!("{}:account_id_set", prefix))
+            .arg(format!("{prefix}:account_id_set"))
             .query_async(&mut connection)
             .await
             .context("Can't read validator account ids from Redis.")?;

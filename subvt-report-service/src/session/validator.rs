@@ -22,7 +22,7 @@ async fn validate_params(
         Ok(account_id) => account_id,
         Err(_) => {
             return Err(HttpResponse::BadRequest().json(ServiceError::from(
-                format!("Bad Request: Invalid address {}.", ss58_address).as_ref(),
+                format!("Bad Request: Invalid address {ss58_address}.").as_ref(),
             )))
         }
     };

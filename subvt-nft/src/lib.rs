@@ -18,8 +18,8 @@ pub async fn get_account_nfts(address: &str) -> anyhow::Result<NFTCollection> {
         .unwrap();
     let collection: NFTCollection = http_client
         .get(&format!(
-            "{}{}{}",
-            CONFIG.sub_id.api_url, address, CONFIG.sub_id.nfts_path,
+            "{}{address}{}",
+            CONFIG.sub_id.api_url, CONFIG.sub_id.nfts_path,
         ))
         .send()
         .await?

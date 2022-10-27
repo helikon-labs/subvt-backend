@@ -38,7 +38,7 @@ impl BlockProcessor {
                         index,
                         true,
                         &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{}P", nesting_index))
+                            Some(format!("{nesting_index}P"))
                         } else {
                             Some("P".to_string())
                         },
@@ -68,7 +68,7 @@ impl BlockProcessor {
                         index,
                         true,
                         &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{}PA", nesting_index))
+                            Some(format!("{nesting_index}PA"))
                         } else {
                             Some("PA".to_string())
                         },

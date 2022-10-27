@@ -367,7 +367,7 @@ impl BlockProcessor {
                                 error_log,
                             )
                             .await?;
-                        panic!("Panic due to event decode error: {:?}", error_log);
+                        panic!("Panic due to event decode error: {error_log:?}");
                     }
                 },
             }

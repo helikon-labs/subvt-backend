@@ -33,11 +33,11 @@ impl FCMSender {
         match self.fcm_client.send(builder.finalize()).await {
             Ok(response) => {
                 log::info!("FCM message sent succesfully.");
-                Ok(format!("{:?}", response))
+                Ok(format!("{response:?}"))
             }
             Err(error) => {
                 log::error!("FCM message send error: {:?}.", error,);
-                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
+                Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }
     }

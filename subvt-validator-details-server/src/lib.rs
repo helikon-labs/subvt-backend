@@ -88,7 +88,7 @@ impl ValidatorDetailsServer {
     ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
-            .build(format!("{}:{}", host, port))
+            .build(format!("{host}:{port}"))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let redis_client = redis_client.clone();

@@ -48,29 +48,26 @@ impl ContentProvider {
                 let network = self
                     .network_map
                     .get(&network_id)
-                    .unwrap_or_else(|| panic!("Cannot find network with id {}.", network_id));
+                    .unwrap_or_else(|| panic!("Cannot find network with id {network_id}."));
                 let context =
                     get_grouped_renderer_context(network, notification_type_code, notifications)?;
                 let notification_content = NotificationContent {
                     subject: renderer
                         .render(
-                            &format!("{}_grouped_subject.txt", notification_type_code),
+                            &format!("{notification_type_code}_grouped_subject.txt"),
                             &context,
                         )
                         .ok(),
                     body_text: renderer
-                        .render(&format!("{}_grouped.txt", notification_type_code), &context)
+                        .render(&format!("{notification_type_code}_grouped.txt"), &context)
                         .ok(),
                     body_html: renderer
-                        .render(
-                            &format!("{}_grouped.html", notification_type_code),
-                            &context,
-                        )
+                        .render(&format!("{notification_type_code}_grouped.html"), &context)
                         .ok(),
                 };
                 Ok(notification_content)
             }
-            None => panic!("No renderer for notification channel: {}", channel),
+            None => panic!("No renderer for notification channel: {channel}"),
         }
     }
 

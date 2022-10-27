@@ -78,7 +78,7 @@ impl BlockProcessor {
                         index,
                         true,
                         &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{}M", nesting_index))
+                            Some(format!("{nesting_index}M"))
                         } else {
                             Some("M".to_string())
                         },
@@ -117,7 +117,7 @@ impl BlockProcessor {
                 {
                     AccountId::multisig_account_id(&signer_account_id, other_signatories, 1)
                 } else {
-                    panic!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
+                    panic!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {block_number}-{index}.");
                     /*
                     log::error!("Cannot get multisig account id while processing AsMultiThreshold1 extrinsic {}-{}.", block_number, index);
                     return Ok(false);
@@ -133,7 +133,7 @@ impl BlockProcessor {
                         index,
                         true,
                         &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{}M", nesting_index))
+                            Some(format!("{nesting_index}M"))
                         } else {
                             Some("M".to_string())
                         },

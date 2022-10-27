@@ -488,7 +488,7 @@ impl<'a> Chart<'a> {
                 .collect::<Vec<LegendEntry>>();
             let legend = Legend::new(legend_entries, width as usize);
             let mut legend_group = legend.to_svg()?;
-            legend_group.assign("transform", format!("translate({},{})", x_offset, y_offset));
+            legend_group.assign("transform", format!("translate({x_offset},{y_offset})"));
 
             group.append(legend_group);
         }

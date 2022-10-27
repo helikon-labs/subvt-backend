@@ -22,7 +22,7 @@ impl FromStr for TelegramChatState {
             "AddValidator" => Ok(Self::AddValidator),
             "EnterBugReport" => Ok(Self::EnterBugReport),
             "EnterFeatureRequest" => Ok(Self::EnterFeatureRequest),
-            _ => panic!("Unknown state: {}", state),
+            _ => panic!("Unknown state: {state}"),
         }
     }
 }
@@ -35,7 +35,7 @@ impl Display for TelegramChatState {
             TelegramChatState::EnterBugReport => "EnterBugReport",
             TelegramChatState::EnterFeatureRequest => "EnterFeatureRequest",
         };
-        write!(f, "{}", display)
+        write!(f, "{display}")
     }
 }
 

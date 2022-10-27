@@ -14,8 +14,8 @@ pub fn get_storage_plain_key(module_name: &str, storage_name: &str) -> String {
     hash.append(&mut module_name_hash);
     let mut storage_name_hash = StorageMetadata::hash(hasher, storage_name.as_bytes());
     hash.append(&mut storage_name_hash);
-    let storage_key_hex: String = hash.iter().map(|b| format!("{:02x}", b)).collect();
-    format!("0x{}", storage_key_hex)
+    let storage_key_hex: String = hash.iter().map(|b| format!("{b:02x}")).collect();
+    format!("0x{storage_key_hex}")
 }
 
 /// Get JSONRPSee parameters for a plain storage type at an optional given block.
@@ -129,8 +129,8 @@ where
 {
     let storage_key_hex = get_storage_plain_key(module_name, storage_name);
     let map_key_hash = get_map_key_hash(metadata, module_name, storage_name, key);
-    let map_key_hex: String = map_key_hash.iter().map(|b| format!("{:02x}", b)).collect();
-    format!("{}{}", storage_key_hex, map_key_hex)
+    let map_key_hex: String = map_key_hash.iter().map(|b| format!("{b:02x}")).collect();
+    format!("{storage_key_hex}{map_key_hex}")
 }
 
 pub fn get_rpc_paged_map_keys_params<'a, T>(
@@ -274,8 +274,8 @@ where
         _get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
     map_keys_hash.append(&mut key_hash_pair.0);
     map_keys_hash.append(&mut key_hash_pair.1);
-    let map_keys_hash_hex: String = map_keys_hash.iter().map(|b| format!("{:02x}", b)).collect();
-    format!("{}{}", storage_key_hex, map_keys_hash_hex)
+    let map_keys_hash_hex: String = map_keys_hash.iter().map(|b| format!("{b:02x}")).collect();
+    format!("{storage_key_hex}{map_keys_hash_hex}")
 }
 
 /// Get JSONRPSee parameters for a double-map storage type at an optional given block.

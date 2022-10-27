@@ -77,7 +77,7 @@ impl DatumRepresentation for Bar {
         let mut group = Group::new()
             .set(
                 "transform",
-                format!("translate({},{})", bar_group_offset_x, bar_group_offset_y),
+                format!("translate({bar_group_offset_x},{bar_group_offset_y})"),
             )
             .set("class", "bar");
 

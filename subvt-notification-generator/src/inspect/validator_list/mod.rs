@@ -36,15 +36,15 @@ impl NotificationGenerator {
             finalized_block_number
         );
         let redis_storage_prefix = format!(
-            "subvt:{}:validators:{}",
-            CONFIG.substrate.chain, finalized_block_number
+            "subvt:{}:validators:{finalized_block_number}",
+            CONFIG.substrate.chain,
         );
         let active_validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
-            .arg(format!("{}:active:account_id_set", redis_storage_prefix))
+            .arg(format!("{redis_storage_prefix}:active:account_id_set"))
             .query_async(redis_connection)
             .await?;
         let inactive_validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
-            .arg(format!("{}:inactive:account_id_set", redis_storage_prefix))
+            .arg(format!("{redis_storage_prefix}:inactive:account_id_set"))
             .query_async(redis_connection)
             .await?;
         let all_validator_account_ids: HashSet<String> = active_validator_account_ids

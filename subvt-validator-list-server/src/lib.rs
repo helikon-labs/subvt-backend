@@ -59,7 +59,7 @@ impl ValidatorListServer {
     ) -> anyhow::Result<WsServerHandle> {
         let rpc_ws_server = WsServerBuilder::default()
             .max_request_body_size(u32::MAX)
-            .build(format!("{}:{}", host, port))
+            .build(format!("{host}:{port}"))
             .await?;
         let mut rpc_module = RpcModule::new(());
         let validator_map = validator_map.clone();
@@ -204,7 +204,7 @@ impl Service for ValidatorListServer {
                 if is_active_list { "active" } else { "inactive" }
             );
             let validator_account_ids: HashSet<String> = redis::cmd("SMEMBERS")
-                .arg(format!("{}:account_id_set", prefix))
+                .arg(format!("{prefix}:account_id_set"))
                 .query(&mut data_connection)
                 .context("Can't read validator account ids from Redis.")?;
             log::info!(
@@ -239,7 +239,7 @@ impl Service for ValidatorListServer {
                 let validator_map = validator_map.read().unwrap();
                 for validator_account_id in validator_account_ids {
                     let validator_account_id = AccountId::from_str(&validator_account_id).unwrap();
-                    let prefix = format!("{}:validator:{}", prefix, validator_account_id);
+                    let prefix = format!("{prefix}:validator:{validator_account_id}");
                     if let Some(validator) = validator_map.get(&validator_account_id) {
                         // check hash, if different, fetch, calculate and add to list
                         let summary_hash = {
@@ -248,7 +248,7 @@ impl Service for ValidatorListServer {
                             hasher.finish()
                         };
                         let db_summary_hash: u64 = redis::cmd("GET")
-                            .arg(format!("{}:summary_hash", prefix))
+                            .arg(format!("{prefix}:summary_hash"))
                             .query(&mut data_connection)
                             .context("Can't read validator summary hash from Redis.")?;
                         if summary_hash != db_summary_hash {

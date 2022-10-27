@@ -133,7 +133,7 @@ impl Messenger for MessengerImpl {
         };
         match self.api.answer_callback_query(&params).await {
             Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+            Err(error) => Err(TelegramBotError::Error(format!("{error:?}")).into()),
         }
     }
 
@@ -148,7 +148,7 @@ impl Messenger for MessengerImpl {
         };
         match self.api.delete_message(&params).await {
             Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+            Err(error) => Err(TelegramBotError::Error(format!("{error:?}")).into()),
         }
     }
 
@@ -184,7 +184,7 @@ impl Messenger for MessengerImpl {
                         network_postgres.delete_chat(chat_id).await?;
                     }
                 }
-                Err(TelegramBotError::Error(format!("{:?}", error)).into())
+                Err(TelegramBotError::Error(format!("{error:?}")).into())
             }
         }
     }
@@ -272,7 +272,7 @@ impl Messenger for MessengerImpl {
                         network_postgres.delete_chat(chat_id).await?;
                     }
                 }
-                Err(TelegramBotError::Error(format!("{:?}", error)).into())
+                Err(TelegramBotError::Error(format!("{error:?}")).into())
             }
         }
     }
@@ -340,7 +340,7 @@ impl Messenger for MessengerImpl {
         };
         match self.api.edit_message_text(&params).await {
             Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+            Err(error) => Err(TelegramBotError::Error(format!("{error:?}")).into()),
         }
     }
 
@@ -380,7 +380,7 @@ impl Messenger for MessengerImpl {
         };
         match self.api.edit_message_text(&params).await {
             Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{:?}", error)).into()),
+            Err(error) => Err(TelegramBotError::Error(format!("{error:?}")).into()),
         }
     }
 }

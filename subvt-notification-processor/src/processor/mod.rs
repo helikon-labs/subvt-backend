@@ -46,9 +46,9 @@ impl NotificationProcessor {
                 .await
             {
                 Ok(_success_log) => {
-                    metrics::sent_notification_counter(&format!("{}", channel)).inc();
+                    metrics::sent_notification_counter(&format!("{channel}")).inc();
                     metrics::observe_notification_send_time_ms(
-                        &format!("{}", channel),
+                        &format!("{channel}"),
                         start.elapsed().as_millis() as f64,
                     );
                     for notification in notification_group.iter() {
@@ -57,13 +57,13 @@ impl NotificationProcessor {
                 }
                 Err(error) => {
                     log::error!("Error while sending grouped notification: {:?}", error,);
-                    metrics::channel_error_counter(&format!("{}", channel,)).inc();
+                    metrics::channel_error_counter(&format!("{channel}")).inc();
                     for notification in notification_group.iter() {
                         let _ = postgres.mark_notification_failed(notification.id).await;
                         let _ = postgres
                             .set_notification_error_log(
                                 notification.id,
-                                format!("{:?}", error).as_str(),
+                                format!("{error:?}").as_str(),
                             )
                             .await;
                     }
@@ -132,10 +132,7 @@ impl NotificationProcessor {
                     .inc();
                     let _ = postgres.mark_notification_failed(notification_id).await;
                     let _ = postgres
-                        .set_notification_error_log(
-                            notification_id,
-                            format!("{:?}", error).as_str(),
-                        )
+                        .set_notification_error_log(notification_id, format!("{error:?}").as_str())
                         .await;
                 }
             }

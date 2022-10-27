@@ -38,7 +38,7 @@ impl NotificationGenerator {
         };
         // current hash
         let db_hash: u64 = redis::cmd("GET")
-            .arg(format!("{}:hash", redis_prefix))
+            .arg(format!("{redis_prefix}:hash"))
             .query_async(redis_connection)
             .await
             .context("Can't read validator hash from Redis.")?;

@@ -399,8 +399,8 @@ async fn create_user_notification_rule(
         if let (false, Some(validation_error_message)) = parameter.validate(parameter_type) {
             return Ok(HttpResponse::BadRequest().json(ServiceError::from(
                 format!(
-                    "Invalid '{}': {}",
-                    parameter_type.code, validation_error_message
+                    "Invalid '{}': {validation_error_message}",
+                    parameter_type.code,
                 )
                 .as_ref(),
             )));
@@ -492,7 +492,7 @@ impl Service for AppService {
                     actix_web::error::InternalError::from_response(
                         "",
                         HttpResponse::BadRequest()
-                            .json(ServiceError::from(format!("{}", err).as_ref())),
+                            .json(ServiceError::from(format!("{err}").as_ref())),
                     )
                     .into()
                 }))

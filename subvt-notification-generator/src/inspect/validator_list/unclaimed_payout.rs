@@ -25,7 +25,7 @@ impl NotificationGenerator {
     ) -> anyhow::Result<()> {
         // check era change & unclaimed payouts
         let db_active_era_json: String = redis::cmd("GET")
-            .arg(format!("{}:active_era", redis_storage_prefix))
+            .arg(format!("{redis_storage_prefix}:active_era"))
             .query_async(redis_connection)
             .await
             .context("Can't read active era JSON from Redis.")?;

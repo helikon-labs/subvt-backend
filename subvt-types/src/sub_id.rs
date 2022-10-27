@@ -34,7 +34,7 @@ impl Display for NFTChain {
             Self::Statemint => "statemint",
             Self::Unique => "unique",
         };
-        write!(f, "{}", display)
+        write!(f, "{display}")
     }
 }
 
@@ -50,7 +50,7 @@ impl FromStr for NFTChain {
             "statemine" => Ok(Self::Statemine),
             "statemint" => Ok(Self::Statemint),
             "unique" => Ok(Self::Unique),
-            _ => panic!("Unknown NFT chain: {}", s),
+            _ => panic!("Unknown NFT chain: {s}"),
         }
     }
 }

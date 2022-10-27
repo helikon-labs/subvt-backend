@@ -42,11 +42,11 @@ impl TelegramSender {
         match self.telegram_client.send_message(&params).await {
             Ok(response) => {
                 log::info!("Telegram notification sent succesfully.");
-                Ok(format!("{:?}", response))
+                Ok(format!("{response:?}"))
             }
             Err(error) => {
                 log::error!("Telegram notification send error: {:?}.", error,);
-                Err(NotificationSenderError::Error(format!("{:?}", error)).into())
+                Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }
     }
