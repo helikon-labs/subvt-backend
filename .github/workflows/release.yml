@@ -27,12 +27,12 @@ jobs:
         run: chmod +x ./_docker/docker-build-and-publish.sh
       - name: Get the version
         id: get_version
-        run: echo ::set-output name=version::${GITHUB_REF/refs\/tags\//}
+        run: echo "version=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
       - name: Build and publish
         run: ./_docker/docker-build-and-publish.sh ${{ steps.get_version.outputs.version }}
       - name: Generate changelog
         id: changelog
-        uses: metcalfc/changelog-generator@v3.0.0
+        uses: metcalfc/changelog-generator@v4.0.1
         with:
           myToken: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
       - name: GitHub Release
