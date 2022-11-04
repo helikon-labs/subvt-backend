@@ -2,7 +2,7 @@
 name = "subvt-config"
 version = "0.14.1"
 edition = "2021"
-rust-version = "1.63.0"
+rust-version = "1.65.0"
 
 [dependencies]
 config = "0.13.1"
