@@ -316,7 +316,7 @@ impl PostgreSQLAppStorage {
             r#"
             UPDATE app_user_validator
             SET deleted_at = now()
-            WHERE user_id = $1 AND network_id = $2 AND validator_account_id = $3
+            WHERE user_id = $1 AND network_id = $2 AND validator_account_id = $3 AND deleted_at IS NULL
             RETURNING id
             "#,
         )
