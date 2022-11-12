@@ -38,6 +38,7 @@ impl TelegramSender {
             reply_to_message_id: None,
             allow_sending_without_reply: None,
             reply_markup: None,
+            message_thread_id: None,
         };
         match self.telegram_client.send_message(&params).await {
             Ok(response) => {
