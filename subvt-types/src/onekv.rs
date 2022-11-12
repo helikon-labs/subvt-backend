@@ -28,10 +28,10 @@ pub struct OneKVCandidate {
     pub unclaimed_eras: Option<Vec<u32>>,
     pub validity: Vec<OneKVValidity>,
     pub location: Option<String>,
-    pub democracy_vote_count: u32,
-    pub democracy_votes: Vec<u32>,
-    pub council_stake: String,
-    pub council_votes: Vec<String>,
+    pub democracy_vote_count: Option<u32>,
+    pub democracy_votes: Option<Vec<u32>>,
+    pub council_stake: Option<String>,
+    pub council_votes: Option<Vec<String>>,
 }
 
 impl OneKVCandidate {
