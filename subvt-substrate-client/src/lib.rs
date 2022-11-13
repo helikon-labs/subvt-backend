@@ -13,6 +13,7 @@ use jsonrpsee::{
 use parity_scale_codec::Decode;
 use rustc_hash::{FxHashMap as HashMap, FxHasher};
 use sp_core::storage::{StorageChangeSet, StorageKey};
+use sp_core::ConstU32;
 use std::convert::TryInto;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
@@ -77,8 +78,8 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         log::info!("Got metadata.");
-        // metadata.log_all_calls();
-        // metadata.log_all_events();
+        metadata.log_all_calls();
+        metadata.log_all_events();
         metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
@@ -1266,7 +1267,9 @@ impl SubstrateClient {
         &self,
         account_id: &AccountId,
         block_hash: Option<&str>,
-    ) -> anyhow::Result<Option<DemocracyVoting<Balance, AccountId, BlockNumber>>> {
+    ) -> anyhow::Result<
+        Option<DemocracyVoting<Balance, AccountId, BlockNumber, ConstU32<{ u32::MAX }>>>,
+    > {
         let storage_key = get_storage_map_key(&self.metadata, "Democracy", "VotingOf", account_id);
         let chunk_values: Vec<StorageChangeSet<String>> = self
             .ws_client
@@ -1278,8 +1281,12 @@ impl SubstrateClient {
         if let Some(value) = chunk_values.get(0) {
             if let Some((_, Some(data))) = value.changes.get(0) {
                 let mut bytes: &[u8] = &data.0;
-                let voting: DemocracyVoting<Balance, AccountId, BlockNumber> =
-                    Decode::decode(&mut bytes)?;
+                let voting: DemocracyVoting<
+                    Balance,
+                    AccountId,
+                    BlockNumber,
+                    ConstU32<{ u32::MAX }>,
+                > = Decode::decode(&mut bytes)?;
                 return Ok(Some(voting));
             }
         }

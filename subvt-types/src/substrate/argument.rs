@@ -13,14 +13,15 @@ use crate::{
         ValidatorPreferences,
     },
 };
+use frame_support::traits::schedule::v3::TaskName;
 use frame_support::traits::schedule::LookupError;
+use frame_support::weights::OldWeight;
 use frame_support::{
-    dispatch::{DispatchError, DispatchInfo, DispatchResult},
+    dispatch::{DispatchError, DispatchInfo, DispatchResult, Weight},
     traits::{
         schedule::{Period, Priority},
         BalanceStatus,
     },
-    weights::Weight,
 };
 use frame_system::{Key, KeyValue};
 use pallet_bounties::BountyIndex;
@@ -218,6 +219,8 @@ pub enum ArgumentPrimitive {
     XcmResponse(xcm::prelude::Response),
     XcmV0Outcome(Box<xcm::v0::Outcome>),
     XcmVersion(xcm::prelude::XcmVersion),
+    TaskName(TaskName),
+    XcmWeight(xcm::latest::Weight),
 }
 
 pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
@@ -367,7 +370,6 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<RegistrarIndex>", decode_compact_registrar_index, CompactRegistrarIndex),
     ("Compact<ReferendumIndex>", decode_compact_referendum_index, CompactReferendumIndex),
     ("Compact<u32>", decode_compact_u32, CompactU32),
-    ("Compact<Weight>", decode_compact_weight, CompactWeight),
     ("ConfigOp<T::AccountId>", decode_config_op_account_id, ConfigOpAccountId),
     ("ConfigOp<BalanceOf<T>>", decode_config_op_balance, ConfigOpBalance),
     ("ConfigOp<u32>", decode_config_op_u32, ConfigOpU32),
@@ -479,7 +481,6 @@ generate_argument_primitive_decoder_impl! {[
     ("Box<VersionedXcm<<T as SysConfig>::RuntimeCall>>", decode_versioned_xcm_5, VersionedXcm),
     ("VestingInfo<BalanceOf<T>, T::BlockNumber>", decode_vesting_info, VestingInfo),
     ("VoteWeight", decode_vote_weight, VoteWeight),
-    ("Weight", decode_weight, Weight),
     ("WeightLimit", decode_weight_limit, WeightLimit),
     ("XcmError", decode_xcm_error, XcmError),
     ("Outcome", decode_xcm_outcome_1, XcmOutcome),
@@ -488,6 +489,8 @@ generate_argument_primitive_decoder_impl! {[
     ("XcmVersion", decode_xcm_version, XcmVersion),
     ("QueryId", decode_xcm_query_id, XcmQueryId),
     ("Response", decode_xcm_response, XcmResponse),
+    ("TaskName", decode_task_name, TaskName),
+    ("XcmWeight", decode_xcm_weight, XcmWeight),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -722,6 +725,52 @@ impl Argument {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
                     ))
+                } else if name == "Weight" {
+                    if metadata.is_weight_legacy() {
+                        let old_weight: OldWeight = match Decode::decode(bytes) {
+                            Ok(old_weight) => old_weight,
+                            Err(_) => {
+                                return Err(ArgumentDecodeError::DecodeError(
+                                    "Cannot decode OldWeight.".to_string(),
+                                ))
+                            }
+                        };
+                        Ok(Argument::Primitive(Box::new(ArgumentPrimitive::Weight(
+                            Weight::from_ref_time(old_weight.0),
+                        ))))
+                    } else {
+                        match Decode::decode(bytes) {
+                            Ok(weight) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::Weight(weight),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode Weight.".to_string(),
+                            )),
+                        }
+                    }
+                } else if name == "Compact<Weight>" {
+                    if metadata.is_weight_legacy() {
+                        let compact_old_weight: Compact<OldWeight> = match Decode::decode(bytes) {
+                            Ok(compact_old_weight) => compact_old_weight,
+                            Err(_) => {
+                                return Err(ArgumentDecodeError::DecodeError(
+                                    "Cannot decode OldWeight.".to_string(),
+                                ));
+                            }
+                        };
+                        Ok(Argument::Primitive(Box::new(ArgumentPrimitive::Weight(
+                            frame_support::dispatch::Weight::from(compact_old_weight.0),
+                        ))))
+                    } else {
+                        match Decode::decode(bytes) {
+                            Ok(weight) => Ok(Argument::Primitive(Box::new(
+                                ArgumentPrimitive::Weight(weight),
+                            ))),
+                            Err(_) => Err(ArgumentDecodeError::DecodeError(
+                                "Cannot decode Weight.".to_string(),
+                            )),
+                        }
+                    }
                 } else if name == "Box<<T as Config>::Call>"
                     || name == "Box<<T as Config>::RuntimeCall>"
                     || name == "Box<<T as Trait>::Call>"

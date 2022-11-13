@@ -28,7 +28,7 @@ pub enum MultisigExtrinsic {
         maybe_timepoint: Option<Timepoint<BlockNumber>>,
         call: Box<SubstrateExtrinsic>,
         store_call: bool,
-        max_weight: u64,
+        max_weight: frame_support::dispatch::Weight,
     },
     AsMultiThreshold1 {
         maybe_signature: Option<Signature>,
@@ -65,7 +65,7 @@ impl MultisigExtrinsic {
                     ),
                     call: Box::new(get_argument_primitive!(&arguments[3], Call)),
                     store_call: get_argument_primitive!(&arguments[4], Bool),
-                    max_weight: get_argument_primitive!(&arguments[5], Weight).ref_time(),
+                    max_weight: get_argument_primitive!(&arguments[5], Weight),
                 }))
             }
             "as_multi_threshold_1" => {

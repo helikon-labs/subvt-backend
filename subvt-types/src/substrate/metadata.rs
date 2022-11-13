@@ -106,6 +106,10 @@ impl Metadata {
         }
     }
 
+    pub fn is_weight_legacy(&self) -> bool {
+        self.last_runtime_upgrade_info.spec_version <= 9300
+    }
+
     pub fn get_xcm_version(&self) -> u8 {
         if self.last_runtime_upgrade_info.spec_version < 9100 {
             0
