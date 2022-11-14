@@ -13,7 +13,7 @@ byteorder = { version = "1.4.3", default-features = false }
 chrono = "0.4"
 frame-metadata = { version = "15.0.0", features = ["std", "v12", "v13", "v14"] }
 hex = "0.4"
-jsonrpsee = { version = "0.15.1", features = ["full"] }
+jsonrpsee = { version = "0.16.0", features = ["full"] }
 jsonrpsee-core = "0.15.1"
 jsonrpsee-types = "0.15.1"
 log = "0.4.16"
