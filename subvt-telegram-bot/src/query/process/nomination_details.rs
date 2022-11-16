@@ -31,7 +31,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     );
                     let onekv_nominator_account_ids = self
                         .network_postgres
-                        .get_onekv_nominator_account_ids()
+                        .get_onekv_nominator_stash_account_ids()
                         .await?;
                     self.messenger
                         .send_message(

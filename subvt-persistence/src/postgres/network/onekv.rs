@@ -3,7 +3,9 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use chrono::NaiveDateTime;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
-use subvt_types::onekv::{OneKVCandidate, OneKVCandidateSummary, OneKVNominator, OneKVValidity};
+use subvt_types::onekv::{
+    OneKVCandidate, OneKVCandidateSummary, OneKVNominator, OneKVNominatorSummary, OneKVValidity,
+};
 
 type PostgresCandidateSummary = (
     i32,
@@ -291,7 +293,7 @@ impl PostgreSQLNetworkStorage {
         Ok(nominator_save_result.0)
     }
 
-    pub async fn get_onekv_nominator_account_ids(&self) -> anyhow::Result<Vec<AccountId>> {
+    pub async fn get_onekv_nominator_stash_account_ids(&self) -> anyhow::Result<Vec<AccountId>> {
         let db_account_ids: Vec<(String,)> = sqlx::query_as(
             r#"
             SELECT DISTINCT stash_account_id
@@ -304,6 +306,36 @@ impl PostgreSQLNetworkStorage {
             .iter()
             .filter_map(|db_account_id| AccountId::from_str(&db_account_id.0).ok())
             .collect())
+    }
+
+    pub async fn get_onekv_nominator_summaries(
+        &self,
+    ) -> anyhow::Result<Vec<OneKVNominatorSummary>> {
+        let account_ids = self.get_onekv_nominator_stash_account_ids().await?;
+        let mut nominator_summaries = Vec::new();
+        for account_id in &account_ids {
+            let db_nominator_summary: (i32, String, String, String, i64) = sqlx::query_as(
+                r#"
+                SELECT id, onekv_id, stash_account_id, bonded_amount, last_nomination_at
+                FROM sub_onekv_nominator
+                WHERE stash_account_id = $1
+                ORDER BY id DESC
+                LIMIT 1
+                "#,
+            )
+            .bind(account_id.to_string())
+            .fetch_one(&self.connection_pool)
+            .await?;
+            nominator_summaries.push(OneKVNominatorSummary {
+                id: db_nominator_summary.0 as u64,
+                onekv_id: db_nominator_summary.1.clone(),
+                stash_account_id: *account_id,
+                stash_address: account_id.to_ss58_check(),
+                bonded_amount: db_nominator_summary.3.parse()?,
+                last_nomination_at: db_nominator_summary.4 as u64,
+            });
+        }
+        Ok(nominator_summaries)
     }
 
     pub async fn is_onekv_nominator_account_id(

@@ -17,6 +17,7 @@ use subvt_types::subvt::ValidatorSummary;
 
 mod era;
 mod metrics;
+mod onekv;
 mod session;
 mod validator;
 
@@ -198,6 +199,7 @@ impl Service for ReportService {
                 .service(era::era_active_validator_list_report_service)
                 .service(era::era_inactive_validator_list_report_service)
                 .service(era::era_report_service)
+                .service(onekv::get_onekv_nominator_summaries)
                 .service(session::validator::session_validator_report_service)
                 .service(session::validator::session_validator_para_vote_service)
                 .service(session::para::session_paras_vote_summaries_service)

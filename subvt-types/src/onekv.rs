@@ -1,5 +1,6 @@
 //! Types for the Thousand Validators Programme on Kusama and Polkadot.
 
+use crate::crypto::AccountId;
 use crate::substrate::Balance;
 use serde::{Deserialize, Serialize};
 use subvt_proc_macro::Diff;
@@ -139,6 +140,17 @@ pub struct OneKVNominator {
     pub average_stake: f64,
     pub new_bonded_amount: f64,
     pub reward_destination: String,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVNominatorSummary {
+    pub id: u64,
+    pub onekv_id: String,
+    pub stash_account_id: AccountId,
+    pub stash_address: String,
+    pub bonded_amount: Balance,
+    pub last_nomination_at: u64,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
