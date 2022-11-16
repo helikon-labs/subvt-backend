@@ -1,5 +1,7 @@
 //! Types to support the older metadata/runtime versions.
 use crate::crypto::AccountId;
+use frame_support::dispatch::{DispatchClass, Pays};
+use frame_support::weights::OldWeight;
 use pallet_election_provider_multi_phase::ElectionCompute;
 use parity_scale_codec::{Compact, Decode};
 use sp_npos_elections::ElectionScore;
@@ -40,6 +42,13 @@ pub struct SolutionSupport {
 pub struct LegacyValidatorPrefs {
     #[codec(compact)]
     pub commission: Perbill,
+}
+
+#[derive(Clone, Debug, Decode)]
+pub struct LegacyDispatchInfo {
+    pub weight: OldWeight,
+    pub class: DispatchClass,
+    pub pays_fee: Pays,
 }
 
 #[derive(Clone, Debug, Decode)]

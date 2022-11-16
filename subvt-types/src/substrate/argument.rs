@@ -303,6 +303,7 @@ macro_rules! get_argument_vector {
         result_vector
     }};
 }
+use crate::substrate::legacy::LegacyDispatchInfo;
 pub(crate) use get_argument_vector;
 
 macro_rules! generate_argument_primitive_decoder_impl {
@@ -382,7 +383,6 @@ generate_argument_primitive_decoder_impl! {[
     ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
     ("AccountVote<BalanceOf<T>>", decode_democracy_account_vote, DemocracyAccountVote),
-    ("DispatchInfo", decode_dispatch_info, DispatchInfo),
     ("DisputeLocation", decode_dispute_location, DisputeLocation),
     ("DisputeResult", decode_dispute_result, DisputeResult),
     ("EcdsaSignature", decode_ecdsa_signature, EcdsaSignature),
@@ -619,6 +619,40 @@ impl Argument {
         }
     }
 
+    fn decode_dispatch_info(
+        metadata: &Metadata,
+        bytes: &mut &[u8],
+    ) -> anyhow::Result<Self, ArgumentDecodeError> {
+        if metadata.is_weight_legacy() {
+            let legacy_dispatch_info: LegacyDispatchInfo =
+                Decode::decode(&mut *bytes).map_err(|error| {
+                    ArgumentDecodeError::DecodeError(format!(
+                        "Cannot decode legacy dispatch info: {:?}",
+                        error
+                    ))
+                })?;
+            let dispatch_info = DispatchInfo {
+                weight: legacy_dispatch_info.weight.into(),
+                class: legacy_dispatch_info.class,
+                pays_fee: legacy_dispatch_info.pays_fee,
+            };
+            Ok(Argument::Primitive(Box::new(
+                ArgumentPrimitive::DispatchInfo(dispatch_info),
+            )))
+        } else {
+            Ok(Argument::Primitive(Box::new(
+                ArgumentPrimitive::DispatchInfo(DispatchInfo::decode(&mut *bytes).map_err(
+                    |error| {
+                        ArgumentDecodeError::DecodeError(format!(
+                            "Cannot decode dispatch info: {:?}",
+                            error
+                        ))
+                    },
+                )?),
+            )))
+        }
+    }
+
     fn decode_dispatch_result(
         metadata: &Metadata,
         bytes: &mut &[u8],
@@ -652,6 +686,7 @@ impl Argument {
         }
     }
 
+    #[allow(clippy::cognitive_complexity)]
     pub fn decode(
         chain: &Chain,
         metadata: &Metadata,
@@ -843,6 +878,8 @@ impl Argument {
                     Argument::decode_multi_location(metadata, &mut *bytes)
                 } else if name == "Xcm<()>" || name == "Box<Xcm<T::Call>>" {
                     Argument::decode_xcm(metadata, &mut *bytes)
+                } else if name == "DispatchInfo" {
+                    Argument::decode_dispatch_info(metadata, &mut *bytes)
                 } else if name == "DispatchError" {
                     Argument::decode_dispatch_error(metadata, &mut *bytes)
                 } else if name == "DispatchResult" {
