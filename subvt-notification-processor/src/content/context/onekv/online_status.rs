@@ -1,4 +1,4 @@
-use chrono::{TimeZone, Utc};
+use chrono::{LocalResult, TimeZone, Utc};
 use subvt_types::app::{app_event, notification::Notification};
 use tera::Context;
 
@@ -12,11 +12,14 @@ pub(crate) fn set_onekv_online_status_changed_context(
         ) {
             let date_time_format = "%b %d, %Y %H:%M UTC";
             if event.offline_since > 0 {
-                let offline_since = Utc::timestamp(&Utc, event.offline_since as i64 / 1000, 0);
-                context.insert(
-                    "offline_since",
-                    &offline_since.format(date_time_format).to_string(),
-                );
+                if let LocalResult::Single(offline_since) =
+                    Utc::timestamp_opt(&Utc, event.offline_since as i64 / 1000, 0)
+                {
+                    context.insert(
+                        "offline_since",
+                        &offline_since.format(date_time_format).to_string(),
+                    )
+                }
             }
         } else {
             log::error!(

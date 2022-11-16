@@ -154,10 +154,16 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
         for i in 0..data.0.len() {
-            let date_time = chrono::NaiveDateTime::from_timestamp(
+            let date_time = match chrono::NaiveDateTime::from_timestamp_opt(
                 data.2[i] as i64 / 1000,
                 (data.2[i] as i64 % 1000) as u32,
-            );
+            ) {
+                Some(date_time) => date_time,
+                _ => {
+                    log::error!("Invalid node network stats date time.");
+                    return Ok(());
+                }
+            };
             sqlx::query(
                 r#"
                 INSERT INTO sub_telemetry_node_network_stats (time, node_id, download_bandwidth, upload_bandwidth)

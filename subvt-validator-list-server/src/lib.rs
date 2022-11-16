@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use bus::Bus;
 use clap::{arg, Command};
 use futures_util::StreamExt as _;
-use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
+use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
 use lazy_static::lazy_static;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet, FxHasher};
 use std::hash::{Hash, Hasher};
@@ -56,8 +56,8 @@ impl ValidatorListServer {
         port: u16,
         validator_map: &Arc<RwLock<HashMap<AccountId, ValidatorDetails>>>,
         bus: &Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<WsServerHandle> {
-        let rpc_ws_server = WsServerBuilder::default()
+    ) -> anyhow::Result<ServerHandle> {
+        let rpc_ws_server = ServerBuilder::default()
             .max_request_body_size(u32::MAX)
             .build(format!("{host}:{port}"))
             .await?;

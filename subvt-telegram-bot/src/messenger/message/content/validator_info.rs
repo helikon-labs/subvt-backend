@@ -1,7 +1,7 @@
 //! Content for the `/validatorinfo` request, after the selection of the validator.
 use super::MessageType;
 use crate::CONFIG;
-use chrono::{TimeZone, Utc};
+use chrono::{LocalResult, TimeZone, Utc};
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::numeric::format_decimal;
@@ -70,25 +70,36 @@ impl MessageType {
                 context.insert("onekv_location", location);
             }
             let date_time_format = "%b %d, %Y %H:%M UTC";
-            let discovered_at = Utc::timestamp(&Utc, onekv_summary.discovered_at as i64 / 1000, 0);
-            context.insert(
-                "onekv_discovered_at",
-                &discovered_at.format(date_time_format).to_string(),
-            );
+            match Utc::timestamp_opt(&Utc, onekv_summary.discovered_at as i64 / 1000, 0) {
+                LocalResult::Single(discovered_at) => {
+                    context.insert(
+                        "onekv_discovered_at",
+                        &discovered_at.format(date_time_format).to_string(),
+                    );
+                }
+                _ => context.insert("onekv_discovered_at", "-"),
+            }
             if let Some(nominated_at) = onekv_summary.nominated_at {
-                let nominated_at = Utc::timestamp(&Utc, nominated_at as i64 / 1000, 0);
-                context.insert(
-                    "onekv_nominated_at",
-                    &nominated_at.format(date_time_format).to_string(),
-                );
+                match Utc::timestamp_opt(&Utc, nominated_at as i64 / 1000, 0) {
+                    LocalResult::Single(nominated_at) => {
+                        context.insert(
+                            "onekv_nominated_at",
+                            &nominated_at.format(date_time_format).to_string(),
+                        );
+                    }
+                    _ => context.insert("onekv_nominated_at", "-"),
+                }
             }
             if onekv_summary.offline_since > 0 {
-                let offline_since =
-                    Utc::timestamp(&Utc, onekv_summary.offline_since as i64 / 1000, 0);
-                context.insert(
-                    "onekv_offline_since",
-                    &offline_since.format(date_time_format).to_string(),
-                );
+                match Utc::timestamp_opt(&Utc, onekv_summary.offline_since as i64 / 1000, 0) {
+                    LocalResult::Single(offline_since) => {
+                        context.insert(
+                            "onekv_offline_since",
+                            &offline_since.format(date_time_format).to_string(),
+                        );
+                    }
+                    _ => context.insert("onekv_offline_since", "-"),
+                }
             }
             if let Some(rank) = onekv_summary.rank {
                 context.insert("onekv_rank", &rank);
@@ -116,12 +127,15 @@ impl MessageType {
                 "onekv_council_vote_count",
                 &onekv_summary.council_votes.len(),
             );
-            let last_updated =
-                Utc::timestamp(&Utc, onekv_summary.record_created_at as i64 / 1000, 0);
-            context.insert(
-                "onekv_last_updated",
-                &last_updated.format(date_time_format).to_string(),
-            );
+            match Utc::timestamp_opt(&Utc, onekv_summary.record_created_at as i64 / 1000, 0) {
+                LocalResult::Single(last_updated) => {
+                    context.insert(
+                        "onekv_last_updated",
+                        &last_updated.format(date_time_format).to_string(),
+                    );
+                }
+                _ => context.insert("onekv_last_updated", "-"),
+            }
         }
     }
 }

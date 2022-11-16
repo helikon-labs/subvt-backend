@@ -2,7 +2,7 @@
 //! Mostly translations of the native Substrate runtime types.
 
 use crate::crypto::AccountId;
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, LocalResult, TimeZone, Utc};
 use frame_support::traits::ConstU32;
 pub use pallet_democracy::Conviction as DemocracyConviction;
 pub use pallet_democracy::Voting as DemocracyVoting;
@@ -363,11 +363,17 @@ impl Era {
 
 impl Era {
     pub fn get_start_date_time(&self) -> DateTime<Utc> {
-        Utc::timestamp(&Utc, self.start_timestamp as i64 / 1000, 0)
+        match Utc::timestamp_opt(&Utc, self.start_timestamp as i64 / 1000, 0) {
+            LocalResult::Single(date_time) => date_time,
+            _ => panic!("Invalid era start date time."),
+        }
     }
 
     pub fn get_end_date_time(&self) -> DateTime<Utc> {
-        Utc::timestamp(&Utc, self.end_timestamp as i64 / 1000, 0)
+        match Utc::timestamp_opt(&Utc, self.end_timestamp as i64 / 1000, 0) {
+            LocalResult::Single(date_time) => date_time,
+            _ => panic!("Invalid era end date time."),
+        }
     }
 }
 
@@ -382,11 +388,17 @@ pub struct Epoch {
 
 impl Epoch {
     pub fn get_start_date_time(&self) -> DateTime<Utc> {
-        Utc::timestamp(&Utc, self.start_timestamp as i64 / 1000, 0)
+        match Utc::timestamp_opt(&Utc, self.start_timestamp as i64 / 1000, 0) {
+            LocalResult::Single(date_time) => date_time,
+            _ => panic!("Invalid epoch start date time."),
+        }
     }
 
     pub fn get_end_date_time(&self) -> DateTime<Utc> {
-        Utc::timestamp(&Utc, self.end_timestamp as i64 / 1000, 0)
+        match Utc::timestamp_opt(&Utc, self.end_timestamp as i64 / 1000, 0) {
+            LocalResult::Single(date_time) => date_time,
+            _ => panic!("Invalid epoch start date time."),
+        }
     }
 }
 

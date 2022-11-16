@@ -9,7 +9,7 @@ use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
 use futures_util::StreamExt as _;
-use jsonrpsee::ws_server::{RpcModule, WsServerBuilder, WsServerHandle};
+use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
 use lazy_static::lazy_static;
 use redis::RedisResult;
 use serde::Serialize;
@@ -85,8 +85,8 @@ impl ValidatorDetailsServer {
         port: u16,
         redis_client: &redis::Client,
         bus: Arc<Mutex<Bus<BusEvent>>>,
-    ) -> anyhow::Result<WsServerHandle> {
-        let rpc_ws_server = WsServerBuilder::default()
+    ) -> anyhow::Result<ServerHandle> {
+        let rpc_ws_server = ServerBuilder::default()
             .max_request_body_size(u32::MAX)
             .build(format!("{host}:{port}"))
             .await?;

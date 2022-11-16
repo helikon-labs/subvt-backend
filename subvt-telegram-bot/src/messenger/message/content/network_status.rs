@@ -1,7 +1,7 @@
 //! Content for the `/networkstatus` request.
 use super::MessageType;
 use crate::CONFIG;
-use chrono::{TimeZone, Utc};
+use chrono::Utc;
 use subvt_types::subvt::NetworkStatus;
 use subvt_utility::numeric::format_decimal;
 use tera::Context;
@@ -24,21 +24,13 @@ impl MessageType {
             &network_status.finalized_block_number,
         );
         context.insert("active_era_index", &network_status.active_era.index);
-        let era_start = Utc::timestamp(
-            &Utc,
-            network_status.active_era.start_timestamp as i64 / 1000,
-            0,
-        );
+        let era_start = network_status.active_era.get_start_date_time();
         // format!("{}{}", " ".repeat(max_len - n.1.len()), n.1),
         context.insert(
             "active_era_start",
             &era_start.format(date_time_format).to_string(),
         );
-        let era_end = Utc::timestamp(
-            &Utc,
-            network_status.active_era.end_timestamp as i64 / 1000,
-            0,
-        );
+        let era_end = network_status.active_era.get_end_date_time();
         let duration_until_era_end = era_end - now;
         context.insert(
             "active_era_end",
@@ -54,20 +46,12 @@ impl MessageType {
         );
 
         context.insert("current_epoch_index", &network_status.current_epoch.index);
-        let epoch_start = Utc::timestamp(
-            &Utc,
-            network_status.current_epoch.start_timestamp as i64 / 1000,
-            0,
-        );
+        let epoch_start = network_status.current_epoch.get_start_date_time();
         context.insert(
             "current_epoch_start",
             &epoch_start.format(date_time_format).to_string(),
         );
-        let epoch_end = Utc::timestamp(
-            &Utc,
-            network_status.current_epoch.end_timestamp as i64 / 1000,
-            0,
-        );
+        let epoch_end = network_status.current_epoch.get_end_date_time();
         let duration_until_epoch_end = epoch_end - now;
         context.insert(
             "current_epoch_end",

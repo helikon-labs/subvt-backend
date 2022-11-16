@@ -68,8 +68,10 @@ impl SubstrateClient {
             .await?;
         log::info!("Substrate connection successful.");
         // get current block hash
-        let block_hash: String = ws_client.request("chain_getBlockHash", None).await?;
-        let chain: String = ws_client.request("system_chain", None).await?;
+        let block_hash: String = ws_client
+            .request("chain_getBlockHash", rpc_params!())
+            .await?;
+        let chain: String = ws_client.request("system_chain", rpc_params!()).await?;
         let chain = Chain::from_str(chain.as_str())?;
         let mut metadata = {
             let metadata_response: String = ws_client
@@ -78,8 +80,8 @@ impl SubstrateClient {
             Metadata::from(metadata_response.as_str())?
         };
         log::info!("Got metadata.");
-        metadata.log_all_calls();
-        metadata.log_all_events();
+        //metadata.log_all_calls();
+        //metadata.log_all_events();
         metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
@@ -90,8 +92,9 @@ impl SubstrateClient {
         metadata.last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
         log::info!("Got last runtime upgrade info.");
-        let system_properties: SystemProperties =
-            ws_client.request("system_properties", None).await?;
+        let system_properties: SystemProperties = ws_client
+            .request("system_properties", rpc_params!())
+            .await?;
         log::info!("Got system properties. {:?}", system_properties);
         Ok(Self {
             network_id: config.substrate.network_id,
@@ -110,8 +113,8 @@ impl SubstrateClient {
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
-        // metadata.log_all_calls();
-        // metadata.log_all_events();
+        //metadata.log_all_calls();
+        //metadata.log_all_events();
         metadata.check_primitive_argument_support(&self.chain)?;
         metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
@@ -119,7 +122,10 @@ impl SubstrateClient {
     }
 
     pub async fn get_current_block_hash(&self) -> anyhow::Result<String> {
-        let hash = self.ws_client.request("chain_getBlockHash", None).await?;
+        let hash = self
+            .ws_client
+            .request("chain_getBlockHash", rpc_params!())
+            .await?;
         Ok(hash)
     }
 
@@ -163,7 +169,7 @@ impl SubstrateClient {
     pub async fn get_finalized_block_hash(&self) -> anyhow::Result<String> {
         let hash: String = self
             .ws_client
-            .request("chain_getFinalizedHead", None)
+            .request("chain_getFinalizedHead", rpc_params!())
             .await?;
         Ok(format!(
             "0x{}",
@@ -1375,7 +1381,11 @@ impl SubstrateClient {
     {
         let mut subscription: Subscription<BlockHeader> = match self
             .ws_client
-            .subscribe(subscribe_method_name, None, unsubscribe_method_name)
+            .subscribe(
+                subscribe_method_name,
+                rpc_params!(),
+                unsubscribe_method_name,
+            )
             .await
         {
             Ok(subscription) => subscription,

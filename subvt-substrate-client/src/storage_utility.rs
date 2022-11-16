@@ -1,5 +1,5 @@
 //! Substrate storage RPC access helper functions.
-use jsonrpsee_types::params::ParamsSer;
+use jsonrpsee::core::params::ArrayParams;
 use parity_scale_codec::Encode;
 use serde_json::Value as JsonValue;
 use subvt_types::substrate::metadata::{
@@ -24,12 +24,15 @@ pub fn get_rpc_storage_plain_params<'a>(
     module: &'a str,
     name: &'a str,
     block_hash: Option<&'a str>,
-) -> Option<ParamsSer<'a>> {
-    let mut params: Vec<JsonValue> = vec![get_storage_plain_key(module, name).into()];
+) -> ArrayParams {
+    //let mut params: Vec<JsonValue> = vec![.into()];
+    let mut params = ArrayParams::new();
+    params.insert(get_storage_plain_key(module, name)).unwrap();
     if let Some(block_hash) = block_hash {
-        params.push(block_hash.into());
+        //params.push(block_hash.into());
+        params.insert(block_hash).unwrap();
     }
-    Some(ParamsSer::Array(params))
+    params
 }
 
 /// Get JSONRPSee parameters for a plain storage type at an optional given block.
@@ -40,22 +43,21 @@ pub fn get_rpc_paged_keys_params<'a>(
     count: usize,
     start_key: Option<&'a str>,
     block_hash: Option<&'a str>,
-) -> Option<ParamsSer<'a>> {
-    let params: Vec<JsonValue> = vec![
-        get_storage_plain_key(module, name).into(),
-        count.into(),
-        if let Some(start_key) = start_key {
-            start_key.into()
-        } else {
-            JsonValue::Null
-        },
-        if let Some(block_hash) = block_hash {
-            block_hash.into()
-        } else {
-            JsonValue::Null
-        },
-    ];
-    Some(ParamsSer::Array(params))
+) -> ArrayParams {
+    let mut params = ArrayParams::new();
+    params.insert(get_storage_plain_key(module, name)).unwrap();
+    params.insert(count).unwrap();
+    if let Some(start_key) = start_key {
+        params.insert(start_key).unwrap();
+    } else {
+        params.insert(JsonValue::Null).unwrap();
+    }
+    if let Some(block_hash) = block_hash {
+        params.insert(block_hash).unwrap();
+    } else {
+        params.insert(JsonValue::Null).unwrap();
+    }
+    params
 }
 
 fn get_map_key_hash<T>(
@@ -141,25 +143,31 @@ pub fn get_rpc_paged_map_keys_params<'a, T>(
     count: usize,
     start_key: Option<&'a str>,
     block_hash: Option<&'a str>,
-) -> Option<ParamsSer<'a>>
+) -> ArrayParams
 where
     T: Encode,
 {
-    let params: Vec<JsonValue> = vec![
-        get_storage_map_key(metadata, module_name, storage_name, key).into(),
-        count.into(),
-        if let Some(start_key) = start_key {
-            start_key.into()
-        } else {
-            JsonValue::Null
-        },
-        if let Some(block_hash) = block_hash {
-            block_hash.into()
-        } else {
-            JsonValue::Null
-        },
-    ];
-    Some(ParamsSer::Array(params))
+    let mut params = ArrayParams::new();
+    params
+        .insert(get_storage_map_key(
+            metadata,
+            module_name,
+            storage_name,
+            key,
+        ))
+        .unwrap();
+    params.insert(count).unwrap();
+    if let Some(start_key) = start_key {
+        params.insert(start_key).unwrap();
+    } else {
+        params.insert(JsonValue::Null).unwrap();
+    }
+    if let Some(block_hash) = block_hash {
+        params.insert(block_hash).unwrap();
+    } else {
+        params.insert(JsonValue::Null).unwrap();
+    }
+    params
 }
 
 /// Get JSONRPSee parameters for a map storage type at an optional given block.
@@ -170,16 +178,23 @@ pub fn get_rpc_storage_map_params<'a, T>(
     storage_name: &str,
     key: &T,
     block_hash: Option<&'a str>,
-) -> Option<ParamsSer<'a>>
+) -> ArrayParams
 where
     T: Encode,
 {
-    let mut params: Vec<JsonValue> =
-        vec![get_storage_map_key(metadata, module_name, storage_name, key).into()];
+    let mut params = ArrayParams::new();
+    params
+        .insert(get_storage_map_key(
+            metadata,
+            module_name,
+            storage_name,
+            key,
+        ))
+        .unwrap();
     if let Some(block_hash) = block_hash {
-        params.push(block_hash.into());
+        params.insert(block_hash).unwrap();
     }
-    Some(ParamsSer::Array(params))
+    params
 }
 
 fn _get_double_map_key_hash<T, U>(
@@ -287,15 +302,23 @@ pub fn _get_rpc_storage_double_map_params<'a, T, U>(
     key_1: &T,
     key_2: &U,
     block_hash: Option<&'a str>,
-) -> Option<ParamsSer<'a>>
+) -> ArrayParams
 where
     T: Encode,
     U: Encode,
 {
-    let mut params: Vec<JsonValue> =
-        vec![_get_storage_double_map_key(metadata, module_name, storage_name, key_1, key_2).into()];
+    let mut params = ArrayParams::new();
+    params
+        .insert(_get_storage_double_map_key(
+            metadata,
+            module_name,
+            storage_name,
+            key_1,
+            key_2,
+        ))
+        .unwrap();
     if let Some(block_hash) = block_hash {
-        params.push(block_hash.into());
+        params.insert(block_hash).unwrap();
     }
-    Some(ParamsSer::Array(params))
+    params
 }
