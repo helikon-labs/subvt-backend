@@ -904,6 +904,14 @@ mod v14 {
             TypeDef::Variant(variant) => {
                 format!("{variant:?}")
             }
+            TypeDef::Tuple(tuple) => {
+                let mut types = vec![];
+                for field in tuple.fields() {
+                    let ty = convert_type(meta, meta.types.resolve(field.id()).unwrap());
+                    types.push(ty.clone());
+                }
+                format!("({})", types.join(","))
+            }
             _ => panic!("Unsupported type: {:?}", ty.type_def()),
         };
         ty

@@ -17,7 +17,7 @@ use frame_support::traits::schedule::v3::TaskName;
 use frame_support::traits::schedule::LookupError;
 use frame_support::weights::OldWeight;
 use frame_support::{
-    dispatch::{DispatchError, DispatchInfo, DispatchResult, Weight},
+    dispatch::{DispatchError, DispatchInfo, DispatchResult, DispatchResultWithPostInfo, Weight},
     traits::{
         schedule::{Period, Priority},
         BalanceStatus,
@@ -123,6 +123,7 @@ pub enum ArgumentPrimitive {
     DispatchError(DispatchError),
     DispatchInfo(DispatchInfo),
     DispatchResult(DispatchResult),
+    DispatchResultWithPostInfo(DispatchResultWithPostInfo),
     DisputeLocation(DisputeLocation),
     DisputeProof(Box<DisputeProof>),
     DisputeResult(DisputeResult),
@@ -221,6 +222,7 @@ pub enum ArgumentPrimitive {
     XcmVersion(xcm::prelude::XcmVersion),
     TaskName(TaskName),
     XcmWeight(xcm::latest::Weight),
+    CompactOldWeight(Compact<OldWeight>),
 }
 
 pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
@@ -382,7 +384,8 @@ generate_argument_primitive_decoder_impl! {[
     ("Conviction", decode_democracy_conviction, DemocracyConviction),
     ("PropIndex", decode_democracy_proposal_index, DemocracyProposalIndex),
     ("VoteThreshold", decode_democracy_vote_threshold, DemocracyVoteThreshold),
-    ("AccountVote<BalanceOf<T>>", decode_democracy_account_vote, DemocracyAccountVote),
+    ("AccountVote<BalanceOf<T>>", decode_democracy_account_vote_1, DemocracyAccountVote),
+    ("AccountVote<BalanceOf<T, I>>", decode_democracy_account_vote_2, DemocracyAccountVote),
     ("DisputeLocation", decode_dispute_location, DisputeLocation),
     ("DisputeResult", decode_dispute_result, DisputeResult),
     ("EcdsaSignature", decode_ecdsa_signature, EcdsaSignature),
@@ -491,6 +494,8 @@ generate_argument_primitive_decoder_impl! {[
     ("Response", decode_xcm_response, XcmResponse),
     ("TaskName", decode_task_name, TaskName),
     ("XcmWeight", decode_xcm_weight, XcmWeight),
+    ("DispatchResultWithPostInfo", decode_dispatch_result_with_post_info, DispatchResultWithPostInfo),
+    ("Compact<OldWeight>", decode_compact_old_weight, CompactOldWeight),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -756,6 +761,18 @@ impl Argument {
                     || name == "Box<CallOrHashOf<T>>"
                     || name == "Box<xcm::opaque::VersionedXcm>"
                     || name == "Box<RawSolution<SolutionOf<T::MinerConfig>>>"
+                    || name == "TrackIdOf<T, I>"
+                    || name == "Compact<PollIndexOf<T, I>>"
+                    || name == "Rank"
+                    || name == "Box<PalletsOriginOf<T>>"
+                    || name == "VoteRecord"
+                    || name == "DispatchTime<T::BlockNumber>"
+                    || name == "BoundedCallOf<T, I>"
+                    || name == "BoundedCallOf<T>"
+                    || name == "TallyOf<T, I>"
+                    || name == "PollIndexOf<T, I>"
+                    || name == "T::Tally"
+                    || name == "ClassOf<T, I>"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
                         name.to_string(),
