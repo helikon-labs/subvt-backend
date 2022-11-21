@@ -8,6 +8,7 @@ pub mod account;
 pub mod app_event;
 pub mod block;
 pub mod epoch;
+pub mod era;
 pub mod error_log;
 pub mod event;
 pub mod extrinsic;

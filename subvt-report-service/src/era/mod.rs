@@ -117,6 +117,24 @@ pub(crate) async fn era_validator_report_service(
     }
 }
 
+/// Gets the current era.
+#[get("/era/current")]
+pub(crate) async fn current_era_service(data: web::Data<ServiceState>) -> ResultResponse {
+    if let Some(era) = data.postgres.get_current_era().await? {
+        Ok(HttpResponse::Ok().json(era))
+    } else {
+        return Ok(HttpResponse::NotFound().json(ServiceError::from(
+            "Current era not found.".to_string().as_ref(),
+        )));
+    }
+}
+
+/// Gets all eras.
+#[get("/era")]
+pub(crate) async fn all_eras_service(data: web::Data<ServiceState>) -> ResultResponse {
+    Ok(HttpResponse::Ok().json(data.postgres.get_all_eras().await?))
+}
+
 /// Gets the report for a range of eras, or a single era.
 /// See `EraReport` struct in the `subvt-types` definition for details.
 #[get("/report/era")]
