@@ -150,7 +150,9 @@ impl BlockProcessor {
                     .last_runtime_upgrade_info
                     .spec_version
             );
-            substrate_client.set_metadata_at_block(&block_hash).await?;
+            substrate_client
+                .set_metadata_at_block(block_number, &block_hash)
+                .await?;
             log::info!(
                 "Runtime {} metadata fetched.",
                 substrate_client

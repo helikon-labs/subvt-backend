@@ -105,11 +105,16 @@ impl SubstrateClient {
         })
     }
 
-    pub async fn set_metadata_at_block(&mut self, block_hash: &str) -> anyhow::Result<()> {
+    pub async fn set_metadata_at_block(
+        &mut self,
+        block_number: u64,
+        block_hash: &str,
+    ) -> anyhow::Result<()> {
+        let prev_block_hash = self.get_block_hash(block_number - 1).await?;
         let mut metadata = {
             let metadata_response: String = self
                 .ws_client
-                .request("state_getMetadata", rpc_params!(&block_hash))
+                .request("state_getMetadata", rpc_params!(&prev_block_hash))
                 .await?;
             Metadata::from(metadata_response.as_str())?
         };
