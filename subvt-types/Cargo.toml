@@ -16,6 +16,7 @@ log = "0.4.16"
 pallet-bags-list = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-bounties = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-collective = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+pallet-conviction-voting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-democracy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-election-provider-multi-phase = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-elections-phragmen = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
@@ -24,6 +25,7 @@ pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch 
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-multisig = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-nomination-pools = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
+pallet-ranked-collective = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }
 pallet-vesting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.32" }

@@ -14,7 +14,7 @@ use crate::{
     },
 };
 use frame_support::traits::schedule::v3::TaskName;
-use frame_support::traits::schedule::LookupError;
+use frame_support::traits::schedule::{DispatchTime, LookupError};
 use frame_support::weights::OldWeight;
 use frame_support::{
     dispatch::{DispatchError, DispatchInfo, DispatchResult, DispatchResultWithPostInfo, Weight},
@@ -35,6 +35,7 @@ use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
 use pallet_nomination_pools::{BondExtra, PoolId, PoolState};
+use pallet_ranked_collective::{Rank, VoteRecord};
 use pallet_scheduler::TaskAddress;
 use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
@@ -223,6 +224,10 @@ pub enum ArgumentPrimitive {
     TaskName(TaskName),
     XcmWeight(xcm::latest::Weight),
     CompactOldWeight(Compact<OldWeight>),
+    TrackId(u16),
+    Rank(Rank),
+    VoteRecord(VoteRecord),
+    DispatchTime(DispatchTime<BlockNumber>),
 }
 
 pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
@@ -496,6 +501,12 @@ generate_argument_primitive_decoder_impl! {[
     ("XcmWeight", decode_xcm_weight, XcmWeight),
     ("DispatchResultWithPostInfo", decode_dispatch_result_with_post_info, DispatchResultWithPostInfo),
     ("Compact<OldWeight>", decode_compact_old_weight, CompactOldWeight),
+    ("TrackIdOf<T, I>", decode_track_id, TrackId),
+    ("PollIndexOf<T, I>", decode_poll_index, ReferendumIndex),
+    ("Compact<PollIndexOf<T, I>>", decode_compact_poll_index, CompactReferendumIndex),
+    ("Rank", decode_rank, Rank),
+    ("VoteRecord", decode_vote_record, VoteRecord),
+    ("DispatchTime<T::BlockNumber>", decode_dispatch_time, DispatchTime),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -761,17 +772,13 @@ impl Argument {
                     || name == "Box<CallOrHashOf<T>>"
                     || name == "Box<xcm::opaque::VersionedXcm>"
                     || name == "Box<RawSolution<SolutionOf<T::MinerConfig>>>"
-                    || name == "TrackIdOf<T, I>"
-                    || name == "Compact<PollIndexOf<T, I>>"
-                    || name == "Rank"
-                    || name == "Box<PalletsOriginOf<T>>"
-                    || name == "VoteRecord"
-                    || name == "DispatchTime<T::BlockNumber>"
+                    // below are introduced with v9320
+                    || name == "T::Tally"
+                    || name == "TallyOf<T, I>"
+                    || name == "BoundedCallOf<T, I>"
                     || name == "BoundedCallOf<T, I>"
                     || name == "BoundedCallOf<T>"
-                    || name == "TallyOf<T, I>"
-                    || name == "PollIndexOf<T, I>"
-                    || name == "T::Tally"
+                    || name == "Box<PalletsOriginOf<T>>"
                     || name == "ClassOf<T, I>"
                 {
                     Err(ArgumentDecodeError::UnsupportedPrimitiveType(
