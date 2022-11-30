@@ -172,12 +172,12 @@ where
 
 /// Get JSONRPSee parameters for a map storage type at an optional given block.
 /// Will get current storage if `None` is supplied for `block_hash`.
-pub fn get_rpc_storage_map_params<'a, T>(
+pub fn get_rpc_storage_map_params<T>(
     metadata: &Metadata,
     module_name: &str,
     storage_name: &str,
     key: &T,
-    block_hash: Option<&'a str>,
+    block_hash: Option<&str>,
 ) -> ArrayParams
 where
     T: Encode,
@@ -295,13 +295,13 @@ where
 
 /// Get JSONRPSee parameters for a double-map storage type at an optional given block.
 /// Will get current storage if `None` is supplied for `block_hash`.
-pub fn _get_rpc_storage_double_map_params<'a, T, U>(
+pub fn _get_rpc_storage_double_map_params<T, U>(
     metadata: &Metadata,
     module_name: &str,
     storage_name: &str,
     key_1: &T,
     key_2: &U,
-    block_hash: Option<&'a str>,
+    block_hash: Option<&str>,
 ) -> ArrayParams
 where
     T: Encode,
