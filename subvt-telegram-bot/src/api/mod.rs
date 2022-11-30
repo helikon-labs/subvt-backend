@@ -140,7 +140,7 @@ impl AsyncTelegramApi for AsyncApi {
         for (key, val) in json_struct.as_object().unwrap().iter() {
             if !file_keys.contains(&key.as_str()) {
                 let value = match val {
-                    &Value::String(ref val) => val.to_string(),
+                    Value::String(val) => val.to_string(),
                     other => other.to_string(),
                 };
                 form.add_text(key, value);
