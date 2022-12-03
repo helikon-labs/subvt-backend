@@ -25,7 +25,7 @@ impl PostgreSQLNetworkStorage {
     async fn get_single_era_report(&self, era_index: u32) -> anyhow::Result<Option<EraReport>> {
         let era_report: PostgresEraReport = sqlx::query_as(
             r#"
-            SELECT start_timestamp, end_timestamp, minimum_stake, maximum_stake, average_stake, median_stake, total_validator_reward, total_reward_points, total_reward, total_stake, active_validator_count, inactive_validator_count, active_nominator_count, offline_offence_count, slashed_amount, chilling_count
+            SELECT start_timestamp, end_timestamp, minimum_stake, maximum_stake, average_stake, median_stake, total_reward, total_reward_points, total_paid_out, total_stake, active_validator_count, inactive_validator_count, active_nominator_count, offline_offence_count, slashed_amount, chilling_count
             FROM sub_get_era_report($1)
             "#
         )
@@ -48,9 +48,9 @@ impl PostgreSQLNetworkStorage {
                 maximum_stake: super::parse_maybe_string(&era_report.3)?,
                 average_stake: super::parse_maybe_string(&era_report.4)?,
                 median_stake: super::parse_maybe_string(&era_report.5)?,
-                total_validator_reward: super::parse_maybe_string(&era_report.6)?,
+                total_reward: super::parse_maybe_string(&era_report.6)?,
                 total_reward_points: era_report.7.map(|value| value as u128),
-                total_reward: era_report.8 as u128,
+                total_paid_out: era_report.8 as u128,
                 total_stake: super::parse_maybe_string(&era_report.9)?,
                 active_validator_count: era_report.10 as u32,
                 inactive_validator_count: era_report.11 as u32,
