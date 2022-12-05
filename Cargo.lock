@@ -5359,9 +5359,9 @@ dependencies = [
 
 [[package]]
 name = "resvg"
-version = "0.27.0"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "856832c60a27c0b7706f1bb1e3980f59f7d7c2710eda37e5f7ce198be0e16849"
+checksum = "c115863f2d3621999cf187e318bc92b16402dfeff6a48c74df700d77381394c1"
 dependencies = [
  "gif",
  "jpeg-decoder",
@@ -5372,7 +5372,8 @@ dependencies = [
  "svgfilters",
  "svgtypes",
  "tiny-skia",
- "usvg",
+ "usvg 0.28.0",
+ "usvg-text-layout",
 ]
 
 [[package]]
@@ -7181,7 +7182,7 @@ dependencies = [
  "svg",
  "thiserror",
  "tiny-skia",
- "usvg",
+ "usvg 0.27.0",
 ]
 
 [[package]]
@@ -8189,6 +8190,42 @@ dependencies = [
  "unicode-script",
  "unicode-vo",
  "xmlwriter",
+]
+
+[[package]]
+name = "usvg"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b5b7c2b30845b3348c067ca3d09e20cc6e327c288f0ca4c48698712abf432e9"
+dependencies = [
+ "base64 0.13.1",
+ "data-url",
+ "flate2",
+ "imagesize",
+ "kurbo",
+ "log",
+ "rctree",
+ "roxmltree",
+ "simplecss",
+ "siphasher",
+ "strict-num",
+ "svgtypes",
+]
+
+[[package]]
+name = "usvg-text-layout"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c9550670848028641bf976b06f5c520ffdcd6f00ee7ee7eb0853f78e2c249d7"
+dependencies = [
+ "fontdb",
+ "kurbo",
+ "log",
+ "rustybuzz",
+ "unicode-bidi",
+ "unicode-script",
+ "unicode-vo",
+ "usvg 0.28.0",
 ]
 
 [[package]]
