@@ -5,5 +5,5 @@ edition = "2021"
 rust-version = "1.65.0"
 
 [dependencies]
-config = "0.13.1"
+config = "0.13.3"
 serde = { version = "1.0", features = ["derive"] }
