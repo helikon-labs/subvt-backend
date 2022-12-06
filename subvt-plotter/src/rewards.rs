@@ -3,6 +3,7 @@ use crate::{PlotterError, CONFIG};
 use chrono::Datelike;
 use itertools::Itertools;
 use rand::Rng;
+use resvg::usvg_text_layout::{fontdb, TreeTextToPath};
 use rustc_hash::FxHashMap as HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
@@ -113,17 +114,18 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         millis,
         random,
     );
-    let mut opt = usvg::Options {
+    let opt = usvg::Options {
         resources_dir: std::fs::canonicalize(&svg_path)
             .ok()
             .and_then(|p| p.parent().map(|p| p.to_path_buf())),
         ..Default::default()
     };
-    opt.fontdb.load_fonts_dir(&CONFIG.plotter.font_dir_path);
-    opt.fontdb
-        .set_sans_serif_family(&CONFIG.plotter.font_sans_serif_family);
+    let mut fontdb = fontdb::Database::new();
+    fontdb.load_fonts_dir(&CONFIG.plotter.font_dir_path);
+    fontdb.set_sans_serif_family(&CONFIG.plotter.font_sans_serif_family);
     let svg_data = std::fs::read(&svg_path).unwrap();
-    let rtree = usvg::Tree::from_data(&svg_data, &opt.to_ref()).unwrap();
+    let mut rtree = usvg::Tree::from_data(&svg_data, &opt).unwrap();
+    rtree.convert_text(&fontdb, opt.keep_named_groups);
     //let pixmap_size = rtree.svg_node().size.to_screen_size();
     let pixmap_size = rtree.size.to_screen_size();
     let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();

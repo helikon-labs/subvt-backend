@@ -67,7 +67,7 @@ impl APNSSender {
             aps: a2::request::payload::APS {
                 alert: Some(a2::request::payload::APSAlert::Plain(message)),
                 badge: None,
-                sound: Some("subvt_generic_notification.wav"),
+                sound: Some("default"),
                 content_available: Some(1),
                 category: None,
                 mutable_content: None,
