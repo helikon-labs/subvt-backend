@@ -248,7 +248,7 @@ async fn create_default_user_notification_rules(
                 auth.id,
                 &rule.0.to_string(),
                 (None, None),
-                (Some(CONFIG.substrate.network_id), true),
+                (None, true),
                 (&rule.1, rule.2),
                 (&HashSet::default(), &channel_id_set, &[]),
             )

@@ -41,13 +41,13 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::ChainValidatorLostNomination,
-            NotificationPeriodType::Immediate,
-            0,
+            NotificationPeriodType::Hour,
+            1,
         ),
         (
             NotificationTypeCode::ChainValidatorNewNomination,
-            NotificationPeriodType::Immediate,
-            0,
+            NotificationPeriodType::Hour,
+            1,
         ),
         (
             NotificationTypeCode::ChainValidatorOfflineOffence,
