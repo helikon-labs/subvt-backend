@@ -4176,6 +4176,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-nis"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.34#1cc97dd30537997ff4c9827beb2ef0cac9c49063"
+dependencies = [
+ "frame-benchmarking 4.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.34)",
+ "frame-support 4.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.34)",
+ "frame-system 4.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.34)",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic 6.0.0",
+ "sp-core 7.0.0",
+ "sp-runtime 7.0.0",
+ "sp-std 5.0.0",
+]
+
+[[package]]
 name = "pallet-nomination-pools"
 version = "1.0.0"
 source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.34#1cc97dd30537997ff4c9827beb2ef0cac9c49063"
@@ -7964,6 +7980,7 @@ dependencies = [
  "pallet-identity",
  "pallet-im-online",
  "pallet-multisig",
+ "pallet-nis",
  "pallet-nomination-pools",
  "pallet-ranked-collective",
  "pallet-scheduler",
@@ -8586,7 +8603,7 @@ dependencies = [
  "cfg-if",
  "digest 0.10.6",
  "digest 0.9.0",
- "rand 0.4.6",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

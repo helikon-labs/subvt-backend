@@ -24,6 +24,7 @@ pallet-gilt = { git = "https://github.com/paritytech/substrate.git", branch = "p
 pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
 pallet-multisig = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
+pallet-nis = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
 pallet-nomination-pools = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
 pallet-ranked-collective = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }
 pallet-scheduler = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.34" }

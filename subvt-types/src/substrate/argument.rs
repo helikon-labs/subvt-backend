@@ -34,6 +34,7 @@ use pallet_identity::{Data, IdentityFields, IdentityInfo, Judgement, RegistrarIn
 use pallet_im_online::sr25519::AuthorityId;
 use pallet_im_online::Heartbeat;
 use pallet_multisig::Timepoint;
+use pallet_nis::ReceiptIndex;
 use pallet_nomination_pools::{BondExtra, PoolId, PoolState};
 use pallet_ranked_collective::{Rank, VoteRecord};
 use pallet_scheduler::TaskAddress;
@@ -228,6 +229,8 @@ pub enum ArgumentPrimitive {
     Rank(Rank),
     VoteRecord(VoteRecord),
     DispatchTime(DispatchTime<BlockNumber>),
+    ReceiptIndex(ReceiptIndex),
+    CompactReceiptIndex(Compact<ReceiptIndex>),
 }
 
 pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
@@ -507,6 +510,9 @@ generate_argument_primitive_decoder_impl! {[
     ("Rank", decode_rank, Rank),
     ("VoteRecord", decode_vote_record, VoteRecord),
     ("DispatchTime<T::BlockNumber>", decode_dispatch_time, DispatchTime),
+    ("ReceiptIndex", decode_receipt_index, ReceiptIndex),
+    ("Compact<ReceiptIndex>", decode_compact_receipt_index, CompactReceiptIndex),
+    ("<T::Counterpart as FungibleInspect<T::AccountId>>::Balance", decode_fungible_inspect_balance, Balance),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
@@ -762,6 +768,7 @@ impl Argument {
                 Ok(Argument::Tuple(result))
             }
             ArgumentMeta::Primitive(name) => {
+                let name = name.trim();
                 if name == "sp_std::marker::PhantomData<(AccountId, Event)>"
                     || name == "Box<RawSolution<CompactOf<T>>>"
                     || name == "Box<RawSolution<SolutionOf<T>>>"
