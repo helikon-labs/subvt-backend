@@ -26,3 +26,10 @@ members = [
     "subvt-validator-list-server",
     "subvt-validator-list-updater",
 ]
+
+[workspace.dependencies]
+anyhow = "1.0"
+itertools = "0.10"
+lazy_static = "1.4"
+log = "0.4"
+thiserror = "1.0"

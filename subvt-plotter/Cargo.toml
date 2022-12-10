@@ -5,14 +5,14 @@ edition = "2021"
 rust-version = "1.65.0"
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { workspace = true }
 chrono = "0.4"
 env_logger = "0.10.0"
 format_num = "0.1.0"
-itertools = "0.10.3"
-lazy_static = "1.4.0"
-log = "0.4.16"
-thiserror = "1.0"
+itertools = { workspace = true }
+log = { workspace = true }
+lazy_static = { workspace = true }
+thiserror = { workspace = true }
 rand = "0.8.5"
 resvg = "0.28.0"
 rustc-hash = "1.1.0"
