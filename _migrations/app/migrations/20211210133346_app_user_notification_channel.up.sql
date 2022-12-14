@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS app_user_notification_channel
 CREATE UNIQUE INDEX IF NOT EXISTS app_user_notification_channel_u_user_channel_target
     ON app_user_notification_channel (user_id, notification_channel_code, target)
     WHERE deleted_at IS NULL;
-
 CREATE UNIQUE INDEX IF NOT EXISTS app_user_notification_channel_u_user_channel_target_deleted
     ON app_user_notification_channel (user_id, notification_channel_code, target, deleted_at)
     WHERE deleted_at IS NOT NULL;

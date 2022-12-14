@@ -202,3 +202,19 @@ pub(crate) async fn validator_search_service(
         .collect();
     Ok(HttpResponse::Ok().json(list))
 }
+
+#[get("/validator/{ss58_address_or_account_id}/era/reward")]
+pub(crate) async fn validator_era_rewards_service(
+    path: web::Path<ValidatorPathParameter>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
+        Ok(account_id) => account_id,
+        Err(response) => return Ok(response),
+    };
+    let era_rewards = data
+        .postgres
+        .get_validator_all_era_rewards(&account_id)
+        .await?;
+    Ok(HttpResponse::Ok().json(era_rewards))
+}

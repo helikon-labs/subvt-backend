@@ -3,7 +3,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::substrate::{Balance, Era};
 
 impl PostgreSQLNetworkStorage {
-    pub async fn get_validator_era_rewards(
+    pub async fn get_validator_all_era_rewards(
         &self,
         validator_account_id: &AccountId,
     ) -> anyhow::Result<Vec<(Era, Balance)>> {

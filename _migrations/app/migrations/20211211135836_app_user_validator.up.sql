@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS app_user_validator
 CREATE UNIQUE INDEX IF NOT EXISTS app_user_validator_u_user_network_validator
     ON app_user_validator (user_id, network_id, validator_account_id)
     WHERE deleted_at IS NULL;
-
 CREATE UNIQUE INDEX IF NOT EXISTS app_user_validator_u_user_network_validator_deleted
     ON app_user_validator (user_id, network_id, validator_account_id, deleted_at)
     WHERE deleted_at IS NOT NULL;

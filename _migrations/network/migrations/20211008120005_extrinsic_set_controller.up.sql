@@ -9,8 +9,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
     controller_account_id   VARCHAR(66) NOT NULL,
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_set_controller_u_extrinsic
-        UNIQUE (block_hash, extrinsic_index, nesting_index),
     CONSTRAINT sub_extrinsic_set_controller_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
@@ -27,6 +25,13 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_set_controller
             ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS sub_extrinsic_set_controller_u_extrinsic
+    ON sub_extrinsic_set_controller (block_hash, extrinsic_index)
+    WHERE nesting_index IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS sub_extrinsic_set_controller_u_extrinsic_nesting_index
+    ON sub_extrinsic_set_controller (block_hash, extrinsic_index, nesting_index)
+    WHERE nesting_index IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS sub_extrinsic_set_controller_idx_block_hash
     ON sub_extrinsic_set_controller (block_hash);

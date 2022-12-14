@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS sub_event_validator_offline
     block_hash              VARCHAR(66) NOT NULL,
     extrinsic_index         INTEGER,
     nesting_index           text,
-    event_index             INTEGER,
+    event_index             INTEGER NOT NULL,
     validator_account_id    VARCHAR(66) NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT sub_event_validator_offline_u_event

@@ -21,7 +21,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             {
                 let era_rewards = self
                     .network_postgres
-                    .get_validator_era_rewards(&validator.account_id)
+                    .get_validator_all_era_rewards(&validator.account_id)
                     .await?;
                 if era_rewards.is_empty() {
                     self.messenger

@@ -10,8 +10,6 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_payout_stakers
     era_index               bigint NOT NULL,
     is_successful           boolean NOT NULL,
     created_at              TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_extrinsic_payout_stakers_u_extrinsic
-        UNIQUE (block_hash, extrinsic_index, nesting_index),
     CONSTRAINT sub_extrinsic_payout_stakers_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
@@ -33,6 +31,13 @@ CREATE TABLE IF NOT EXISTS sub_extrinsic_payout_stakers
             ON DELETE RESTRICT
             ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS sub_extrinsic_payout_stakers_u_extrinsic
+    ON sub_extrinsic_payout_stakers (block_hash, extrinsic_index)
+    WHERE nesting_index IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS sub_extrinsic_payout_stakers_u_extrinsic_nesting_index
+    ON sub_extrinsic_payout_stakers (block_hash, extrinsic_index, nesting_index)
+    WHERE nesting_index IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS sub_extrinsic_payout_stakers_idx_block_hash
     ON sub_extrinsic_payout_stakers (block_hash);

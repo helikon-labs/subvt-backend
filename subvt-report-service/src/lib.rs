@@ -211,6 +211,7 @@ impl Service for ReportService {
                 .service(validator::active_validator_list_service)
                 .service(validator::inactive_validator_list_service)
                 .service(validator::validator_search_service)
+                .service(validator::validator_era_rewards_service)
         })
         .workers(10)
         .disable_signals()
