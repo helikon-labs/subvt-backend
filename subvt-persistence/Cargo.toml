@@ -1,6 +1,6 @@
 [package]
 name = "subvt-persistence"
-version = "0.14.18"
+version = "0.14.19"
 edition = "2021"
 rust-version = "1.65.0"
 
