@@ -5,7 +5,8 @@ use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
-    BlockSummary, ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
+    BlockSummary, EraValidatorRewardReport, ValidatorDetailsReport, ValidatorListReport,
+    ValidatorSummaryReport,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
@@ -212,9 +213,31 @@ pub(crate) async fn validator_era_rewards_service(
         Ok(account_id) => account_id,
         Err(response) => return Ok(response),
     };
-    let era_rewards = data
+    let era_rewards: Vec<EraValidatorRewardReport> = data
         .postgres
         .get_validator_all_era_rewards(&account_id)
-        .await?;
+        .await?
+        .iter()
+        .map(EraValidatorRewardReport::from)
+        .collect();
+    Ok(HttpResponse::Ok().json(era_rewards))
+}
+
+#[get("/validator/{ss58_address_or_account_id}/era/payout")]
+pub(crate) async fn validator_era_payouts_service(
+    path: web::Path<ValidatorPathParameter>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
+        Ok(account_id) => account_id,
+        Err(response) => return Ok(response),
+    };
+    let era_rewards: Vec<EraValidatorRewardReport> = data
+        .postgres
+        .get_validator_all_era_payouts(&account_id)
+        .await?
+        .iter()
+        .map(EraValidatorRewardReport::from)
+        .collect();
     Ok(HttpResponse::Ok().json(era_rewards))
 }
