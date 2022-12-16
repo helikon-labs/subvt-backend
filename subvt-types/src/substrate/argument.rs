@@ -178,6 +178,7 @@ pub enum ArgumentPrimitive {
     Perbill(Perbill),
     Percent(Percent),
     Perquintill(Perquintill),
+    PreimageHash(Hash),
     SlotLeasePeriodStart(SlotLeasePeriodStart),
     RewardDestination(RewardDestination),
     SchedulerLookupError(LookupError),
@@ -513,6 +514,7 @@ generate_argument_primitive_decoder_impl! {[
     ("ReceiptIndex", decode_receipt_index, ReceiptIndex),
     ("Compact<ReceiptIndex>", decode_compact_receipt_index, CompactReceiptIndex),
     ("<T::Counterpart as FungibleInspect<T::AccountId>>::Balance", decode_fungible_inspect_balance, Balance),
+    ("PreimageHash", decode_preimage_hash, PreimageHash),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
