@@ -44,7 +44,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_extrinsic_payout_stakers (block_hash, extrinsic_index, is_nested_call, nesting_index, caller_account_id, validator_account_id, era_index, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            ON CONFLICT(block_hash, extrinsic_index, nesting_index) DO NOTHING
             RETURNING id
             "#,
         )

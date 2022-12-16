@@ -19,7 +19,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_extrinsic_heartbeat (block_hash, extrinsic_index, is_nested_call, nesting_index, block_number, session_index, validator_index, validator_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            ON CONFLICT (block_hash, extrinsic_index, nesting_index) DO NOTHING
             RETURNING id
             "#,
         )

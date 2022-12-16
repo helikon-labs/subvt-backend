@@ -18,7 +18,6 @@ impl PostgreSQLNetworkStorage {
             r#"
             INSERT INTO sub_extrinsic_nominate (block_hash, extrinsic_index, is_nested_call, nesting_index, controller_account_id, is_successful)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT(block_hash, extrinsic_index, nesting_index) DO NOTHING
             RETURNING id
             "#,
         )
