@@ -35,7 +35,7 @@ polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git",
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.35" }
 polkadot-runtime = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.35" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.35" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.35" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.36" }
 rustc-hash = "1.1.0"
 scale-info = "2.1.2"
 serde = { version = "1.0", features = ["derive"] }
