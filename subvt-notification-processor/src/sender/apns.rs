@@ -1,7 +1,7 @@
 //! Apple Push Notification Service (APNS) sender. Sends notifications to Apple devices.
 use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
-use a2::ErrorReason;
+use a2::{DefaultNotificationBuilder, ErrorReason, NotificationBuilder};
 use async_trait::async_trait;
 use serde::Serialize;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -58,23 +58,17 @@ impl APNSSender {
         user_notification_channel_id: u32,
         target: &str,
     ) -> anyhow::Result<String> {
-        let mut payload = a2::request::payload::Payload {
-            options: a2::NotificationOptions {
-                apns_topic: Some("io.helikon.subvt"),
-                ..Default::default()
-            },
-            device_token: target,
-            aps: a2::request::payload::APS {
-                alert: Some(a2::request::payload::APSAlert::Plain(message)),
-                badge: None,
-                sound: Some("default"),
-                content_available: Some(1),
-                category: None,
-                mutable_content: None,
-                url_args: None,
-            },
-            data: Default::default(),
-        };
+        let mut payload = DefaultNotificationBuilder::new()
+            .set_body(message)
+            .set_sound("default")
+            .set_content_available()
+            .build(
+                target,
+                a2::NotificationOptions {
+                    apns_topic: Some("io.helikon.subvt"),
+                    ..Default::default()
+                },
+            );
         payload.add_custom_data(
             "notification_data",
             &APNSNotificationData {
