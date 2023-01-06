@@ -25,11 +25,11 @@ sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polka
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.24", features = ["full"] }
 twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
 
 [dev-dependencies]
 hex = "0.4"
 lazy_static = { workspace = true }
 subvt-config = { path = "../subvt-config" }
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.24", features = ["full"] }
