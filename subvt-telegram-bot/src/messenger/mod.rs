@@ -167,6 +167,7 @@ impl Messenger for MessengerImpl {
             caption: None,
             parse_mode: Some(ParseMode::Html),
             caption_entities: None,
+            has_spoiler: None,
             disable_notification: None,
             protect_content: None,
             reply_to_message_id: None,
