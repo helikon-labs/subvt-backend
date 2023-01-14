@@ -5,8 +5,8 @@ use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
-    BlockSummary, EraValidatorRewardReport, ValidatorDetailsReport, ValidatorListReport,
-    ValidatorSummaryReport,
+    BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, ValidatorDetailsReport,
+    ValidatorListReport, ValidatorSummaryReport,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
@@ -232,12 +232,12 @@ pub(crate) async fn validator_era_payouts_service(
         Ok(account_id) => account_id,
         Err(response) => return Ok(response),
     };
-    let era_rewards: Vec<EraValidatorRewardReport> = data
+    let era_payouts: Vec<EraValidatorPayoutReport> = data
         .postgres
         .get_validator_all_era_payouts(&account_id)
         .await?
         .iter()
-        .map(EraValidatorRewardReport::from)
+        .map(EraValidatorPayoutReport::from)
         .collect();
-    Ok(HttpResponse::Ok().json(era_rewards))
+    Ok(HttpResponse::Ok().json(era_payouts))
 }
