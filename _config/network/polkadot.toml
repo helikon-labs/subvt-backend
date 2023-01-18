@@ -17,3 +17,6 @@ start_block_number = 2_700_565
 candidate_list_endpoint = "https://polkadot.w3f.community/candidates"
 candidate_details_endpoint = "https://polkadot.w3f.community/candidate/"
 nominator_list_endpoint = "https://polkadot.w3f.community/nominators"
+
+[notification_generator]
+unclaimed_payout_check_delay_hours = 9

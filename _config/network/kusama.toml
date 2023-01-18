@@ -17,3 +17,6 @@ start_block_number = 6_015_486
 candidate_list_endpoint = "https://kusama.w3f.community/candidates"
 candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
 nominator_list_endpoint = "https://kusama.w3f.community/nominators"
+
+[notification_generator]
+unclaimed_payout_check_delay_hours = 3

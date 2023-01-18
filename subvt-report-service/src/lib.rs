@@ -201,6 +201,7 @@ impl Service for ReportService {
                 .service(era::era_report_service)
                 .service(era::current_era_service)
                 .service(era::all_eras_service)
+                .service(session::current_session_service)
                 .service(onekv::get_onekv_nominator_summaries)
                 .service(session::validator::session_validator_report_service)
                 .service(session::validator::session_validator_para_vote_service)

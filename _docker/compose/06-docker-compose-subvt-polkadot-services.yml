@@ -201,6 +201,8 @@ services:
       - SUBVT__REDIS__URL=redis://subvt_polkadot_redis:6379/
       # rpc
       - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
+      # notification generator
+      - SUBVT__NOTIFICATION_GENERATOR__UNCLAIMED_PAYOUT_CHECK_DELAY_HOURS=9
   subvt_polkadot_report_service:
     container_name: subvt_polkadot_report_service
     restart: unless-stopped
