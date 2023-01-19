@@ -14,7 +14,7 @@ hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
 once_cell = "1.13"
-parity-scale-codec = "3.1.5"
+parity-scale-codec = "3.2.2"
 rustc-hash = "1.1.0"
 serde_json = "1.0"
 subvt-config = { path = "../subvt-config" }
