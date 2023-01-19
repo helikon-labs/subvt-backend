@@ -27,7 +27,7 @@ use frame_system::{Key, KeyValue};
 use pallet_bounties::BountyIndex;
 use pallet_collective::{MemberCount, ProposalIndex};
 use pallet_democracy::{AccountVote, Conviction, PropIndex, ReferendumIndex, VoteThreshold};
-use pallet_election_provider_multi_phase::{ElectionCompute, SolutionOrSnapshotSize};
+use pallet_election_provider_multi_phase::{ElectionCompute, Phase, SolutionOrSnapshotSize};
 use pallet_elections_phragmen::Renouncing;
 use pallet_gilt::ActiveIndex;
 use pallet_identity::{Data, IdentityFields, IdentityInfo, Judgement, RegistrarIndex};
@@ -38,7 +38,7 @@ use pallet_nis::ReceiptIndex;
 use pallet_nomination_pools::{BondExtra, PoolId, PoolState};
 use pallet_ranked_collective::{Rank, VoteRecord};
 use pallet_scheduler::TaskAddress;
-use pallet_staking::{ConfigOp, Exposure, ValidatorPrefs};
+use pallet_staking::{ConfigOp, Exposure, Forcing, ValidatorPrefs};
 use pallet_vesting::VestingInfo;
 use parity_scale_codec::{Compact, Decode, Input};
 use polkadot_core_primitives::{AccountIndex, CandidateHash, Hash, Header};
@@ -232,6 +232,8 @@ pub enum ArgumentPrimitive {
     DispatchTime(DispatchTime<BlockNumber>),
     ReceiptIndex(ReceiptIndex),
     CompactReceiptIndex(Compact<ReceiptIndex>),
+    Phase(Phase<BlockNumber>),
+    Forcing(Forcing),
 }
 
 pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimitive, DecodeError> {
@@ -515,6 +517,8 @@ generate_argument_primitive_decoder_impl! {[
     ("Compact<ReceiptIndex>", decode_compact_receipt_index, CompactReceiptIndex),
     ("<T::Counterpart as FungibleInspect<T::AccountId>>::Balance", decode_fungible_inspect_balance, Balance),
     ("PreimageHash", decode_preimage_hash, PreimageHash),
+    ("Phase<T::BlockNumber>", decode_phase, Phase),
+    ("Forcing", decode_forcing, Forcing),
 ]}
 
 #[derive(thiserror::Error, Clone, Debug)]
