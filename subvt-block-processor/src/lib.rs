@@ -32,8 +32,6 @@ lazy_static! {
     static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
-static PARA_VALIDATOR_GROUP_SIZE: u32 = 5;
-
 #[derive(Default)]
 pub struct BlockProcessor;
 
@@ -449,6 +447,10 @@ impl BlockProcessor {
                 para_core_assignments.len()
             );
         }
+        // para groups
+        let para_groups = substrate_client
+            .get_para_validator_groups(&block_hash)
+            .await?;
         // para votes
         if let Some(votes) = substrate_client.get_para_votes(&block_hash).await? {
             let session_index: u32 = votes.session;
@@ -476,23 +478,24 @@ impl BlockProcessor {
                         .await?;
                 }
                 // save missing votes
-                let para_validator_group_index = voted_para_validator_indices[0] / 5;
-                let group_para_validator_indices: Vec<u32> = ((para_validator_group_index
-                    * PARA_VALIDATOR_GROUP_SIZE)
-                    ..(para_validator_group_index * PARA_VALIDATOR_GROUP_SIZE
-                        + PARA_VALIDATOR_GROUP_SIZE))
-                    .collect();
-                for group_para_validator_index in group_para_validator_indices {
-                    if !voted_para_validator_indices.contains(&group_para_validator_index) {
-                        postgres
-                            .save_para_vote(
-                                &block_hash,
-                                session_index,
-                                para_id,
-                                group_para_validator_index,
-                                None,
-                            )
-                            .await?;
+                if let Some(first_para_validator_index) = voted_para_validator_indices.first() {
+                    for para_group in &para_groups {
+                        if para_group.contains(first_para_validator_index) {
+                            for para_validator_index in para_group {
+                                if !voted_para_validator_indices.contains(para_validator_index) {
+                                    postgres
+                                        .save_para_vote(
+                                            &block_hash,
+                                            session_index,
+                                            para_id,
+                                            *para_validator_index,
+                                            None,
+                                        )
+                                        .await?;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
             }
