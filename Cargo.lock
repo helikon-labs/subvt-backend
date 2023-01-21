@@ -7558,7 +7558,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "subvt-app-service"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -7587,7 +7587,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-block-processor"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7613,7 +7613,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-config"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "config",
  "serde",
@@ -7621,7 +7621,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-governance"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -7634,7 +7634,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-logging"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "env_logger 0.9.3",
  "log",
@@ -7643,7 +7643,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-metrics"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "env_logger 0.10.0",
  "log",
@@ -7657,7 +7657,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-server"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7682,7 +7682,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-updater"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7704,7 +7704,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-nft"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -7716,7 +7716,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-generator"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7743,7 +7743,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-processor"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "a2",
  "anyhow",
@@ -7778,7 +7778,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-onekv-updater"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7800,7 +7800,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-persistence"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "chrono",
@@ -7819,7 +7819,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-plotter"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "chrono",
@@ -7842,7 +7842,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-proc-macro"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7851,7 +7851,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-report-service"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -7874,7 +7874,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-service-common"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -7891,7 +7891,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-substrate-client"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7920,7 +7920,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telegram-bot"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -7960,7 +7960,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telemetry-processor"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7984,7 +7984,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-types"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "chrono",
@@ -8039,7 +8039,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-utility"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "hex",
@@ -8049,7 +8049,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-details-server"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8073,7 +8073,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-server"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8100,7 +8100,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-updater"
-version = "0.14.24"
+version = "0.14.25"
 dependencies = [
  "anyhow",
  "async-lock",
