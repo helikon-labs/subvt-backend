@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.65.0"
 
 [dependencies]
-actix-http = "3.2.1"
+actix-http = "3.3.0"
 actix-service = "2.0.2"
 actix-web = "4.1.0"
 anyhow = { workspace = true }
