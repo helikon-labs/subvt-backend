@@ -81,6 +81,10 @@ impl OneKVUpdater {
                 }
             }
         }
+        // delete stale records
+        postgres
+            .delete_onekv_candidate_records_older_than_days(1)
+            .await?;
         metrics::last_candidate_persist_success_count().set(success_count);
         metrics::last_candidate_persist_error_count().set(error_count);
         log::info!("1KV update completed.");

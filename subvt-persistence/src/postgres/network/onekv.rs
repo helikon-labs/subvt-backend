@@ -354,4 +354,19 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(count.0 > 0)
     }
+
+    pub async fn delete_onekv_candidate_records_older_than_days(
+        &self,
+        day_count: u8,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            format!(
+                "DELETE FROM sub_onekv_candidate WHERE created_at < now() - interval '{day_count} days' RETURNING id",
+            )
+            .as_str(),
+        )
+        .execute(&self.connection_pool)
+        .await?;
+        Ok(())
+    }
 }
