@@ -10,7 +10,7 @@ chrono = "0.4"
 hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
-parity-scale-codec = "3.1.5"
+parity-scale-codec = "3.3.0"
 redis = { version = "0.22.1", features = ["tokio-comp"] }
 rustc-hash = "1.1.0"
 serde = { version = "1.0" }
