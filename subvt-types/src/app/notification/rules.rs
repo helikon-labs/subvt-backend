@@ -71,12 +71,12 @@ lazy_static! {
         ),
         (
             NotificationTypeCode::ChainValidatorStartedParaValidating,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
             NotificationTypeCode::ChainValidatorStoppedParaValidating,
-            NotificationPeriodType::Off,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (

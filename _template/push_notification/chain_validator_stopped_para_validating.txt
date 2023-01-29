@@ -1,2 +1,3 @@
 {{ validator_display }}
 ⭕ is no longer a paravalidator.
+Tap here to view the paravalidation vote report.

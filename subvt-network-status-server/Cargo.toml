@@ -1,6 +1,6 @@
 [package]
 name = "subvt-network-status-server"
-version = "0.14.26"
+version = "0.14.27"
 edition = "2021"
 rust-version = "1.65.0"
 
