@@ -35,7 +35,7 @@ subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.16.0"
 thiserror = { workspace = true }
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.25", features = ["full"] }
 
 [dev-dependencies]
 mockall = "0.11"
