@@ -10,7 +10,7 @@ actix-service = "2.0.2"
 actix-web = "4.1.0"
 anyhow = { workspace = true }
 async-trait = "0.1"
-futures = "0.3.21"
+futures = "0.3.26"
 hex = "0.4"
 libsecp256k1 = "0.7.0"
 lazy_static = { workspace = true }

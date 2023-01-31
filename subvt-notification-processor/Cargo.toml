@@ -12,7 +12,7 @@ anyhow = { workspace = true }
 async-trait = "0.1"
 chrono = "0.4"
 fcm = "0.9.1"
-futures = "0.3.21"
+futures = "0.3.26"
 futures-util = "0.3.21"
 itertools = { workspace = true }
 job_scheduler = "1.2.1"
