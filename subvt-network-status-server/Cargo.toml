@@ -12,7 +12,7 @@ async-trait = "0.1"
 bus = "2.2.4"
 chrono = "0.4"
 env_logger = "0.10.0"
-futures-util = "0.3.21"
+futures-util = "0.3.26"
 jsonrpsee = { version = "0.16.0", features = ["full"] }
 lazy_static = { workspace = true }
 log = { workspace = true }
