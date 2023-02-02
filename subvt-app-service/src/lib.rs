@@ -57,8 +57,9 @@ async fn get_notification_types(state: web::Data<ServiceState>) -> ResultRespons
 async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> ResultResponse {
     // rate limit per IP address
     let maybe_registration_ip = request
-        .peer_addr()
-        .map(|socket_address| socket_address.ip().to_string());
+        .connection_info()
+        .realip_remote_addr()
+        .map(str::to_string);
     if let Some(registration_ip) = &maybe_registration_ip {
         let count = state
             .postgres
