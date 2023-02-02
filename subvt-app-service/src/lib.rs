@@ -55,6 +55,21 @@ async fn get_notification_types(state: web::Data<ServiceState>) -> ResultRespons
 /// Validates and creates a new user.
 #[post("/secure/user")]
 async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> ResultResponse {
+    // rate limit per IP address
+    let maybe_registration_ip = request
+        .peer_addr()
+        .map(|socket_address| socket_address.ip().to_string());
+    if let Some(registration_ip) = &maybe_registration_ip {
+        let count = state
+            .postgres
+            .get_user_registration_count_from_ip(registration_ip)
+            .await?;
+        if count > (CONFIG.app_service.user_registration_per_ip_limit as u64) {
+            return Ok(HttpResponse::TooManyRequests().json(ServiceError::from(
+                "Too many create user requests from the same IP address.",
+            )));
+        }
+    }
     let public_key_hex = request
         .headers()
         .get("SubVT-Public-Key")
@@ -80,7 +95,10 @@ async fn create_user(state: web::Data<ServiceState>, request: HttpRequest) -> Re
         id: 0,
         public_key_hex: Some(public_key_hex),
     };
-    user.id = state.postgres.save_user(&user).await?;
+    user.id = state
+        .postgres
+        .save_user(&user, maybe_registration_ip.as_deref())
+        .await?;
     Ok(HttpResponse::Created().json(user))
 }
 
@@ -116,6 +134,19 @@ async fn add_user_notification_channel(
             HttpResponse::NotFound().json(ServiceError::from("Notification channel not found."))
         );
     }
+    // delete existing channels with the same code
+    let deleted_channel_count = state
+        .postgres
+        .delete_existing_notification_channels_with_code(
+            input.channel.to_string().as_str(),
+            input.target.to_string().as_str(),
+        )
+        .await?;
+    log::debug!(
+        "Deleted {} existing {} channels with the same code while adding a new notification channel.",
+        deleted_channel_count,
+        input.channel.to_string().as_str(),
+    );
     if state
         .postgres
         .user_notification_channel_target_exists(&input)
@@ -384,8 +415,7 @@ async fn create_user_notification_rule(
     if !missing_non_optional_parameter_type_ids.is_empty() {
         return Ok(HttpResponse::BadRequest().json(ServiceError::from(
             format!(
-                "Missing non-optional parameter type ids: {:?}",
-                missing_non_optional_parameter_type_ids
+                "Missing non-optional parameter type ids: {missing_non_optional_parameter_type_ids:?}",
             )
             .as_ref(),
         )));

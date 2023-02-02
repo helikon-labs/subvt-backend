@@ -1,6 +1,6 @@
 [package]
 name = "subvt-substrate-client"
-version = "0.14.27"
+version = "0.14.28"
 edition = "2021"
 rust-version = "1.65.0"
 
@@ -32,4 +32,4 @@ twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
 hex = "0.4"
 lazy_static = { workspace = true }
 subvt-config = { path = "../subvt-config" }
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.25", features = ["full"] }

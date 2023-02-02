@@ -1,6 +1,6 @@
 [package]
 name = "subvt-notification-processor"
-version = "0.14.27"
+version = "0.14.28"
 edition = "2021"
 rust-version = "1.65.0"
 
@@ -12,8 +12,8 @@ anyhow = { workspace = true }
 async-trait = "0.1"
 chrono = "0.4"
 fcm = "0.9.1"
-futures = "0.3.21"
-futures-util = "0.3.21"
+futures = "0.3"
+futures-util = "0.3"
 itertools = { workspace = true }
 job_scheduler = "1.2.1"
 lazy_static = { workspace = true }
@@ -35,4 +35,4 @@ subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.16.0"
 thiserror = { workspace = true }
-tokio = { version = "1.20", features = ["full"] }
+tokio = { version = "1.25", features = ["full"] }

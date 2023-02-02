@@ -81,8 +81,7 @@ where
                 frame_metadata::v12::StorageEntryType::Map { hasher, .. } => hasher,
                 frame_metadata::v12::StorageEntryType::DoubleMap { hasher, .. } => hasher,
                 _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
                 ),
             };
             StorageMetadata::hash_key(&StorageHasher::V12(hasher.clone()), key)
@@ -92,8 +91,7 @@ where
                 frame_metadata::v13::StorageEntryType::Map { hasher, .. } => hasher,
                 frame_metadata::v13::StorageEntryType::DoubleMap { hasher, .. } => hasher,
                 _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
                 ),
             };
             StorageMetadata::hash_key(&StorageHasher::V13(hasher.clone()), key)
@@ -102,17 +100,13 @@ where
             let maybe_hasher = match storage_entry_type {
                 frame_metadata::v14::StorageEntryType::Map { hashers, .. } => hashers.get(0),
                 _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
                 ),
             };
             if let Some(hasher) = maybe_hasher {
                 StorageMetadata::hash_key(&StorageHasher::V14(hasher.clone()), key)
             } else {
-                panic!(
-                    "Cannot get hasher for map storage {}.{}.",
-                    module_name, storage_name
-                );
+                panic!("Cannot get hasher for map storage {module_name}.{storage_name}.",);
             }
         }
     };
@@ -223,8 +217,7 @@ where
                     ..
                 } => (hasher, key2_hasher),
                 _ => panic!(
-                    "Unexpected storage entry type. Expected double map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected double map, got: {storage_entry_type:?}",
                 ),
             };
             let key_1_hash =
@@ -241,8 +234,7 @@ where
                     ..
                 } => (hasher, key2_hasher),
                 _ => panic!(
-                    "Unexpected storage entry type. Expected double map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected double map, got: {storage_entry_type:?}",
                 ),
             };
             let key_1_hash =
@@ -257,8 +249,7 @@ where
                     (hashers.get(0).unwrap(), hashers.get(1).unwrap())
                 }
                 _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {:?}",
-                    storage_entry_type
+                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
                 ),
             };
             let key_1_hash =

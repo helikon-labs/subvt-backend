@@ -137,10 +137,7 @@ async fn test_get_account_democracy_vote_direct() {
         assert_eq!(direct_vote.conviction.unwrap_or(100), 0);
         assert_eq!(direct_vote.aye.unwrap_or(0), 115_000_000_000_000);
     } else {
-        panic!(
-            "Expected direct vote for referendum #{} by {}.",
-            referendum_index, address
-        );
+        panic!("Expected direct vote for referendum #{referendum_index} by {address}.",);
     }
 }
 
@@ -178,9 +175,6 @@ async fn test_get_account_democracy_vote_delegated() {
         assert_eq!(delegated_vote.vote.aye.unwrap_or(0), 20_000_000_000_000);
         assert_eq!(delegated_vote.vote.conviction.unwrap_or(0), 3);
     } else {
-        panic!(
-            "Expected delegate vote for referendum #{} by {}.",
-            referendum_index, address
-        );
+        panic!("Expected delegate vote for referendum #{referendum_index} by {address}.",);
     }
 }

@@ -1135,8 +1135,7 @@ impl SubstrateEvent {
             module
         } else {
             return Err(DecodeError::Error(format!(
-                "Cannot find module at index {}.",
-                module_index
+                "Cannot find module at index {module_index}.",
             )));
         };
         let event = if let Some(event) = module.events.get(&event_index) {
@@ -1214,17 +1213,10 @@ impl SubstrateEvent {
                 Err(decode_error) => {
                     let error_log = match block.header.get_number() {
                         Ok(number) => format!(
-                            "Error decoding event #{} for block #{}: {:?}",
-                            event_index,
-                            number,
-                            decode_error,
+                            "Error decoding event #{event_index} for block #{number}: {decode_error:?}",
                         ),
                         Err(error) => format!(
-                            "[Cannot get block number: {:?}] Error decoding extrinsic #{} for block {}: {:?}",
-                            error,
-                            event_index,
-                            block_hash,
-                            decode_error,
+                            "[Cannot get block number: {error:?}] Error decoding extrinsic #{event_index} for block {block_hash}: {decode_error:?}",
                         ),
                     };
                     log::error!("{}", error_log);

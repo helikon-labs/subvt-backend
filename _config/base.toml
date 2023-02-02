@@ -146,3 +146,8 @@ validator_list_updater_port = 11001
 [sub_id]
 api_url = "https://sub.id/api/v1/"
 nfts_path = "/nfts"
+
+[app_service]
+# max x users per IP per x minutes
+user_registration_per_ip_limit_time_window_mins = 10
+user_registration_per_ip_limit = 10

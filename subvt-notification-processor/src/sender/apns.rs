@@ -189,10 +189,7 @@ impl NotificationSender for APNSSender {
             )?
             .body_text
             .unwrap_or_else(|| {
-                panic!(
-                    "Cannot get text content for APNS {} notification.",
-                    notification_type_code
-                )
+                panic!("Cannot get text content for APNS {notification_type_code} notification.",)
             });
         let (account_id, account) = if let Some(notification) = notifications.first() {
             let account = if let Some(json) = &notification.validator_account_json {

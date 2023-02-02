@@ -516,8 +516,7 @@ impl<'a> Chart<'a> {
                 }
                 Err(e) => {
                     return Err(format!(
-                        "Encountered an error while saving the chart: {:?}",
-                        e
+                        "Encountered an error while saving the chart: {e:?}",
                     ))
                 }
             }

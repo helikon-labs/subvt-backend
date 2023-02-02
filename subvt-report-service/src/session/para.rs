@@ -39,22 +39,19 @@ async fn validate_params(
     };
     if start_session_index > end_session_index {
         return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
-            "Bad Request: start_session_index ({}) cannot be greater than end_session_index ({}).",
-            start_session_index, end_session_index,
+            "Bad Request: start_session_index ({start_session_index}) cannot be greater than end_session_index ({end_session_index}).",
         ))));
     }
     if end_session_index > current_session.index {
         return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
-            "Bad Request: end_session_index ({}) cannot be greater than the current session index ({}).",
-            end_session_index, current_session.index,
+            "Bad Request: end_session_index ({end_session_index}) cannot be greater than the current session index ({}).",
+            current_session.index,
         ))));
     }
     // check if start session is supported [votes]
     if start_session_index < min_para_vote_session_index {
         return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
-            "Bad Request: start_session_index ({}) cannot be less than the earliest supported session index ({}).",
-            start_session_index,
-            min_para_vote_session_index,
+            "Bad Request: start_session_index ({start_session_index}) cannot be less than the earliest supported session index ({min_para_vote_session_index}).",
         ))));
     }
     // check if era range is valid

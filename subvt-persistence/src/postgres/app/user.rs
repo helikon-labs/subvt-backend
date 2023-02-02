@@ -15,17 +15,46 @@ use subvt_types::app::{
 use subvt_types::crypto::AccountId;
 
 impl PostgreSQLAppStorage {
-    pub async fn save_user(&self, user: &User) -> anyhow::Result<u32> {
+    pub async fn get_user_registration_count_from_ip(
+        &self,
+        registration_ip: &str,
+    ) -> anyhow::Result<u64> {
+        let time_window_mins = self
+            .config
+            .app_service
+            .user_registration_per_ip_limit_time_window_mins;
+        let result: (i64,) = sqlx::query_as(
+            format!(
+                "
+                SELECT COUNT(DISTINCT id) FROM app_user
+                WHERE registration_ip = $1
+                AND created_at > (current_timestamp - interval '{time_window_mins} minutes')
+                ",
+            )
+            .as_str(),
+        )
+        .bind(registration_ip)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(result.0 as u64)
+    }
+
+    pub async fn save_user(
+        &self,
+        user: &User,
+        registration_ip: Option<&str>,
+    ) -> anyhow::Result<u32> {
         let result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO app_user (public_key_hex)
-            VALUES ($1)
+            INSERT INTO app_user (public_key_hex, registration_ip)
+            VALUES ($1, $2)
             ON CONFLICT(public_key_hex)
             DO UPDATE SET deleted_at = NULL, updated_at = now()
             RETURNING id
             "#,
         )
         .bind(&user.public_key_hex)
+        .bind(registration_ip)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(result.0 as u32)
@@ -156,6 +185,26 @@ impl PostgreSQLAppStorage {
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
+    }
+
+    pub async fn delete_existing_notification_channels_with_code(
+        &self,
+        channel: &str,
+        code: &str,
+    ) -> anyhow::Result<usize> {
+        let ids: Vec<(i32,)> = sqlx::query_as(
+            r#"
+            UPDATE app_user_notification_channel
+            SET deleted_at = now()
+            WHERE notification_channel_code = $1 AND target = $2
+            RETURNING id
+            "#,
+        )
+        .bind(channel)
+        .bind(code)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(ids.len())
     }
 
     pub async fn user_notification_channel_target_exists(

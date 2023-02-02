@@ -441,8 +441,7 @@ impl SubstrateExtrinsic {
             module
         } else {
             return Err(DecodeError::Error(format!(
-                "Cannot find module at index {}.",
-                module_index
+                "Cannot find module at index {module_index}.",
             )));
         };
         let call = if let Some(call) = module.calls.get(&call_index) {
@@ -550,17 +549,10 @@ impl SubstrateExtrinsic {
                 Err(decode_error) => {
                     let error_log = match block.header.get_number() {
                         Ok(number) => format!(
-                            "Error decoding extrinsic #{} for block #{}: {:?}",
-                            extrinsic_index,
-                            number,
-                            decode_error,
+                            "Error decoding extrinsic #{extrinsic_index} for block #{number}: {decode_error:?}",
                         ),
                         Err(error) => format!(
-                            "[Cannot get block number: {:?}] Error decoding extrinsic #{} for block {}: {:?}",
-                            error,
-                            extrinsic_index,
-                            block_hash,
-                            decode_error,
+                            "[Cannot get block number: {error:?}] Error decoding extrinsic #{extrinsic_index} for block {block_hash}: {decode_error:?}",
                         ),
                     };
                     log::error!("{}", error_log);

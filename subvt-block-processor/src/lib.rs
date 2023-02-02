@@ -339,8 +339,7 @@ impl BlockProcessor {
                     .await
                     {
                         let error_log = format!(
-                            "Error while processing event #{} of block #{}: {:?}",
-                            index, block_number, error,
+                            "Error while processing event #{index} of block #{block_number}: {error:?}",
                         );
                         log::error!("{}", error_log);
                         metrics::event_process_error_count().inc();
@@ -400,8 +399,7 @@ impl BlockProcessor {
                         .await
                     {
                         let error_log = format!(
-                            "Error while processing extrinsic #{} of block #{}: {:?}",
-                            index, block_number, error,
+                            "Error while processing extrinsic #{index} of block #{block_number}: {error:?}",
                         );
                         log::error!("{}", error_log);
                         metrics::extrinsic_process_error_count().inc();

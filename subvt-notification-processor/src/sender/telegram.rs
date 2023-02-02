@@ -89,8 +89,7 @@ impl NotificationSender for TelegramSender {
             .body_html
             .unwrap_or_else(|| {
                 panic!(
-                    "Cannot get grouped HTML content for Telegram {} notification.",
-                    notification_type_code,
+                    "Cannot get grouped HTML content for Telegram {notification_type_code} notification.",
                 )
             });
         let chat_id = ChatId::Integer(target.parse()?);

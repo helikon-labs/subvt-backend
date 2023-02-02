@@ -82,8 +82,7 @@ impl NotificationSender for FCMSender {
                 .body_text
                 .unwrap_or_else(|| {
                     panic!(
-                        "Cannot get text content for grouped FCM {} notification.",
-                        notification_type_code
+                        "Cannot get text content for grouped FCM {notification_type_code} notification.",
                     )
                 }),
         };

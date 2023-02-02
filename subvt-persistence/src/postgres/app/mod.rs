@@ -11,6 +11,7 @@ pub mod notification_type;
 pub mod user;
 
 pub struct PostgreSQLAppStorage {
+    config: Config,
     _uri: String,
     connection_pool: Pool<Postgres>,
 }
@@ -27,6 +28,7 @@ impl PostgreSQLAppStorage {
             .await?;
         log::info!("Application database connection pool established.");
         Ok(PostgreSQLAppStorage {
+            config: config.clone(),
             _uri: uri,
             connection_pool,
         })

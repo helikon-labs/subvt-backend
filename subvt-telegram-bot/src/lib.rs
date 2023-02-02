@@ -273,7 +273,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             chat_id
         );
         // save app user
-        let app_user_id = self.app_postgres.save_user(&User::default()).await?;
+        let app_user_id = self.app_postgres.save_user(&User::default(), None).await?;
         // save notification channel
         let channel_id = self
             .app_postgres

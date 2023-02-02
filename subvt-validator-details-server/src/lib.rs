@@ -166,15 +166,13 @@ impl ValidatorDetailsServer {
                                     let mut data_connection = data_connection.write().unwrap();
                                     let (validator_storage_key_prefix, db_hash) = if let Ok(db_hash) = redis::cmd("GET")
                                         .arg(format!(
-                                            "{}:hash",
-                                            active_validator_storage_key_prefix,
+                                            "{active_validator_storage_key_prefix}:hash",
                                         ))
                                         .query::<u64>(&mut *data_connection) {
                                         (active_validator_storage_key_prefix, db_hash)
                                     } else if let Ok(db_hash) = redis::cmd("GET")
                                         .arg(format!(
-                                            "{}:hash",
-                                            inactive_validator_storage_key_prefix,
+                                            "{inactive_validator_storage_key_prefix}:hash",
                                         ))
                                         .query::<u64>(&mut *data_connection) {
                                         (inactive_validator_storage_key_prefix, db_hash)

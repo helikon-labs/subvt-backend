@@ -35,8 +35,7 @@ impl BlockProcessor {
                     signature
                 } else {
                     panic!(
-                        "Cannot get signature while processing AsMulti extrinsic {}-{}.",
-                        block_number, index
+                        "Cannot get signature while processing AsMulti extrinsic {block_number}-{index}.",
                     );
                     /*
                     log::error!(
@@ -47,27 +46,27 @@ impl BlockProcessor {
                     return Ok(());
                      */
                 };
-                let multisig_account_id =
-                    if let Some(signer_account_id) = signature.get_signer_account_id() {
-                        AccountId::multisig_account_id(
-                            &signer_account_id,
-                            other_signatories,
-                            *threshold,
-                        )
-                    } else {
-                        panic!(
-                        "Cannot get multisig account id while processing AsMulti extrinsic {}-{}.",
-                        block_number, index
+                let multisig_account_id = if let Some(signer_account_id) =
+                    signature.get_signer_account_id()
+                {
+                    AccountId::multisig_account_id(
+                        &signer_account_id,
+                        other_signatories,
+                        *threshold,
+                    )
+                } else {
+                    panic!(
+                        "Cannot get multisig account id while processing AsMulti extrinsic {block_number}-{index}.",
                     );
-                        /*
-                        log::error!(
-                            "Cannot get multisig account id while processing AsMulti extrinsic {}-{}.",
-                            block_number,
-                            index
-                        );
-                        return Ok(());
-                         */
-                    };
+                    /*
+                    log::error!(
+                        "Cannot get multisig account id while processing AsMulti extrinsic {}-{}.",
+                        block_number,
+                        index
+                    );
+                    return Ok(());
+                     */
+                };
                 let is_successful = self
                     .process_extrinsic(
                         substrate_client,
@@ -100,8 +99,7 @@ impl BlockProcessor {
                     signature
                 } else {
                     panic!(
-                        "Cannot get signature while processing AsMultiThreshold1 extrinsic {}-{}.",
-                        block_number, index
+                        "Cannot get signature while processing AsMultiThreshold1 extrinsic {block_number}-{index}.",
                     );
                     /*
                     log::error!(

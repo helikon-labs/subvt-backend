@@ -240,8 +240,7 @@ pub fn extract_argument_primitive(argument: &Argument) -> Result<ArgumentPrimiti
     match argument {
         Argument::Primitive(argument_primitive) => Ok(*argument_primitive.clone()),
         _ => Err(DecodeError::Error(format!(
-            "Cannot extract argument primitive: {:?}",
-            argument
+            "Cannot extract argument primitive: {argument:?}",
         ))),
     }
 }
@@ -255,8 +254,7 @@ pub fn extract_optional_argument_primitive(
             None => Ok(None),
         },
         _ => Err(DecodeError::Error(format!(
-            "Cannot extract optional argument primitive: {:?}",
-            argument
+            "Cannot extract optional argument primitive: {argument:?}",
         ))),
     }
 }
@@ -655,8 +653,7 @@ impl Argument {
             let legacy_dispatch_info: LegacyDispatchInfo =
                 Decode::decode(&mut *bytes).map_err(|error| {
                     ArgumentDecodeError::DecodeError(format!(
-                        "Cannot decode legacy dispatch info: {:?}",
-                        error
+                        "Cannot decode legacy dispatch info: {error:?}",
                     ))
                 })?;
             let dispatch_info = DispatchInfo {
@@ -672,8 +669,7 @@ impl Argument {
                 ArgumentPrimitive::DispatchInfo(DispatchInfo::decode(&mut *bytes).map_err(
                     |error| {
                         ArgumentDecodeError::DecodeError(format!(
-                            "Cannot decode dispatch info: {:?}",
-                            error
+                            "Cannot decode dispatch info: {error:?}",
                         ))
                     },
                 )?),
@@ -689,8 +685,7 @@ impl Argument {
             let legacy_result: Result<(), LegacyDispatchError> = Decode::decode(&mut *bytes)
                 .map_err(|error| {
                     ArgumentDecodeError::DecodeError(format!(
-                        "Cannot decode legacy dispatch result: {:?}",
-                        error
+                        "Cannot decode legacy dispatch result: {error:?}",
                     ))
                 })?;
             let dispatch_result: DispatchResult = match legacy_result {
@@ -705,8 +700,7 @@ impl Argument {
                 ArgumentPrimitive::DispatchResult(DispatchResult::decode(&mut *bytes).map_err(
                     |error| {
                         ArgumentDecodeError::DecodeError(format!(
-                            "Cannot decode dispatch result: {:?}",
-                            error
+                            "Cannot decode dispatch result: {error:?}",
                         ))
                     },
                 )?),
@@ -863,8 +857,7 @@ impl Argument {
                             Ok(_) => (),
                             Err(_) => {
                                 return Err(ArgumentDecodeError::DecodeError(format!(
-                                    "Cannot decode byte vector length for {}.",
-                                    name
+                                    "Cannot decode byte vector length for {name}.",
                                 )))
                             }
                         }
@@ -879,8 +872,7 @@ impl Argument {
                             ArgumentPrimitive::Call(extrinsic),
                         ))),
                         Err(decode_error) => Err(ArgumentDecodeError::DecodeError(format!(
-                            "Cannot decode call type {}: {:?}",
-                            name, decode_error
+                            "Cannot decode call type {name}: {decode_error:?}",
                         ))),
                     }
                 } else if name == "<T::Lookup as StaticLookup>::Source"

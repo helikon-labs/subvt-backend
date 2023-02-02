@@ -38,10 +38,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             .iter()
             .find(|a| a.channel == NotificationChannel::Telegram)
             .unwrap_or_else(|| {
-                panic!(
-                    "User {} does not have a Telegram notification channel.",
-                    user_id
-                )
+                panic!("User {user_id} does not have a Telegram notification channel.",)
             })
             .id;
         let mut channel_id_set = HashSet::default();
@@ -67,10 +64,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
     ) -> anyhow::Result<()> {
         self.create_rule_if_not_exists(user_id, type_code).await?;
         let is_on: bool = serde_json::from_str(query.parameter.as_ref().unwrap_or_else(|| {
-            panic!(
-                "Expecting on/off param for {} notification setting.",
-                type_code
-            )
+            panic!("Expecting on/off param for {type_code} notification setting.",)
         }))?;
         self.app_postgres
             .update_user_notification_rule_period(

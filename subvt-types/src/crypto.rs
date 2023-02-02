@@ -52,8 +52,7 @@ impl AccountId {
             Ok(Self(account_id_bytes))
         } else {
             Err(DecodeError::Error(format!(
-                "Cannot get account id from SS58 encoded address {}.",
-                address
+                "Cannot get account id from SS58 encoded address {address}.",
             )))
         }
     }

@@ -20,8 +20,7 @@ pub(crate) fn get_period_settings_keyboard(
             SettingsEditQueryType::NewNomination => "settings_new_nominations_title.html",
             SettingsEditQueryType::LostNomination => "settings_lost_nominations_title.html",
             _ => panic!(
-                "Period settings keyboard not implemented for edit query type {:?}.",
-                edit_type
+                "Period settings keyboard not implemented for edit query type {edit_type:?}.",
             ),
         },
         QueryType::NoOp,

@@ -250,6 +250,13 @@ pub struct SubIDConfig {
     pub nfts_path: String,
 }
 
+/// App service configuration.
+#[derive(Clone, Debug, Deserialize)]
+pub struct AppServiceConfig {
+    pub user_registration_per_ip_limit_time_window_mins: u16,
+    pub user_registration_per_ip_limit: u16,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -273,6 +280,7 @@ pub struct Config {
     pub metrics: MetricsConfig,
     pub plotter: PlotterConfig,
     pub sub_id: SubIDConfig,
+    pub app_service: AppServiceConfig,
 }
 
 impl Config {
@@ -307,8 +315,7 @@ impl Config {
                 .set_default("env", env.to_string())?
                 .add_source(config::File::with_name(&format!("{config_dir}/base")))
                 .add_source(config::File::with_name(&format!(
-                    "{}/network/{}",
-                    config_dir, network
+                    "{config_dir}/network/{network}",
                 )))
                 .add_source(config::File::with_name(&format!(
                     "{}/env/{}",
@@ -325,8 +332,7 @@ impl Config {
                 .set_default("env", env.to_string())?
                 .add_source(config::File::with_name(&format!("{config_dir}/base")))
                 .add_source(config::File::with_name(&format!(
-                    "{}/network/{}",
-                    config_dir, network
+                    "{config_dir}/network/{network}",
                 )))
                 .add_source(config::File::with_name(&format!(
                     "{}/env/{}",
