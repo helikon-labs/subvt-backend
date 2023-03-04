@@ -125,7 +125,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
     fontdb.set_sans_serif_family(&CONFIG.plotter.font_sans_serif_family);
     let svg_data = std::fs::read(&svg_path).unwrap();
     let mut rtree = usvg::Tree::from_data(&svg_data, &opt).unwrap();
-    rtree.convert_text(&fontdb, opt.keep_named_groups);
+    rtree.convert_text(&fontdb);
     //let pixmap_size = rtree.svg_node().size.to_screen_size();
     let pixmap_size = rtree.size.to_screen_size();
     let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
