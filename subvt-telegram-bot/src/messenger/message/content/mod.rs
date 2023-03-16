@@ -121,6 +121,7 @@ impl MessageType {
                 context.insert("chain", &CONFIG.substrate.chain);
                 "no_referenda_found.html"
             }
+            Self::DemocracyTemporarilyDisabled => "democracy_temporarily_disabled.html",
             Self::RemoveAllValidatorsConfirm => "confirm.html",
             Self::RefererendumList(_) => "select_referendum.html",
             Self::ReferendumNotFound(id) => {

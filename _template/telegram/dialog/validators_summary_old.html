@@ -6,4 +6,5 @@
 👤 Self Stake: <strong>{{ validator_summary.self_stake_formatted }} {{ token_ticker }}</strong>
 🟢️️ Active nom.s ({{ validator_summary.active_nominator_count }}): <strong>{{ validator_summary.active_nomination_formatted }} {{ token_ticker }}</strong>
 ⚪️ Inactive nom.s ({{ validator_summary.inactive_nominator_count }}): <strong>{{ validator_summary.inactive_nomination_formatted }} {{ token_ticker }}</strong>{% if validator_summary.heartbeat_received %}
-💌 Sent session heartbeat{% endif %}{% endfor %}{% endif %}
+💌 Sent session heartbeat{% endif %}
+🗳 {% if validator_summary.missing_referendum_votes | length == 0 %}No missing votes for open referenda{% else %}Hasn't voted for {% for missing_referendum_vote in validator_summary.missing_referendum_votes %}<a href="https://{{ chain }}.polkassembly.io/referendum/{{ missing_referendum_vote }}">#{{ missing_referendum_vote }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}{% endfor %}{% endif %}

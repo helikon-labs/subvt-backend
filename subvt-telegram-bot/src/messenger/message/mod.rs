@@ -57,6 +57,7 @@ pub enum MessageType {
     NoPayoutsFound,
     NoRewardsFound,
     NoOpenReferendaFound,
+    DemocracyTemporarilyDisabled,
     RefererendumList(Vec<ReferendumPost>),
     ReferendumNotFound(u32),
     ReferendumDetails {
