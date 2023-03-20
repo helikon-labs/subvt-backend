@@ -1,15 +1,15 @@
 [package]
 name = "subvt-telegram-bot"
-version = "0.14.29"
+version = "0.15.0"
 edition = "2021"
-rust-version = "1.65.0"
+rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
 async-recursion = "1.0.0"
 async-trait = "0.1"
 chrono = "0.4"
-frankenstein = { version = "0.23.0", default-features = false, features = ["async-telegram-trait"] }
+frankenstein = { version = "0.24", default-features = false, features = ["async-telegram-trait"] }
 futures = "0.3"
 hyper = "0.14"
 hyper-multipart-rfc7578 = "0.8.0"
@@ -39,5 +39,5 @@ tokio = { version = "1.26", features = ["full"] }
 
 [dev-dependencies]
 mockall = "0.11"
-mockito = "0.31"
+mockito = "1"
 rand = "0.8.5"

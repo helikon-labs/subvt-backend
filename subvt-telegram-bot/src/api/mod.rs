@@ -166,19 +166,20 @@ mod async_tests {
     /// HTTP layer.
     #[tokio::test]
     async fn test_async_send_message_success() {
+        let mut server = mockito::Server::new();
         let response_string = "{\"ok\":true,\"result\":{\"message_id\":2746,\"from\":{\"id\":1276618370,\"is_bot\":true,\"first_name\":\"test_el_bot\",\"username\":\"el_mon_test_bot\"},\"date\":1618207352,\"chat\":{\"id\":275808073,\"type\":\"private\",\"username\":\"Ayrat555\",\"first_name\":\"Ayrat\",\"last_name\":\"Badykov\"},\"text\":\"Hello!\"}}";
         let params = SendMessageParams::builder()
             .chat_id(275808073)
             .text("Hello!")
             .build();
-        let _m = mockito::mock("POST", "/sendMessage")
+        server
+            .mock("POST", "/sendMessage")
             .with_status(200)
             .with_body(response_string)
             .create();
-        let api = AsyncApi::new_with_url(mockito::server_url().as_str());
 
+        let api = AsyncApi::new_with_url(server.url().as_str());
         let response = api.send_message(&params).await.unwrap();
-
         let json = serde_json::to_string(&response).unwrap();
         assert_eq!(response_string, json);
     }
@@ -187,18 +188,19 @@ mod async_tests {
     /// HTTP layer.
     #[tokio::test]
     async fn test_send_message_failure() {
+        let mut server = mockito::Server::new();
         let response_string =
             "{\"ok\":false,\"description\":\"Bad Request: chat not found\",\"error_code\":400}";
         let params = SendMessageParams::builder()
             .chat_id(1)
             .text("Hello!")
             .build();
-        let _m = mockito::mock("POST", "/sendMessage")
+        server
+            .mock("POST", "/sendMessage")
             .with_status(400)
             .with_body(response_string)
             .create();
-        let api = AsyncApi::new_with_url(mockito::server_url().as_str());
-
+        let api = AsyncApi::new_with_url(server.url().as_str());
         if let Err(Error::Api(ErrorResponse {
             ok: false,
             description,

@@ -1,8 +1,8 @@
 [package]
 name = "subvt-block-processor"
-version = "0.14.29"
+version = "0.15.0"
 edition = "2021"
-rust-version = "1.65.0"
+rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
