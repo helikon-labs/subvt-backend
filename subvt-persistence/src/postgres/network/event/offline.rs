@@ -1,7 +1,8 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
 use subvt_types::app::event::ValidatorOfflineEvent;
-use subvt_types::{crypto::AccountId, substrate::argument::IdentificationTuple};
+use subvt_types::crypto::AccountId;
+use subvt_types::substrate::IdentificationTuple;
 
 impl PostgreSQLNetworkStorage {
     pub async fn get_validator_offline_events_in_block(

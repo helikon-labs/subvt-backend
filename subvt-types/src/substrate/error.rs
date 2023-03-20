@@ -18,9 +18,3 @@ impl From<parity_scale_codec::Error> for DecodeError {
         Self::Error(error.to_string())
     }
 }
-
-impl From<crate::substrate::argument::ArgumentDecodeError> for DecodeError {
-    fn from(error: crate::substrate::argument::ArgumentDecodeError) -> Self {
-        Self::Error(error.to_string())
-    }
-}

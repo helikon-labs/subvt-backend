@@ -27,7 +27,6 @@ pub type CallHash = [u8; 32];
 pub type OpaqueTimeSlot = Vec<u8>;
 pub type Balance = polkadot_core_primitives::Balance;
 
-pub mod argument;
 pub mod democracy;
 pub mod error;
 #[macro_use]
@@ -36,6 +35,9 @@ pub mod extrinsic;
 pub mod legacy;
 pub mod metadata;
 pub mod para;
+
+pub type IdentificationTuple = (AccountId, Exposure<AccountId, Balance>);
+pub type BlockNumber = polkadot_core_primitives::BlockNumber;
 
 #[derive(Default)]
 pub struct LastRuntimeUpgradeInfo {

@@ -5,6 +5,8 @@ use crate::storage_utility::{
     get_rpc_storage_plain_params, get_storage_map_key,
 };
 use async_recursion::async_recursion;
+use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed, RuntimeMetadataV14};
+use jsonrpsee::ws_client::WsClient;
 use jsonrpsee::{
     core::client::{Client, ClientT, Subscription, SubscriptionClientT},
     rpc_params,
@@ -21,18 +23,21 @@ use std::str::FromStr;
 use subvt_config::Config;
 use subvt_types::app::event::democracy::AccountVote;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::argument::BlockNumber;
 use subvt_types::substrate::democracy::{
     get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote,
 };
 use subvt_types::substrate::error::DecodeError;
+use subvt_types::substrate::metadata::{
+    get_metadata_constant, get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
+};
 use subvt_types::substrate::para::ParaCoreAssignment;
+use subvt_types::substrate::BlockNumber;
 use subvt_types::substrate::{
-    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs,
-    metadata::Metadata, Account, Balance, Block, BlockHeader, BlockWrapper, Chain, DemocracyVoting,
-    Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo,
-    Nomination, RewardDestination, ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties,
-    ValidatorPreferences, ValidatorStake,
+    event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
+    Balance, Block, BlockHeader, BlockWrapper, Chain, DemocracyVoting, Epoch, Era, EraRewardPoints,
+    EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo, Nomination, RewardDestination,
+    ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
+    ValidatorStake,
 };
 /// Substrate client structure and its functions.
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
@@ -48,9 +53,27 @@ const KEY_QUERY_PAGE_SIZE: usize = 1000;
 pub struct SubstrateClient {
     network_id: u32,
     pub chain: Chain,
-    pub metadata: Metadata,
+    pub metadata: RuntimeMetadataV14,
     pub system_properties: SystemProperties,
     ws_client: Client,
+    pub last_runtime_upgrade_info: LastRuntimeUpgradeInfo,
+}
+
+async fn get_metadata_at_block(
+    ws_client: &WsClient,
+    block_hash: &str,
+) -> anyhow::Result<RuntimeMetadataV14> {
+    let metadata_hex_string: String = ws_client
+        .request("state_getMetadata", rpc_params!(block_hash))
+        .await?;
+    let metadata_hex_string = metadata_hex_string.trim_start_matches("0x");
+    let mut metadata_hex_decoded: &[u8] = &hex::decode(metadata_hex_string)?;
+    let metadata_prefixed = RuntimeMetadataPrefixed::decode(&mut metadata_hex_decoded)?;
+    let metadata = match metadata_prefixed.1 {
+        RuntimeMetadata::V14(metadata) => metadata,
+        _ => panic!("Unsupported metadata version."),
+    };
+    Ok(metadata)
 }
 
 impl SubstrateClient {
@@ -73,23 +96,15 @@ impl SubstrateClient {
             .await?;
         let chain: String = ws_client.request("system_chain", rpc_params!()).await?;
         let chain = Chain::from_str(chain.as_str())?;
-        let mut metadata = {
-            let metadata_response: String = ws_client
-                .request("state_getMetadata", rpc_params!(&block_hash))
-                .await?;
-            Metadata::from(metadata_response.as_str())?
-        };
+        let metadata = get_metadata_at_block(&ws_client, &block_hash).await?;
         log::info!("Got metadata.");
-        //metadata.log_all_calls();
-        //metadata.log_all_events();
-        metadata.check_primitive_argument_support(&chain)?;
         let last_runtime_upgrade_hex_string: String = ws_client
             .request(
                 "state_getStorage",
                 get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(&block_hash)),
             )
             .await?;
-        metadata.last_runtime_upgrade_info =
+        let last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
         log::info!("Got last runtime upgrade info.");
         let system_properties: SystemProperties = ws_client
@@ -102,6 +117,7 @@ impl SubstrateClient {
             metadata,
             system_properties,
             ws_client,
+            last_runtime_upgrade_info,
         })
     }
 
@@ -111,17 +127,8 @@ impl SubstrateClient {
         block_hash: &str,
     ) -> anyhow::Result<()> {
         let prev_block_hash = self.get_block_hash(block_number - 1).await?;
-        let mut metadata = {
-            let metadata_response: String = self
-                .ws_client
-                .request("state_getMetadata", rpc_params!(&prev_block_hash))
-                .await?;
-            Metadata::from(metadata_response.as_str())?
-        };
-        //metadata.log_all_calls();
-        //metadata.log_all_events();
-        metadata.check_primitive_argument_support(&self.chain)?;
-        metadata.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
+        let metadata = get_metadata_at_block(&self.ws_client, &prev_block_hash).await?;
+        self.last_runtime_upgrade_info = self.get_last_runtime_upgrade_info(block_hash).await?;
         self.metadata = metadata;
         Ok(())
     }
@@ -222,7 +229,7 @@ impl SubstrateClient {
             .await?;
         let active_era_info = Era::from(
             hex_string.as_str(),
-            self.metadata.constants.era_duration_millis,
+            get_metadata_era_duration_millis(&self.metadata)?,
         )?;
         Ok(active_era_info)
     }
@@ -255,7 +262,7 @@ impl SubstrateClient {
         };
         let start_block_hash = self.get_block_hash(start_block_number as u64).await?;
         let start_timestamp = self.get_block_timestamp(&start_block_hash).await?;
-        let end_timestamp = start_timestamp + self.metadata.constants.epoch_duration_millis;
+        let end_timestamp = start_timestamp + get_metadata_epoch_duration_millis(&self.metadata)?;
         Ok(Epoch {
             index,
             start_block_number,
@@ -568,11 +575,11 @@ impl SubstrateClient {
         era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
         log::info!("Getting all validators.");
-        let max_nominator_rewarded_per_validator: u32 = self
-            .metadata
-            .module("Staking")?
-            .constant("MaxNominatorRewardedPerValidator")?
-            .value()?;
+        let max_nominator_rewarded_per_validator: u32 = get_metadata_constant(
+            &self.metadata,
+            "Staking",
+            "MaxNominatorRewardedPerValidator",
+        )?;
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
             .await?;
@@ -912,7 +919,7 @@ impl SubstrateClient {
             // calculate return rates
             let total_staked = self.get_era_total_stake(era.index, block_hash).await?;
             let eras_per_day =
-                (24 * 60 * 60 * 1000 / self.metadata.constants.era_duration_millis) as u128;
+                (24 * 60 * 60 * 1000 / get_metadata_era_duration_millis(&self.metadata)?) as u128;
             let last_era_total_reward = self
                 .get_era_total_validator_reward(era.index - 1, block_hash)
                 .await?;
@@ -1093,6 +1100,7 @@ impl SubstrateClient {
         };
         SubstrateEvent::decode_events(
             &self.chain,
+            self.last_runtime_upgrade_info.spec_version,
             &self.metadata,
             block_hash,
             block,
@@ -1106,7 +1114,13 @@ impl SubstrateClient {
         block_hash: &str,
     ) -> anyhow::Result<Vec<Result<SubstrateExtrinsic, DecodeError>>> {
         let block = self.get_block(block_hash).await?;
-        SubstrateExtrinsic::decode_extrinsics(&self.chain, &self.metadata, block_hash, block)
+        SubstrateExtrinsic::decode_extrinsics(
+            &self.chain,
+            self.last_runtime_upgrade_info.spec_version,
+            &self.metadata,
+            block_hash,
+            block,
+        )
     }
 
     /// Get runtime info at the given block.

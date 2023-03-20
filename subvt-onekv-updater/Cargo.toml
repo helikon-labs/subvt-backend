@@ -10,8 +10,8 @@ async-trait = "0.1"
 chrono = { version = "0.4", default-features = true, features = ["serde"] }
 lazy_static = { workspace = true }
 log = { workspace = true }
-once_cell = "1.13"
-prometheus = { version = "0.13.2", features = ["process"] }
+once_cell = "1"
+prometheus = { version = "0.13", features = ["process"] }
 rand = "0.8.5"
 reqwest = { version = "0.11.11", features = ["blocking", "json", "gzip", "brotli"] }
 subvt-config = { path = "../subvt-config" }
@@ -20,4 +20,4 @@ subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
-tokio = { version = "1.25", features = ["full"] }
+tokio = { version = "1.26", features = ["full"] }

@@ -1,20 +1,22 @@
 //! Substrate storage RPC access helper functions.
+use frame_metadata::{
+    v14::{StorageEntryType, StorageHasher},
+    RuntimeMetadataV14,
+};
 use jsonrpsee::core::params::ArrayParams;
 use parity_scale_codec::Encode;
 use serde_json::Value as JsonValue;
-use subvt_types::substrate::metadata::{
-    Metadata, StorageEntryType, StorageHasher, StorageMetadata,
-};
+use subvt_types::substrate::metadata::hash;
 
 /// Get storage key in hex string format for a plain storage type.
 pub fn get_storage_plain_key(module_name: &str, storage_name: &str) -> String {
-    let hasher = &StorageHasher::V13(frame_metadata::v13::StorageHasher::Twox128);
-    let mut hash: Vec<u8> = Vec::new();
-    let mut module_name_hash = StorageMetadata::hash(hasher, module_name.as_bytes());
-    hash.append(&mut module_name_hash);
-    let mut storage_name_hash = StorageMetadata::hash(hasher, storage_name.as_bytes());
-    hash.append(&mut storage_name_hash);
-    let storage_key_hex: String = hash.iter().map(|b| format!("{b:02x}")).collect();
+    let hasher = StorageHasher::Twox128;
+    let mut storage_hash: Vec<u8> = Vec::new();
+    let mut module_name_hash = hash(&hasher, module_name.as_bytes());
+    storage_hash.append(&mut module_name_hash);
+    let mut storage_name_hash = hash(&hasher, storage_name.as_bytes());
+    storage_hash.append(&mut storage_name_hash);
+    let storage_key_hex: String = storage_hash.iter().map(|b| format!("{b:02x}")).collect();
     format!("0x{storage_key_hex}")
 }
 
@@ -61,7 +63,7 @@ pub fn get_rpc_paged_keys_params<'a>(
 }
 
 fn get_map_key_hash<T>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key: &T,
@@ -69,45 +71,30 @@ fn get_map_key_hash<T>(
 where
     T: Encode,
 {
-    let storage_metadata = metadata
-        .module(module_name)
+    let storage_entry_type = &metadata
+        .pallets
+        .iter()
+        .find(|p| p.name == module_name)
         .unwrap()
         .storage
-        .get(storage_name)
-        .unwrap();
-    let key_hash = match &storage_metadata.ty {
-        StorageEntryType::V12(storage_entry_type) => {
-            let hasher = match storage_entry_type {
-                frame_metadata::v12::StorageEntryType::Map { hasher, .. } => hasher,
-                frame_metadata::v12::StorageEntryType::DoubleMap { hasher, .. } => hasher,
-                _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
-                ),
-            };
-            StorageMetadata::hash_key(&StorageHasher::V12(hasher.clone()), key)
-        }
-        StorageEntryType::V13(storage_entry_type) => {
-            let hasher = match storage_entry_type {
-                frame_metadata::v13::StorageEntryType::Map { hasher, .. } => hasher,
-                frame_metadata::v13::StorageEntryType::DoubleMap { hasher, .. } => hasher,
-                _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
-                ),
-            };
-            StorageMetadata::hash_key(&StorageHasher::V13(hasher.clone()), key)
-        }
-        StorageEntryType::V14(storage_entry_type) => {
-            let maybe_hasher = match storage_entry_type {
-                frame_metadata::v14::StorageEntryType::Map { hashers, .. } => hashers.get(0),
-                _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
-                ),
-            };
-            if let Some(hasher) = maybe_hasher {
-                StorageMetadata::hash_key(&StorageHasher::V14(hasher.clone()), key)
-            } else {
-                panic!("Cannot get hasher for map storage {module_name}.{storage_name}.",);
+        .as_ref()
+        .unwrap()
+        .entries
+        .iter()
+        .find(|s| s.name == storage_name)
+        .unwrap()
+        .ty;
+    let key_hash = {
+        let maybe_hasher = match storage_entry_type {
+            StorageEntryType::Map { hashers, .. } => hashers.get(0),
+            _ => {
+                panic!("Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",)
             }
+        };
+        if let Some(hasher) = maybe_hasher {
+            hash(hasher, &key.encode())
+        } else {
+            panic!("Cannot get hasher for map storage {module_name}.{storage_name}.",);
         }
     };
     key_hash
@@ -115,7 +102,7 @@ where
 
 /// Get storage key in hex string format for a map storage type.
 pub fn get_storage_map_key<T>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key: &T,
@@ -130,7 +117,7 @@ where
 }
 
 pub fn get_rpc_paged_map_keys_params<'a, T>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &'a str,
     storage_name: &'a str,
     key: &T,
@@ -167,7 +154,7 @@ where
 /// Get JSONRPSee parameters for a map storage type at an optional given block.
 /// Will get current storage if `None` is supplied for `block_hash`.
 pub fn get_rpc_storage_map_params<T>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key: &T,
@@ -192,7 +179,7 @@ where
 }
 
 fn _get_double_map_key_hash<T, U>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key_1: &T,
@@ -202,69 +189,38 @@ where
     T: Encode,
     U: Encode,
 {
-    let storage_metadata = metadata
-        .module(module_name)
+    let storage_entry_type = &metadata
+        .pallets
+        .iter()
+        .find(|p| p.name == module_name)
         .unwrap()
         .storage
-        .get(storage_name)
-        .unwrap();
-    let key_hash_pair = match &storage_metadata.ty {
-        StorageEntryType::V12(storage_entry_type) => {
-            let (hasher_1, hasher_2) = match storage_entry_type {
-                frame_metadata::v12::StorageEntryType::DoubleMap {
-                    hasher,
-                    key2_hasher,
-                    ..
-                } => (hasher, key2_hasher),
-                _ => panic!(
-                    "Unexpected storage entry type. Expected double map, got: {storage_entry_type:?}",
-                ),
-            };
-            let key_1_hash =
-                StorageMetadata::hash_key(&StorageHasher::V12(hasher_1.clone()), key_1);
-            let key_2_hash =
-                StorageMetadata::hash_key(&StorageHasher::V12(hasher_2.clone()), key_2);
-            (key_1_hash, key_2_hash)
-        }
-        StorageEntryType::V13(storage_entry_type) => {
-            let (hasher_1, hasher_2) = match storage_entry_type {
-                frame_metadata::v13::StorageEntryType::DoubleMap {
-                    hasher,
-                    key2_hasher,
-                    ..
-                } => (hasher, key2_hasher),
-                _ => panic!(
-                    "Unexpected storage entry type. Expected double map, got: {storage_entry_type:?}",
-                ),
-            };
-            let key_1_hash =
-                StorageMetadata::hash_key(&StorageHasher::V13(hasher_1.clone()), key_1);
-            let key_2_hash =
-                StorageMetadata::hash_key(&StorageHasher::V13(hasher_2.clone()), key_2);
-            (key_1_hash, key_2_hash)
-        }
-        StorageEntryType::V14(storage_entry_type) => {
-            let (hasher_1, hasher_2) = match storage_entry_type {
-                frame_metadata::v14::StorageEntryType::Map { hashers, .. } => {
-                    (hashers.get(0).unwrap(), hashers.get(1).unwrap())
-                }
-                _ => panic!(
-                    "Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",
-                ),
-            };
-            let key_1_hash =
-                StorageMetadata::hash_key(&StorageHasher::V14(hasher_1.clone()), key_1);
-            let key_2_hash =
-                StorageMetadata::hash_key(&StorageHasher::V14(hasher_2.clone()), key_2);
-            (key_1_hash, key_2_hash)
-        }
+        .as_ref()
+        .unwrap()
+        .entries
+        .iter()
+        .find(|s| s.name == storage_name)
+        .unwrap()
+        .ty;
+    let key_hash_pair = {
+        let (hasher_1, hasher_2) = match storage_entry_type {
+            StorageEntryType::Map { hashers, .. } => {
+                (hashers.get(0).unwrap(), hashers.get(1).unwrap())
+            }
+            _ => {
+                panic!("Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",)
+            }
+        };
+        let key_1_hash = hash(hasher_1, &key_1.encode());
+        let key_2_hash = hash(hasher_2, &key_2.encode());
+        (key_1_hash, key_2_hash)
     };
     key_hash_pair
 }
 
 /// Get storage key in hex string format for a double-map storage type.
 fn _get_storage_double_map_key<T, U>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key_1: &T,
@@ -287,7 +243,7 @@ where
 /// Get JSONRPSee parameters for a double-map storage type at an optional given block.
 /// Will get current storage if `None` is supplied for `block_hash`.
 pub fn _get_rpc_storage_double_map_params<T, U>(
-    metadata: &Metadata,
+    metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
     key_1: &T,

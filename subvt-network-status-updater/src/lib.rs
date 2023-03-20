@@ -11,6 +11,7 @@ use std::sync::{Arc, Mutex};
 use subvt_config::Config;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::substrate::metadata::get_metadata_era_duration_millis;
 use subvt_types::{substrate::BlockHeader, subvt::NetworkStatus};
 
 mod metrics;
@@ -164,7 +165,7 @@ impl NetworkStatusUpdater {
                 .await
                 .context("Error while getting last era's active stakers.")?;
             let total_stake = era_stakers.total_stake();
-            let era_duration_seconds = client.metadata.constants.era_duration_millis / 1000;
+            let era_duration_seconds = get_metadata_era_duration_millis(&client.metadata)? / 1000;
             let year_seconds = (365 * 24 + 6) * 60 * 60;
             let eras_per_year = (year_seconds / era_duration_seconds) as u128;
             let return_rate_per_million =

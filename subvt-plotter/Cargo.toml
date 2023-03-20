@@ -7,7 +7,7 @@ rust-version = "1.65.0"
 [dependencies]
 anyhow = { workspace = true }
 chrono = "0.4"
-env_logger = "0.10.0"
+env_logger = "0.10"
 format_num = "0.1.0"
 itertools = { workspace = true }
 log = { workspace = true }

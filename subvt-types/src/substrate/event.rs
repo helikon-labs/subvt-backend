@@ -1,18 +1,12 @@
 //! Substrate event types, and decode logic.
 //! Note: These are only the events that are utilized in SubVT.
-use crate::substrate::CallHash;
+use crate::substrate::metadata::{decode_field, get_metadata_type};
+use crate::substrate::{CallHash, IdentificationTuple};
 use crate::{
     crypto::AccountId,
-    substrate::{
-        argument::{
-            get_argument_primitive, get_argument_vector, Argument, ArgumentPrimitive,
-            IdentificationTuple,
-        },
-        error::DecodeError,
-        metadata::Metadata,
-        Balance, Block, Chain, OpaqueTimeSlot,
-    },
+    substrate::{error::DecodeError, Balance, Block, Chain, OpaqueTimeSlot},
 };
+use frame_metadata::RuntimeMetadataV14;
 use frame_support::dispatch::{DispatchError, DispatchInfo, DispatchResult};
 use pallet_democracy::{AccountVote, PropIndex, ReferendumIndex, VoteThreshold};
 use pallet_identity::RegistrarIndex;
@@ -64,10 +58,11 @@ impl BalancesEvent {
 
 impl BalancesEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "BalanceSet" => Some(SubstrateEvent::Balances(BalancesEvent::BalanceSet {
                 extrinsic_index,
@@ -89,6 +84,8 @@ impl BalancesEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -174,10 +171,11 @@ impl DemocracyEvent {
 
 impl DemocracyEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "Cancelled" => Some(SubstrateEvent::Democracy(DemocracyEvent::Cancelled {
                 extrinsic_index,
@@ -224,6 +222,8 @@ impl DemocracyEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -314,10 +314,11 @@ impl IdentityEvent {
 
 impl IdentityEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "IdentityCleared" => Some(SubstrateEvent::Identity(IdentityEvent::IdentityCleared {
                 extrinsic_index,
@@ -377,6 +378,8 @@ impl IdentityEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -410,10 +413,12 @@ impl ImOnlineEvent {
 
 impl ImOnlineEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _runtime_version: u32,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
                 extrinsic_index,
@@ -435,6 +440,8 @@ impl ImOnlineEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -459,10 +466,11 @@ impl OffencesEvent {
 
 impl OffencesEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "Offence" => Some(SubstrateEvent::Offences(OffencesEvent::Offence {
                 extrinsic_index,
@@ -472,6 +480,8 @@ impl OffencesEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -517,10 +527,11 @@ impl ParachainInclusionEvent {
 
 impl ParachainInclusionEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "CandidateBacked" => Some(SubstrateEvent::ParachainInclusion(Box::new(
                 ParachainInclusionEvent::CandidateBacked {
@@ -551,6 +562,8 @@ impl ParachainInclusionEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -602,10 +615,11 @@ impl ParachainsEvent {
 
 impl ParachainsEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "CurrentHeadUpdated" => Some(SubstrateEvent::Parachains(
                 ParachainsEvent::CurrentHeadUpdated {
@@ -632,6 +646,8 @@ impl ParachainsEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -655,10 +671,11 @@ impl SessionEvent {
 
 impl SessionEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "NewSession" => Some(SubstrateEvent::Session(SessionEvent::NewSession {
                 extrinsic_index,
@@ -667,6 +684,8 @@ impl SessionEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -774,10 +793,11 @@ impl StakingEvent {
 
 impl StakingEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "Bonded" => Some(SubstrateEvent::Staking(StakingEvent::Bonded {
                 extrinsic_index,
@@ -841,6 +861,8 @@ impl StakingEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -892,10 +914,11 @@ impl SystemEvent {
 
 impl SystemEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "CodeUpdated" => Some(SubstrateEvent::System(SystemEvent::CodeUpdated {
                 extrinsic_index,
@@ -920,6 +943,8 @@ impl SystemEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -977,10 +1002,11 @@ pub enum ProxyEvent {
 
 impl ProxyEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "ProxyExecuted" => Some(SubstrateEvent::Proxy(ProxyEvent::ProxyExecuted {
                 extrinsic_index,
@@ -989,6 +1015,8 @@ impl ProxyEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 
     pub fn get_extrinsic_index(&self) -> Option<u32> {
@@ -1014,10 +1042,11 @@ pub enum MultisigEvent {
 
 impl MultisigEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "MultisigExecuted" => Some(SubstrateEvent::Multisig(MultisigEvent::MultisigExecuted {
                 extrinsic_index,
@@ -1030,6 +1059,8 @@ impl MultisigEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 
     pub fn get_extrinsic_index(&self) -> Option<u32> {
@@ -1043,10 +1074,11 @@ impl MultisigEvent {
 
 impl UtilityEvent {
     pub fn from(
-        name: &str,
-        extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
+        _name: &str,
+        _extrinsic_index: Option<u32>,
+        _bytes: &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        /*
         let maybe_event = match name {
             "ItemCompleted" => Some(SubstrateEvent::Utility(UtilityEvent::ItemCompleted {
                 extrinsic_index,
@@ -1069,6 +1101,8 @@ impl UtilityEvent {
             _ => None,
         };
         Ok(maybe_event)
+         */
+        Ok(None)
     }
 }
 
@@ -1091,7 +1125,6 @@ pub enum SubstrateEvent {
         module_name: String,
         event_name: String,
         extrinsic_index: Option<u32>,
-        arguments: Vec<Argument>,
     },
 }
 
@@ -1120,8 +1153,9 @@ impl SubstrateEvent {
 
 impl SubstrateEvent {
     fn decode_event(
-        chain: &Chain,
-        metadata: &Metadata,
+        _chain: &Chain,
+        runtime_version: u32,
+        metadata: &RuntimeMetadataV14,
         bytes: &mut &[u8],
     ) -> Result<Self, DecodeError> {
         let phase = frame_system::Phase::decode(bytes)?;
@@ -1131,68 +1165,76 @@ impl SubstrateEvent {
         };
         let module_index: u8 = Decode::decode(&mut *bytes)?;
         let event_index: u8 = Decode::decode(&mut *bytes)?;
-        let module = if let Some(module) = metadata.modules.get(&module_index) {
-            module
-        } else {
-            return Err(DecodeError::Error(format!(
-                "Cannot find module at index {module_index}.",
-            )));
+        let pallet = metadata
+            .pallets
+            .iter()
+            .find(|p| p.index == module_index)
+            .unwrap();
+        let event_type = metadata
+            .types
+            .types()
+            .iter()
+            .find(|ty| ty.id() == pallet.event.clone().unwrap().ty.id())
+            .unwrap();
+        let event_variant = &match event_type.ty().type_def() {
+            scale_info::TypeDef::Variant(variant) => variant
+                .variants()
+                .iter()
+                .find(|variant| variant.index == event_index)
+                .unwrap(),
+            _ => panic!(
+                "Unexpected non-variant event type: {:?}",
+                event_type.ty().type_def()
+            ),
         };
-        let event = if let Some(event) = module.events.get(&event_index) {
-            event
-        } else {
-            return Err(DecodeError::Error(format!(
-                "Cannot find event at index {} for module {}.",
-                event_index, module.name
-            )));
-        };
-        // decode arguments
-        let mut arguments: Vec<Argument> = Vec::new();
-        for argument_meta in &event.arguments {
-            arguments.push(Argument::decode(
-                chain,
-                metadata,
-                argument_meta,
-                &None,
-                &mut *bytes,
-            )?);
+        let pre_event_bytes = <&[u8]>::clone(bytes);
+        // decode parameters
+        for event_field in event_variant.fields() {
+            let event_field_type = get_metadata_type(metadata, event_field.ty().id());
+            decode_field(metadata, event_field_type, bytes, false).unwrap();
         }
+        // post bytes :: get bytes => decode by runtime
+        let event_bytes_len = pre_event_bytes.len() - bytes.len();
+        let event_bytes = &pre_event_bytes[0..event_bytes_len];
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
         // decode events
-        // debug!("Will decode {}.{}.", module.name, event.name);
-        let maybe_event = match module.name.as_str() {
-            "Balances" => BalancesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Democracy" => DemocracyEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Identity" => IdentityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "ImOnline" => ImOnlineEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Multisig" => MultisigEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Offences" => OffencesEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+        let maybe_event = match pallet.name.as_str() {
+            "Balances" => BalancesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Democracy" => DemocracyEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Identity" => IdentityEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "ImOnline" => ImOnlineEvent::from(
+                runtime_version,
+                &event_variant.name,
+                extrinsic_index,
+                event_bytes,
+            )?,
+            "Multisig" => MultisigEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Offences" => OffencesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "ParaInclusion" => {
-                ParachainInclusionEvent::from(&event.name, extrinsic_index, arguments.clone())?
+                ParachainInclusionEvent::from(&event_variant.name, extrinsic_index, event_bytes)?
             }
-            "Paras" => ParachainsEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Proxy" => ProxyEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Session" => SessionEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Staking" => StakingEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "System" => SystemEvent::from(&event.name, extrinsic_index, arguments.clone())?,
-            "Utility" => UtilityEvent::from(&event.name, extrinsic_index, arguments.clone())?,
+            "Paras" => ParachainsEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Proxy" => ProxyEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Session" => SessionEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Staking" => StakingEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "System" => SystemEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
+            "Utility" => UtilityEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             _ => None,
         };
         let substrate_event = if let Some(substrate_event) = maybe_event {
-            log::debug!("Decoded event {}.{}.", module.name, event.name);
+            log::debug!("Decoded event {}.{}.", pallet.name, event_variant.name);
             substrate_event
         } else {
             log::debug!(
                 "Decoded non-specified event {}.{}.",
-                module.name,
-                event.name
+                pallet.name,
+                event_variant.name
             );
             SubstrateEvent::Other {
-                module_name: module.name.clone(),
-                event_name: event.name.clone(),
+                module_name: pallet.name.clone(),
+                event_name: event_variant.name.clone(),
                 extrinsic_index,
-                arguments,
             }
         };
         Ok(substrate_event)
@@ -1200,7 +1242,8 @@ impl SubstrateEvent {
 
     pub fn decode_events(
         chain: &Chain,
-        metadata: &Metadata,
+        runtime_version: u32,
+        metadata: &RuntimeMetadataV14,
         block_hash: &str,
         block: Block,
         bytes: &mut &[u8],
@@ -1208,7 +1251,7 @@ impl SubstrateEvent {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
         let mut result = Vec::with_capacity(event_count as usize);
         for event_index in 0..event_count {
-            match SubstrateEvent::decode_event(chain, metadata, &mut *bytes) {
+            match SubstrateEvent::decode_event(chain, runtime_version, metadata, bytes) {
                 Ok(event) => result.push(Ok(event)),
                 Err(decode_error) => {
                     let error_log = match block.header.get_number() {

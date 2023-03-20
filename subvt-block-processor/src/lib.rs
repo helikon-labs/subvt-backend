@@ -16,7 +16,7 @@ use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::event::SubstrateEvent;
-use subvt_types::substrate::metadata::MetadataVersion;
+use subvt_types::substrate::metadata::get_metadata_expected_block_time_millis;
 use subvt_types::substrate::ValidityAttestation;
 use subvt_types::{
     crypto::AccountId,
@@ -134,38 +134,22 @@ impl BlockProcessor {
             .get_last_runtime_upgrade_info(&block_hash)
             .await?;
         // check metadata version
-        if substrate_client
-            .metadata
-            .last_runtime_upgrade_info
-            .spec_version
+        if substrate_client.last_runtime_upgrade_info.spec_version
             != runtime_upgrade_info.spec_version
         {
             log::info!(
                 "Different runtime version #{} than client's #{}. Will reset metadata.",
                 runtime_upgrade_info.spec_version,
-                substrate_client
-                    .metadata
-                    .last_runtime_upgrade_info
-                    .spec_version
+                substrate_client.last_runtime_upgrade_info.spec_version
             );
             substrate_client
                 .set_metadata_at_block(block_number, &block_hash)
                 .await?;
             log::info!(
                 "Runtime {} metadata fetched.",
-                substrate_client
-                    .metadata
-                    .last_runtime_upgrade_info
-                    .spec_version
+                substrate_client.last_runtime_upgrade_info.spec_version
             );
-            //substrate_client.metadata.log_all_calls();
-            //substrate_client.metadata.log_all_events();
         }
-        let metadata_version = match substrate_client.metadata.version {
-            MetadataVersion::V12 => 12,
-            MetadataVersion::V13 => 13,
-            MetadataVersion::V14 => 14,
-        } as i16;
         let (last_era_index, last_epoch_index) = {
             let runtime_information = runtime_information.read().unwrap();
             (
@@ -296,10 +280,7 @@ impl BlockProcessor {
         } else {
             None
         };
-        let runtime_version = substrate_client
-            .metadata
-            .last_runtime_upgrade_info
-            .spec_version as i16;
+        let runtime_version = substrate_client.last_runtime_upgrade_info.spec_version as i16;
         postgres
             .save_finalized_block(
                 &block_hash,
@@ -307,7 +288,7 @@ impl BlockProcessor {
                 block_timestamp,
                 maybe_author_account_id,
                 (active_era.index, current_epoch.index as u32),
-                (metadata_version, runtime_version),
+                (14, runtime_version),
             )
             .await?;
         // process/persist events
@@ -620,10 +601,7 @@ impl Service for BlockProcessor {
                         } else {
                             // update current era reward points every 3 minutes
                             let blocks_per_3_minutes = 3 * 60 * 1000
-                                / block_processor_substrate_client
-                                .metadata
-                                .constants
-                                .expected_block_time_millis;
+                                / get_metadata_expected_block_time_millis(&block_processor_substrate_client.metadata).unwrap();
                             log::info!("Process block #{}.", finalized_block_number);
                             let start = std::time::Instant::now();
                             let update_result = self.process_block(
