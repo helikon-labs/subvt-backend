@@ -1,7 +1,7 @@
 //! Substrate event types, and decode logic.
 //! Note: These are only the events that are utilized in SubVT.
 use crate::substrate::metadata::{decode_field, get_metadata_type};
-use crate::substrate::{CallHash, IdentificationTuple};
+use crate::substrate::CallHash;
 use crate::{
     crypto::AccountId,
     substrate::{error::DecodeError, Balance, Block, Chain, OpaqueTimeSlot},
@@ -16,6 +16,8 @@ use polkadot_core_primitives::BlockNumber;
 use polkadot_primitives::v2::{CandidateReceipt, CoreIndex, GroupIndex, HeadData, Id};
 use sp_staking::offence::Kind;
 use sp_staking::SessionIndex;
+
+pub mod im_online;
 
 type EraIndex = u32;
 
@@ -380,88 +382,6 @@ impl IdentityEvent {
         Ok(maybe_event)
          */
         Ok(None)
-    }
-}
-
-#[derive(Clone, Debug)]
-pub enum ImOnlineEvent {
-    AllGood {
-        extrinsic_index: Option<u32>,
-    },
-    HeartbeatReceived {
-        extrinsic_index: Option<u32>,
-        im_online_key_hex_string: String,
-    },
-    SomeOffline {
-        identification_tuples: Vec<IdentificationTuple>,
-    },
-}
-
-impl ImOnlineEvent {
-    pub fn get_extrinsic_index(&self) -> Option<u32> {
-        match self {
-            Self::AllGood {
-                extrinsic_index, ..
-            } => *extrinsic_index,
-            Self::HeartbeatReceived {
-                extrinsic_index, ..
-            } => *extrinsic_index,
-            Self::SomeOffline { .. } => None,
-        }
-    }
-}
-
-impl ImOnlineEvent {
-    pub fn decode(
-        _runtime_version: u32,
-        name: &str,
-        extrinsic_index: Option<u32>,
-        bytes: &mut &[u8],
-    ) -> Result<Option<SubstrateEvent>, DecodeError> {
-        let maybe_event = match name {
-            "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
-                extrinsic_index,
-            })),
-            "HeartbeatReceived" => {
-                let im_online_key: pallet_im_online::sr25519::AuthorityId = Decode::decode(bytes)?;
-                let im_online_key_bytes: &[u8] = im_online_key.as_ref();
-                Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
-                    extrinsic_index,
-                    im_online_key_hex_string: format!(
-                        "0x{}",
-                        hex::encode_upper(im_online_key_bytes)
-                    ),
-                }))
-            }
-            "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
-                identification_tuples: Decode::decode(bytes)?,
-            })),
-            _ => None,
-        };
-        /*
-        let maybe_event = match name {
-            "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
-                extrinsic_index,
-            })),
-            "HeartbeatReceived" => {
-                let im_online_key = get_argument_primitive!(&arguments[0], ImOnlineAuthorityId);
-                let im_online_key_bytes: &[u8] = im_online_key.as_ref();
-                Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
-                    extrinsic_index,
-                    im_online_key_hex_string: format!(
-                        "0x{}",
-                        hex::encode_upper(im_online_key_bytes)
-                    ),
-                }))
-            }
-            "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
-                identification_tuples: get_argument_vector!(&arguments[0], IdentificationTuple),
-            })),
-            _ => None,
-        };
-
-         */
-        Ok(maybe_event)
     }
 }
 
@@ -1131,7 +1051,7 @@ pub enum SubstrateEvent {
     Balances(BalancesEvent),
     Democracy(DemocracyEvent),
     Identity(IdentityEvent),
-    ImOnline(ImOnlineEvent),
+    ImOnline(im_online::ImOnlineEvent),
     Multisig(MultisigEvent),
     Offences(OffencesEvent),
     ParachainInclusion(Box<ParachainInclusionEvent>),
@@ -1219,16 +1139,23 @@ impl SubstrateEvent {
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
         // decode events
+
         let maybe_event = match pallet.name.as_str() {
             "Balances" => BalancesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Democracy" => DemocracyEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Identity" => IdentityEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
-            "ImOnline" => ImOnlineEvent::decode(
-                runtime_version,
-                &event_variant.name,
-                extrinsic_index,
-                event_bytes,
-            )?,
+            "ImOnline" => {
+                let _event_type_json = serde_json::to_string(event_type).unwrap();
+                let _event_type_type_json = serde_json::to_string(event_type.ty()).unwrap();
+                let _event_type_type_def_json =
+                    serde_json::to_string(event_type.ty().type_def()).unwrap();
+                im_online::ImOnlineEvent::decode(
+                    runtime_version,
+                    &event_variant.name,
+                    extrinsic_index,
+                    event_bytes,
+                )?
+            }
             "Multisig" => MultisigEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Offences" => OffencesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "ParaInclusion" => {

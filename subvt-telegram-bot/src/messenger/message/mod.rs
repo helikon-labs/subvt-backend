@@ -1,7 +1,7 @@
 //! This module manages the creation of the content for every message type.
 use crate::query::QueryType;
 use subvt_types::crypto::AccountId;
-use subvt_types::governance::polkassembly::ReferendumPost;
+use subvt_types::governance::polkassembly::{ReferendumPost, ReferendumPostDetails};
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::sub_id::NFTCollection;
 use subvt_types::substrate::democracy::ReferendumVote;
@@ -57,11 +57,10 @@ pub enum MessageType {
     NoPayoutsFound,
     NoRewardsFound,
     NoOpenReferendaFound,
-    DemocracyTemporarilyDisabled,
-    RefererendumList(Vec<ReferendumPost>),
+    ReferendumList(Vec<ReferendumPost>),
     ReferendumNotFound(u32),
     ReferendumDetails {
-        post: ReferendumPost,
+        post: ReferendumPostDetails,
         chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)>,
     },
     SelectContactType,

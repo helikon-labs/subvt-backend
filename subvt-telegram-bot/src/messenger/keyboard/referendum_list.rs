@@ -17,14 +17,18 @@ pub fn get_referendum_list_keyboard(
         for post in posts {
             let query = Query {
                 query_type: QueryType::ReferendumDetails,
-                parameter: Some(post.onchain_link.onchain_referendum_id.to_string()),
+                parameter: Some(post.post_id.to_string()),
             };
             rows.push(vec![InlineKeyboardButton {
                 text: format!(
                     "#{} - {}",
-                    post.onchain_link.onchain_referendum_id,
-                    if let Some(title) = &post.maybe_title {
+                    post.post_id,
+                    if let Some(title) = post.maybe_title.as_ref().filter(|t| !t.is_empty()) {
                         title.to_owned()
+                    } else if let Some(method) =
+                        post.maybe_method.as_ref().filter(|m| !m.is_empty())
+                    {
+                        method.to_owned()
                     } else {
                         renderer.render("no_title.html", &Context::new())?
                     },

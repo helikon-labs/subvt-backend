@@ -36,7 +36,6 @@ pub mod legacy;
 pub mod metadata;
 pub mod para;
 
-pub type IdentificationTuple = (AccountId, Exposure<AccountId, Balance>);
 pub type BlockNumber = polkadot_core_primitives::BlockNumber;
 
 #[derive(Default)]

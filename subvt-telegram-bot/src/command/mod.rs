@@ -2,7 +2,7 @@
 //! the `process_command` function below and the corresponding command modules.
 use crate::{query::QueryType, MessageType, Messenger, TelegramBot};
 use async_recursion::async_recursion;
-// use subvt_governance::polkassembly;
+use subvt_governance::polkassembly;
 
 mod add_validator;
 mod broadcast;
@@ -134,15 +134,6 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 self.process_payouts_command(chat_id, args).await?;
             }
             "/referenda" | "/democracy" => {
-                self.messenger
-                    .send_message(
-                        &self.app_postgres,
-                        &self.network_postgres,
-                        chat_id,
-                        Box::new(MessageType::DemocracyTemporarilyDisabled),
-                    )
-                    .await?;
-                /*
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
@@ -163,11 +154,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                             &self.app_postgres,
                             &self.network_postgres,
                             chat_id,
-                            Box::new(MessageType::RefererendumList(posts)),
+                            Box::new(MessageType::ReferendumList(posts)),
                         )
                         .await?;
                 }
-                 */
             }
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();

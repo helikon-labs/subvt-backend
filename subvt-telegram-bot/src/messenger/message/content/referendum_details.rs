@@ -1,7 +1,7 @@
 //! Content for a selected open referendum.
 use crate::MessageType;
 use crate::CONFIG;
-use subvt_types::governance::polkassembly::ReferendumPost;
+use subvt_types::governance::polkassembly::ReferendumPostDetails;
 use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::numeric::format_decimal;
@@ -12,25 +12,22 @@ impl MessageType {
     pub(in crate::messenger::message) fn fill_referendum_details_context(
         &self,
         context: &mut Context,
-        post: &ReferendumPost,
+        post: &ReferendumPostDetails,
         chat_validator_votes: &[(TelegramChatValidator, Option<ReferendumVote>)],
     ) {
         context.insert("chain", &CONFIG.substrate.chain);
-        context.insert("referendum_id", &post.onchain_link.onchain_referendum_id);
+        context.insert("referendum_id", &post.post_id);
         if let Some(title) = &post.maybe_title {
             context.insert("title", title);
         }
-        context.insert("proposer_address", &post.onchain_link.proposer_address);
+        context.insert("proposer_address", &post.proposer);
         context.insert(
             "condensed_proposer_address",
-            &get_condensed_address(&post.onchain_link.proposer_address, None),
+            &get_condensed_address(&post.proposer, None),
         );
-        let referendum = &post.onchain_link.onchain_referendum[0];
-        context.insert("vote_threshold", &referendum.vote_threshold);
-        context.insert("end_block_number", &referendum.end_block_number);
-        if let Some(status) = referendum.referendum_status.last() {
-            context.insert("status", &status.status);
-        }
+        context.insert("vote_threshold", &post.vote_threshold);
+        context.insert("end_block_number", &post.end_block_number);
+        context.insert("status", &post.status);
         if let Some(content) = &post.maybe_content {
             context.insert("content", &content);
         }

@@ -1,6 +1,6 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::substrate::event::ImOnlineEvent;
+use subvt_types::substrate::event::im_online::ImOnlineEvent;
 
 pub(crate) async fn process_imonline_event(
     substrate_client: &SubstrateClient,

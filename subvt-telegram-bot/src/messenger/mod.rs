@@ -223,7 +223,7 @@ impl Messenger for MessengerImpl {
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
                 get_settings_keyboard(&self.renderer)?,
             )),
-            MessageType::RefererendumList(posts) => {
+            MessageType::ReferendumList(posts) => {
                 get_referendum_list_keyboard(&self.renderer, posts)?
             }
             MessageType::SelectContactType => get_contact_type_keyboard(&self.renderer)?,

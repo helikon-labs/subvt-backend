@@ -1,7 +1,7 @@
 //! `/summary` command processor.
 use crate::{MessageType, Messenger, TelegramBot, CONFIG};
-// use subvt_governance::polkassembly::fetch_open_referendum_list;
-// use subvt_substrate_client::SubstrateClient;
+use subvt_governance::polkassembly::fetch_open_referendum_list;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::telegram::TelegramChatValidatorSummary;
 
 impl<M: Messenger + Send + Sync> TelegramBot<M> {
@@ -20,9 +20,9 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             return Ok(());
         }
         // get referenda
-        // let open_referenda = fetch_open_referendum_list().await?;
+        let open_referenda = fetch_open_referendum_list().await?;
         let mut chat_validator_summaries: Vec<TelegramChatValidatorSummary> = vec![];
-        // let substrate_client = SubstrateClient::new(&CONFIG).await?;
+        let substrate_client = SubstrateClient::new(&CONFIG).await?;
         for chat_validator in chat_validators {
             if let Some(validator_details) = &self
                 .redis
@@ -32,17 +32,16 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 )
                 .await?
             {
-                let validator_summary = TelegramChatValidatorSummary::from(
+                let mut validator_summary = TelegramChatValidatorSummary::from(
                     validator_details,
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
                 );
-                /*
                 for open_referendum in &open_referenda {
                     if substrate_client
                         .get_account_referendum_vote(
                             &chat_validator.account_id,
-                            open_referendum.onchain_link.onchain_referendum_id,
+                            open_referendum.post_id,
                             None,
                         )
                         .await?
@@ -50,11 +49,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     {
                         validator_summary
                             .missing_referendum_votes
-                            .push(open_referendum.onchain_link.onchain_referendum_id);
+                            .push(open_referendum.post_id);
                     }
                 }
                 validator_summary.missing_referendum_votes.sort_unstable();
-                */
                 chat_validator_summaries.push(validator_summary);
             }
         }

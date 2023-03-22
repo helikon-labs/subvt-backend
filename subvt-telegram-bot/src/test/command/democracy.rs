@@ -14,7 +14,7 @@ async fn test_democracy() {
         .expect_send_message()
         .withf(|_, _, _, message_type: &Box<MessageType>| {
             matches!(**message_type, MessageType::NoOpenReferendaFound)
-                || matches!(**message_type, MessageType::RefererendumList(_))
+                || matches!(**message_type, MessageType::ReferendumList(_))
         })
         .times(2)
         .returning(|_, _, _, _| Ok(get_telegram_message_response()));
