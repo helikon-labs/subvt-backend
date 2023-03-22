@@ -25,7 +25,7 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
         let field_is_key = field
             .attrs
             .iter()
-            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
+            .any(|attribute| attribute.path().is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 diff.#field_ident = other.#field_ident.clone();
@@ -43,7 +43,7 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
         let field_is_key = field
             .attrs
             .iter()
-            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
+            .any(|attribute| attribute.path().is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 self.#field_ident = diff.#field_ident.clone();
@@ -62,7 +62,7 @@ pub fn derive_diff(input: DeriveInput) -> TokenStream {
         let field_is_key = field
             .attrs
             .iter()
-            .any(|attribute| attribute.path.is_ident(KEY_ATTR_NAME));
+            .any(|attribute| attribute.path().is_ident(KEY_ATTR_NAME));
         if field_is_key {
             quote! {
                 pub #field_name: #field_ty,
