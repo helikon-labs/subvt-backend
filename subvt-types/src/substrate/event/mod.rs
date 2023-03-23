@@ -1,6 +1,6 @@
 //! Substrate event types, and decode logic.
 //! Note: These are only the events that are utilized in SubVT.
-use crate::substrate::metadata::{decode_field, get_metadata_type};
+use crate::substrate::metadata::{decode_field, get_metadata_type, get_variant_type_code};
 use crate::substrate::CallHash;
 use crate::{
     crypto::AccountId,
@@ -1116,7 +1116,7 @@ impl SubstrateEvent {
             .iter()
             .find(|ty| ty.id() == pallet.event.clone().unwrap().ty.id())
             .unwrap();
-        let event_variant = &match event_type.ty().type_def() {
+        let event_variant = match event_type.ty().type_def() {
             scale_info::TypeDef::Variant(variant) => variant
                 .variants()
                 .iter()
@@ -1139,7 +1139,7 @@ impl SubstrateEvent {
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
         // decode events
-
+        let event_type_code = get_variant_type_code(metadata, event_variant);
         let maybe_event = match pallet.name.as_str() {
             "Balances" => BalancesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Democracy" => DemocracyEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
@@ -1151,6 +1151,7 @@ impl SubstrateEvent {
                     serde_json::to_string(event_type.ty().type_def()).unwrap();
                 im_online::ImOnlineEvent::decode(
                     runtime_version,
+                    &event_type_code,
                     &event_variant.name,
                     extrinsic_index,
                     event_bytes,

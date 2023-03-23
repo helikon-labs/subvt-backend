@@ -1,7 +1,7 @@
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
 use parity_scale_codec::{Compact, Decode};
 use scale_info::form::PortableForm;
-use scale_info::{Type, TypeDefPrimitive};
+use scale_info::{Type, TypeDefPrimitive, Variant};
 use sp_core::U256;
 use subxt::utils::bits::{DecodedBits, Lsb0, Msb0};
 
@@ -36,6 +36,64 @@ pub(crate) fn get_metadata_type(
         .find(|metadata_ty| metadata_ty.id() == type_id)
         .unwrap()
         .ty()
+}
+
+pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) {
+    for pallet in &metadata.pallets {
+        println!("{}", pallet.name);
+        if let Some(pallet_event_type) = &pallet.event {
+            let event_type = metadata
+                .types
+                .types()
+                .iter()
+                .find(|ty| ty.id() == pallet_event_type.ty.id())
+                .unwrap();
+            match event_type.ty().type_def() {
+                scale_info::TypeDef::Variant(variant) => {
+                    println!("    {} events", variant.variants().len());
+                    for event_variant in variant.variants() {
+                        println!(
+                            "        {}.{} {}",
+                            pallet.name,
+                            event_variant.name,
+                            get_variant_type_code(metadata, event_variant),
+                        );
+                    }
+                }
+                _ => panic!(
+                    "Unexpected non-variant event type: {:?}",
+                    event_type.ty().type_def()
+                ),
+            };
+        } else {
+            println!("    0 events");
+        }
+        if let Some(pallet_call_type) = &pallet.calls {
+            let call_type = metadata
+                .types
+                .types()
+                .iter()
+                .find(|ty| ty.id() == pallet_call_type.ty.id())
+                .unwrap();
+            match call_type.ty().type_def() {
+                scale_info::TypeDef::Variant(variant) => {
+                    println!("    {} calls", variant.variants().len());
+                    for event_variant in variant.variants() {
+                        println!(
+                            "        {}.{} {}",
+                            pallet.name,
+                            event_variant.name,
+                            get_variant_type_code(metadata, event_variant),
+                        );
+                    }
+                }
+                _ => panic!(
+                    "Unexpected non-variant call type: {:?}",
+                    call_type.ty().type_def()
+                ),
+            };
+        }
+    }
 }
 
 pub(crate) fn decode_field(
@@ -106,7 +164,7 @@ pub(crate) fn decode_field(
     Ok(())
 }
 
-pub(crate) fn decode_bit_sequence(
+fn decode_bit_sequence(
     bit_store_type: &Type<PortableForm>,
     bit_order_type: &Type<PortableForm>,
     bytes: &mut &[u8],
@@ -151,10 +209,7 @@ pub(crate) fn decode_bit_sequence(
     Ok(())
 }
 
-pub(crate) fn decode_primitive(
-    type_def: &TypeDefPrimitive,
-    bytes: &mut &[u8],
-) -> anyhow::Result<()> {
+fn decode_primitive(type_def: &TypeDefPrimitive, bytes: &mut &[u8]) -> anyhow::Result<()> {
     match type_def {
         TypeDefPrimitive::Bool => {
             let _value: bool = Decode::decode(bytes)?;
@@ -202,10 +257,7 @@ pub(crate) fn decode_primitive(
     Ok(())
 }
 
-pub(crate) fn decode_compact_primitive(
-    type_def: &TypeDefPrimitive,
-    bytes: &mut &[u8],
-) -> anyhow::Result<()> {
+fn decode_compact_primitive(type_def: &TypeDefPrimitive, bytes: &mut &[u8]) -> anyhow::Result<()> {
     match type_def {
         TypeDefPrimitive::Bool => {
             panic!("No Compact for Bool.");
@@ -289,4 +341,147 @@ pub fn get_metadata_era_duration_millis(metadata: &RuntimeMetadataV14) -> anyhow
     let expected_block_time_millis: u64 = get_metadata_expected_block_time_millis(metadata)?;
     let era_duration_blocks = epoch_duration_blocks * sessions_per_era as u64;
     Ok(era_duration_blocks * expected_block_time_millis)
+}
+
+pub fn get_variant_type_code(
+    metadata: &RuntimeMetadataV14,
+    variant: &Variant<PortableForm>,
+) -> String {
+    let mut code = String::new();
+    code.push('{');
+    for (i, field) in variant.fields().iter().enumerate() {
+        let field_type = get_metadata_type(metadata, field.ty().id());
+        code.push_str(&get_type_code(metadata, field_type));
+        if i < (variant.fields().len() - 1) {
+            code.push(',');
+        }
+    }
+    code.push('}');
+    code
+}
+
+fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
+    let mut code = String::new();
+    match ty.type_def() {
+        scale_info::TypeDef::Primitive(primitive_type_def) => {
+            code.push_str(get_primitive_type_code(primitive_type_def).as_str());
+        }
+        scale_info::TypeDef::Composite(composite_type_def) => {
+            code.push('{');
+            for (i, field) in composite_type_def.fields().iter().enumerate() {
+                let field_type = get_metadata_type(metadata, field.ty().id());
+                code.push_str(get_type_code(metadata, field_type).as_str());
+                if i < (composite_type_def.fields().len() - 1) {
+                    code.push(',');
+                }
+            }
+            code.push('}');
+        }
+        scale_info::TypeDef::Array(array_type_def) => {
+            code.push('[');
+            let array_type = get_metadata_type(metadata, array_type_def.type_param().id());
+            code.push_str(get_type_code(metadata, array_type).as_str());
+            code.push_str(format!(";{}]", array_type_def.len()).as_str());
+        }
+        scale_info::TypeDef::Tuple(tuple_type_def) => {
+            code.push('(');
+            for (i, field_type_id) in tuple_type_def.fields().iter().enumerate() {
+                let field_type = get_metadata_type(metadata, field_type_id.id());
+                code.push_str(get_type_code(metadata, field_type).as_str());
+                if i < (tuple_type_def.fields().len() - 1) {
+                    code.push(',');
+                }
+            }
+            code.push(')');
+        }
+        scale_info::TypeDef::Compact(compact_type_def) => {
+            code.push_str("compact<");
+            let compact_type = get_metadata_type(metadata, compact_type_def.type_param().id());
+            code.push_str(get_type_code(metadata, compact_type).as_str());
+            code.push('>');
+        }
+        scale_info::TypeDef::Variant(variant_type_def) => {
+            code.push_str("var{");
+            for (i, variant) in variant_type_def.variants().iter().enumerate() {
+                code.push_str(&variant.name);
+                if !variant.fields().is_empty() {
+                    code.push('{');
+                    for (j, field) in variant.fields().iter().enumerate() {
+                        let field_type = get_metadata_type(metadata, field.ty().id());
+                        code.push_str(get_type_code(metadata, field_type).as_str());
+                        if j < (variant.fields().len() - 1) {
+                            code.push(',');
+                        }
+                    }
+                    code.push('}');
+                }
+                if i < (variant_type_def.variants().len() - 1) {
+                    code.push(',');
+                }
+            }
+            code.push('}');
+        }
+        scale_info::TypeDef::Sequence(sequence_type_def) => {
+            code.push_str("seq<");
+            let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param().id());
+            code.push_str(get_type_code(metadata, sequence_type).as_str());
+            code.push('>');
+        }
+        scale_info::TypeDef::BitSequence(bit_sequence) => {
+            let bit_store_type =
+                metadata.types.types()[bit_sequence.bit_store_type().id() as usize].ty();
+            let bit_order_type =
+                metadata.types.types()[bit_sequence.bit_order_type().id() as usize].ty();
+            code.push_str(&get_bit_sequence_type_code(bit_store_type, bit_order_type));
+        }
+    }
+    code
+}
+
+fn get_primitive_type_code(type_def: &TypeDefPrimitive) -> String {
+    match type_def {
+        TypeDefPrimitive::Bool => "bool",
+        TypeDefPrimitive::Str => "string",
+        TypeDefPrimitive::Char => "char",
+        TypeDefPrimitive::U8 => "u8",
+        TypeDefPrimitive::U16 => "u16",
+        TypeDefPrimitive::U32 => "u32",
+        TypeDefPrimitive::U64 => "u64",
+        TypeDefPrimitive::U128 => "u128",
+        TypeDefPrimitive::U256 => "u256",
+        TypeDefPrimitive::I8 => "i8",
+        TypeDefPrimitive::I16 => "i16",
+        TypeDefPrimitive::I32 => "i32",
+        TypeDefPrimitive::I64 => "i64",
+        TypeDefPrimitive::I128 => "i128",
+        TypeDefPrimitive::I256 => "i256",
+    }
+    .to_string()
+}
+
+fn get_bit_sequence_type_code(
+    bit_store_type: &Type<PortableForm>,
+    bit_order_type: &Type<PortableForm>,
+) -> String {
+    let mut code = String::new();
+    code.push_str("bs<");
+    let bit_order_type_path = bit_order_type.path().segments().join("::");
+    match bit_order_type_path.as_str() {
+        "bitvec::order::Lsb0" => code.push_str("lsb0,"),
+        "bitvec::order::Msb0" => code.push_str("msb0,"),
+        _ => panic!("Unexpected bit sequence order: {}", bit_order_type_path),
+    }
+    match bit_store_type.type_def() {
+        scale_info::TypeDef::Primitive(ty) => match ty {
+            TypeDefPrimitive::U8 => code.push_str("u8"),
+            TypeDefPrimitive::U16 => code.push_str("u16"),
+            TypeDefPrimitive::U32 => code.push_str("u32"),
+            TypeDefPrimitive::U64 => code.push_str("u64"),
+            TypeDefPrimitive::U128 => code.push_str("u128"),
+            _ => panic!("Unexpected bit sequence primitive: {:?}", ty),
+        },
+        _ => panic!("Non-primitive type fed for bit sequence."),
+    }
+    code.push('>');
+    code
 }

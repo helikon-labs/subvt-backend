@@ -35,12 +35,27 @@ impl ImOnlineEvent {
 }
 
 impl ImOnlineEvent {
+    fn get_type_code(_runtime_version: u32, name: &str) -> &str {
+        match name {
+            "HeartbeatReceived" => "<{{[u8;32]}}>",
+            _ => "",
+        }
+    }
+
     pub fn decode(
-        _runtime_version: u32,
+        runtime_version: u32,
+        type_code: &str,
         name: &str,
         extrinsic_index: Option<u32>,
         bytes: &mut &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
+        let expected_type_code = ImOnlineEvent::get_type_code(runtime_version, name);
+        if type_code != expected_type_code {
+            panic!(
+                "Event type code {} doesn't match expected {}",
+                type_code, expected_type_code,
+            );
+        }
         let maybe_event = match name {
             "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
                 extrinsic_index,
