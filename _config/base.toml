@@ -60,8 +60,6 @@ pool_max_connections = 7
 connection_timeout_seconds = 3
 
 [block_processor]
-# min supported for Kusama is 4_401_243, metadata v12
-# for Polkadot it is 2_005_673
 # first block of 2021 for Kusama is 6_015_486
 # first block of 2021 for Polkadot is 2_700_565
 start_block_number = 6_015_486

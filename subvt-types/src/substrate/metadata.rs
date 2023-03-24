@@ -1,9 +1,12 @@
 use crate::substrate::error::DecodeError;
+use crate::substrate::legacy::{LegacyDispatchError, LegacyDispatchInfo};
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
+use frame_support::dispatch::{DispatchInfo, DispatchResult};
 use parity_scale_codec::{Compact, Decode};
 use scale_info::form::PortableForm;
 use scale_info::{Type, TypeDefPrimitive, Variant};
 use sp_core::U256;
+use sp_runtime::DispatchError;
 use subxt::utils::bits::{DecodedBits, Lsb0, Msb0};
 
 pub fn hash(hasher: &StorageHasher, bytes: &[u8]) -> Vec<u8> {
@@ -390,7 +393,10 @@ pub fn get_variant_type_code(
     Ok(code)
 }
 
-fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Result<String, DecodeError> {
+fn get_type_code(
+    metadata: &RuntimeMetadataV14,
+    ty: &Type<PortableForm>,
+) -> Result<String, DecodeError> {
     let mut code = String::new();
     match ty.type_def() {
         scale_info::TypeDef::Primitive(primitive_type_def) => {
@@ -400,7 +406,14 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Resu
             code.push('{');
             for (i, field) in composite_type_def.fields().iter().enumerate() {
                 let field_type = get_metadata_type(metadata, field.ty().id());
-                code.push_str(&get_type_code(metadata, field_type)?);
+                let field_type_path = field_type.path().segments().join("::");
+                if field_type_path.is_empty() {
+                    code.push_str(&get_type_code(metadata, field_type)?);
+                } else if field_type_path.ends_with("Call") {
+                    code.push_str("Call");
+                } else {
+                    code.push_str(&field_type_path);
+                }
                 if i < (composite_type_def.fields().len() - 1) {
                     code.push(',');
                 }
@@ -410,14 +423,28 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Resu
         scale_info::TypeDef::Array(array_type_def) => {
             code.push('[');
             let array_type = get_metadata_type(metadata, array_type_def.type_param().id());
-            code.push_str(&get_type_code(metadata, array_type)?);
+            let array_type_path = array_type.path().segments().join("::");
+            if array_type_path.is_empty() {
+                code.push_str(&get_type_code(metadata, array_type)?);
+            } else if array_type_path.ends_with("Call") {
+                code.push_str("Call");
+            } else {
+                code.push_str(&array_type_path);
+            }
             code.push_str(format!(";{}]", array_type_def.len()).as_str());
         }
         scale_info::TypeDef::Tuple(tuple_type_def) => {
             code.push('(');
             for (i, field_type_id) in tuple_type_def.fields().iter().enumerate() {
                 let field_type = get_metadata_type(metadata, field_type_id.id());
-                code.push_str(&get_type_code(metadata, field_type)?);
+                let field_type_path = field_type.path().segments().join("::");
+                if field_type_path.is_empty() {
+                    code.push_str(&get_type_code(metadata, field_type)?);
+                } else if field_type_path.ends_with("Call") {
+                    code.push_str("Call");
+                } else {
+                    code.push_str(&field_type_path);
+                }
                 if i < (tuple_type_def.fields().len() - 1) {
                     code.push(',');
                 }
@@ -427,7 +454,14 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Resu
         scale_info::TypeDef::Compact(compact_type_def) => {
             code.push_str("compact<");
             let compact_type = get_metadata_type(metadata, compact_type_def.type_param().id());
-            code.push_str(&get_type_code(metadata, compact_type)?);
+            let compact_type_path = compact_type.path().segments().join("::");
+            if compact_type_path.is_empty() {
+                code.push_str(&get_type_code(metadata, compact_type)?);
+            } else if compact_type_path.ends_with("Call") {
+                code.push_str("Call");
+            } else {
+                code.push_str(&compact_type_path);
+            }
             code.push('>');
         }
         scale_info::TypeDef::Variant(variant_type_def) => {
@@ -438,16 +472,13 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Resu
                     code.push('{');
                     for (j, field) in variant.fields().iter().enumerate() {
                         let field_type = get_metadata_type(metadata, field.ty().id());
-                        if field_type
-                            .path()
-                            .segments()
-                            .last()
-                            .filter(|s| *s == "Call")
-                            .is_some()
-                        {
-                            code.push_str(&field_type.path().segments().join("::"));
-                        } else {
+                        let field_type_path = field_type.path().segments().join("::");
+                        if field_type_path.is_empty() {
                             code.push_str(&get_type_code(metadata, field_type)?);
+                        } else if field_type_path.ends_with("Call") {
+                            code.push_str("Call");
+                        } else {
+                            code.push_str(&field_type_path);
                         }
                         if j < (variant.fields().len() - 1) {
                             code.push(',');
@@ -464,7 +495,14 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Resu
         scale_info::TypeDef::Sequence(sequence_type_def) => {
             code.push_str("seq<");
             let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param().id());
-            code.push_str(&get_type_code(metadata, sequence_type)?);
+            let sequence_type_path = sequence_type.path().segments().join("::");
+            if sequence_type_path.is_empty() {
+                code.push_str(&get_type_code(metadata, sequence_type)?);
+            } else if sequence_type_path.ends_with("Call") {
+                code.push_str("Call");
+            } else {
+                code.push_str(&sequence_type_path);
+            }
             code.push('>');
         }
         scale_info::TypeDef::BitSequence(bit_sequence) => {
@@ -538,4 +576,78 @@ fn get_bit_sequence_type_code(
     }
     code.push('>');
     Ok(code)
+}
+
+pub fn is_dispatch_error_legacy(runtime_version: u32) -> bool {
+    runtime_version < 9190
+}
+
+pub fn is_weight_legacy(runtime_version: u32) -> bool {
+    runtime_version <= 9300
+}
+
+pub fn decode_dispatch_result(
+    runtime_version: u32,
+    bytes: &mut &[u8],
+) -> Result<DispatchResult, DecodeError> {
+    if is_dispatch_error_legacy(runtime_version) {
+        let legacy_result: Result<(), LegacyDispatchError> =
+            Decode::decode(&mut *bytes).map_err(|error| {
+                DecodeError::Error(format!("Cannot decode legacy dispatch result: {error:?}",))
+            })?;
+        let dispatch_result: DispatchResult = match legacy_result {
+            Ok(()) => Ok(()),
+            Err(legacy_error) => Err(legacy_error.into()),
+        };
+        Ok(dispatch_result)
+    } else {
+        Ok(DispatchResult::decode(&mut *bytes).map_err(|error| {
+            DecodeError::Error(format!("Cannot decode dispatch result: {error:?}",))
+        })?)
+    }
+}
+
+pub fn decode_dispatch_error(
+    runtime_version: u32,
+    bytes: &mut &[u8],
+) -> anyhow::Result<DispatchError, DecodeError> {
+    if is_dispatch_error_legacy(runtime_version) {
+        match LegacyDispatchError::decode(&mut *bytes) {
+            Ok(legacy_dispatch_error) => Ok(legacy_dispatch_error.into()),
+            Err(error) => Err(DecodeError::Error(format!(
+                "Cannot decode legacy dispatch error: {:?}",
+                error
+            ))),
+        }
+    } else {
+        match DispatchError::decode(&mut *bytes) {
+            Ok(dispatch_error) => Ok(dispatch_error),
+            Err(error) => Err(DecodeError::Error(format!(
+                "Cannot decode dispatch error: {:?}",
+                error
+            ))),
+        }
+    }
+}
+
+pub fn decode_dispatch_info(
+    runtime_version: u32,
+    bytes: &mut &[u8],
+) -> anyhow::Result<DispatchInfo, DecodeError> {
+    if is_weight_legacy(runtime_version) {
+        let legacy_dispatch_info: LegacyDispatchInfo =
+            Decode::decode(&mut *bytes).map_err(|error| {
+                DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
+            })?;
+        let dispatch_info = DispatchInfo {
+            weight: legacy_dispatch_info.weight.into(),
+            class: legacy_dispatch_info.class,
+            pays_fee: legacy_dispatch_info.pays_fee,
+        };
+        Ok(dispatch_info)
+    } else {
+        Ok(DispatchInfo::decode(&mut *bytes).map_err(|error| {
+            DecodeError::Error(format!("Cannot decode dispatch info: {error:?}",))
+        })?)
+    }
 }

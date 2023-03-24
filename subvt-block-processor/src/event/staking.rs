@@ -1,5 +1,5 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::substrate::event::StakingEvent;
+use subvt_types::substrate::event::staking::StakingEvent;
 
 pub(crate) async fn process_staking_event(
     postgres: &PostgreSQLNetworkStorage,

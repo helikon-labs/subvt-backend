@@ -347,9 +347,11 @@ impl BlockProcessor {
                                 error_log,
                             )
                             .await?;
-                        //panic!("Panic due to event decode error: {error_log:?}");
+                        panic!("Panic due to event decode error: {error_log:?}");
+                        /*
                         log::error!("Event decode error - skip the rest of the events in block: {error_log:?}");
                         break;
+                         */
                     }
                 },
             }

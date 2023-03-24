@@ -6,6 +6,10 @@ use parity_scale_codec::Decode;
 
 pub type IdentificationTuple = (AccountId, Exposure<AccountId, Balance>);
 
+const ALL_GOOD: &str = "AllGood";
+const HEARTBEAT_RECEIVED: &str = "HeartbeatReceived";
+const SOME_OFFLINE: &str = "SomeOffline";
+
 #[derive(Clone, Debug)]
 pub enum ImOnlineEvent {
     AllGood {
@@ -35,32 +39,17 @@ impl ImOnlineEvent {
 }
 
 impl ImOnlineEvent {
-    fn get_type_code(_runtime_version: u32, name: &str) -> &str {
-        match name {
-            "HeartbeatReceived" => "<{{[u8;32]}}>",
-            _ => "",
-        }
-    }
-
     pub fn decode(
-        runtime_version: u32,
-        type_code: &str,
+        _runtime_version: u32,
         name: &str,
         extrinsic_index: Option<u32>,
         bytes: &mut &[u8],
     ) -> Result<Option<SubstrateEvent>, DecodeError> {
-        let expected_type_code = ImOnlineEvent::get_type_code(runtime_version, name);
-        if type_code != expected_type_code {
-            panic!(
-                "Event type code {} doesn't match expected {}",
-                type_code, expected_type_code,
-            );
-        }
         let maybe_event = match name {
-            "AllGood" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
+            ALL_GOOD => Some(SubstrateEvent::ImOnline(ImOnlineEvent::AllGood {
                 extrinsic_index,
             })),
-            "HeartbeatReceived" => {
+            HEARTBEAT_RECEIVED => {
                 let im_online_key: pallet_im_online::sr25519::AuthorityId = Decode::decode(bytes)?;
                 let im_online_key_bytes: &[u8] = im_online_key.as_ref();
                 Some(SubstrateEvent::ImOnline(ImOnlineEvent::HeartbeatReceived {
@@ -71,7 +60,7 @@ impl ImOnlineEvent {
                     ),
                 }))
             }
-            "SomeOffline" => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
+            SOME_OFFLINE => Some(SubstrateEvent::ImOnline(ImOnlineEvent::SomeOffline {
                 identification_tuples: Decode::decode(bytes)?,
             })),
             _ => None,

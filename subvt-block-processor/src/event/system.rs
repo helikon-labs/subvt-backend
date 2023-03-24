@@ -1,5 +1,5 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
-use subvt_types::substrate::event::SystemEvent;
+use subvt_types::substrate::event::system::SystemEvent;
 
 pub(crate) async fn process_system_event(
     postgres: &PostgreSQLNetworkStorage,
