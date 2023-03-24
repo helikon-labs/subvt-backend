@@ -1,3 +1,4 @@
+use crate::substrate::error::DecodeError;
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
 use parity_scale_codec::{Compact, Decode};
 use scale_info::form::PortableForm;
@@ -38,7 +39,7 @@ pub(crate) fn get_metadata_type(
         .ty()
 }
 
-pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) {
+pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Result<()> {
     for pallet in &metadata.pallets {
         println!("{}", pallet.name);
         if let Some(pallet_event_type) = &pallet.event {
@@ -56,14 +57,17 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) {
                             "        {}.{} {}",
                             pallet.name,
                             event_variant.name,
-                            get_variant_type_code(metadata, event_variant),
+                            get_variant_type_code(metadata, event_variant)?,
                         );
                     }
                 }
-                _ => panic!(
-                    "Unexpected non-variant event type: {:?}",
-                    event_type.ty().type_def()
-                ),
+                _ => {
+                    return Err(DecodeError::Error(format!(
+                        "Unexpected non-variant event type: {:?}",
+                        event_type.ty().type_def(),
+                    ))
+                    .into())
+                }
             };
         } else {
             println!("    0 events");
@@ -83,17 +87,21 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) {
                             "        {}.{} {}",
                             pallet.name,
                             event_variant.name,
-                            get_variant_type_code(metadata, event_variant),
+                            get_variant_type_code(metadata, event_variant)?,
                         );
                     }
                 }
-                _ => panic!(
-                    "Unexpected non-variant call type: {:?}",
-                    call_type.ty().type_def()
-                ),
+                _ => {
+                    return Err(DecodeError::Error(format!(
+                        "Unexpected non-variant call type: {:?}",
+                        call_type.ty().type_def(),
+                    ))
+                    .into())
+                }
             };
         }
     }
+    Ok(())
 }
 
 pub(crate) fn decode_field(
@@ -185,7 +193,13 @@ fn decode_bit_sequence(
                 TypeDefPrimitive::U64 => {
                     let _: DecodedBits<u64, Lsb0> = Decode::decode(bytes)?;
                 }
-                _ => panic!("Unexpected bit sequence primitive: {:?}", ty),
+                _ => {
+                    return Err(DecodeError::Error(format!(
+                        "Unexpected bit sequence primitive: {:?}",
+                        ty,
+                    ))
+                    .into())
+                }
             },
             "bitvec::order::Msb0" => match ty {
                 TypeDefPrimitive::U8 => {
@@ -200,11 +214,27 @@ fn decode_bit_sequence(
                 TypeDefPrimitive::U64 => {
                     let _: DecodedBits<u64, Msb0> = Decode::decode(bytes)?;
                 }
-                _ => panic!("Unexpected bit sequence primitive: {:?}", ty),
+                _ => {
+                    return Err(DecodeError::Error(format!(
+                        "Unexpected bit sequence primitive: {:?}",
+                        ty,
+                    ))
+                    .into())
+                }
             },
-            _ => panic!("Unexpected bit sequence order: {}", bit_order_type_path),
+            _ => {
+                return Err(DecodeError::Error(format!(
+                    "Unexpected bit sequence order: {}",
+                    bit_order_type_path,
+                ))
+                .into())
+            }
         },
-        _ => panic!("Non-primitive type fed for bit sequence."),
+        _ => {
+            return Err(
+                DecodeError::Error("Non-primitive type fed for bit sequence.".to_string()).into(),
+            )
+        }
     }
     Ok(())
 }
@@ -260,13 +290,13 @@ fn decode_primitive(type_def: &TypeDefPrimitive, bytes: &mut &[u8]) -> anyhow::R
 fn decode_compact_primitive(type_def: &TypeDefPrimitive, bytes: &mut &[u8]) -> anyhow::Result<()> {
     match type_def {
         TypeDefPrimitive::Bool => {
-            panic!("No Compact for Bool.");
+            return Err(DecodeError::Error("No compact for Bool.".to_string()).into());
         }
         TypeDefPrimitive::Char | TypeDefPrimitive::U8 => {
             let _value: Compact<u8> = Decode::decode(bytes)?;
         }
         TypeDefPrimitive::Str => {
-            panic!("No Compact for Str.");
+            return Err(DecodeError::Error("No compact for Str.".to_string()).into());
         }
         TypeDefPrimitive::U16 => {
             let _value: Compact<u16> = Decode::decode(bytes)?;
@@ -281,25 +311,25 @@ fn decode_compact_primitive(type_def: &TypeDefPrimitive, bytes: &mut &[u8]) -> a
             let _value: Compact<u128> = Decode::decode(bytes)?;
         }
         TypeDefPrimitive::U256 => {
-            panic!("No Compact for U256.");
+            return Err(DecodeError::Error("No compact for U256.".to_string()).into());
         }
         TypeDefPrimitive::I8 => {
-            panic!("No Compact for I8.");
+            return Err(DecodeError::Error("No compact for I8.".to_string()).into());
         }
         TypeDefPrimitive::I16 => {
-            panic!("No Compact for I16.");
+            return Err(DecodeError::Error("No compact for I16.".to_string()).into());
         }
         TypeDefPrimitive::I32 => {
-            panic!("No Compact for I32.");
+            return Err(DecodeError::Error("No compact for I32.".to_string()).into());
         }
         TypeDefPrimitive::I64 => {
-            panic!("No Compact for I64.");
+            return Err(DecodeError::Error("No compact for I64.".to_string()).into());
         }
         TypeDefPrimitive::I128 => {
-            panic!("No Compact for I128.");
+            return Err(DecodeError::Error("No compact for I128.".to_string()).into());
         }
         TypeDefPrimitive::I256 => {
-            panic!("No Compact for I256.");
+            return Err(DecodeError::Error("No compact for I256.".to_string()).into());
         }
     }
     Ok(())
@@ -346,31 +376,31 @@ pub fn get_metadata_era_duration_millis(metadata: &RuntimeMetadataV14) -> anyhow
 pub fn get_variant_type_code(
     metadata: &RuntimeMetadataV14,
     variant: &Variant<PortableForm>,
-) -> String {
+) -> Result<String, DecodeError> {
     let mut code = String::new();
     code.push('{');
     for (i, field) in variant.fields().iter().enumerate() {
         let field_type = get_metadata_type(metadata, field.ty().id());
-        code.push_str(&get_type_code(metadata, field_type));
+        code.push_str(&get_type_code(metadata, field_type)?);
         if i < (variant.fields().len() - 1) {
             code.push(',');
         }
     }
     code.push('}');
-    code
+    Ok(code)
 }
 
-fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> String {
+fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Result<String, DecodeError> {
     let mut code = String::new();
     match ty.type_def() {
         scale_info::TypeDef::Primitive(primitive_type_def) => {
-            code.push_str(get_primitive_type_code(primitive_type_def).as_str());
+            code.push_str(&get_primitive_type_code(primitive_type_def)?);
         }
         scale_info::TypeDef::Composite(composite_type_def) => {
             code.push('{');
             for (i, field) in composite_type_def.fields().iter().enumerate() {
                 let field_type = get_metadata_type(metadata, field.ty().id());
-                code.push_str(get_type_code(metadata, field_type).as_str());
+                code.push_str(&get_type_code(metadata, field_type)?);
                 if i < (composite_type_def.fields().len() - 1) {
                     code.push(',');
                 }
@@ -380,14 +410,14 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Stri
         scale_info::TypeDef::Array(array_type_def) => {
             code.push('[');
             let array_type = get_metadata_type(metadata, array_type_def.type_param().id());
-            code.push_str(get_type_code(metadata, array_type).as_str());
+            code.push_str(&get_type_code(metadata, array_type)?);
             code.push_str(format!(";{}]", array_type_def.len()).as_str());
         }
         scale_info::TypeDef::Tuple(tuple_type_def) => {
             code.push('(');
             for (i, field_type_id) in tuple_type_def.fields().iter().enumerate() {
                 let field_type = get_metadata_type(metadata, field_type_id.id());
-                code.push_str(get_type_code(metadata, field_type).as_str());
+                code.push_str(&get_type_code(metadata, field_type)?);
                 if i < (tuple_type_def.fields().len() - 1) {
                     code.push(',');
                 }
@@ -397,7 +427,7 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Stri
         scale_info::TypeDef::Compact(compact_type_def) => {
             code.push_str("compact<");
             let compact_type = get_metadata_type(metadata, compact_type_def.type_param().id());
-            code.push_str(get_type_code(metadata, compact_type).as_str());
+            code.push_str(&get_type_code(metadata, compact_type)?);
             code.push('>');
         }
         scale_info::TypeDef::Variant(variant_type_def) => {
@@ -408,7 +438,17 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Stri
                     code.push('{');
                     for (j, field) in variant.fields().iter().enumerate() {
                         let field_type = get_metadata_type(metadata, field.ty().id());
-                        code.push_str(get_type_code(metadata, field_type).as_str());
+                        if field_type
+                            .path()
+                            .segments()
+                            .last()
+                            .filter(|s| *s == "Call")
+                            .is_some()
+                        {
+                            code.push_str(&field_type.path().segments().join("::"));
+                        } else {
+                            code.push_str(&get_type_code(metadata, field_type)?);
+                        }
                         if j < (variant.fields().len() - 1) {
                             code.push(',');
                         }
@@ -424,7 +464,7 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Stri
         scale_info::TypeDef::Sequence(sequence_type_def) => {
             code.push_str("seq<");
             let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param().id());
-            code.push_str(get_type_code(metadata, sequence_type).as_str());
+            code.push_str(&get_type_code(metadata, sequence_type)?);
             code.push('>');
         }
         scale_info::TypeDef::BitSequence(bit_sequence) => {
@@ -432,14 +472,14 @@ fn get_type_code(metadata: &RuntimeMetadataV14, ty: &Type<PortableForm>) -> Stri
                 metadata.types.types()[bit_sequence.bit_store_type().id() as usize].ty();
             let bit_order_type =
                 metadata.types.types()[bit_sequence.bit_order_type().id() as usize].ty();
-            code.push_str(&get_bit_sequence_type_code(bit_store_type, bit_order_type));
+            code.push_str(&get_bit_sequence_type_code(bit_store_type, bit_order_type)?);
         }
     }
-    code
+    Ok(code)
 }
 
-fn get_primitive_type_code(type_def: &TypeDefPrimitive) -> String {
-    match type_def {
+fn get_primitive_type_code(type_def: &TypeDefPrimitive) -> Result<String, DecodeError> {
+    let code = match type_def {
         TypeDefPrimitive::Bool => "bool",
         TypeDefPrimitive::Str => "string",
         TypeDefPrimitive::Char => "char",
@@ -455,21 +495,26 @@ fn get_primitive_type_code(type_def: &TypeDefPrimitive) -> String {
         TypeDefPrimitive::I64 => "i64",
         TypeDefPrimitive::I128 => "i128",
         TypeDefPrimitive::I256 => "i256",
-    }
-    .to_string()
+    };
+    Ok(code.to_string())
 }
 
 fn get_bit_sequence_type_code(
     bit_store_type: &Type<PortableForm>,
     bit_order_type: &Type<PortableForm>,
-) -> String {
+) -> Result<String, DecodeError> {
     let mut code = String::new();
     code.push_str("bs<");
     let bit_order_type_path = bit_order_type.path().segments().join("::");
     match bit_order_type_path.as_str() {
         "bitvec::order::Lsb0" => code.push_str("lsb0,"),
         "bitvec::order::Msb0" => code.push_str("msb0,"),
-        _ => panic!("Unexpected bit sequence order: {}", bit_order_type_path),
+        _ => {
+            return Err(DecodeError::Error(format!(
+                "Unexpected bit sequence order: {}",
+                bit_order_type_path
+            )))
+        }
     }
     match bit_store_type.type_def() {
         scale_info::TypeDef::Primitive(ty) => match ty {
@@ -478,10 +523,19 @@ fn get_bit_sequence_type_code(
             TypeDefPrimitive::U32 => code.push_str("u32"),
             TypeDefPrimitive::U64 => code.push_str("u64"),
             TypeDefPrimitive::U128 => code.push_str("u128"),
-            _ => panic!("Unexpected bit sequence primitive: {:?}", ty),
+            _ => {
+                return Err(DecodeError::Error(format!(
+                    "Unexpected bit sequence primitive: {:?}",
+                    ty
+                )))
+            }
         },
-        _ => panic!("Non-primitive type fed for bit sequence."),
+        _ => {
+            return Err(DecodeError::Error(
+                "Non-primitive type fed for bit sequence.".to_string(),
+            ))
+        }
     }
     code.push('>');
-    code
+    Ok(code)
 }

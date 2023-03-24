@@ -105,7 +105,7 @@ impl SubstrateClient {
                 get_rpc_storage_plain_params("System", "LastRuntimeUpgrade", Some(&block_hash)),
             )
             .await?;
-        print_metadata_type_codes(&metadata);
+        print_metadata_type_codes(&metadata)?;
         let last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
         log::info!("Got last runtime upgrade info.");
@@ -1102,8 +1102,8 @@ impl SubstrateClient {
         };
         SubstrateEvent::decode_events(
             &self.chain,
-            self.last_runtime_upgrade_info.spec_version,
             &self.metadata,
+            self.last_runtime_upgrade_info.spec_version,
             block_hash,
             block,
             &mut event_bytes,

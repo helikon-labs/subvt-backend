@@ -1094,8 +1094,8 @@ impl SubstrateEvent {
 impl SubstrateEvent {
     fn decode_event(
         _chain: &Chain,
-        runtime_version: u32,
         metadata: &RuntimeMetadataV14,
+        runtime_version: u32,
         bytes: &mut &[u8],
     ) -> Result<Self, DecodeError> {
         let phase = frame_system::Phase::decode(bytes)?;
@@ -1122,10 +1122,12 @@ impl SubstrateEvent {
                 .iter()
                 .find(|variant| variant.index == event_index)
                 .unwrap(),
-            _ => panic!(
-                "Unexpected non-variant event type: {:?}",
-                event_type.ty().type_def()
-            ),
+            _ => {
+                return Err(DecodeError::Error(format!(
+                    "Unexpected non-variant event type: {:?}",
+                    event_type.ty().type_def()
+                )))
+            }
         };
         let pre_event_bytes = <&[u8]>::clone(bytes);
         // decode parameters
@@ -1139,24 +1141,18 @@ impl SubstrateEvent {
         // decode topics - unused
         let _topics = Vec::<sp_core::H256>::decode(bytes)?;
         // decode events
-        let event_type_code = get_variant_type_code(metadata, event_variant);
+        let event_type_code = get_variant_type_code(metadata, event_variant)?;
         let maybe_event = match pallet.name.as_str() {
             "Balances" => BalancesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Democracy" => DemocracyEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Identity" => IdentityEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
-            "ImOnline" => {
-                let _event_type_json = serde_json::to_string(event_type).unwrap();
-                let _event_type_type_json = serde_json::to_string(event_type.ty()).unwrap();
-                let _event_type_type_def_json =
-                    serde_json::to_string(event_type.ty().type_def()).unwrap();
-                im_online::ImOnlineEvent::decode(
-                    runtime_version,
-                    &event_type_code,
-                    &event_variant.name,
-                    extrinsic_index,
-                    event_bytes,
-                )?
-            }
+            "ImOnline" => im_online::ImOnlineEvent::decode(
+                runtime_version,
+                &event_type_code,
+                &event_variant.name,
+                extrinsic_index,
+                event_bytes,
+            )?,
             "Multisig" => MultisigEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "Offences" => OffencesEvent::from(&event_variant.name, extrinsic_index, event_bytes)?,
             "ParaInclusion" => {
@@ -1190,8 +1186,8 @@ impl SubstrateEvent {
 
     pub fn decode_events(
         chain: &Chain,
-        runtime_version: u32,
         metadata: &RuntimeMetadataV14,
+        runtime_version: u32,
         block_hash: &str,
         block: Block,
         bytes: &mut &[u8],
@@ -1199,7 +1195,7 @@ impl SubstrateEvent {
         let event_count = <Compact<u32>>::decode(bytes)?.0;
         let mut result = Vec::with_capacity(event_count as usize);
         for event_index in 0..event_count {
-            match SubstrateEvent::decode_event(chain, runtime_version, metadata, bytes) {
+            match SubstrateEvent::decode_event(chain, metadata, runtime_version, bytes) {
                 Ok(event) => result.push(Ok(event)),
                 Err(decode_error) => {
                     let error_log = match block.header.get_number() {
