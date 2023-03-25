@@ -409,6 +409,7 @@ impl BlockProcessor {
                                 error_log,
                             )
                             .await?;
+                        panic!("Panic due to extrinsic decode error: {error_log}");
                     }
                 },
             }

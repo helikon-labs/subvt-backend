@@ -738,20 +738,6 @@ impl RewardDestination {
 }
 
 #[derive(Clone, Debug, Decode)]
-pub enum SlotRange {
-    ZeroZero,
-    ZeroOne,
-    ZeroTwo,
-    ZeroThree,
-    OneOne,
-    OneTwo,
-    OneThree,
-    TwoTwo,
-    TwoThree,
-    ThreeThree,
-}
-
-#[derive(Clone, Debug, Decode)]
 pub enum ProxyType {
     Any,
     NonTransfer,
@@ -761,12 +747,4 @@ pub enum ProxyType {
     CancelProxy,
     Auction,
     Society,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
-pub struct Slash {
-    pub block_hash: String,
-    pub extrinsic_index: u32,
-    pub validator_account_id: AccountId,
-    pub amount: u128,
 }

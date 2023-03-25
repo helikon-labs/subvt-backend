@@ -4,6 +4,7 @@ use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::extrinsic::ProxyExtrinsic;
+use subvt_types::substrate::MultiAddress;
 
 impl BlockProcessor {
     #[allow(clippy::too_many_arguments)]
@@ -24,61 +25,69 @@ impl BlockProcessor {
         match extrinsic {
             ProxyExtrinsic::Proxy {
                 maybe_signature: _,
-                real_account_id,
+                real,
                 force_proxy_type: _,
                 call,
             } => {
-                let is_successful = self
-                    .process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        block_hash,
-                        block_number,
-                        active_validator_account_ids,
-                        index,
-                        true,
-                        &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{nesting_index}P"))
-                        } else {
-                            Some("P".to_string())
-                        },
-                        maybe_multisig_account_id,
-                        Some(*real_account_id),
-                        events,
-                        batch_fail,
-                        call,
-                    )
-                    .await?;
+                let is_successful = match real {
+                    MultiAddress::Id(real_account_id) => {
+                        self.process_extrinsic(
+                            substrate_client,
+                            postgres,
+                            block_hash,
+                            block_number,
+                            active_validator_account_ids,
+                            index,
+                            true,
+                            &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                                Some(format!("{nesting_index}P"))
+                            } else {
+                                Some("P".to_string())
+                            },
+                            maybe_multisig_account_id,
+                            Some(*real_account_id),
+                            events,
+                            batch_fail,
+                            call,
+                        )
+                        .await?
+                    }
+                    _ => false,
+                };
                 Ok(is_successful)
             }
             ProxyExtrinsic::ProxyAnnounced {
                 maybe_signature: _,
-                delegate_account_id: _,
-                real_account_id,
+                delegate: _,
+                real,
                 force_proxy_type: _,
                 call,
             } => {
-                let is_successful = self
-                    .process_extrinsic(
-                        substrate_client,
-                        postgres,
-                        block_hash,
-                        block_number,
-                        active_validator_account_ids,
-                        index,
-                        true,
-                        &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
-                            Some(format!("{nesting_index}PA"))
-                        } else {
-                            Some("PA".to_string())
-                        },
-                        maybe_multisig_account_id,
-                        Some(*real_account_id),
-                        events,
-                        batch_fail,
-                        call,
-                    )
-                    .await?;
+                let is_successful = match real {
+                    MultiAddress::Id(real_account_id) => {
+                        self.process_extrinsic(
+                            substrate_client,
+                            postgres,
+                            block_hash,
+                            block_number,
+                            active_validator_account_ids,
+                            index,
+                            true,
+                            &if let Some(nesting_index) = maybe_nesting_index.as_ref() {
+                                Some(format!("{nesting_index}PA"))
+                            } else {
+                                Some("PA".to_string())
+                            },
+                            maybe_multisig_account_id,
+                            Some(*real_account_id),
+                            events,
+                            batch_fail,
+                            call,
+                        )
+                        .await?
+                    }
+                    _ => false,
+                };
                 Ok(is_successful)
             }
         }

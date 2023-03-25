@@ -1,7 +1,8 @@
 use crate::substrate::error::DecodeError;
 use crate::substrate::legacy::{LegacyDispatchError, LegacyDispatchInfo};
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
-use frame_support::dispatch::{DispatchInfo, DispatchResult};
+use frame_support::dispatch::{DispatchInfo, DispatchResult, Weight};
+use frame_support::weights::OldWeight;
 use parity_scale_codec::{Compact, Decode};
 use scale_info::form::PortableForm;
 use scale_info::{Type, TypeDefPrimitive, Variant};
@@ -649,5 +650,17 @@ pub fn decode_dispatch_info(
         Ok(DispatchInfo::decode(&mut *bytes).map_err(|error| {
             DecodeError::Error(format!("Cannot decode dispatch info: {error:?}",))
         })?)
+    }
+}
+
+pub fn decode_weight(
+    runtime_version: u32,
+    bytes: &mut &[u8],
+) -> anyhow::Result<Weight, DecodeError> {
+    if is_weight_legacy(runtime_version) {
+        let old_weight: OldWeight = Decode::decode(bytes)?;
+        Ok(old_weight.into())
+    } else {
+        Ok(Decode::decode(bytes)?)
     }
 }
