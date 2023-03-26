@@ -1,6 +1,6 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::extrinsic::ImOnlineExtrinsic;
+use subvt_types::substrate::extrinsic::im_online::ImOnlineExtrinsic;
 
 #[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_imonline_extrinsic(

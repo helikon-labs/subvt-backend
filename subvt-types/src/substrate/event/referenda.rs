@@ -1,9 +1,5 @@
+use crate::substrate::{error::DecodeError, event::SubstrateEvent, Balance};
 use frame_support::traits::Bounded;
-use crate::substrate::{
-    error::DecodeError,
-    event::SubstrateEvent,
-    Balance,
-};
 use pallet_conviction_voting::Tally;
 use pallet_referenda::ReferendumIndex;
 use parity_scale_codec::Decode;

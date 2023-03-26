@@ -1,7 +1,7 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
-use subvt_types::substrate::extrinsic::StakingExtrinsic;
+use subvt_types::substrate::extrinsic::staking::StakingExtrinsic;
 use subvt_types::substrate::MultiAddress;
 
 #[allow(clippy::too_many_arguments)]
