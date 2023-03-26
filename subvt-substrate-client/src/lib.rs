@@ -29,6 +29,7 @@ use subvt_types::substrate::democracy::{
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::metadata::{
     get_metadata_constant, get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
+    print_metadata_type_codes,
 };
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::BlockNumber;
@@ -106,6 +107,7 @@ impl SubstrateClient {
             .await?;
         let last_runtime_upgrade_info =
             LastRuntimeUpgradeInfo::from_substrate_hex_string(last_runtime_upgrade_hex_string)?;
+        print_metadata_type_codes(&metadata)?;
         log::info!("Got last runtime upgrade info.");
         let system_properties: SystemProperties = ws_client
             .request("system_properties", rpc_params!())

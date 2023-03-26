@@ -14,6 +14,7 @@ pub mod im_online;
 pub mod multisig;
 pub mod offences;
 pub mod proxy;
+pub mod referenda;
 pub mod staking;
 pub mod system;
 pub mod utility;
@@ -26,6 +27,7 @@ pub enum SubstrateEvent {
     Multisig(multisig::MultisigEvent),
     Offences(offences::OffencesEvent),
     Proxy(proxy::ProxyEvent),
+    Referenda(referenda::ReferendaEvent),
     Staking(staking::StakingEvent),
     System(system::SystemEvent),
     Utility(utility::UtilityEvent),
@@ -45,6 +47,7 @@ impl SubstrateEvent {
             Self::Multisig(event) => event.get_extrinsic_index(),
             Self::Offences(event) => event.get_extrinsic_index(),
             Self::Proxy(event) => event.get_extrinsic_index(),
+            Self::Referenda(event) => event.get_extrinsic_index(),
             Self::Staking(event) => event.get_extrinsic_index(),
             Self::System(event) => event.get_extrinsic_index(),
             Self::Utility(event) => event.get_extrinsic_index(),
@@ -137,6 +140,12 @@ impl SubstrateEvent {
                 event_bytes,
             )?,
             "Proxy" => proxy::ProxyEvent::decode(
+                runtime_version,
+                &event_variant.name,
+                extrinsic_index,
+                event_bytes,
+            )?,
+            "Referenda" => referenda::ReferendaEvent::decode(
                 runtime_version,
                 &event_variant.name,
                 extrinsic_index,

@@ -13,10 +13,12 @@ frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "
 hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
+pallet-conviction-voting = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-democracy = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-identity = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-im-online = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-multisig = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
+pallet-referenda = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 pallet-staking = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.39" }
 parity-scale-codec = { version = "3.4", default-features = false, features = ["derive", "full"] }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.39" }
