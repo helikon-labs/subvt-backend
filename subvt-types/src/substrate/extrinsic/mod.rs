@@ -8,6 +8,7 @@ use crate::{
 use frame_metadata::RuntimeMetadataV14;
 use parity_scale_codec::{Compact, Decode, Input};
 
+pub mod conviction_voting;
 pub mod im_online;
 pub mod multisig;
 pub mod proxy;
@@ -33,6 +34,7 @@ impl Signature {
 
 #[derive(Clone, Debug)]
 pub enum SubstrateExtrinsic {
+    ConvictionVoting(conviction_voting::ConvictionVotingExtrinsic),
     ImOnline(im_online::ImOnlineExtrinsic),
     Multisig(multisig::MultisigExtrinsic),
     Proxy(proxy::ProxyExtrinsic),
@@ -116,6 +118,11 @@ impl SubstrateExtrinsic {
         let extrinsic_param_bytes = &mut &pre_decode_bytes[0..extrinsic_bytes_len];
         */
         let maybe_extrinsic = match pallet.name.as_str() {
+            "ConvictionVoting" => conviction_voting::ConvictionVotingExtrinsic::decode(
+                &call_variant.name,
+                &maybe_signature,
+                bytes,
+            )?,
             "ImOnline" => {
                 im_online::ImOnlineExtrinsic::decode(&call_variant.name, &maybe_signature, bytes)?
             }
