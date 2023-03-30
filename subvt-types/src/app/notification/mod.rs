@@ -92,6 +92,7 @@ pub enum NotificationTypeCode {
     DemocracyStarted,
     DemocracyUndelegated,
     DemocracyVoted,
+    ReferendumConfirmed,
 }
 
 impl Display for NotificationTypeCode {
@@ -169,6 +170,8 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::DemocracyStarted => "democracy_started",
             NotificationTypeCode::DemocracyUndelegated => "democracy_undelegated",
             NotificationTypeCode::DemocracyVoted => "democracy_voted",
+            // referenda
+            NotificationTypeCode::ReferendumConfirmed => "referendum_confirmed",
         };
         write!(f, "{code}")
     }
@@ -248,6 +251,7 @@ impl From<&str> for NotificationTypeCode {
             "democracy_started" => NotificationTypeCode::DemocracyStarted,
             "democracy_undelegated" => NotificationTypeCode::DemocracyUndelegated,
             "democracy_voted" => NotificationTypeCode::DemocracyVoted,
+            "referendum_confirmed" => NotificationTypeCode::ReferendumConfirmed,
             _ => panic!("Unknown notification type code: {code}"),
         }
     }

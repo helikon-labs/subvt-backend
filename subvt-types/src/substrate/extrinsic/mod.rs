@@ -1,5 +1,6 @@
 //! Substrate extrinsic types, and decode logic.
 //! Note: These are only the extrinsics that are utilized in SubVT.
+use crate::substrate::metadata::{decode_field, get_metadata_type};
 use crate::substrate::{Balance, Chain};
 use crate::{
     crypto::AccountId,
@@ -91,32 +92,23 @@ impl SubstrateExtrinsic {
             .unwrap();
         let calls_type = metadata
             .types
-            .types()
+            .types
             .iter()
-            .find(|metadata_type| metadata_type.id() == pallet.calls.clone().unwrap().ty.id())
+            .find(|metadata_type| metadata_type.id == pallet.calls.clone().unwrap().ty.id)
             .unwrap();
-        let call_variant = match calls_type.ty().type_def() {
+        let call_variant = match &calls_type.ty.type_def {
             scale_info::TypeDef::Variant(variant) => variant
-                .variants()
+                .variants
                 .iter()
                 .find(|variant| variant.index == call_index)
                 .unwrap(),
             _ => {
                 return Err(DecodeError::Error(format!(
                     "Unexpected non-variant call type: {:?}",
-                    calls_type.ty().type_def()
+                    calls_type.ty.type_def
                 )))
             }
         };
-        /*
-        let pre_decode_bytes = <&[u8]>::clone(bytes);
-        for call_field in call_variant.fields() {
-            let call_field_type = get_metadata_type(metadata, call_field.ty().id());
-            decode_field(metadata, call_field_type, bytes, false).unwrap();
-        }
-        let extrinsic_bytes_len = pre_decode_bytes.len() - bytes.len();
-        let extrinsic_param_bytes = &mut &pre_decode_bytes[0..extrinsic_bytes_len];
-        */
         let maybe_extrinsic = match pallet.name.as_str() {
             "ConvictionVoting" => conviction_voting::ConvictionVotingExtrinsic::decode(
                 &call_variant.name,
@@ -165,6 +157,10 @@ impl SubstrateExtrinsic {
             log::debug!("Decoded extrinsic {}.{}.", pallet.name, call_variant.name);
             extrinsic
         } else {
+            for call_field in &call_variant.fields {
+                let call_field_type = get_metadata_type(metadata, call_field.ty.id);
+                decode_field(metadata, call_field_type, bytes, false).unwrap();
+            }
             log::debug!(
                 "Decoded non-specified extrinsic {}.{}.",
                 pallet.name,

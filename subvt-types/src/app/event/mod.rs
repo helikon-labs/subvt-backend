@@ -3,6 +3,7 @@ use crate::crypto::AccountId;
 use serde::{Deserialize, Serialize};
 
 pub mod democracy;
+pub mod referenda;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ValidatorOfflineEvent {

@@ -46,6 +46,7 @@ INSERT INTO app_notification_type(code) VALUES('democracy_seconded') ON CONFLICT
 INSERT INTO app_notification_type(code) VALUES('democracy_started') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_undelegated') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_voted') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_confirmed') ON CONFLICT(code) DO NOTHING;
 
 DO $$ BEGIN
     IF to_regtype('app_notification_type_param_data_type') IS NULL THEN
@@ -416,3 +417,4 @@ INSERT INTO app_notification_param_type(
 -- onekv_validator_validity_change :: no param
 -- onekv_validator_online_status_change :: no param
 -- democracy notifications :: no param
+-- referenda notifications :: no param

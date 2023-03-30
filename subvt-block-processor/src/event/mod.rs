@@ -1,5 +1,6 @@
 use crate::event::democracy::{process_democracy_event, update_democracy_event_nesting_index};
 use crate::event::imonline::process_imonline_event;
+use crate::event::referenda::{process_referenda_event, update_referenda_event_nesting_index};
 use crate::event::staking::{process_staking_event, update_staking_event_nesting_index};
 use crate::event::system::{process_system_event, update_system_event_nesting_index};
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -8,6 +9,7 @@ use subvt_types::substrate::event::SubstrateEvent;
 
 mod democracy;
 mod imonline;
+mod referenda;
 mod staking;
 mod system;
 
@@ -36,6 +38,9 @@ pub(crate) async fn process_event(
                 im_online_event,
             )
             .await?
+        }
+        SubstrateEvent::Referenda(referenda_event) => {
+            process_referenda_event(postgres, block_hash, event_index, referenda_event).await?
         }
         SubstrateEvent::Staking(staking_event) => {
             process_staking_event(postgres, block_hash, event_index, staking_event).await?
@@ -75,6 +80,16 @@ pub(crate) async fn update_event_nesting_indices(
                 )
                 .await?;
             }
+            SubstrateEvent::Referenda(referenda_event) => {
+                update_referenda_event_nesting_index(
+                    postgres,
+                    block_hash,
+                    maybe_nesting_index,
+                    *event_index as i32,
+                    referenda_event,
+                )
+                .await?
+            }
             SubstrateEvent::Staking(staking_event) => {
                 update_staking_event_nesting_index(
                     postgres,
@@ -96,7 +111,12 @@ pub(crate) async fn update_event_nesting_indices(
                 .await?
             }
             SubstrateEvent::Utility(_) => (),
-            _ => (),
+            SubstrateEvent::Identity(_) => {}
+            SubstrateEvent::ImOnline(_) => {}
+            SubstrateEvent::Multisig(_) => {}
+            SubstrateEvent::Offences(_) => {}
+            SubstrateEvent::Proxy(_) => {}
+            SubstrateEvent::Other { .. } => {}
         }
     }
     Ok(())

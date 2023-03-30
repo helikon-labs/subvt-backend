@@ -14,6 +14,7 @@ mod chilling;
 mod democracy;
 mod offence;
 mod payout;
+mod referenda;
 mod set_controller;
 mod validate;
 
@@ -53,6 +54,8 @@ impl NotificationGenerator {
         )
         .await?;
         self.inspect_democracy_events(network_postgres.clone(), app_postgres.clone(), &block)
+            .await?;
+        self.inspect_referenda_events(network_postgres.clone(), app_postgres.clone(), &block)
             .await?;
 
         network_postgres

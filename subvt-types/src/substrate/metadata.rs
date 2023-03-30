@@ -34,13 +34,13 @@ pub(crate) fn get_metadata_type(
     metadata: &RuntimeMetadataV14,
     type_id: u32,
 ) -> &Type<PortableForm> {
-    metadata
+    &metadata
         .types
-        .types()
+        .types
         .iter()
-        .find(|metadata_ty| metadata_ty.id() == type_id)
+        .find(|metadata_ty| metadata_ty.id == type_id)
         .unwrap()
-        .ty()
+        .ty
 }
 
 pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Result<()> {
@@ -49,14 +49,14 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Resul
         if let Some(pallet_event_type) = &pallet.event {
             let event_type = metadata
                 .types
-                .types()
+                .types
                 .iter()
-                .find(|ty| ty.id() == pallet_event_type.ty.id())
+                .find(|ty| ty.id == pallet_event_type.ty.id)
                 .unwrap();
-            match event_type.ty().type_def() {
+            match &event_type.ty.type_def {
                 scale_info::TypeDef::Variant(variant) => {
-                    println!("    {} events", variant.variants().len());
-                    for event_variant in variant.variants() {
+                    println!("    {} events", variant.variants.len());
+                    for event_variant in &variant.variants {
                         println!(
                             "        {}.{} {}",
                             pallet.name,
@@ -68,7 +68,7 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Resul
                 _ => {
                     return Err(DecodeError::Error(format!(
                         "Unexpected non-variant event type: {:?}",
-                        event_type.ty().type_def(),
+                        event_type.ty.type_def,
                     ))
                     .into())
                 }
@@ -79,14 +79,14 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Resul
         if let Some(pallet_call_type) = &pallet.calls {
             let call_type = metadata
                 .types
-                .types()
+                .types
                 .iter()
-                .find(|ty| ty.id() == pallet_call_type.ty.id())
+                .find(|ty| ty.id == pallet_call_type.ty.id)
                 .unwrap();
-            match call_type.ty().type_def() {
+            match &call_type.ty.type_def {
                 scale_info::TypeDef::Variant(variant) => {
-                    println!("    {} calls", variant.variants().len());
-                    for event_variant in variant.variants() {
+                    println!("    {} calls", variant.variants.len());
+                    for event_variant in &variant.variants {
                         println!(
                             "        {}.{} {}",
                             pallet.name,
@@ -98,7 +98,7 @@ pub fn print_metadata_type_codes(metadata: &RuntimeMetadataV14) -> anyhow::Resul
                 _ => {
                     return Err(DecodeError::Error(format!(
                         "Unexpected non-variant call type: {:?}",
-                        call_type.ty().type_def(),
+                        call_type.ty.type_def,
                     ))
                     .into())
                 }
@@ -114,7 +114,7 @@ pub(crate) fn decode_field(
     bytes: &mut &[u8],
     is_compact: bool,
 ) -> anyhow::Result<()> {
-    match field_type.type_def() {
+    match &field_type.type_def {
         scale_info::TypeDef::Primitive(primitive_type_def) => {
             if is_compact {
                 decode_compact_primitive(primitive_type_def, bytes)?;
@@ -123,36 +123,36 @@ pub(crate) fn decode_field(
             }
         }
         scale_info::TypeDef::Composite(composite_type_def) => {
-            for field in composite_type_def.fields() {
-                let field_type = get_metadata_type(metadata, field.ty().id());
+            for field in &composite_type_def.fields {
+                let field_type = get_metadata_type(metadata, field.ty.id);
                 decode_field(metadata, field_type, bytes, is_compact)?;
             }
         }
         scale_info::TypeDef::Array(array_type_def) => {
-            let array_type = get_metadata_type(metadata, array_type_def.type_param().id());
-            for _ in 0..array_type_def.len() {
+            let array_type = get_metadata_type(metadata, array_type_def.type_param.id);
+            for _ in 0..array_type_def.len {
                 decode_field(metadata, array_type, bytes, is_compact)?;
             }
         }
         scale_info::TypeDef::Tuple(tuple_type_def) => {
-            for field_type_id in tuple_type_def.fields() {
-                let field_type = get_metadata_type(metadata, field_type_id.id());
+            for field_type_id in &tuple_type_def.fields {
+                let field_type = get_metadata_type(metadata, field_type_id.id);
                 decode_field(metadata, field_type, bytes, is_compact)?;
             }
         }
         scale_info::TypeDef::Compact(compact_type_def) => {
-            let compact_type = get_metadata_type(metadata, compact_type_def.type_param().id());
+            let compact_type = get_metadata_type(metadata, compact_type_def.type_param.id);
             decode_field(metadata, compact_type, bytes, true)?;
         }
         scale_info::TypeDef::Variant(variant_type_def) => {
             let index: u8 = Decode::decode(bytes)?;
             let variant = &variant_type_def
-                .variants()
+                .variants
                 .iter()
                 .find(|v| v.index == index)
                 .unwrap();
-            for field in variant.fields() {
-                let field_type = get_metadata_type(metadata, field.ty().id());
+            for field in &variant.fields {
+                let field_type = get_metadata_type(metadata, field.ty.id);
                 decode_field(metadata, field_type, bytes, is_compact)?;
             }
         }
@@ -160,16 +160,14 @@ pub(crate) fn decode_field(
             // get length (usize?)
             let compact_length: Compact<u32> = Decode::decode(bytes)?;
             let length = compact_length.0;
-            let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param().id());
+            let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param.id);
             for _ in 0..length {
                 decode_field(metadata, sequence_type, bytes, is_compact)?;
             }
         }
         scale_info::TypeDef::BitSequence(bit_sequence) => {
-            let bit_store_type =
-                metadata.types.types()[bit_sequence.bit_store_type().id() as usize].ty();
-            let bit_order_type =
-                metadata.types.types()[bit_sequence.bit_order_type().id() as usize].ty();
+            let bit_store_type = &metadata.types.types[bit_sequence.bit_store_type.id as usize].ty;
+            let bit_order_type = &metadata.types.types[bit_sequence.bit_order_type.id as usize].ty;
             decode_bit_sequence(bit_store_type, bit_order_type, bytes)?;
         }
     }
@@ -181,8 +179,8 @@ fn decode_bit_sequence(
     bit_order_type: &Type<PortableForm>,
     bytes: &mut &[u8],
 ) -> anyhow::Result<()> {
-    let bit_order_type_path = bit_order_type.path().segments().join("::");
-    match bit_store_type.type_def() {
+    let bit_order_type_path = bit_order_type.path.segments.join("::");
+    match &bit_store_type.type_def {
         scale_info::TypeDef::Primitive(ty) => match bit_order_type_path.as_str() {
             "bitvec::order::Lsb0" => match ty {
                 TypeDefPrimitive::U8 => {
@@ -383,10 +381,10 @@ pub fn get_variant_type_code(
 ) -> Result<String, DecodeError> {
     let mut code = String::new();
     code.push('{');
-    for (i, field) in variant.fields().iter().enumerate() {
-        let field_type = get_metadata_type(metadata, field.ty().id());
+    for (i, field) in variant.fields.iter().enumerate() {
+        let field_type = get_metadata_type(metadata, field.ty.id);
         code.push_str(&get_type_code(metadata, field_type)?);
-        if i < (variant.fields().len() - 1) {
+        if i < (variant.fields.len() - 1) {
             code.push(',');
         }
     }
@@ -399,15 +397,15 @@ fn get_type_code(
     ty: &Type<PortableForm>,
 ) -> Result<String, DecodeError> {
     let mut code = String::new();
-    match ty.type_def() {
+    match &ty.type_def {
         scale_info::TypeDef::Primitive(primitive_type_def) => {
             code.push_str(&get_primitive_type_code(primitive_type_def)?);
         }
         scale_info::TypeDef::Composite(composite_type_def) => {
             code.push('{');
-            for (i, field) in composite_type_def.fields().iter().enumerate() {
-                let field_type = get_metadata_type(metadata, field.ty().id());
-                let field_type_path = field_type.path().segments().join("::");
+            for (i, field) in composite_type_def.fields.iter().enumerate() {
+                let field_type = get_metadata_type(metadata, field.ty.id);
+                let field_type_path = field_type.path.segments.join("::");
                 if field_type_path.is_empty() {
                     code.push_str(&get_type_code(metadata, field_type)?);
                 } else if field_type_path.ends_with("Call") {
@@ -415,7 +413,7 @@ fn get_type_code(
                 } else {
                     code.push_str(&field_type_path);
                 }
-                if i < (composite_type_def.fields().len() - 1) {
+                if i < (composite_type_def.fields.len() - 1) {
                     code.push(',');
                 }
             }
@@ -423,8 +421,8 @@ fn get_type_code(
         }
         scale_info::TypeDef::Array(array_type_def) => {
             code.push('[');
-            let array_type = get_metadata_type(metadata, array_type_def.type_param().id());
-            let array_type_path = array_type.path().segments().join("::");
+            let array_type = get_metadata_type(metadata, array_type_def.type_param.id);
+            let array_type_path = array_type.path.segments.join("::");
             if array_type_path.is_empty() {
                 code.push_str(&get_type_code(metadata, array_type)?);
             } else if array_type_path.ends_with("Call") {
@@ -432,13 +430,13 @@ fn get_type_code(
             } else {
                 code.push_str(&array_type_path);
             }
-            code.push_str(format!(";{}]", array_type_def.len()).as_str());
+            code.push_str(format!(";{}]", array_type_def.len).as_str());
         }
         scale_info::TypeDef::Tuple(tuple_type_def) => {
             code.push('(');
-            for (i, field_type_id) in tuple_type_def.fields().iter().enumerate() {
-                let field_type = get_metadata_type(metadata, field_type_id.id());
-                let field_type_path = field_type.path().segments().join("::");
+            for (i, field_type_id) in tuple_type_def.fields.iter().enumerate() {
+                let field_type = get_metadata_type(metadata, field_type_id.id);
+                let field_type_path = field_type.path.segments.join("::");
                 if field_type_path.is_empty() {
                     code.push_str(&get_type_code(metadata, field_type)?);
                 } else if field_type_path.ends_with("Call") {
@@ -446,7 +444,7 @@ fn get_type_code(
                 } else {
                     code.push_str(&field_type_path);
                 }
-                if i < (tuple_type_def.fields().len() - 1) {
+                if i < (tuple_type_def.fields.len() - 1) {
                     code.push(',');
                 }
             }
@@ -454,8 +452,8 @@ fn get_type_code(
         }
         scale_info::TypeDef::Compact(compact_type_def) => {
             code.push_str("compact<");
-            let compact_type = get_metadata_type(metadata, compact_type_def.type_param().id());
-            let compact_type_path = compact_type.path().segments().join("::");
+            let compact_type = get_metadata_type(metadata, compact_type_def.type_param.id);
+            let compact_type_path = compact_type.path.segments.join("::");
             if compact_type_path.is_empty() {
                 code.push_str(&get_type_code(metadata, compact_type)?);
             } else if compact_type_path.ends_with("Call") {
@@ -467,13 +465,13 @@ fn get_type_code(
         }
         scale_info::TypeDef::Variant(variant_type_def) => {
             code.push_str("var{");
-            for (i, variant) in variant_type_def.variants().iter().enumerate() {
+            for (i, variant) in variant_type_def.variants.iter().enumerate() {
                 code.push_str(&variant.name);
-                if !variant.fields().is_empty() {
+                if !variant.fields.is_empty() {
                     code.push('{');
-                    for (j, field) in variant.fields().iter().enumerate() {
-                        let field_type = get_metadata_type(metadata, field.ty().id());
-                        let field_type_path = field_type.path().segments().join("::");
+                    for (j, field) in variant.fields.iter().enumerate() {
+                        let field_type = get_metadata_type(metadata, field.ty.id);
+                        let field_type_path = field_type.path.segments.join("::");
                         if field_type_path.is_empty() {
                             code.push_str(&get_type_code(metadata, field_type)?);
                         } else if field_type_path.ends_with("Call") {
@@ -481,13 +479,13 @@ fn get_type_code(
                         } else {
                             code.push_str(&field_type_path);
                         }
-                        if j < (variant.fields().len() - 1) {
+                        if j < (variant.fields.len() - 1) {
                             code.push(',');
                         }
                     }
                     code.push('}');
                 }
-                if i < (variant_type_def.variants().len() - 1) {
+                if i < (variant_type_def.variants.len() - 1) {
                     code.push(',');
                 }
             }
@@ -495,8 +493,8 @@ fn get_type_code(
         }
         scale_info::TypeDef::Sequence(sequence_type_def) => {
             code.push_str("seq<");
-            let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param().id());
-            let sequence_type_path = sequence_type.path().segments().join("::");
+            let sequence_type = get_metadata_type(metadata, sequence_type_def.type_param.id);
+            let sequence_type_path = sequence_type.path.segments.join("::");
             if sequence_type_path.is_empty() {
                 code.push_str(&get_type_code(metadata, sequence_type)?);
             } else if sequence_type_path.ends_with("Call") {
@@ -507,10 +505,8 @@ fn get_type_code(
             code.push('>');
         }
         scale_info::TypeDef::BitSequence(bit_sequence) => {
-            let bit_store_type =
-                metadata.types.types()[bit_sequence.bit_store_type().id() as usize].ty();
-            let bit_order_type =
-                metadata.types.types()[bit_sequence.bit_order_type().id() as usize].ty();
+            let bit_store_type = &metadata.types.types[bit_sequence.bit_store_type.id as usize].ty;
+            let bit_order_type = &metadata.types.types[bit_sequence.bit_order_type.id as usize].ty;
             code.push_str(&get_bit_sequence_type_code(bit_store_type, bit_order_type)?);
         }
     }
@@ -544,7 +540,7 @@ fn get_bit_sequence_type_code(
 ) -> Result<String, DecodeError> {
     let mut code = String::new();
     code.push_str("bs<");
-    let bit_order_type_path = bit_order_type.path().segments().join("::");
+    let bit_order_type_path = bit_order_type.path.segments.join("::");
     match bit_order_type_path.as_str() {
         "bitvec::order::Lsb0" => code.push_str("lsb0,"),
         "bitvec::order::Msb0" => code.push_str("msb0,"),
@@ -555,7 +551,7 @@ fn get_bit_sequence_type_code(
             )))
         }
     }
-    match bit_store_type.type_def() {
+    match &bit_store_type.type_def {
         scale_info::TypeDef::Primitive(ty) => match ty {
             TypeDefPrimitive::U8 => code.push_str("u8"),
             TypeDefPrimitive::U16 => code.push_str("u16"),

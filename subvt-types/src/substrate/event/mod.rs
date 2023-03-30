@@ -79,27 +79,27 @@ impl SubstrateEvent {
             .unwrap();
         let event_type = metadata
             .types
-            .types()
+            .types
             .iter()
-            .find(|ty| ty.id() == pallet.event.clone().unwrap().ty.id())
+            .find(|ty| ty.id == pallet.event.clone().unwrap().ty.id)
             .unwrap();
-        let event_variant = match event_type.ty().type_def() {
+        let event_variant = match &event_type.ty.type_def {
             scale_info::TypeDef::Variant(variant) => variant
-                .variants()
+                .variants
                 .iter()
                 .find(|variant| variant.index == event_index)
                 .unwrap(),
             _ => {
                 return Err(DecodeError::Error(format!(
                     "Unexpected non-variant event type: {:?}",
-                    event_type.ty().type_def()
+                    event_type.ty.type_def
                 )))
             }
         };
         let pre_event_bytes = <&[u8]>::clone(bytes);
         // decode parameters
-        for event_field in event_variant.fields() {
-            let event_field_type = get_metadata_type(metadata, event_field.ty().id());
+        for event_field in &event_variant.fields {
+            let event_field_type = get_metadata_type(metadata, event_field.ty.id);
             decode_field(metadata, event_field_type, bytes, false).unwrap();
         }
         // post bytes :: get bytes => decode by runtime
