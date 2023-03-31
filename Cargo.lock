@@ -1793,13 +1793,14 @@ dependencies = [
 
 [[package]]
 name = "fontdb"
-version = "0.12.0"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff20bef7942a72af07104346154a70a70b089c572e454b41bef6eb6cb10e9c06"
+checksum = "bfec8f19f9b89b2901219cc62604810d2bfef15dc1182e95320f57e7cbbe041a"
 dependencies = [
  "fontconfig-parser",
  "log",
  "memmap2",
+ "slotmap",
  "ttf-parser",
 ]
 
@@ -4899,9 +4900,9 @@ dependencies = [
 
 [[package]]
 name = "resvg"
-version = "0.29.0"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76888219c0881e22b0ceab06fddcfe83163cd81642bd60c7842387f9c968a72e"
+checksum = "3781eed5e82686ce0cc64b081b70920487ad709525b4555060a63d53636dd46f"
 dependencies = [
  "gif",
  "jpeg-decoder",
@@ -4910,10 +4911,9 @@ dependencies = [
  "png",
  "rgb",
  "svgfilters",
- "svgtypes 0.10.0",
+ "svgtypes 0.11.0",
  "tiny-skia",
- "usvg",
- "usvg-text-layout",
+ "usvg 0.30.0",
 ]
 
 [[package]]
@@ -4973,6 +4973,19 @@ dependencies = [
  "simplecss",
  "siphasher",
  "svgtypes 0.9.0",
+]
+
+[[package]]
+name = "rosvgtree"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cdb7996003c5cc8a8c2585b4ab6b422da64ad86a9c99cfa7ba320e15e8739f3"
+dependencies = [
+ "log",
+ "roxmltree",
+ "simplecss",
+ "siphasher",
+ "svgtypes 0.11.0",
 ]
 
 [[package]]
@@ -5545,6 +5558,15 @@ dependencies = [
  "paste",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "slotmap"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1e08e261d0e8f5c43123b7adf3e4ca1690d655377ac93a03b2c9d3e98de1342"
+dependencies = [
+ "version_check 0.9.4",
 ]
 
 [[package]]
@@ -6607,7 +6629,7 @@ dependencies = [
  "svg",
  "thiserror",
  "tiny-skia",
- "usvg",
+ "usvg 0.29.0",
 ]
 
 [[package]]
@@ -6907,9 +6929,9 @@ dependencies = [
 
 [[package]]
 name = "svgtypes"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98ffacedcdcf1da6579c907279b4f3c5492fbce99fbbf227f5ed270a589c2765"
+checksum = "ed4b0611e7f3277f68c0fa18e385d9e2d26923691379690039548f867cef02a7"
 dependencies = [
  "kurbo 0.9.2",
  "siphasher",
@@ -7621,15 +7643,47 @@ dependencies = [
  "kurbo 0.9.2",
  "log",
  "rctree",
- "rosvgtree",
+ "rosvgtree 0.1.0",
  "strict-num",
 ]
 
 [[package]]
-name = "usvg-text-layout"
-version = "0.29.0"
+name = "usvg"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "195386e01bc35f860db024de275a76e7a31afdf975d18beb6d0e44764118b4db"
+checksum = "15cc6c2525931fafd8dd1b1169805c02b6ad8aeb85ca454413cc251df0592220"
+dependencies = [
+ "base64 0.21.0",
+ "log",
+ "pico-args",
+ "usvg-parser",
+ "usvg-text-layout",
+ "usvg-tree",
+ "xmlwriter",
+]
+
+[[package]]
+name = "usvg-parser"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8177e95723471c172d1163d4d6b28c0ede7a3ef6389a117b69ae323faf8b62a1"
+dependencies = [
+ "data-url",
+ "flate2",
+ "imagesize",
+ "kurbo 0.9.2",
+ "log",
+ "rosvgtree 0.2.0",
+ "strict-num",
+ "svgtypes 0.11.0",
+ "usvg-tree",
+]
+
+[[package]]
+name = "usvg-text-layout"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0accc97b136de1893848eede9b1b44e8e0acaaa687e65c64097335029fd72c54"
 dependencies = [
  "fontdb",
  "kurbo 0.9.2",
@@ -7638,7 +7692,19 @@ dependencies = [
  "unicode-bidi",
  "unicode-script",
  "unicode-vo",
- "usvg",
+ "usvg-tree",
+]
+
+[[package]]
+name = "usvg-tree"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a58ac99ef85e0a970d0b1cdb89b9327069d853876da8b64a2bd96fc0d25cad8c"
+dependencies = [
+ "kurbo 0.9.2",
+ "rctree",
+ "strict-num",
+ "svgtypes 0.11.0",
 ]
 
 [[package]]
@@ -8333,6 +8399,12 @@ name = "xmlparser"
 version = "0.13.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d25c75bf9ea12c4040a97f829154768bbbce366287e2dc044af160cd79a13fd"
+
+[[package]]
+name = "xmlwriter"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 
 [[package]]
 name = "yaml-rust"
