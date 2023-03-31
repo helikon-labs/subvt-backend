@@ -37,5 +37,5 @@ sp-staking = { git = "https://github.com/paritytech/substrate.git", branch = "po
 sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
-subxt = "0.27"
+scale-bits = "0.3.0"
 thiserror = { workspace = true }

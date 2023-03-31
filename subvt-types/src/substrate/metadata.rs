@@ -1,3 +1,4 @@
+use crate::substrate::bits::{DecodedBits, Lsb0, Msb0};
 use crate::substrate::error::DecodeError;
 use crate::substrate::legacy::{LegacyDispatchError, LegacyDispatchInfo};
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
@@ -8,7 +9,6 @@ use scale_info::form::PortableForm;
 use scale_info::{Type, TypeDefPrimitive, Variant};
 use sp_core::U256;
 use sp_runtime::DispatchError;
-use subxt::utils::bits::{DecodedBits, Lsb0, Msb0};
 
 pub fn hash(hasher: &StorageHasher, bytes: &[u8]) -> Vec<u8> {
     match hasher {
