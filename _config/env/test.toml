@@ -11,3 +11,6 @@ request_timeout_seconds = 120
 
 [telegram_bot]
 admin_chat_ids = "1234567890"
+
+[notification_processor]
+template_dir_path = "../_template"

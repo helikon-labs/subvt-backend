@@ -28,8 +28,8 @@ impl BlockProcessor {
                 other_signatories,
                 maybe_timepoint: _,
                 call,
-                store_call: _,
-                max_weight: _,
+                // store_call: _,
+                // max_weight: _,
             } => {
                 let signature = if let Some(signature) = signature {
                     signature
