@@ -7,7 +7,7 @@ rust-version = "1.67.0"
 [dependencies]
 anyhow = { workspace = true }
 chrono = { version = "0.4", default-features = true, features = ["serde"] }
-frame-metadata = { version = "15.0", features = ["std", "v14"] }
+frame-metadata = { version = "15.1", features = ["std", "v14"] }
 frame-support = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
 frame-system = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.40" }
 hex = "0.4"
