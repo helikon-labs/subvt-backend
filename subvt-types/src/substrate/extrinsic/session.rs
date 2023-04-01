@@ -9,6 +9,7 @@ pub enum SessionExtrinsic {
     SetKeys {
         maybe_signature: Option<Signature>,
         session_keys: [u8; 192],
+        proof: Vec<u8>,
     },
 }
 
@@ -22,6 +23,7 @@ impl SessionExtrinsic {
             SET_KEYS => Some(SubstrateExtrinsic::Session(SessionExtrinsic::SetKeys {
                 maybe_signature: maybe_signature.clone(),
                 session_keys: Decode::decode(bytes)?,
+                proof: Decode::decode(bytes)?,
             })),
             _ => None,
         };
