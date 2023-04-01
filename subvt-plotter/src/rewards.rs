@@ -3,7 +3,8 @@ use crate::{PlotterError, CONFIG};
 use chrono::Datelike;
 use itertools::Itertools;
 use rand::Rng;
-use resvg::usvg_text_layout::{fontdb, TreeTextToPath};
+use resvg::usvg::fontdb;
+use usvg::{TreeParsing, TreeTextToPath};
 use rustc_hash::FxHashMap as HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
@@ -131,7 +132,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
     let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
     resvg::render(
         &rtree,
-        usvg::FitTo::Original,
+        resvg::FitTo::Original,
         tiny_skia::Transform::default(),
         pixmap.as_mut(),
     )
