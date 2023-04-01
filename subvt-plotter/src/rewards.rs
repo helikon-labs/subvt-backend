@@ -4,11 +4,11 @@ use chrono::Datelike;
 use itertools::Itertools;
 use rand::Rng;
 use resvg::usvg::fontdb;
-use usvg::{TreeParsing, TreeTextToPath};
 use rustc_hash::FxHashMap as HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
 use subvt_utility::numeric::format_decimal;
+use usvg::{TreeParsing, TreeTextToPath};
 
 fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32, Balance>> {
     if rewards.is_empty() {
