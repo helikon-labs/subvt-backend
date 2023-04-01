@@ -900,8 +900,8 @@ impl SubstrateClient {
                 .await?;
             for (storage_key, data) in values[0].changes.iter() {
                 if let Some(data) = data {
-                    let bytes: &[u8] = &data.0;
-                    let preferences = ValidatorPreferences::from_bytes(bytes).unwrap();
+                    let mut bytes = &data.0.clone()[..];
+                    let preferences = Decode::decode(&mut bytes)?;
                     let validator_account_id = self.account_id_from_storage_key(storage_key);
                     let validator = validator_map.get_mut(&validator_account_id).unwrap();
                     validator.preferences = preferences;
@@ -1267,9 +1267,9 @@ impl SubstrateClient {
             for (storage_key, data) in chunk_values[0].changes.iter() {
                 if let Some(data) = data {
                     let validator_account_id = self.account_id_from_storage_key(storage_key);
-                    let bytes: &[u8] = &data.0;
+                    let mut bytes: &[u8] = &data.0.clone();
                     let mut bytes_clone: &[u8] = &data.0.clone();
-                    let validator_prefs = match ValidatorPreferences::from_bytes(bytes) {
+                    let validator_prefs = match Decode::decode(&mut bytes) {
                         Ok(validator_preferences) => validator_preferences,
                         Err(_) => {
                             let legacy_validator_prefs: LegacyValidatorPrefs =

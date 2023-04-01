@@ -8,7 +8,7 @@ pub use pallet_democracy::Conviction as DemocracyConviction;
 pub use pallet_democracy::Voting as DemocracyVoting;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, Encode, Error, Input};
 pub use polkadot_primitives::v2::{ScrapedOnChainVotes, ValidityAttestation};
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
@@ -509,15 +509,15 @@ pub struct EraRewardPoints {
 }
 
 /// Validator commission and block preferences.
-#[derive(Clone, Debug, Encode, Decode, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Debug, Encode, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct ValidatorPreferences {
     pub commission_per_billion: u32,
     pub blocks_nominations: bool,
 }
 
-impl ValidatorPreferences {
-    pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let preferences: ValidatorPrefs = Decode::decode(&mut bytes)?;
+impl Decode for ValidatorPreferences {
+    fn decode<I: Input>(input: &mut I) -> Result<Self, Error> {
+        let preferences: ValidatorPrefs = Decode::decode(input)?;
         Ok(ValidatorPreferences {
             commission_per_billion: preferences.commission.deconstruct(),
             blocks_nominations: preferences.blocked,
