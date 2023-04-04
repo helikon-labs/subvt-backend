@@ -43,7 +43,7 @@ impl PostgreSQLNetworkStorage {
         &self,
         block_hash: &str,
     ) -> anyhow::Result<Vec<ReferendumRejectedEvent>> {
-        let db_events: Vec<(i32, String, Option<i32>, i32, i64, i64, i64, i64)> = sqlx::query_as(
+        let db_events: Vec<(i32, String, Option<i32>, i32, i32, i64, i64, i64)> = sqlx::query_as(
             r#"
             SELECT "id", block_hash, extrinsic_index, event_index, referendum_index, ayes::bigint, nays::bigint, support::bigint
             FROM sub_event_referendum_rejected
