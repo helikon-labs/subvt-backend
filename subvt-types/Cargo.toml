@@ -24,7 +24,7 @@ parity-scale-codec = { version = "3.4", default-features = false, features = ["d
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.40" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.40" }
 polkadot-runtime-common = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.40" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.40" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot.git", tag = "v0.9.42" }
 rustc-hash = "1.1"
 scale-info = "2.1"
 serde = { version = "1.0", features = ["derive"] }
