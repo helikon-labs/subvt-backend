@@ -1,7 +1,5 @@
 //! Types to support the older metadata/runtime versions.
-use frame_support::{
-    dispatch::{DispatchClass, Pays},
-};
+use frame_support::dispatch::{DispatchClass, Pays};
 use parity_scale_codec::Decode;
 use sp_runtime::{ArithmeticError, DispatchError, ModuleError, Perbill, TokenError};
 
