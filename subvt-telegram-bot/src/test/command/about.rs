@@ -1,4 +1,4 @@
-///! /about command tests.
+//! /about command tests.
 use crate::messenger::message::MessageType;
 use crate::messenger::MockMessenger;
 use crate::test::util::data::get_telegram_message_response;

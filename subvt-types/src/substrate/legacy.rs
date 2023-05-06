@@ -1,7 +1,6 @@
 //! Types to support the older metadata/runtime versions.
 use frame_support::{
     dispatch::{DispatchClass, Pays},
-    weights::OldWeight,
 };
 use parity_scale_codec::Decode;
 use sp_runtime::{ArithmeticError, DispatchError, ModuleError, Perbill, TokenError};
@@ -9,6 +8,9 @@ use sp_runtime::{ArithmeticError, DispatchError, ModuleError, Perbill, TokenErro
 pub type ValidatorIndex = u16;
 pub type NominatorIndex = u32;
 pub type ExtendedBalance = u128;
+
+#[derive(Clone, Debug, Decode)]
+pub struct OldWeight(pub u64);
 
 #[derive(Clone, Debug, Decode)]
 pub struct LegacyDispatchInfo {
