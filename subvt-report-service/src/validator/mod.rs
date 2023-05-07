@@ -6,7 +6,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
     BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, ValidatorDetailsReport,
-    ValidatorListReport, ValidatorSummaryReport,
+    ValidatorListReport, ValidatorSummaryReport, ValidatorTotalRewardChartData,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
@@ -240,4 +240,36 @@ pub(crate) async fn validator_era_payouts_service(
         .map(EraValidatorPayoutReport::from)
         .collect();
     Ok(HttpResponse::Ok().json(era_payouts))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct ValidatorRewardChartQueryParameters {
+    start_timestamp: u64,
+    end_timestamp: u64,
+}
+
+#[get("/validator/reward/chart")]
+pub(crate) async fn validator_reward_chart_service(
+    query: web::Query<ValidatorRewardChartQueryParameters>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let rewards = data
+        .postgres
+        .get_validator_total_rewards(query.start_timestamp, query.end_timestamp)
+        .await?;
+    let block_hash = data.substrate_client.get_current_block_hash().await?;
+    let account_ids: Vec<AccountId> = rewards
+        .iter()
+        .map(|reward| reward.validator_account_id)
+        .collect();
+    let accounts = data
+        .substrate_client
+        .get_accounts(&account_ids, &block_hash)
+        .await?;
+    Ok(HttpResponse::Ok().json(ValidatorTotalRewardChartData {
+        accounts,
+        rewards,
+        start_timestamp: query.start_timestamp,
+        end_timestamp: query.end_timestamp,
+    }))
 }

@@ -12,6 +12,7 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::{err::InternalServerError, Service};
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::report::BlockSummary;
 use subvt_types::subvt::ValidatorSummary;
 
@@ -31,6 +32,7 @@ pub(crate) type ResultResponse = Result<HttpResponse, InternalServerError>;
 pub(crate) struct ServiceState {
     postgres: Arc<PostgreSQLNetworkStorage>,
     redis: Arc<Redis>,
+    substrate_client: Arc<SubstrateClient>,
     finalized_block_summary: Arc<RwLock<BlockSummary>>,
     active_validator_list: Arc<RwLock<Vec<ValidatorSummary>>>,
     inactive_validator_list: Arc<RwLock<Vec<ValidatorSummary>>>,
@@ -65,6 +67,7 @@ impl Service for ReportService {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
+        let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
         let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
         pubsub_connection
             .subscribe(format!(
@@ -168,6 +171,7 @@ impl Service for ReportService {
                 .app_data(web::Data::new(ServiceState {
                     postgres: postgres.clone(),
                     redis: redis.clone(),
+                    substrate_client: substrate_client.clone(),
                     finalized_block_summary: finalized_block_summary.clone(),
                     active_validator_list: active_validator_list.clone(),
                     inactive_validator_list: inactive_validator_list.clone(),
@@ -214,6 +218,7 @@ impl Service for ReportService {
                 .service(validator::validator_search_service)
                 .service(validator::validator_era_rewards_service)
                 .service(validator::validator_era_payouts_service)
+                .service(validator::validator_reward_chart_service)
         })
         .workers(10)
         .disable_signals()

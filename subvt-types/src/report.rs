@@ -1,7 +1,7 @@
 //! Report presentation types. Utilized by the `subvt-report-service` crate to server era and
 //! validator reports.
 use crate::crypto::AccountId;
-use crate::substrate::{Balance, Epoch, Era};
+use crate::substrate::{Account, Balance, Epoch, Era};
 use crate::subvt::{ValidatorDetails, ValidatorSummary};
 use serde::{Deserialize, Serialize};
 
@@ -192,4 +192,18 @@ impl From<&(Era, Balance)> for EraValidatorPayoutReport {
             payout: era_reward.1,
         }
     }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorTotalReward {
+    pub validator_account_id: AccountId,
+    pub total_reward: Balance,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorTotalRewardChartData {
+    pub accounts: Vec<Account>,
+    pub rewards: Vec<ValidatorTotalReward>,
+    pub start_timestamp: u64,
+    pub end_timestamp: u64,
 }
