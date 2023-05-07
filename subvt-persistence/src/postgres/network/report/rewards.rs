@@ -49,7 +49,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Vec<ValidatorTotalReward>> {
         let validator_total_rewards: Vec<(String, i64)> = sqlx::query_as(
             r#"
-            SELECT ER.rewardee_account_id as validator_account_id, SUM(ER.amount::bigint) AS total_reward
+            SELECT ER.rewardee_account_id as validator_account_id, SUM(ER.amount::bigint)::bigint AS total_reward
             FROM sub_event_rewarded ER
             INNER JOIN sub_block B
                 ON ER.block_hash = B.hash
