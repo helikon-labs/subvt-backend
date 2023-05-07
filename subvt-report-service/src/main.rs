@@ -4,7 +4,7 @@ use subvt_report_service::ReportService;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: ReportService = ReportService::default();
+    static ref SERVICE: ReportService = ReportService;
 }
 
 #[actix_web::main]

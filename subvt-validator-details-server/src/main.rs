@@ -5,7 +5,7 @@ use subvt_service_common::Service;
 use subvt_validator_details_server::ValidatorDetailsServer;
 
 lazy_static! {
-    static ref SERVICE: ValidatorDetailsServer = ValidatorDetailsServer::default();
+    static ref SERVICE: ValidatorDetailsServer = ValidatorDetailsServer;
 }
 
 #[tokio::main]

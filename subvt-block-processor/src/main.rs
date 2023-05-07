@@ -5,7 +5,7 @@ use subvt_block_processor::BlockProcessor;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: BlockProcessor = BlockProcessor::default();
+    static ref SERVICE: BlockProcessor = BlockProcessor;
 }
 
 #[tokio::main]

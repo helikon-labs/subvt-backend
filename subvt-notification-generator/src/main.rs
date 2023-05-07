@@ -5,7 +5,7 @@ use subvt_notification_generator::NotificationGenerator;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: NotificationGenerator = NotificationGenerator::default();
+    static ref SERVICE: NotificationGenerator = NotificationGenerator;
 }
 
 #[tokio::main]

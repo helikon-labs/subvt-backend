@@ -5,7 +5,7 @@ use subvt_app_service::AppService;
 use subvt_service_common::Service;
 
 lazy_static! {
-    static ref SERVICE: AppService = AppService::default();
+    static ref SERVICE: AppService = AppService;
 }
 
 #[actix_web::main]

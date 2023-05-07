@@ -5,7 +5,7 @@ use subvt_service_common::Service;
 use subvt_validator_list_updater::ValidatorListUpdater;
 
 lazy_static! {
-    static ref SERVICE: ValidatorListUpdater = ValidatorListUpdater::default();
+    static ref SERVICE: ValidatorListUpdater = ValidatorListUpdater;
 }
 
 #[tokio::main]

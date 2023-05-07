@@ -5,7 +5,7 @@ use subvt_service_common::Service;
 use subvt_telemetry_processor::TelemetryProcessor;
 
 lazy_static! {
-    static ref SERVICE: TelemetryProcessor = TelemetryProcessor::default();
+    static ref SERVICE: TelemetryProcessor = TelemetryProcessor;
 }
 
 #[tokio::main]
