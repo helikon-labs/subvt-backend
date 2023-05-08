@@ -8,7 +8,7 @@ rust-version = "1.67.0"
 anyhow = { workspace = true }
 async-lock = "2.7"
 async-trait = "0.1"
-async-tungstenite = { version = "0.20", features = ["tokio-runtime", "tokio-native-tls"] }
+async-tungstenite = { version = "0.22", features = ["tokio-runtime", "tokio-native-tls"] }
 futures = "0.3"
 lazy_static = { workspace = true }
 log = { workspace = true }
