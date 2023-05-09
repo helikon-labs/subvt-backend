@@ -491,6 +491,7 @@ impl SubstrateClient {
     pub async fn get_accounts(
         &self,
         account_ids: &[AccountId],
+        fetch_parent_accounts: bool,
         block_hash: &str,
     ) -> anyhow::Result<Vec<Account>> {
         let identity_map = { self.get_identities(account_ids, block_hash).await? };
@@ -513,18 +514,23 @@ impl SubstrateClient {
                     account.identity = Some(identity.clone());
                 }
                 if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
-                    let mut parent_account = Account {
-                        id: parent_account_id.0,
-                        address: parent_account_id.0.to_ss58_check(),
-                        ..Default::default()
-                    };
-                    if let Some(parent_account_identity) =
-                        parent_account_identity_map.get(&parent_account_id.0)
-                    {
-                        parent_account.identity = Some(parent_account_identity.clone());
+                    if fetch_parent_accounts {
+                        account.parent_account_id = Some(parent_account_id.0);
+                        account.child_display = parent_account_id.1.clone();
+                    } else {
+                        let mut parent_account = Account {
+                            id: parent_account_id.0,
+                            address: parent_account_id.0.to_ss58_check(),
+                            ..Default::default()
+                        };
+                        if let Some(parent_account_identity) =
+                            parent_account_identity_map.get(&parent_account_id.0)
+                        {
+                            parent_account.identity = Some(parent_account_identity.clone());
+                        }
+                        account.parent = Box::new(Some(parent_account));
+                        account.child_display = parent_account_id.1.clone();
                     }
-                    account.parent = Box::new(Some(parent_account));
-                    account.child_display = parent_account_id.1.clone();
                 }
                 account
             })
@@ -646,7 +652,7 @@ impl SubstrateClient {
                 .iter()
                 .map(|key| self.account_id_from_storage_key_string(key))
                 .collect();
-            let accounts = self.get_accounts(&account_ids, block_hash).await?;
+            let accounts = self.get_accounts(&account_ids, true, block_hash).await?;
             for account in accounts {
                 let is_active = active_validator_account_ids.contains(&account.id);
                 let is_para_validator =
@@ -804,7 +810,9 @@ impl SubstrateClient {
                 let nominator_account_ids: Vec<AccountId> =
                     nomination_map.keys().cloned().collect();
                 for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
-                    let accounts = self.get_accounts(account_id_chunk, block_hash).await?;
+                    let accounts = self
+                        .get_accounts(account_id_chunk, true, block_hash)
+                        .await?;
                     for account in accounts {
                         nomination_map.get_mut(&account.id).unwrap().stash_account =
                             account.clone();

@@ -262,12 +262,49 @@ pub(crate) async fn validator_reward_chart_service(
         .iter()
         .map(|reward| reward.validator_account_id)
         .collect();
-    let accounts = data
+    let mut new_account_ids = vec![];
+    {
+        let account_cache = data.account_cache.read().unwrap();
+        for account_id in &account_ids {
+            if !account_cache.contains_key(account_id) {
+                new_account_ids.push(*account_id);
+            }
+        }
+    }
+    let new_accounts = data
         .substrate_client
-        .get_accounts(&account_ids, &block_hash)
+        .get_accounts(&new_account_ids, false, &block_hash)
         .await?;
+    let parent_account_ids: Vec<AccountId> = new_accounts
+        .iter()
+        .filter_map(|account| account.parent_account_id)
+        .collect();
+    let mut new_parent_account_ids = vec![];
+    {
+        let account_cache = data.account_cache.read().unwrap();
+        for parent_account_id in &parent_account_ids {
+            if !account_cache.contains_key(parent_account_id) {
+                new_parent_account_ids.push(*parent_account_id);
+            }
+        }
+    }
+    let new_parent_accounts = data
+        .substrate_client
+        .get_accounts(&new_parent_account_ids, false, &block_hash)
+        .await?;
+    // write new accounts to cache
+    {
+        let mut account_cache = data.account_cache.write().unwrap();
+        for new_account in &new_accounts {
+            account_cache.insert(new_account.id, new_account.clone());
+        }
+        for new_parent_account in &new_parent_accounts {
+            account_cache.insert(new_parent_account.id, new_parent_account.clone());
+        }
+    }
+    let account_cache = data.account_cache.read().unwrap();
     Ok(HttpResponse::Ok().json(ValidatorTotalRewardChartData {
-        accounts,
+        accounts: account_cache.values().cloned().collect(),
         rewards,
         start_timestamp: query.start_timestamp,
         end_timestamp: query.end_timestamp,

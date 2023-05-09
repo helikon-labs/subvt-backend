@@ -131,6 +131,8 @@ pub struct Account {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub identity: Option<IdentityRegistration>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_account_id: Option<AccountId>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub parent: Box<Option<Account>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub child_display: Option<String>,

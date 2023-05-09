@@ -47,7 +47,7 @@ impl NotificationGenerator {
         // identity information if exists
         let account_json = if let Some(validator_account_id) = maybe_validator_account_id.as_ref() {
             if let Some(account) = substrate_client
-                .get_accounts(&[*validator_account_id], &block_hash)
+                .get_accounts(&[*validator_account_id], true, &block_hash)
                 .await?
                 .get(0)
             {

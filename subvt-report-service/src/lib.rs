@@ -7,13 +7,16 @@ use async_trait::async_trait;
 use futures_util::future::FutureExt;
 use futures_util::StreamExt as _;
 use lazy_static::lazy_static;
+use rustc_hash::FxHashMap as HashMap;
 use std::sync::{Arc, RwLock};
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_persistence::redis::Redis;
 use subvt_service_common::{err::InternalServerError, Service};
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::crypto::AccountId;
 use subvt_types::report::BlockSummary;
+use subvt_types::substrate::Account;
 use subvt_types::subvt::ValidatorSummary;
 
 mod era;
@@ -33,6 +36,7 @@ pub(crate) struct ServiceState {
     postgres: Arc<PostgreSQLNetworkStorage>,
     redis: Arc<Redis>,
     substrate_client: Arc<SubstrateClient>,
+    account_cache: Arc<RwLock<HashMap<AccountId, Account>>>,
     finalized_block_summary: Arc<RwLock<BlockSummary>>,
     active_validator_list: Arc<RwLock<Vec<ValidatorSummary>>>,
     inactive_validator_list: Arc<RwLock<Vec<ValidatorSummary>>>,
@@ -59,6 +63,7 @@ impl Service for ReportService {
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
         );
         let redis = Arc::new(Redis::new()?);
+        let account_map = Arc::new(RwLock::new(HashMap::default()));
         let finalized_block_summary = Arc::new(RwLock::new(BlockSummary::default()));
         let active_validator_list = Arc::new(RwLock::new(Vec::new()));
         let inactive_validator_list = Arc::new(RwLock::new(Vec::new()));
@@ -172,6 +177,7 @@ impl Service for ReportService {
                     postgres: postgres.clone(),
                     redis: redis.clone(),
                     substrate_client: substrate_client.clone(),
+                    account_cache: account_map.clone(),
                     finalized_block_summary: finalized_block_summary.clone(),
                     active_validator_list: active_validator_list.clone(),
                     inactive_validator_list: inactive_validator_list.clone(),
