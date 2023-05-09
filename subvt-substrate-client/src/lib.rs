@@ -515,9 +515,6 @@ impl SubstrateClient {
                 }
                 if let Some(parent_account_id) = parent_account_id_map.get(&account_id) {
                     if fetch_parent_accounts {
-                        account.parent_account_id = Some(parent_account_id.0);
-                        account.child_display = parent_account_id.1.clone();
-                    } else {
                         let mut parent_account = Account {
                             id: parent_account_id.0,
                             address: parent_account_id.0.to_ss58_check(),
@@ -529,6 +526,9 @@ impl SubstrateClient {
                             parent_account.identity = Some(parent_account_identity.clone());
                         }
                         account.parent = Box::new(Some(parent_account));
+                        account.child_display = parent_account_id.1.clone();
+                    } else {
+                        account.parent_account_id = Some(parent_account_id.0);
                         account.child_display = parent_account_id.1.clone();
                     }
                 }
