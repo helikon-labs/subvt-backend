@@ -49,17 +49,11 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Vec<ValidatorTotalReward>> {
         let validator_total_rewards: Vec<(String, i64)> = sqlx::query_as(
             r#"
-            SELECT ER.rewardee_account_id as validator_account_id, SUM(ER.amount::bigint)::bigint AS total_reward
-            FROM sub_event_rewarded ER
-            INNER JOIN sub_block B
-                ON ER.block_hash = B.hash
-                AND B.timestamp > $1
-                AND B.timestamp < $2
-            WHERE EXISTS (
-                SELECT * FROM sub_era_validator EV
-                WHERE EV.validator_account_id = ER.rewardee_account_id
-            )
-            GROUP BY ER.rewardee_account_id
+            SELECT validator_account_id, SUM(amount::bigint)::bigint AS total_reward
+            FROM sub_mat_view_validator_reward
+            WHERE timestamp > $1
+            AND timestamp < $2
+            GROUP BY validator_account_id
             ORDER BY total_reward DESC;
             "#,
         )

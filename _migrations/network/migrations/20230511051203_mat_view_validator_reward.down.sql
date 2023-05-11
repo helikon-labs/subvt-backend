@@ -1,0 +1,1 @@
+DROP MATERIALIZED VIEW sub_view_validator_reward;
