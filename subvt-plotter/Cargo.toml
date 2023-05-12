@@ -14,11 +14,11 @@ log = { workspace = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
 rand = "0.8.5"
-resvg = "0.30"
+resvg = "0.32"
 rustc-hash = "1.1.0"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 svg = "0.13.0"
-tiny-skia = "0.8.3"
-usvg = "0.30"
+tiny-skia = "0.9"
+usvg = "0.32"
