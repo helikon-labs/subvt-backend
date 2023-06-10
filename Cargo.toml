@@ -26,6 +26,7 @@ members = [
     "subvt-validator-list-server",
     "subvt-validator-list-updater",
 ]
+resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
