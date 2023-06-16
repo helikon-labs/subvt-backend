@@ -10,7 +10,7 @@ anyhow = { workspace = true }
 async-trait = "0.1"
 log = { workspace = true }
 serde_json = "1.0"
-sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.42" }
+sp-core = { git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.43" }
 subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
 subvt-metrics = { path = "../subvt-metrics" }
