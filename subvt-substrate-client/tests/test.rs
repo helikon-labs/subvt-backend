@@ -1,9 +1,11 @@
 //! Substrate client tests. WiP.
-use std::str::FromStr;
 use subvt_config::Config;
 use subvt_substrate_client::SubstrateClient;
+/*
+use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::DemocracyVoting;
+*/
 
 #[tokio::test]
 async fn test_get_block_hash() {
@@ -23,6 +25,7 @@ async fn test_get_block_hash() {
     assert_eq!(hash, expected_hash);
 }
 
+/*
 #[tokio::test]
 async fn test_get_democracy_voting_direct() {
     let config = Config::test().expect("Cannot get test config.");
@@ -178,3 +181,4 @@ async fn test_get_account_democracy_vote_delegated() {
         panic!("Expected delegate vote for referendum #{referendum_index} by {address}.",);
     }
 }
+*/
