@@ -13,31 +13,32 @@ fn get_http_client() -> anyhow::Result<reqwest::Client> {
         .build()?)
 }
 
-pub async fn fetch_open_referendum_list() -> anyhow::Result<Vec<ReferendumPost>> {
+pub async fn fetch_track_referenda(
+    track_id: u16,
+    page: u16,
+    limit: u16,
+) -> anyhow::Result<Vec<ReferendumPost>> {
     let http_client = get_http_client()?;
+    let url = format!(
+        "https://api.polkassembly.io/api/v1/listing/on-chain-posts?proposalType=referendums_v2&trackNo={track_id}&page={page}&listingLimit={limit}&sortBy=newest"
+    );
     let response = http_client
-        .get("https://api.polkassembly.io/api/v1/listing/on-chain-posts?page=1&proposalType=referendums&listingLimit=10&sortBy=newest")
-        .header(
-            "x-network",
-            &CONFIG.substrate.chain,
-        )
+        .get(url)
+        .header("x-network", &CONFIG.substrate.chain)
         .send()
         .await?;
-    let posts = response.json::<ReferendaQueryResponse>().await?.posts;
-    let mut result = vec![];
-    for post in posts {
-        if post.status.to_lowercase() == "started" {
-            result.push(post.clone());
-        }
+    let mut posts = response.json::<ReferendaQueryResponse>().await?.posts;
+    for post in &mut posts {
+        post.track_id = track_id;
     }
-    Ok(result)
+    Ok(posts)
 }
 
 pub async fn fetch_referendum_details(id: u32) -> anyhow::Result<ReferendumPostDetails> {
     let http_client = get_http_client()?;
     let response = http_client
         .get(format!(
-            "https://api.polkassembly.io/api/v1/posts/on-chain-post?postId={}&proposalType=referendums",
+            "https://api.polkassembly.io/api/v1/posts/on-chain-post?postId={}&proposalType=referendums_v2",
             id,
         ))
         .header(

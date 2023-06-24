@@ -23,6 +23,7 @@ pub(crate) fn get_settings_button(
         web_app: None,
         switch_inline_query: None,
         switch_inline_query_current_chat: None,
+        switch_inline_query_chosen_chat: None,
         callback_game: None,
         pay: None,
     }])
@@ -53,6 +54,7 @@ pub(crate) fn get_notification_on_off_button(
         web_app: None,
         switch_inline_query: None,
         switch_inline_query_current_chat: None,
+        switch_inline_query_chosen_chat: None,
         callback_game: None,
         pay: None,
     }])
@@ -88,6 +90,7 @@ pub(crate) fn get_notification_period_button(
             web_app: None,
             switch_inline_query: None,
             switch_inline_query_current_chat: None,
+            switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
         }]))

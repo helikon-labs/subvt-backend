@@ -46,6 +46,7 @@ INSERT INTO app_notification_type(code) VALUES('democracy_seconded') ON CONFLICT
 INSERT INTO app_notification_type(code) VALUES('democracy_started') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_undelegated') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_voted') ON CONFLICT(code) DO NOTHING;
+-- opengov
 INSERT INTO app_notification_type(code) VALUES('referendum_confirmed') ON CONFLICT(code) DO NOTHING;
 
 DO $$ BEGIN

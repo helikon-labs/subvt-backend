@@ -2,6 +2,7 @@
 use crate::MessageType;
 use crate::CONFIG;
 use subvt_types::governance::polkassembly::ReferendumPostDetails;
+use subvt_types::governance::track::Track;
 use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::numeric::format_decimal;
@@ -25,7 +26,9 @@ impl MessageType {
             "condensed_proposer_address",
             &get_condensed_address(&post.proposer, None),
         );
-        context.insert("vote_threshold", &post.vote_threshold);
+        if let Some(track) = Track::from_id(post.track_id) {
+            context.insert("track", track.name());
+        }
         context.insert("end_block_number", &post.end_block_number);
         context.insert("status", &post.status);
         if let Some(content) = &post.maybe_content {
@@ -43,6 +46,7 @@ impl MessageType {
                             get_condensed_address(&validator_vote.0.address, None)
                         }),
                         false,
+                        direct_vote.ty.to_string(),
                         if let Some(balance) = direct_vote.aye {
                             format_decimal(
                                 balance,
@@ -53,6 +57,15 @@ impl MessageType {
                             "".to_string()
                         },
                         if let Some(balance) = direct_vote.nay {
+                            format_decimal(
+                                balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        if let Some(balance) = direct_vote.abstain {
                             format_decimal(
                                 balance,
                                 CONFIG.substrate.token_decimals,
@@ -73,6 +86,7 @@ impl MessageType {
                             get_condensed_address(&validator_vote.0.address, None)
                         }),
                         true,
+                        delegated_vote.vote.ty.to_string(),
                         if delegated_vote.vote.aye.is_some() {
                             format_decimal(
                                 delegated_vote.balance,
@@ -83,6 +97,15 @@ impl MessageType {
                             "".to_string()
                         },
                         if delegated_vote.vote.nay.is_some() {
+                            format_decimal(
+                                delegated_vote.balance,
+                                CONFIG.substrate.token_decimals,
+                                CONFIG.substrate.token_format_decimal_points,
+                            )
+                        } else {
+                            "".to_string()
+                        },
+                        if delegated_vote.vote.abstain.is_some() {
                             format_decimal(
                                 delegated_vote.balance,
                                 CONFIG.substrate.token_decimals,

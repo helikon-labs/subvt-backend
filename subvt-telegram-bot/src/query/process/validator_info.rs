@@ -1,5 +1,6 @@
 use crate::query::Query;
-use crate::{messenger::message::MessageType, Messenger, TelegramBot};
+use crate::{messenger::message::MessageType, Messenger, TelegramBot, CONFIG};
+use subvt_substrate_client::SubstrateClient;
 
 impl<M: Messenger + Send + Sync> TelegramBot<M> {
     pub(crate) async fn process_validator_info_query(
@@ -32,6 +33,24 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         )
                         .await?;
                 }
+                let referenda = self.network_postgres.get_open_referenda(None).await?;
+                let substrate_client = SubstrateClient::new(&CONFIG).await?;
+                let mut missing_referendum_votes: Vec<u32> = vec![];
+                for referendum in &referenda {
+                    if substrate_client
+                        .get_account_referendum_conviction_vote(
+                            &validator.account_id,
+                            referendum.track_id,
+                            referendum.post_id,
+                            None,
+                        )
+                        .await?
+                        .is_none()
+                    {
+                        missing_referendum_votes.push(referendum.post_id);
+                    }
+                }
+                missing_referendum_votes.sort_unstable();
                 self.messenger
                     .send_message(
                         &self.app_postgres,
@@ -47,6 +66,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                                     )
                                     .await?,
                             ),
+                            missing_referendum_votes,
                         }),
                     )
                     .await?;

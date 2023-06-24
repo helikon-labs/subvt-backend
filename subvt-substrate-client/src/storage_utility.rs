@@ -116,6 +116,26 @@ where
     format!("{storage_key_hex}{map_key_hex}")
 }
 
+/// Get storage key in hex string format for a double map storage type.
+pub fn get_storage_double_map_key<T, U>(
+    metadata: &RuntimeMetadataV14,
+    module_name: &str,
+    storage_name: &str,
+    key_1: &T,
+    key_2: &U,
+) -> String
+where
+    T: Encode,
+    U: Encode,
+{
+    let storage_key_hex = get_storage_plain_key(module_name, storage_name);
+    let (may_key_1_hash, may_key_2_hash) =
+        get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
+    let map_key_1_hex: String = may_key_1_hash.iter().map(|b| format!("{b:02x}")).collect();
+    let map_key_2_hex: String = may_key_2_hash.iter().map(|b| format!("{b:02x}")).collect();
+    format!("{storage_key_hex}{map_key_1_hex}{map_key_2_hex}")
+}
+
 pub fn get_rpc_paged_map_keys_params<'a, T>(
     metadata: &RuntimeMetadataV14,
     module_name: &'a str,
@@ -178,7 +198,7 @@ where
     params
 }
 
-fn _get_double_map_key_hash<T, U>(
+fn get_double_map_key_hash<T, U>(
     metadata: &RuntimeMetadataV14,
     module_name: &str,
     storage_name: &str,
@@ -233,7 +253,7 @@ where
     let storage_key_hex = get_storage_plain_key(module_name, storage_name);
     let mut map_keys_hash: Vec<u8> = Vec::new();
     let mut key_hash_pair =
-        _get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
+        get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
     map_keys_hash.append(&mut key_hash_pair.0);
     map_keys_hash.append(&mut key_hash_pair.1);
     let map_keys_hash_hex: String = map_keys_hash.iter().map(|b| format!("{b:02x}")).collect();

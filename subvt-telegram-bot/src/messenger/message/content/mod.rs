@@ -74,12 +74,14 @@ impl MessageType {
                 address,
                 maybe_validator_details,
                 maybe_onekv_candidate_summary,
+                missing_referendum_votes,
             } => {
                 self.fill_validator_info_context(
                     &mut context,
                     address,
                     maybe_validator_details,
                     maybe_onekv_candidate_summary,
+                    missing_referendum_votes,
                 );
                 "validator_info.html"
             }
@@ -117,12 +119,14 @@ impl MessageType {
             }
             Self::NoPayoutsFound => "no_payouts_found.html",
             Self::NoRewardsFound => "no_rewards_found.html",
-            Self::NoOpenReferendaFound => {
+            Self::NoOpenReferendaFound(track) => {
+                context.insert("track", track.name());
                 context.insert("chain", &CONFIG.substrate.chain);
                 "no_referenda_found.html"
             }
             Self::RemoveAllValidatorsConfirm => "confirm.html",
-            Self::ReferendumList(_) => "select_referendum.html",
+            Self::ReferendumList(_, _) => "select_referendum.html",
+            Self::ReferendumTracks(_) => "select_referendum_track.html",
             Self::ReferendumNotFound(id) => {
                 context.insert("referendum_id", &id);
                 "referendum_not_found.html"

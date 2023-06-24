@@ -1528,6 +1528,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-iterator"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7add3873b5dd076766ee79c8e406ad1a472c385476b9e38849f8eec24f1be689"
+dependencies = [
+ "enum-iterator-derive",
+]
+
+[[package]]
+name = "enum-iterator-derive"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eecf8589574ce9b895052fa12d69af7a233f99e6107f5cb8dd1044f2a17bfdcb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.18",
+]
+
+[[package]]
 name = "enumflags2"
 version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1954,9 +1974,9 @@ dependencies = [
 
 [[package]]
 name = "frankenstein"
-version = "0.24.1"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb62ef4c77f8dfaf164dfd3d5e2c2e61ad0270527fff64c08e873775ff866786"
+checksum = "38df1ab4d3c5c67f6bf903fbd0f891972aebc9032274e67b835ed26910fdd9c5"
 dependencies = [
  "async-trait",
  "serde",
@@ -6383,6 +6403,7 @@ dependencies = [
  "serde_json",
  "subvt-config",
  "subvt-types",
+ "tokio",
 ]
 
 [[package]]
@@ -6603,6 +6624,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "subvt-referendum-updater"
+version = "0.16.4"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "enum-iterator",
+ "lazy_static",
+ "log",
+ "once_cell",
+ "prometheus",
+ "rand 0.8.5",
+ "reqwest",
+ "subvt-config",
+ "subvt-governance",
+ "subvt-logging",
+ "subvt-metrics",
+ "subvt-persistence",
+ "subvt-service-common",
+ "subvt-types",
+ "tokio",
+]
+
+[[package]]
 name = "subvt-report-service"
 version = "0.16.4"
 dependencies = [
@@ -6681,6 +6726,7 @@ dependencies = [
  "async-recursion",
  "async-trait",
  "chrono",
+ "enum-iterator",
  "frankenstein",
  "futures",
  "hyper",
@@ -6743,6 +6789,7 @@ version = "0.16.4"
 dependencies = [
  "anyhow",
  "chrono",
+ "enum-iterator",
  "frame-metadata",
  "frame-support",
  "frame-system",

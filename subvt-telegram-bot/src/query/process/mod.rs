@@ -7,6 +7,7 @@ mod nomination_details;
 mod nomination_summary;
 mod payouts;
 mod referendum_details;
+mod referendum_track;
 mod remove_all_validators;
 mod remove_validator;
 mod report_bug;
@@ -63,6 +64,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             }
             QueryType::ReferendumDetails => {
                 self.process_referendum_details_query(chat_id, original_message_id, query)
+                    .await?;
+            }
+            QueryType::ReferendumTracks => {
+                self.process_referendum_track_query(chat_id, original_message_id, query)
                     .await?;
             }
             QueryType::RemoveAllValidators => {

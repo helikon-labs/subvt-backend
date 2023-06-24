@@ -2,6 +2,7 @@
 use crate::query::QueryType;
 use subvt_types::crypto::AccountId;
 use subvt_types::governance::polkassembly::{ReferendumPost, ReferendumPostDetails};
+use subvt_types::governance::track::Track;
 use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::sub_id::NFTCollection;
 use subvt_types::substrate::democracy::ReferendumVote;
@@ -40,6 +41,7 @@ pub enum MessageType {
         address: String,
         maybe_validator_details: Box<Option<ValidatorDetails>>,
         maybe_onekv_candidate_summary: Box<Option<OneKVCandidateSummary>>,
+        missing_referendum_votes: Vec<u32>,
     },
     NominationSummary {
         chat_validator_id: u64,
@@ -56,13 +58,14 @@ pub enum MessageType {
     NetworkStatus(NetworkStatus),
     NoPayoutsFound,
     NoRewardsFound,
-    NoOpenReferendaFound,
-    ReferendumList(Vec<ReferendumPost>),
+    NoOpenReferendaFound(Track),
+    ReferendumList(u16, Vec<ReferendumPost>),
     ReferendumNotFound(u32),
     ReferendumDetails {
         post: ReferendumPostDetails,
         chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)>,
     },
+    ReferendumTracks(Vec<(Track, usize)>),
     SelectContactType,
     EnterBugReport,
     EnterFeatureRequest,

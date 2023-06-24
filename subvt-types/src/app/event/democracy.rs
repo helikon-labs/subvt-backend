@@ -1,5 +1,6 @@
 use crate::crypto::AccountId;
 use crate::substrate::Balance;
+pub use pallet_conviction_voting::AccountVote as ConvictionVote;
 pub use pallet_democracy::{AccountVote, Conviction, VoteThreshold};
 use serde::{Deserialize, Serialize};
 

@@ -34,6 +34,8 @@ pub enum QueryType {
     Payouts,
     #[serde(rename = "RD")]
     ReferendumDetails,
+    #[serde(rename = "RT")]
+    ReferendumTracks,
     #[serde(rename = "RAV")]
     RemoveAllValidators,
     #[serde(rename = "RV")]

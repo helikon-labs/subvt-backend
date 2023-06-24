@@ -124,6 +124,9 @@ max_validators_per_chat = 25
 # include the @
 username = "@bot_username"
 
+[referendum_updater]
+refresh_seconds = 900
+
 [metrics]
 host = "127.0.0.1"
 active_validator_list_server_port = 11003

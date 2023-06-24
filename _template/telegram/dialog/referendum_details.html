@@ -1,14 +1,15 @@
 <strong>🗳 {{ chain | capitalize }} Referendum #{{ referendum_id }}</strong>
 <strong>Title:</strong> {% if title %}{{ title }}{% else %}N/A{% endif %}
-<strong>Proposer:</strong> <a href="https://{{ chain }}.subscan.io/account/{{ proposer_address }}">{{ condensed_proposer_address }}</a>
-<strong>Vote Threshold:</strong> {{ vote_threshold }}
-<strong>Ends at Block:</strong> #{{ end_block_number }}{% if status %}
+<strong>Proposer:</strong> <a href="https://{{ chain }}.subscan.io/account/{{ proposer_address }}">{{ condensed_proposer_address }}</a>{% if track %}
+<strong>Track:</strong> {{ track }}{% endif %}{% if end_block_number %}
+<strong>Ends at Block:</strong> #{{ end_block_number }}{% endif %}{% if status %}
 <strong>Status:</strong> {{ status }}{% endif %}{% if content %}
-<strong>Content:</strong> {{ content | truncate(length=250) }}{% endif %}
-<i>View full referendum details on <a href="https://{{ chain }}.polkassembly.io/referendum/{{ referendum_id }}">Polkassembly</a>.</i>{% if validator_votes | length > 0 %}
+<strong>Content:</strong>
+{{ content | truncate(length=250) }}{% endif %}
+<i>View full referendum details on <a href="https://{{ chain }}.subsquare.io/referenda/referendum/{{ referendum_id }}">Subsquare</a>.</i>{% if validator_votes | length > 0 %}
 
 <strong>Validator Votes</strong>{% for validator_vote in validator_votes %}
-<strong>{{ validator_vote.0 }}</strong> has {% if validator_vote.2 | length > 0 and validator_vote.3 | length > 0 %}cast a split vote.{% else %}voted {% if validator_vote.2 | length > 0 %}👍 {% if validator_vote.1 %}through delegation {% endif %}with <strong>{{ validator_vote.2 }}</strong>{% else %}👎 with <strong>{{ validator_vote.3 }}</strong>{% endif %} <strong>{{ token_ticker }}</strong> and {% if validator_vote.4 > 0 %}<strong>{{ validator_vote.4 }}x</strong>{% else %}no{% endif %} conviction.{% endif %}{% endfor %}{% endif %}{% if validators_without_vote | length > 0 %}
+• <strong>{{ validator_vote.0 }}</strong> has {% if validator_vote.2 == "split_abstain" %}abstained{% elif validator_vote.2 == "split" %}split voted{% else %}voted{% if validator_vote.3 | length > 0 %} 👍 with <strong>{{ validator_vote.3 }}</strong>{% else %} 👎 with <strong>{{ validator_vote.4 }}</strong>{% endif %} <strong>{{ token_ticker }}</strong>{% endif %}{% if validator_vote.1 %} through delegation{% endif %}{% if validator_vote.1 or validator_vote.2 == "standard" %} and {% if validator_vote.6 > 0 %}<strong>{{ validator_vote.6 }}x</strong>{% else %}no{% endif %} conviction.{% else %}.{% endif %}{% endfor %}{% endif %}{% if validators_without_vote | length > 0 %}
 
 ⚠️ Validators below have not voted for this referendum yet:{% for validator_without_vote in validators_without_vote %}
 <strong>{{ validator_without_vote }}</strong>{% endfor %}{% endif %}

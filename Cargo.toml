@@ -15,6 +15,7 @@ members = [
     "subvt-persistence",
     "subvt-plotter",
     "subvt-proc-macro",
+    "subvt-referendum-updater",
     "subvt-report-service",
     "subvt-service-common",
     "subvt-substrate-client",

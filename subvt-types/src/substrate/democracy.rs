@@ -1,10 +1,32 @@
 use crate::crypto::AccountId;
 use crate::substrate::{Balance, DemocracyConviction};
+use std::fmt::{Display, Formatter};
+
+#[derive(Clone, Copy, Debug, Default)]
+pub enum VoteType {
+    #[default]
+    Standard,
+    Split,
+    SplitAbstain,
+}
+
+impl Display for VoteType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let display = match self {
+            VoteType::Standard => "standard",
+            VoteType::Split => "split",
+            VoteType::SplitAbstain => "split_abstain",
+        };
+        write!(f, "{display}")
+    }
+}
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct DirectVote {
+    pub ty: VoteType,
     pub aye: Option<Balance>,
     pub nay: Option<Balance>,
+    pub abstain: Option<Balance>,
     pub conviction: Option<u8>,
 }
 

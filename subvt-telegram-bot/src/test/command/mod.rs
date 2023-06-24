@@ -3,7 +3,6 @@ mod add_validator;
 mod broadcast;
 mod cancel;
 mod contact;
-mod democracy;
 mod help;
 mod invalid;
 mod network_status;

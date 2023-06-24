@@ -1,5 +1,6 @@
 //! This module handles the sending of all the messages to a Telegram chat.
 use crate::api::{AsyncApi, Error};
+use crate::messenger::keyboard::referendum_tracks::get_referendum_tracks_keyboard;
 use crate::messenger::keyboard::{
     confirmation::get_confirmation_keyboard,
     contact_type::get_contact_type_keyboard,
@@ -223,8 +224,11 @@ impl Messenger for MessengerImpl {
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
                 get_settings_keyboard(&self.renderer)?,
             )),
-            MessageType::ReferendumList(posts) => {
-                get_referendum_list_keyboard(&self.renderer, posts)?
+            MessageType::ReferendumList(track_id, posts) => {
+                get_referendum_list_keyboard(&self.renderer, *track_id, posts)?
+            }
+            MessageType::ReferendumTracks(data) => {
+                get_referendum_tracks_keyboard(&self.renderer, data)?
             }
             MessageType::SelectContactType => get_contact_type_keyboard(&self.renderer)?,
             MessageType::NFTs {

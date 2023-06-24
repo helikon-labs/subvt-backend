@@ -1,6 +1,5 @@
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::event::democracy::AccountVote;
-use subvt_types::substrate::democracy::get_democracy_conviction_u8;
 use subvt_types::substrate::event::democracy::DemocracyEvent;
 
 pub(crate) async fn process_democracy_event(
@@ -165,9 +164,7 @@ pub(crate) async fn process_democracy_event(
                         AccountVote::Split { nay, .. } => Some(*nay),
                     },
                     match vote {
-                        AccountVote::Standard { vote, .. } => {
-                            Some(get_democracy_conviction_u8(&vote.conviction))
-                        }
+                        AccountVote::Standard { .. } => Some(0),
                         AccountVote::Split { .. } => None,
                     },
                 )

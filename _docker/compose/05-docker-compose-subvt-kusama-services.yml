@@ -259,6 +259,24 @@ services:
       - SUBVT__PLOTTER__FONT_DIR_PATH=/subvt/font
       # rpc
       - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
+  subvt_kusama_referendum_updater:
+    container_name: subvt_kusama_referendum_updater
+    restart: unless-stopped
+    image: "helikon/subvt-referendum-updater:${VERSION}"
+    networks:
+      - subvt_kusama
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=kusama
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # network postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
 networks:
   subvt_kusama:
     name: subvt_kusama

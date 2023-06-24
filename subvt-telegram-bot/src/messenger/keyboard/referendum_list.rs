@@ -8,6 +8,7 @@ use tera::{Context, Tera};
 
 pub fn get_referendum_list_keyboard(
     renderer: &Tera,
+    track_id: u16,
     posts: &[ReferendumPost],
 ) -> anyhow::Result<Option<ReplyMarkup>> {
     if posts.is_empty() {
@@ -15,9 +16,10 @@ pub fn get_referendum_list_keyboard(
     } else {
         let mut rows = vec![];
         for post in posts {
+            let params = (track_id, post.post_id.to_string());
             let query = Query {
                 query_type: QueryType::ReferendumDetails,
-                parameter: Some(post.post_id.to_string()),
+                parameter: Some(serde_json::to_string(&params)?),
             };
             rows.push(vec![InlineKeyboardButton {
                 text: format!(
@@ -39,6 +41,7 @@ pub fn get_referendum_list_keyboard(
                 web_app: None,
                 switch_inline_query: None,
                 switch_inline_query_current_chat: None,
+                switch_inline_query_chosen_chat: None,
                 callback_game: None,
                 pay: None,
             }]);
@@ -54,6 +57,7 @@ pub fn get_referendum_list_keyboard(
             web_app: None,
             switch_inline_query: None,
             switch_inline_query_current_chat: None,
+            switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
         }]);

@@ -9,7 +9,8 @@ anyhow = { workspace = true }
 async-recursion = "1.0.0"
 async-trait = "0.1"
 chrono = "0.4"
-frankenstein = { version = "0.24", default-features = false, features = ["async-telegram-trait"] }
+enum-iterator = "1.4"
+frankenstein = { version = "0.25", default-features = false, features = ["async-telegram-trait"] }
 futures = "0.3"
 hyper = "0.14"
 hyper-multipart-rfc7578 = "0.8.0"

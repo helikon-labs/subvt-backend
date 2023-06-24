@@ -2,12 +2,12 @@
 //! the `process_command` function below and the corresponding command modules.
 use crate::{query::QueryType, MessageType, Messenger, TelegramBot};
 use async_recursion::async_recursion;
-use subvt_governance::polkassembly;
 
 mod add_validator;
 mod broadcast;
 mod broadcast_test;
 mod network_status;
+mod opengov;
 mod payouts;
 mod remove_all_validators;
 mod remove_validator;
@@ -133,31 +133,12 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     .await?;
                 self.process_payouts_command(chat_id, args).await?;
             }
-            "/referenda" | "/democracy" => {
+            "/referenda" | "/opengov" => {
                 crate::metrics::command_call_counter(command).inc();
                 self.network_postgres
                     .save_chat_command_log(chat_id, command)
                     .await?;
-                let posts = polkassembly::fetch_open_referendum_list().await?;
-                if posts.is_empty() {
-                    self.messenger
-                        .send_message(
-                            &self.app_postgres,
-                            &self.network_postgres,
-                            chat_id,
-                            Box::new(MessageType::NoOpenReferendaFound),
-                        )
-                        .await?;
-                } else {
-                    self.messenger
-                        .send_message(
-                            &self.app_postgres,
-                            &self.network_postgres,
-                            chat_id,
-                            Box::new(MessageType::ReferendumList(posts)),
-                        )
-                        .await?;
-                }
+                self.process_opengov_command(chat_id).await?;
             }
             "/remove" => {
                 crate::metrics::command_call_counter(command).inc();

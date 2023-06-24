@@ -1,6 +1,5 @@
 //! `/summary` command processor.
 use crate::{MessageType, Messenger, TelegramBot, CONFIG};
-use subvt_governance::polkassembly::fetch_open_referendum_list;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::telegram::TelegramChatValidatorSummary;
 
@@ -20,7 +19,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             return Ok(());
         }
         // get referenda
-        let open_referenda = fetch_open_referendum_list().await?;
+        let referenda = self.network_postgres.get_open_referenda(None).await?;
         let mut chat_validator_summaries: Vec<TelegramChatValidatorSummary> = vec![];
         let substrate_client = SubstrateClient::new(&CONFIG).await?;
         for chat_validator in chat_validators {
@@ -37,11 +36,12 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     CONFIG.substrate.token_decimals,
                     CONFIG.substrate.token_format_decimal_points,
                 );
-                for open_referendum in &open_referenda {
+                for referendum in &referenda {
                     if substrate_client
-                        .get_account_referendum_vote(
+                        .get_account_referendum_conviction_vote(
                             &chat_validator.account_id,
-                            open_referendum.post_id,
+                            referendum.track_id,
+                            referendum.post_id,
                             None,
                         )
                         .await?
@@ -49,7 +49,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     {
                         validator_summary
                             .missing_referendum_votes
-                            .push(open_referendum.post_id);
+                            .push(referendum.post_id);
                     }
                 }
                 validator_summary.missing_referendum_votes.sort_unstable();

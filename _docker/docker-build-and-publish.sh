@@ -68,3 +68,7 @@ docker push --all-tags helikon/subvt-notification-generator
 # report service
 docker build -t helikon/subvt-report-service:"$1" -t helikon/subvt-report-service:latest --no-cache --build-arg version="$1" -f ./network/13-subvt-report-service.dockerfile ..
 docker push --all-tags helikon/subvt-report-service
+
+# referendum updater
+docker build -t helikon/subvt-referendum-updater:"$1" -t helikon/subvt-referendum-updater:latest --no-cache --build-arg version="$1" -f ./network/14-subvt-referendum-updater.dockerfile ..
+docker push --all-tags helikon/subvt-referendum-updater

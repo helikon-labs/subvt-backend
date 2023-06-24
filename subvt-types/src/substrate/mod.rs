@@ -4,7 +4,7 @@
 use crate::crypto::AccountId;
 use chrono::{DateTime, LocalResult, TimeZone, Utc};
 use frame_support::traits::ConstU32;
-pub use pallet_democracy::Conviction as DemocracyConviction;
+pub use pallet_conviction_voting::{Conviction as DemocracyConviction, Voting as ConvictionVoting};
 pub use pallet_democracy::Voting as DemocracyVoting;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};

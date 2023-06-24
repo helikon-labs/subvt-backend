@@ -15,16 +15,22 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         if let Some(message_id) = original_message_id {
             self.messenger.delete_message(chat_id, message_id).await?;
         }
-        if let Some(id_str) = &query.parameter {
-            let referendum_index: u32 = id_str.parse()?;
-            let post = polkassembly::fetch_referendum_details(referendum_index).await?;
+        if let Some(params_str) = &query.parameter {
+            let (track_id, referendum_id_str) = serde_json::from_str::<(u16, String)>(params_str)?;
+            let referendum_id: u32 = referendum_id_str.parse()?;
+            let post = polkassembly::fetch_referendum_details(referendum_id).await?;
             let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
             let mut chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)> =
                 vec![];
             let substrate_client = SubstrateClient::new(&CONFIG).await?;
             for chat_validator in &chat_validators {
                 let vote = substrate_client
-                    .get_account_referendum_vote(&chat_validator.account_id, referendum_index, None)
+                    .get_account_referendum_conviction_vote(
+                        &chat_validator.account_id,
+                        track_id,
+                        referendum_id,
+                        None,
+                    )
                     .await?;
                 chat_validator_votes.push((chat_validator.clone(), vote));
             }

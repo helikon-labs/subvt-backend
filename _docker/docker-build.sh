@@ -52,3 +52,6 @@ docker build -t helikon/subvt-telegram-bot:"$1" --no-cache --build-arg version="
 docker build -t helikon/subvt-notification-generator:"$1" --no-cache --build-arg version="$1" -f ./network/12-subvt-notification-generator.dockerfile ..
 # report service
 docker build -t helikon/subvt-report-service:"$1" --no-cache --build-arg version="$1" -f ./network/13-subvt-report-service.dockerfile ..
+
+# referendum updater
+docker build -t helikon/subvt-referendum-updater:"$1" --no-cache --build-arg version="$1" -f ./network/14-subvt-referendum-updater.dockerfile ..

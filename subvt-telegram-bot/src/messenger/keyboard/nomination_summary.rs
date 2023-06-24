@@ -26,6 +26,7 @@ pub fn get_nomination_summary_keyboard(
             web_app: None,
             switch_inline_query: None,
             switch_inline_query_current_chat: None,
+            switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
         }]];

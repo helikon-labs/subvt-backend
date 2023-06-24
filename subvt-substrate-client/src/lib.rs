@@ -2,7 +2,7 @@
 #![warn(clippy::disallowed_types)]
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
-    get_rpc_storage_plain_params, get_storage_map_key,
+    get_rpc_storage_plain_params, get_storage_double_map_key, get_storage_map_key,
 };
 use async_recursion::async_recursion;
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed, RuntimeMetadataV14};
@@ -21,17 +21,16 @@ use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 use subvt_config::Config;
-use subvt_types::app::event::democracy::AccountVote;
+use subvt_types::app::event::democracy::{AccountVote, ConvictionVote};
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::democracy::{
-    get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote,
+    get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote, VoteType,
 };
 use subvt_types::substrate::error::DecodeError;
 use subvt_types::substrate::metadata::{
     get_metadata_constant, get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
 };
 use subvt_types::substrate::para::ParaCoreAssignment;
-use subvt_types::substrate::BlockNumber;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
     Balance, Block, BlockHeader, BlockWrapper, Chain, DemocracyVoting, Epoch, Era, EraRewardPoints,
@@ -39,6 +38,7 @@ use subvt_types::substrate::{
     ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
     ValidatorStake,
 };
+use subvt_types::substrate::{BlockNumber, ConvictionVoting};
 /// Substrate client structure and its functions.
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
 use subvt_types::subvt::ValidatorDetails;
@@ -1297,6 +1297,44 @@ impl SubstrateClient {
         Ok(validator_prefs_map)
     }
 
+    pub async fn get_conviction_voting_for(
+        &self,
+        account_id: &AccountId,
+        track_id: u16,
+        block_hash: Option<&str>,
+    ) -> anyhow::Result<
+        Option<ConvictionVoting<Balance, AccountId, BlockNumber, u32, ConstU32<{ u32::MAX }>>>,
+    > {
+        let storage_key = get_storage_double_map_key(
+            &self.metadata,
+            "ConvictionVoting",
+            "VotingFor",
+            account_id,
+            &track_id,
+        );
+        let chunk_values: Vec<StorageChangeSet<String>> = self
+            .ws_client
+            .request(
+                "state_queryStorageAt",
+                rpc_params!(vec![storage_key], block_hash),
+            )
+            .await?;
+        if let Some(value) = chunk_values.get(0) {
+            if let Some((_, Some(data))) = value.changes.get(0) {
+                let mut bytes: &[u8] = &data.0;
+                let voting: ConvictionVoting<
+                    Balance,
+                    AccountId,
+                    BlockNumber,
+                    u32,
+                    ConstU32<{ u32::MAX }>,
+                > = Decode::decode(&mut bytes)?;
+                return Ok(Some(voting));
+            }
+        }
+        Ok(None)
+    }
+
     pub async fn get_democracy_voting_of(
         &self,
         account_id: &AccountId,
@@ -1346,9 +1384,11 @@ impl SubstrateClient {
                                 account_id: *account_id,
                                 referendum_index,
                                 direct_vote: Some(DirectVote {
+                                    ty: VoteType::Standard,
                                     aye: if vote.aye { Some(balance) } else { None },
                                     nay: if !vote.aye { Some(balance) } else { None },
-                                    conviction: Some(get_democracy_conviction_u8(&vote.conviction)),
+                                    abstain: None,
+                                    conviction: None,
                                 }),
                                 delegated_vote: None,
                             },
@@ -1356,8 +1396,10 @@ impl SubstrateClient {
                                 account_id: *account_id,
                                 referendum_index,
                                 direct_vote: Some(DirectVote {
+                                    ty: VoteType::Split,
                                     aye: Some(aye),
                                     nay: Some(nay),
+                                    abstain: None,
                                     conviction: None,
                                 }),
                                 delegated_vote: None,
@@ -1367,10 +1409,7 @@ impl SubstrateClient {
                     }
                 }
                 DemocracyVoting::Delegating {
-                    balance,
-                    target,
-                    conviction,
-                    ..
+                    balance, target, ..
                 } => {
                     if let Some(delegate_vote) = self
                         .get_account_referendum_vote(&target, referendum_index, block_hash)
@@ -1384,8 +1423,101 @@ impl SubstrateClient {
                                 delegated_vote: Some(DelegatedVote {
                                     target_account_id: target,
                                     balance,
-                                    conviction: get_democracy_conviction_u8(&conviction),
+                                    conviction: 0,
                                     delegate_account_id: target,
+                                    vote: delegate_direct_vote,
+                                }),
+                            };
+                            return Ok(Some(vote));
+                        }
+                    }
+                }
+            }
+        }
+        Ok(None)
+    }
+
+    #[async_recursion]
+    pub async fn get_account_referendum_conviction_vote(
+        &self,
+        account_id: &AccountId,
+        track_id: u16,
+        referendum_id: u32,
+        block_hash: Option<&'async_recursion str>,
+    ) -> anyhow::Result<Option<ReferendumVote>> {
+        let maybe_vote = self
+            .get_conviction_voting_for(account_id, track_id, block_hash)
+            .await?;
+        if let Some(vote) = maybe_vote {
+            match vote {
+                ConvictionVoting::Casting(casting) => {
+                    if let Some(referendum_vote) = casting
+                        .votes
+                        .iter()
+                        .find(|vote| vote.0 == referendum_id)
+                        .map(|vote| vote.1)
+                    {
+                        let vote = match referendum_vote {
+                            ConvictionVote::Standard { vote, balance } => ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index: referendum_id,
+                                direct_vote: Some(DirectVote {
+                                    ty: VoteType::Standard,
+                                    aye: if vote.aye { Some(balance) } else { None },
+                                    nay: if !vote.aye { Some(balance) } else { None },
+                                    abstain: None,
+                                    conviction: Some(get_democracy_conviction_u8(&vote.conviction)),
+                                }),
+                                delegated_vote: None,
+                            },
+                            ConvictionVote::Split { aye, nay } => ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index: referendum_id,
+                                direct_vote: Some(DirectVote {
+                                    ty: VoteType::Split,
+                                    aye: Some(aye),
+                                    nay: Some(nay),
+                                    abstain: None,
+                                    conviction: None,
+                                }),
+                                delegated_vote: None,
+                            },
+                            ConvictionVote::SplitAbstain { aye, nay, abstain } => ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index: referendum_id,
+                                direct_vote: Some(DirectVote {
+                                    ty: VoteType::SplitAbstain,
+                                    aye: Some(aye),
+                                    nay: Some(nay),
+                                    abstain: Some(abstain),
+                                    conviction: None,
+                                }),
+                                delegated_vote: None,
+                            },
+                        };
+                        return Ok(Some(vote));
+                    }
+                }
+                ConvictionVoting::Delegating(delegating) => {
+                    if let Some(delegate_vote) = self
+                        .get_account_referendum_conviction_vote(
+                            &delegating.target,
+                            track_id,
+                            referendum_id,
+                            block_hash,
+                        )
+                        .await?
+                    {
+                        if let Some(delegate_direct_vote) = delegate_vote.direct_vote {
+                            let vote = ReferendumVote {
+                                account_id: *account_id,
+                                referendum_index: referendum_id,
+                                direct_vote: None,
+                                delegated_vote: Some(DelegatedVote {
+                                    target_account_id: delegating.target,
+                                    balance: delegating.balance,
+                                    conviction: get_democracy_conviction_u8(&delegating.conviction),
+                                    delegate_account_id: delegating.target,
                                     vote: delegate_direct_vote,
                                 }),
                             };

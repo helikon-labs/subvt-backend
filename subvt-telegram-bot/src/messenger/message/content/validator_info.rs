@@ -15,7 +15,9 @@ impl MessageType {
         address: &str,
         maybe_validator_details: &Option<ValidatorDetails>,
         maybe_onekv_candidate_summary: &Option<OneKVCandidateSummary>,
+        missing_referendum_votes: &Vec<u32>,
     ) {
+        context.insert("chain", &CONFIG.substrate.chain);
         context.insert("condensed_address", &get_condensed_address(address, None));
         context.insert("is_validator", &maybe_validator_details.is_some());
         if let Some(validator_details) = maybe_validator_details {
@@ -63,6 +65,7 @@ impl MessageType {
             }
             context.insert("slash_count", &validator_details.slash_count);
         }
+        context.insert("missing_referendum_votes", missing_referendum_votes);
         context.insert("is_onekv", &maybe_onekv_candidate_summary.is_some());
         if let Some(onekv_summary) = maybe_onekv_candidate_summary {
             context.insert("onekv_name", &onekv_summary.name);

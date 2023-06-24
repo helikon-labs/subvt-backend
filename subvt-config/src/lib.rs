@@ -257,6 +257,12 @@ pub struct AppServiceConfig {
     pub user_registration_per_ip_limit: u16,
 }
 
+/// Referendum updater configuration - fetches data from Polkassembly.
+#[derive(Clone, Debug, Deserialize)]
+pub struct ReferendumUpdaterConfig {
+    pub refresh_seconds: u64,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -281,6 +287,7 @@ pub struct Config {
     pub plotter: PlotterConfig,
     pub sub_id: SubIDConfig,
     pub app_service: AppServiceConfig,
+    pub referendum_updater: ReferendumUpdaterConfig,
 }
 
 impl Config {
