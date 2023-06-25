@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS sub_event_referendum_confirmed
+CREATE TABLE IF NOT EXISTS sub_event_referendum_timed_out
 (
     id                  SERIAL PRIMARY KEY,
     block_hash          VARCHAR(66) NOT NULL,
@@ -10,16 +10,16 @@ CREATE TABLE IF NOT EXISTS sub_event_referendum_confirmed
     nays                VARCHAR(128) NOT NULL,
     support             VARCHAR(128) NOT NULL,
     created_at          TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_event_referendum_confirmed_u_event
+    CONSTRAINT sub_event_referendum_timed_out_u_event
         UNIQUE (block_hash, event_index),
-    CONSTRAINT sub_event_referendum_confirmed_fk_block
+    CONSTRAINT sub_event_referendum_timed_out_fk_block
         FOREIGN KEY (block_hash)
             REFERENCES sub_block (hash)
             ON DELETE CASCADE
             ON UPDATE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS sub_event_referendum_confirmed_idx_block_hash
-    ON sub_event_referendum_confirmed (block_hash);
-CREATE INDEX IF NOT EXISTS sub_event_referendum_confirmed_idx_referendum_index
-    ON sub_event_referendum_confirmed (referendum_index);
+CREATE INDEX IF NOT EXISTS sub_event_referendum_timed_out_idx_block_hash
+    ON sub_event_referendum_timed_out (block_hash);
+CREATE INDEX IF NOT EXISTS sub_event_referendum_timed_out_idx_referendum_index
+    ON sub_event_referendum_timed_out (referendum_index);

@@ -1,0 +1,1 @@
+🗳🆕 Referendum #{{ referendum_index }} has been submitted.

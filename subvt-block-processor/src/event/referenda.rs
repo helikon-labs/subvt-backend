@@ -8,6 +8,20 @@ pub(crate) async fn process_referenda_event(
     event: &ReferendaEvent,
 ) -> anyhow::Result<()> {
     match event {
+        ReferendaEvent::Approved {
+            extrinsic_index,
+            referendum_index,
+        } => {
+            let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+            postgres
+                .save_referendum_approved_event(
+                    block_hash,
+                    extrinsic_index,
+                    event_index as i32,
+                    *referendum_index,
+                )
+                .await?;
+        }
         ReferendaEvent::Cancelled {
             extrinsic_index,
             referendum_index,
@@ -65,6 +79,24 @@ pub(crate) async fn process_referenda_event(
                 )
                 .await?;
         }
+        ReferendaEvent::Killed {
+            extrinsic_index,
+            referendum_index,
+            tally,
+        } => {
+            let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+            postgres
+                .save_referendum_killed_event(
+                    block_hash,
+                    extrinsic_index,
+                    event_index as i32,
+                    *referendum_index,
+                    tally.ayes,
+                    tally.nays,
+                    tally.support,
+                )
+                .await?;
+        }
         ReferendaEvent::Rejected {
             extrinsic_index,
             referendum_index,
@@ -100,6 +132,24 @@ pub(crate) async fn process_referenda_event(
                 )
                 .await?;
         }
+        ReferendaEvent::TimedOut {
+            extrinsic_index,
+            referendum_index,
+            tally,
+        } => {
+            let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
+            postgres
+                .save_referendum_timed_out_event(
+                    block_hash,
+                    extrinsic_index,
+                    event_index as i32,
+                    *referendum_index,
+                    tally.ayes,
+                    tally.nays,
+                    tally.support,
+                )
+                .await?;
+        }
     }
     Ok(())
 }
@@ -112,6 +162,15 @@ pub(crate) async fn update_referenda_event_nesting_index(
     event: &ReferendaEvent,
 ) -> anyhow::Result<()> {
     match event {
+        ReferendaEvent::Approved { .. } => {
+            postgres
+                .update_referendum_approved_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
+                .await?;
+        }
         ReferendaEvent::Cancelled { .. } => {
             postgres
                 .update_referendum_cancelled_event_nesting_index(
@@ -139,6 +198,15 @@ pub(crate) async fn update_referenda_event_nesting_index(
                 )
                 .await?;
         }
+        ReferendaEvent::Killed { .. } => {
+            postgres
+                .update_referendum_killed_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
+                .await?;
+        }
         ReferendaEvent::Rejected { .. } => {
             postgres
                 .update_referendum_rejected_event_nesting_index(
@@ -151,6 +219,15 @@ pub(crate) async fn update_referenda_event_nesting_index(
         ReferendaEvent::Submitted { .. } => {
             postgres
                 .update_referendum_submitted_event_nesting_index(
+                    block_hash,
+                    maybe_nesting_index,
+                    event_index,
+                )
+                .await?;
+        }
+        ReferendaEvent::TimedOut { .. } => {
+            postgres
+                .update_referendum_timed_out_event_nesting_index(
                     block_hash,
                     maybe_nesting_index,
                     event_index,

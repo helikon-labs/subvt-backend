@@ -20,6 +20,6 @@ CREATE TABLE IF NOT EXISTS sub_event_referendum_cancelled
 );
 
 CREATE INDEX IF NOT EXISTS sub_event_referendum_cancelled_idx_block_hash
-    ON sub_event_democracy_cancelled (block_hash);
+    ON sub_event_referendum_cancelled (block_hash);
 CREATE INDEX IF NOT EXISTS sub_event_referendum_cancelled_idx_referendum_index
-    ON sub_event_democracy_cancelled (referendum_index);
+    ON sub_event_referendum_cancelled (referendum_index);

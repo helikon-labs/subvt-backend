@@ -1,0 +1,1 @@
+🗳☠️ {{ chain | capitalize }} referendum #{{ referendum_index }} has been killed.
