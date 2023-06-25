@@ -47,7 +47,14 @@ INSERT INTO app_notification_type(code) VALUES('democracy_started') ON CONFLICT(
 INSERT INTO app_notification_type(code) VALUES('democracy_undelegated') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('democracy_voted') ON CONFLICT(code) DO NOTHING;
 -- opengov
+INSERT INTO app_notification_type(code) VALUES('referendum_approved') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_cancelled') ON CONFLICT(code) DO NOTHING;
 INSERT INTO app_notification_type(code) VALUES('referendum_confirmed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_decision_started') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_killed') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_rejected') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_submitted') ON CONFLICT(code) DO NOTHING;
+INSERT INTO app_notification_type(code) VALUES('referendum_timed_out') ON CONFLICT(code) DO NOTHING;
 
 DO $$ BEGIN
     IF to_regtype('app_notification_type_param_data_type') IS NULL THEN

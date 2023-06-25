@@ -4,11 +4,11 @@ use frankenstein::InlineKeyboardMarkup;
 use tera::Tera;
 
 pub(crate) mod active_inactive;
-pub(crate) mod democracy;
 pub(crate) mod nomination;
 pub(crate) mod onekv;
 pub(crate) mod para_validation;
 pub(crate) mod period;
+pub(crate) mod referenda;
 pub(crate) mod validator_activity;
 
 pub fn get_settings_keyboard(renderer: &Tera) -> anyhow::Result<InlineKeyboardMarkup> {
@@ -26,8 +26,8 @@ pub fn get_settings_keyboard(renderer: &Tera) -> anyhow::Result<InlineKeyboardMa
         )?,
         get_settings_button(
             renderer,
-            "settings_democracy.html",
-            QueryType::SettingsNavigate(SettingsSubSection::Democracy),
+            "settings_referenda.html",
+            QueryType::SettingsNavigate(SettingsSubSection::Referenda),
         )?,
         get_settings_button(
             renderer,

@@ -271,87 +271,6 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 .await?;
                 SettingsSubSection::ParaValidation
             }
-            SettingsEditQueryType::DemocracyCancelled => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyCancelled,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyDelegated => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyDelegated,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyNotPassed => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyNotPassed,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyPassed => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyPassed,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyProposed => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyProposed,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracySeconded => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracySeconded,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyStarted => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyStarted,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyUndelegated => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyUndelegated,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
-            SettingsEditQueryType::DemocracyVoted => {
-                self.process_notification_on_off_setting_query(
-                    user_id,
-                    query,
-                    NotificationTypeCode::DemocracyVoted,
-                )
-                .await?;
-                SettingsSubSection::Democracy
-            }
             SettingsEditQueryType::OneKVRankChange => {
                 self.process_notification_on_off_setting_query(
                     user_id,
@@ -387,6 +306,78 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 )
                 .await?;
                 SettingsSubSection::OneKV
+            }
+            SettingsEditQueryType::ReferendumApproved => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumApproved,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumCancelled => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumCancelled,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumConfirmed => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumConfirmed,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumDecisionStarted => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumDecisionStarted,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumKilled => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumKilled,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumRejected => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumRejected,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumSubmitted => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumSubmitted,
+                )
+                .await?;
+                SettingsSubSection::Referenda
+            }
+            SettingsEditQueryType::ReferendumTimedOut => {
+                self.process_notification_on_off_setting_query(
+                    user_id,
+                    query,
+                    NotificationTypeCode::ReferendumTimedOut,
+                )
+                .await?;
+                SettingsSubSection::Referenda
             }
         };
         let notification_rules = self

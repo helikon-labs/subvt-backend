@@ -1,6 +1,7 @@
 //! This module handles the sending of all the messages to a Telegram chat.
 use crate::api::{AsyncApi, Error};
 use crate::messenger::keyboard::referendum_tracks::get_referendum_tracks_keyboard;
+use crate::messenger::keyboard::settings::referenda::get_referenda_settings_keyboard;
 use crate::messenger::keyboard::{
     confirmation::get_confirmation_keyboard,
     contact_type::get_contact_type_keyboard,
@@ -8,8 +9,7 @@ use crate::messenger::keyboard::{
     nomination_summary::get_nomination_summary_keyboard,
     referendum_list::get_referendum_list_keyboard,
     settings::{
-        active_inactive::get_active_inactive_settings_keyboard,
-        democracy::get_democracy_settings_keyboard, get_settings_keyboard,
+        active_inactive::get_active_inactive_settings_keyboard, get_settings_keyboard,
         nomination::get_nomination_settings_keyboard, onekv::get_onekv_settings_keyboard,
         para_validation::get_para_validation_settings_keyboard,
         period::get_period_settings_keyboard,
@@ -311,9 +311,6 @@ impl Messenger for MessengerImpl {
             SettingsSubSection::ParaValidation => {
                 get_para_validation_settings_keyboard(&self.renderer, notification_rules)?
             }
-            SettingsSubSection::Democracy => {
-                get_democracy_settings_keyboard(&self.renderer, notification_rules)?
-            }
             SettingsSubSection::OneKV => {
                 get_onekv_settings_keyboard(&self.renderer, notification_rules)?
             }
@@ -332,6 +329,9 @@ impl Messenger for MessengerImpl {
                 SettingsSubSection::Nominations,
                 notification_rules,
             )?,
+            SettingsSubSection::Referenda => {
+                get_referenda_settings_keyboard(&self.renderer, notification_rules)?
+            }
         };
         let params = EditMessageTextParams {
             chat_id: Some(ChatId::Integer(chat_id)),

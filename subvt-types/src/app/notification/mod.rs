@@ -92,7 +92,14 @@ pub enum NotificationTypeCode {
     DemocracyStarted,
     DemocracyUndelegated,
     DemocracyVoted,
+    ReferendumApproved,
+    ReferendumCancelled,
     ReferendumConfirmed,
+    ReferendumDecisionStarted,
+    ReferendumKilled,
+    ReferendumRejected,
+    ReferendumSubmitted,
+    ReferendumTimedOut,
 }
 
 impl Display for NotificationTypeCode {
@@ -171,7 +178,14 @@ impl Display for NotificationTypeCode {
             NotificationTypeCode::DemocracyUndelegated => "democracy_undelegated",
             NotificationTypeCode::DemocracyVoted => "democracy_voted",
             // referenda
+            NotificationTypeCode::ReferendumApproved => "referendum_approved",
+            NotificationTypeCode::ReferendumCancelled => "referendum_cancelled",
             NotificationTypeCode::ReferendumConfirmed => "referendum_confirmed",
+            NotificationTypeCode::ReferendumDecisionStarted => "referendum_decision_started",
+            NotificationTypeCode::ReferendumKilled => "referendum_killed",
+            NotificationTypeCode::ReferendumRejected => "referendum_rejected",
+            NotificationTypeCode::ReferendumSubmitted => "referendum_submitted",
+            NotificationTypeCode::ReferendumTimedOut => "referendum_timed_out",
         };
         write!(f, "{code}")
     }
@@ -251,7 +265,14 @@ impl From<&str> for NotificationTypeCode {
             "democracy_started" => NotificationTypeCode::DemocracyStarted,
             "democracy_undelegated" => NotificationTypeCode::DemocracyUndelegated,
             "democracy_voted" => NotificationTypeCode::DemocracyVoted,
+            "referendum_approved" => NotificationTypeCode::ReferendumApproved,
+            "referendum_cancelled" => NotificationTypeCode::ReferendumCancelled,
             "referendum_confirmed" => NotificationTypeCode::ReferendumConfirmed,
+            "referendum_decision_started" => NotificationTypeCode::ReferendumDecisionStarted,
+            "referendum_killed" => NotificationTypeCode::ReferendumKilled,
+            "referendum_rejected" => NotificationTypeCode::ReferendumRejected,
+            "referendum_submitted" => NotificationTypeCode::ReferendumSubmitted,
+            "referendum_timed_out" => NotificationTypeCode::ReferendumTimedOut,
             _ => panic!("Unknown notification type code: {code}"),
         }
     }

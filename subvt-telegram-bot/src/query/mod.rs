@@ -71,12 +71,12 @@ pub enum SettingsSubSection {
     ActiveInactive,
     #[serde(rename = "BA")]
     BlockAuthorship,
-    #[serde(rename = "D")]
-    ParaValidation,
     #[serde(rename = "PV")]
-    Democracy,
+    ParaValidation,
     #[serde(rename = "OKV")]
     OneKV,
+    #[serde(rename = "OG")]
+    Referenda,
 }
 
 /// Query to edit a settings sub-item, i.e. notification type.
@@ -114,24 +114,6 @@ pub enum SettingsEditQueryType {
     StartedParaValidating,
     #[serde(rename = "STOPV")]
     StoppedParaValidating,
-    #[serde(rename = "DC")]
-    DemocracyCancelled,
-    #[serde(rename = "DD")]
-    DemocracyDelegated,
-    #[serde(rename = "DNP")]
-    DemocracyNotPassed,
-    #[serde(rename = "DP")]
-    DemocracyPassed,
-    #[serde(rename = "DPR")]
-    DemocracyProposed,
-    #[serde(rename = "DS")]
-    DemocracySeconded,
-    #[serde(rename = "DST")]
-    DemocracyStarted,
-    #[serde(rename = "DU")]
-    DemocracyUndelegated,
-    #[serde(rename = "DV")]
-    DemocracyVoted,
     #[serde(rename = "OKVR")]
     OneKVRankChange,
     #[serde(rename = "OKVV")]
@@ -140,4 +122,20 @@ pub enum SettingsEditQueryType {
     OneKVLocationChange,
     #[serde(rename = "OKVO")]
     OneKVOnlineStatusChange,
+    #[serde(rename = "RA")]
+    ReferendumApproved,
+    #[serde(rename = "RCA")]
+    ReferendumCancelled,
+    #[serde(rename = "RCO")]
+    ReferendumConfirmed,
+    #[serde(rename = "RDS")]
+    ReferendumDecisionStarted,
+    #[serde(rename = "RK")]
+    ReferendumKilled,
+    #[serde(rename = "RR")]
+    ReferendumRejected,
+    #[serde(rename = "RS")]
+    ReferendumSubmitted,
+    #[serde(rename = "RTO")]
+    ReferendumTimedOut,
 }
