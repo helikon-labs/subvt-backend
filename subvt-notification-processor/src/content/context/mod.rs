@@ -8,6 +8,12 @@ use crate::content::context::democracy::{
 };
 use crate::content::context::lost_nomination::set_lost_nomination_grouped_context;
 use crate::content::context::new_nomination::set_new_nomination_grouped_context;
+use crate::content::context::referenda::{
+    set_referendum_approved_context, set_referendum_cancelled_context,
+    set_referendum_confirmed_context, set_referendum_decision_started_context,
+    set_referendum_killed_context, set_referendum_rejected_context,
+    set_referendum_submitted_context, set_referendum_timed_out_context,
+};
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
@@ -44,6 +50,7 @@ mod new_nomination;
 mod offline_offence;
 mod onekv;
 mod payout;
+mod referenda;
 mod session_keys;
 mod unclaimed_payout;
 mod validate;
@@ -159,6 +166,30 @@ pub(crate) fn get_renderer_context(
         NotificationTypeCode::DemocracyUndelegated => (),
         NotificationTypeCode::DemocracyVoted => {
             set_democracy_voted_context(network, notification, &mut context);
+        }
+        NotificationTypeCode::ReferendumApproved => {
+            set_referendum_approved_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumCancelled => {
+            set_referendum_cancelled_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumConfirmed => {
+            set_referendum_confirmed_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumDecisionStarted => {
+            set_referendum_decision_started_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumKilled => {
+            set_referendum_killed_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumRejected => {
+            set_referendum_rejected_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumSubmitted => {
+            set_referendum_submitted_context(notification, &mut context)
+        }
+        NotificationTypeCode::ReferendumTimedOut => {
+            set_referendum_timed_out_context(notification, &mut context)
         }
         _ => todo!(
             "Push notification content not yet ready for {}.",
