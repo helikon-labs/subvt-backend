@@ -162,7 +162,7 @@ impl Messenger for MessengerImpl {
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
         let params = SendPhotoParams {
             chat_id: ChatId::Integer(chat_id),
-            photo: frankenstein::api_params::File::InputFile(frankenstein::InputFile {
+            photo: frankenstein::api_params::FileUpload::InputFile(frankenstein::InputFile {
                 path: path.into(),
             }),
             caption: None,
