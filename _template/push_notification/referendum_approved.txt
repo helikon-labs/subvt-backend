@@ -1,1 +1,1 @@
-🗳✅ Referendum #{{ referendum_index }} has been approved.
+🗳✅ Referendum {{ referendum_index }} has been approved.

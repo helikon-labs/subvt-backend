@@ -1,1 +1,1 @@
-🗳⌛ {{ chain | capitalize }} referendum #{{ referendum_index }} has timed out.
+🗳⌛ {{ chain | capitalize }} referendum {{ referendum_index }} has timed out.

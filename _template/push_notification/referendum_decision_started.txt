@@ -1,1 +1,2 @@
 🗳🎬 Decision started for referendum #{{ referendum_index }}.
+Don't forget to cast your vote!

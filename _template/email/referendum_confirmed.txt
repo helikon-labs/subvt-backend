@@ -1,1 +1,1 @@
-🗳🆗 Referendum #{{ referendum_index }} has been confirmed.
+🗳🆗 Referendum {{ referendum_index }} has been confirmed.

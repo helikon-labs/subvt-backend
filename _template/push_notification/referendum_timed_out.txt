@@ -1,1 +1,1 @@
-🗳⌛️ Referendum #{{ referendum_index }} has timed out.
+🗳⌛️ Referendum {{ referendum_index }} has timed out.

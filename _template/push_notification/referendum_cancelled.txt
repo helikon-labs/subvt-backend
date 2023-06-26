@@ -1,1 +1,1 @@
-🗳🚫 Referendum #{{ referendum_index }} has been cancelled.
+🗳🚫 Referendum {{ referendum_index }} has been cancelled.

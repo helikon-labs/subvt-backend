@@ -1,1 +1,1 @@
-🗳🚫 {{ chain | capitalize }} referendum #{{ referendum_index }} has been cancelled.
+🗳🚫 {{ chain | capitalize }} referendum {{ referendum_index }} has been cancelled.

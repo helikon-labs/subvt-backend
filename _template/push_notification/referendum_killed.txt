@@ -1,1 +1,1 @@
-🗳☠️ Referendum #{{ referendum_index }} has been killed.
+🗳☠️ Referendum {{ referendum_index }} has been killed.
