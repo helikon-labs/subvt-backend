@@ -149,49 +149,29 @@ lazy_static! {
             NotificationPeriodType::Immediate,
             0,
         ),
-        // democracy
+        // referenda/opengov
         (
-            NotificationTypeCode::DemocracyCancelled,
-            NotificationPeriodType::Off,
-            0,
-        ),
-        (
-            NotificationTypeCode::DemocracyDelegated,
-            NotificationPeriodType::Off,
-            0,
-        ),
-        (
-            NotificationTypeCode::DemocracyNotPassed,
+            NotificationTypeCode::ReferendumConfirmed,
             NotificationPeriodType::Immediate,
             0,
         ),
         (
-            NotificationTypeCode::DemocracyPassed,
+            NotificationTypeCode::ReferendumDecisionStarted,
             NotificationPeriodType::Immediate,
             0,
         ),
         (
-            NotificationTypeCode::DemocracyProposed,
-            NotificationPeriodType::Off,
-            0,
-        ),
-        (
-            NotificationTypeCode::DemocracySeconded,
-            NotificationPeriodType::Off,
-            0,
-        ),
-        (
-            NotificationTypeCode::DemocracyStarted,
+            NotificationTypeCode::ReferendumRejected,
             NotificationPeriodType::Immediate,
             0,
         ),
         (
-            NotificationTypeCode::DemocracyUndelegated,
-            NotificationPeriodType::Off,
+            NotificationTypeCode::ReferendumTimedOut,
+            NotificationPeriodType::Immediate,
             0,
         ),
         (
-            NotificationTypeCode::DemocracyVoted,
+            NotificationTypeCode::ReferendumCancelled,
             NotificationPeriodType::Immediate,
             0,
         ),

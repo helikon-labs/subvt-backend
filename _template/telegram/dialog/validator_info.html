@@ -13,10 +13,10 @@
 ⚖️ Oversubscribed{% endif %}{% if heartbeat_received %}
 💌 Sent session heartbeat{% endif %}{% if slash_count == 1 %}
 ☠️ Slashed once in the last 12 months{% endif %}{% if slash_count > 1 %}
-☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}{% else %}🙄 There is currently no active or waiting validator with address <pre>{{ condensed_address }}</pre>. Please make sure the validator still has a <pre>validate</pre> intention.{% endif %}{% if is_onekv %}
+☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}{% else %}🙄 There is currently no active or waiting validator with address <pre>{{ condensed_address }}</pre>. Please make sure the validator still has a <pre>validate</pre> intention.{% endif %}
 
 <strong>OpenGov</strong>
-🗳 {% if missing_referendum_votes | length == 0 %}No missing votes for open referenda{% else %}Hasn't voted for {% for missing_referendum_vote in missing_referendum_votes %}<a href="https://{{ chain }}.subsquare.io/referenda/referendum/{{ missing_referendum_vote }}">#{{ missing_referendum_vote }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}
+🗳 {% if missing_referendum_votes | length == 0 %}No missing votes for open referenda{% else %}Hasn't voted for {% for missing_referendum_vote in missing_referendum_votes %}<a href="https://{{ chain }}.subsquare.io/referenda/referendum/{{ missing_referendum_vote }}">#{{ missing_referendum_vote }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}{% if is_onekv %}
 
 <strong>Thousand Validators Info</strong>
 🏷 {{ onekv_name }}

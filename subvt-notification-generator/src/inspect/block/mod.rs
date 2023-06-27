@@ -11,7 +11,6 @@ use subvt_types::rdb::BlockProcessedNotification;
 
 mod authorship;
 mod chilling;
-mod democracy;
 mod offence;
 mod payout;
 mod referenda;
@@ -53,8 +52,6 @@ impl NotificationGenerator {
             &block,
         )
         .await?;
-        self.inspect_democracy_events(network_postgres.clone(), app_postgres.clone(), &block)
-            .await?;
         self.inspect_referenda_events(network_postgres.clone(), app_postgres.clone(), &block)
             .await?;
 

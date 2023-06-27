@@ -1,11 +1,6 @@
 //! This module and sub-modules set the context of notification templates for various notification
 //! types.
 use crate::content::context::block_authorship::set_block_authorship_grouped_context;
-use crate::content::context::democracy::{
-    set_democracy_cancelled_context, set_democracy_delegated_context,
-    set_democracy_not_passed_context, set_democracy_passed_context, set_democracy_proposed_context,
-    set_democracy_seconded_context, set_democracy_started_context, set_democracy_voted_context,
-};
 use crate::content::context::lost_nomination::set_lost_nomination_grouped_context;
 use crate::content::context::new_nomination::set_new_nomination_grouped_context;
 use crate::content::context::referenda::{
@@ -43,7 +38,6 @@ use tera::Context;
 mod basic;
 mod block_authorship;
 mod controller;
-mod democracy;
 mod identity;
 mod lost_nomination;
 mod new_nomination;
@@ -141,31 +135,6 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::OneKVValidatorValidityChange => {
             set_onekv_validity_changed_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyCancelled => {
-            set_democracy_cancelled_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyDelegated => {
-            set_democracy_delegated_context(network, notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyNotPassed => {
-            set_democracy_not_passed_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyPassed => {
-            set_democracy_passed_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyProposed => {
-            set_democracy_proposed_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracySeconded => {
-            set_democracy_seconded_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyStarted => {
-            set_democracy_started_context(notification, &mut context);
-        }
-        NotificationTypeCode::DemocracyUndelegated => (),
-        NotificationTypeCode::DemocracyVoted => {
-            set_democracy_voted_context(network, notification, &mut context);
         }
         NotificationTypeCode::ReferendumApproved => {
             set_referendum_approved_context(notification, &mut context)
