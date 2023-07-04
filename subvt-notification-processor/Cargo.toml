@@ -7,7 +7,7 @@ rust-version = "1.67.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-a2 = "0.6"
+a2 = "0.7"
 anyhow = { workspace = true }
 async-trait = "0.1"
 chrono = "0.4"
