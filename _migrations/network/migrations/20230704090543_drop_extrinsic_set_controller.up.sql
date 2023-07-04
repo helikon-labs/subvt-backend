@@ -1,0 +1,1 @@
+DROP TABLE sub_extrinsic_set_controller CASCADE;

@@ -91,42 +91,6 @@ pub(crate) async fn process_staking_extrinsic(
                 log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
             }
         }
-        StakingExtrinsic::SetController {
-            maybe_signature: signature,
-            controller,
-        } => {
-            let maybe_caller_account_id = if maybe_multisig_account_id.is_some() {
-                maybe_multisig_account_id
-            } else if maybe_real_account_id.is_some() {
-                maybe_real_account_id
-            } else {
-                match signature {
-                    Some(signature) => signature.get_signer_account_id(),
-                    _ => None,
-                }
-            };
-            let controller_account_id = if let Some(account_id) = controller.get_account_id() {
-                account_id
-            } else {
-                log::error!("Controller address is not raw account id in staking.set_controller. Cannot persist.");
-                return Ok(());
-            };
-            if let Some(caller_account_id) = maybe_caller_account_id {
-                postgres
-                    .save_set_controller_extrinsic(
-                        &block_hash,
-                        index as i32,
-                        is_nested_call,
-                        maybe_nesting_index,
-                        is_successful,
-                        &caller_account_id,
-                        &controller_account_id,
-                    )
-                    .await?;
-            } else {
-                log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
-            }
-        }
         StakingExtrinsic::Validate {
             maybe_signature: signature,
             preferences,

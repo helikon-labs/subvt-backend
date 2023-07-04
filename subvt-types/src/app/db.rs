@@ -1,6 +1,6 @@
 //! Helper types to read data from PostgreSQL using SQLx.
 use crate::app::event::democracy::DemocracyVotedEvent;
-use crate::app::extrinsic::{PayoutStakersExtrinsic, SetControllerExtrinsic, ValidateExtrinsic};
+use crate::app::extrinsic::{PayoutStakersExtrinsic, ValidateExtrinsic};
 use crate::app::{
     notification::{
         Notification, NotificationParamDataType, NotificationPeriodType, UserNotificationChannel,
@@ -162,26 +162,6 @@ impl ValidateExtrinsic {
             commission_per_billion: db_extrinsic.7 as u64,
             blocks_nominations: db_extrinsic.8,
             is_successful: db_extrinsic.9,
-        })
-    }
-}
-
-pub type PostgresSetControllerExtrinsic =
-    (i32, String, i32, bool, Option<String>, String, String, bool);
-
-impl SetControllerExtrinsic {
-    pub fn from(
-        db_extrinsic: PostgresSetControllerExtrinsic,
-    ) -> anyhow::Result<SetControllerExtrinsic> {
-        Ok(SetControllerExtrinsic {
-            id: db_extrinsic.0 as u32,
-            block_hash: db_extrinsic.1.clone(),
-            extrinsic_index: db_extrinsic.2 as u32,
-            is_nested_call: db_extrinsic.3,
-            maybe_nesting_index: db_extrinsic.4,
-            caller_account_id: AccountId::from_str(&db_extrinsic.5)?,
-            controller_account_id: AccountId::from_str(&db_extrinsic.6)?,
-            is_successful: db_extrinsic.7,
         })
     }
 }

@@ -12,7 +12,6 @@ use crate::content::context::referenda::{
 use crate::content::context::{
     basic::set_basic_context,
     block_authorship::set_block_authorship_context,
-    controller::set_controller_changed_context,
     identity::set_identity_changed_context,
     lost_nomination::set_lost_nomination_context,
     new_nomination::set_new_nomination_context,
@@ -37,7 +36,6 @@ use tera::Context;
 
 mod basic;
 mod block_authorship;
-mod controller;
 mod identity;
 mod lost_nomination;
 mod new_nomination;
@@ -109,9 +107,6 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::ChainValidatorSessionKeysChanged => {
             set_session_keys_changed_context(notification, &mut context);
-        }
-        NotificationTypeCode::ChainValidatorSetController => {
-            set_controller_changed_context(network, notification, &mut context);
         }
         NotificationTypeCode::ChainValidatorIdentityChanged => {
             set_identity_changed_context(notification, &mut context);

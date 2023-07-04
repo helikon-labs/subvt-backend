@@ -4,5 +4,4 @@
 pub mod heartbeat;
 pub mod nominate;
 pub mod payout_stakers;
-pub mod set_controller;
 pub mod validate;

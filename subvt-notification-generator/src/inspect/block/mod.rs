@@ -14,7 +14,6 @@ mod chilling;
 mod offence;
 mod payout;
 mod referenda;
-mod set_controller;
 mod validate;
 
 impl NotificationGenerator {
@@ -40,12 +39,6 @@ impl NotificationGenerator {
             .await?;
         self.inspect_validate_extrinsics(network_postgres.clone(), app_postgres.clone(), &block)
             .await?;
-        self.inspect_set_controller_extrinsics(
-            network_postgres.clone(),
-            app_postgres.clone(),
-            &block,
-        )
-        .await?;
         self.inspect_payout_stakers_extrinsics(
             network_postgres.clone(),
             app_postgres.clone(),
