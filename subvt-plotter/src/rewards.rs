@@ -35,7 +35,7 @@ fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32
 pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Result<PathBuf> {
     let monthly_rewards = get_monthly_rewards(rewards)?;
 
-    let months = vec![
+    let months = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
     let mut domain = vec![];

@@ -14,7 +14,7 @@ pub fn get_referendum_tracks_keyboard(
             parameter: Some(track.id().to_string()),
         };
         rows.push(vec![InlineKeyboardButton {
-            text: format!("{} ({})", track.name().to_string(), count),
+            text: format!("{} ({})", track.name(), count),
             url: None,
             login_url: None,
             callback_data: Some(serde_json::to_string(&query)?),
