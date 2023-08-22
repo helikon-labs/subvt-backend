@@ -16,7 +16,7 @@ pub fn get_storage_plain_key(module_name: &str, storage_name: &str) -> String {
     storage_hash.append(&mut module_name_hash);
     let mut storage_name_hash = hash(&hasher, storage_name.as_bytes());
     storage_hash.append(&mut storage_name_hash);
-    let storage_key_hex: String = storage_hash.iter().map(|b| format!("{b:02x}")).collect();
+    let storage_key_hex: String = hex::encode(storage_hash);
     format!("0x{storage_key_hex}")
 }
 
@@ -112,7 +112,7 @@ where
 {
     let storage_key_hex = get_storage_plain_key(module_name, storage_name);
     let map_key_hash = get_map_key_hash(metadata, module_name, storage_name, key);
-    let map_key_hex: String = map_key_hash.iter().map(|b| format!("{b:02x}")).collect();
+    let map_key_hex: String = hex::encode(map_key_hash);
     format!("{storage_key_hex}{map_key_hex}")
 }
 
@@ -129,10 +129,10 @@ where
     U: Encode,
 {
     let storage_key_hex = get_storage_plain_key(module_name, storage_name);
-    let (may_key_1_hash, may_key_2_hash) =
+    let (map_key_1_hash, map_key_2_hash) =
         get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
-    let map_key_1_hex: String = may_key_1_hash.iter().map(|b| format!("{b:02x}")).collect();
-    let map_key_2_hex: String = may_key_2_hash.iter().map(|b| format!("{b:02x}")).collect();
+    let map_key_1_hex: String = hex::encode(map_key_1_hash);
+    let map_key_2_hex: String = hex::encode(map_key_2_hash);
     format!("{storage_key_hex}{map_key_1_hex}{map_key_2_hex}")
 }
 
@@ -256,7 +256,7 @@ where
         get_double_map_key_hash(metadata, module_name, storage_name, key_1, key_2);
     map_keys_hash.append(&mut key_hash_pair.0);
     map_keys_hash.append(&mut key_hash_pair.1);
-    let map_keys_hash_hex: String = map_keys_hash.iter().map(|b| format!("{b:02x}")).collect();
+    let map_keys_hash_hex: String = hex::encode(map_keys_hash);
     format!("{storage_key_hex}{map_keys_hash_hex}")
 }
 

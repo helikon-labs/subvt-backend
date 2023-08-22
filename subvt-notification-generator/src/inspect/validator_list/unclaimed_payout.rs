@@ -21,7 +21,7 @@ impl NotificationGenerator {
         redis_storage_prefix: &str,
         last_active_era_index: &AtomicU32,
         finalized_block_number: u64,
-        validator_map: &mut HashMap<String, ValidatorDetails>,
+        validator_map: &HashMap<String, ValidatorDetails>,
     ) -> anyhow::Result<()> {
         // check era change & unclaimed payouts
         let db_active_era_json: String = redis::cmd("GET")
