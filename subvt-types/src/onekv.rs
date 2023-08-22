@@ -27,7 +27,7 @@ pub struct OneKVCandidate {
     #[serde(rename(deserialize = "stash"))]
     pub stash_address: String,
     pub unclaimed_eras: Option<Vec<u32>>,
-    pub validity: Vec<OneKVValidity>,
+    pub validity: Option<Vec<OneKVValidity>>,
     pub location: Option<String>,
     pub democracy_vote_count: Option<u32>,
     pub democracy_votes: Option<Vec<u32>>,
@@ -37,7 +37,11 @@ pub struct OneKVCandidate {
 
 impl OneKVCandidate {
     pub fn is_valid(&self) -> bool {
-        self.validity.iter().all(|validity| validity.is_valid)
+        if let Some(validity) = &self.validity {
+            validity.iter().all(|validity| validity.is_valid)
+        } else {
+            false
+        }
     }
 }
 

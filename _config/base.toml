@@ -143,6 +143,7 @@ telegram_bot_port = 11012
 telemetry_processor_port = 11008
 validator_details_server_port = 11002
 validator_list_updater_port = 11001
+referendum_updater_port = 11014
 
 [sub_id]
 api_url = "https://sub.id/api/v1/"

@@ -22,7 +22,7 @@ impl Service for ReferendumUpdater {
     fn get_metrics_server_addr() -> (&'static str, u16) {
         (
             CONFIG.metrics.host.as_str(),
-            CONFIG.metrics.onekv_updater_port,
+            CONFIG.metrics.referendum_updater_port,
         )
     }
 

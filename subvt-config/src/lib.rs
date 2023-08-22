@@ -233,6 +233,7 @@ pub struct MetricsConfig {
     pub notification_processor_port: u16,
     pub telegram_bot_port: u16,
     pub app_service_port: u16,
+    pub referendum_updater_port: u16,
 }
 
 /// Plotter config.

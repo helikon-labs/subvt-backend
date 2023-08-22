@@ -88,26 +88,28 @@ impl PostgreSQLNetworkStorage {
             .await?;
 
         // persist validity records and rank events
-        let mut transaction = self.connection_pool.begin().await?;
-        for validity in &candidate.validity {
-            sqlx::query(
-                r#"
+        if let Some(validity) = &candidate.validity {
+            let mut transaction = self.connection_pool.begin().await?;
+            for validity in validity {
+                sqlx::query(
+                    r#"
                 INSERT INTO sub_onekv_candidate_validity (onekv_id, onekv_candidate_id, validator_account_id, details, is_valid, ty, validity_updated_at)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                 ON CONFLICT (id) DO NOTHING
                 "#,
-            )
-                .bind(&validity.id)
-                .bind(candidate_save_result.0)
-                .bind(validator_account_id.to_string())
-                .bind(&validity.details)
-                .bind(validity.is_valid)
-                .bind(&validity.ty)
-                .bind(validity.updated_at as i64)
-                .execute(&mut transaction)
-                .await?;
+                )
+                    .bind(&validity.id)
+                    .bind(candidate_save_result.0)
+                    .bind(validator_account_id.to_string())
+                    .bind(&validity.details)
+                    .bind(validity.is_valid)
+                    .bind(&validity.ty)
+                    .bind(validity.updated_at as i64)
+                    .execute(&mut transaction)
+                    .await?;
+            }
+            transaction.commit().await?;
         }
-        transaction.commit().await?;
 
         // only keep the relevant number of candidate records
         let candidate_record_count: (i64,) = sqlx::query_as(
