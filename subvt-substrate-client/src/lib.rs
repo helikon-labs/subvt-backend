@@ -288,16 +288,17 @@ impl SubstrateClient {
     pub async fn get_controller_account_id(
         &self,
         stash_account_id: &AccountId,
-        block_hash: &str,
+        maybe_block_hash: Option<&str>,
     ) -> anyhow::Result<Option<AccountId>> {
         let storage_key =
             get_storage_map_key(&self.metadata, "Staking", "Bonded", stash_account_id);
+        let mut params = rpc_params!(vec![storage_key]);
+        if let Some(block_hash) = maybe_block_hash {
+            params.insert(block_hash)?;
+        }
         let chunk_values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request(
-                "state_queryStorageAt",
-                rpc_params!(vec![storage_key], block_hash),
-            )
+            .request("state_queryStorageAt", params)
             .await?;
         if let Some(value) = chunk_values.get(0) {
             if let Some((_, Some(data))) = value.changes.get(0) {
@@ -312,16 +313,17 @@ impl SubstrateClient {
     pub async fn get_stake(
         &self,
         controller_account_id: &AccountId,
-        block_hash: &str,
+        maybe_block_hash: Option<&str>,
     ) -> anyhow::Result<Option<Stake>> {
         let storage_key =
             get_storage_map_key(&self.metadata, "Staking", "Ledger", controller_account_id);
+        let mut params = rpc_params!(vec![storage_key]);
+        if let Some(block_hash) = maybe_block_hash {
+            params.insert(block_hash)?;
+        }
         let chunk_values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request(
-                "state_queryStorageAt",
-                rpc_params!(vec![storage_key], block_hash),
-            )
+            .request("state_queryStorageAt", params)
             .await?;
         if let Some(value) = chunk_values.get(0) {
             if let Some((_, Some(data))) = value.changes.get(0) {
@@ -336,9 +338,12 @@ impl SubstrateClient {
     pub async fn get_stash_account_id(
         &self,
         controller_account_id: &AccountId,
-        block_hash: &str,
+        maybe_block_hash: Option<&str>,
     ) -> anyhow::Result<Option<AccountId>> {
-        match self.get_stake(controller_account_id, block_hash).await? {
+        match self
+            .get_stake(controller_account_id, maybe_block_hash)
+            .await?
+        {
             Some(stake) => Ok(Some(stake.stash_account_id)),
             None => Ok(None),
         }

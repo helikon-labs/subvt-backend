@@ -225,6 +225,7 @@ impl Service for ReportService {
                 .service(validator::validator_era_rewards_service)
                 .service(validator::validator_era_payouts_service)
                 .service(validator::validator_reward_chart_service)
+                .service(validator::validator_bond_service)
         })
         .workers(10)
         .disable_signals()

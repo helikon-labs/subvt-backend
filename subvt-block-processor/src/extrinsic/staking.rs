@@ -108,7 +108,7 @@ pub(crate) async fn process_staking_extrinsic(
             if let Some(controller_account_id) = maybe_controller_account_id {
                 // get stash account id
                 if let Some(stash_account_id) = substrate_client
-                    .get_stash_account_id(&controller_account_id, &block_hash)
+                    .get_stash_account_id(&controller_account_id, Some(&block_hash))
                     .await?
                 {
                     postgres

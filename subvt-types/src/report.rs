@@ -1,7 +1,7 @@
 //! Report presentation types. Utilized by the `subvt-report-service` crate to server era and
 //! validator reports.
 use crate::crypto::AccountId;
-use crate::substrate::{Account, Balance, Epoch, Era};
+use crate::substrate::{Account, Balance, Epoch, Era, Stake};
 use crate::subvt::{ValidatorDetails, ValidatorSummary};
 use serde::{Deserialize, Serialize};
 
@@ -206,4 +206,10 @@ pub struct ValidatorTotalRewardChartData {
     pub rewards: Vec<ValidatorTotalReward>,
     pub start_timestamp: u64,
     pub end_timestamp: u64,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct ValidatorBond {
+    pub controller_account_id: AccountId,
+    pub bond: Stake,
 }

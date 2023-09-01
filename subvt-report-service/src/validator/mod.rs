@@ -5,8 +5,9 @@ use std::str::FromStr;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
-    BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, ValidatorDetailsReport,
-    ValidatorListReport, ValidatorSummaryReport, ValidatorTotalRewardChartData,
+    BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, ValidatorBond,
+    ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
+    ValidatorTotalRewardChartData,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
@@ -308,5 +309,55 @@ pub(crate) async fn validator_reward_chart_service(
         rewards,
         start_timestamp: query.start_timestamp,
         end_timestamp: query.end_timestamp,
+    }))
+}
+
+#[derive(Deserialize)]
+pub(crate) struct ValidatorBondQueryParameters {
+    block_hash: Option<String>,
+}
+
+#[get("/validator/{ss58_address_or_account_id}/bond")]
+pub(crate) async fn validator_bond_service(
+    path: web::Path<ValidatorPathParameter>,
+    query: web::Query<ValidatorBondQueryParameters>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let stash_account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id)
+    {
+        Ok(account_id) => account_id,
+        Err(response) => return Ok(response),
+    };
+    if let Some(block_hash) = &query.block_hash {
+        let trimmed_hex_string = block_hash.trim_start_matches("0x");
+        if trimmed_hex_string.len() != 64 {
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from("Invalid block hash.")));
+        }
+        if hex::decode(trimmed_hex_string).is_err() {
+            return Ok(HttpResponse::BadRequest().json(ServiceError::from("Invalid block hash.")));
+        }
+    }
+    let controller_account_id =
+        match data
+            .substrate_client
+            .get_controller_account_id(&stash_account_id, query.block_hash.as_deref())
+            .await?
+        {
+            Some(controller_account_id) => controller_account_id,
+            None => return Ok(HttpResponse::NotFound().json(ServiceError::from(
+                "No controller account found for the given stash account at the given block hash.",
+            ))),
+        };
+    let bond = match data.substrate_client.get_stake(
+        &controller_account_id,
+        query.block_hash.as_deref(),
+    ).await? {
+        Some(bond) => bond,
+        None => return Ok(HttpResponse::NotFound()
+            .json(ServiceError::from("No bond found for the controller account of the given stash account at the given block hash.")))
+    };
+    Ok(HttpResponse::Ok().json(ValidatorBond {
+        controller_account_id,
+        bond,
     }))
 }

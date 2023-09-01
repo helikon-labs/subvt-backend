@@ -6710,6 +6710,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "futures-util",
+ "hex",
  "lazy_static",
  "log",
  "once_cell",
