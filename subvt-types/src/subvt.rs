@@ -142,8 +142,8 @@ impl From<&ValidatorDetails> for ValidatorSummary {
         let inactive_nominations: Vec<NominationSummary> = validator
             .nominations
             .iter()
-            .cloned()
             .filter(|nomination| !active_staker_account_ids.contains(&nomination.stash_account.id))
+            .cloned()
             .collect();
 
         ValidatorSummary {
