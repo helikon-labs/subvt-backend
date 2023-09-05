@@ -209,7 +209,14 @@ pub struct ValidatorTotalRewardChartData {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct ValidatorBond {
+pub struct Controller {
     pub controller_account_id: AccountId,
+    pub controller_address: String,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct Bond {
+    pub controller_account_id: AccountId,
+    pub controller_address: String,
     pub bond: Stake,
 }

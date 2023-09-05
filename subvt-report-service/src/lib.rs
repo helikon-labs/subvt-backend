@@ -23,6 +23,8 @@ mod era;
 mod metrics;
 mod onekv;
 mod session;
+mod staking;
+pub(crate) mod util;
 mod validator;
 
 lazy_static! {
@@ -225,7 +227,8 @@ impl Service for ReportService {
                 .service(validator::validator_era_rewards_service)
                 .service(validator::validator_era_payouts_service)
                 .service(validator::validator_reward_chart_service)
-                .service(validator::validator_bond_service)
+                .service(staking::controller_service)
+                .service(staking::bond_service)
         })
         .workers(10)
         .disable_signals()
