@@ -720,7 +720,7 @@ impl SubstrateClient {
                     get_rpc_storage_plain_params("Session", "QueuedKeys", Some(block_hash)),
                 )
                 .await?;
-            let session_key_pairs: Vec<(AccountId, [u8; 192])> =
+            let session_key_pairs: Vec<(AccountId, [u8; 225])> =
                 decode_hex_string(&hex_string).unwrap();
             for session_key_pair in session_key_pairs.iter() {
                 let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
