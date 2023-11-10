@@ -86,7 +86,7 @@ where
         .ty;
     let key_hash = {
         let maybe_hasher = match storage_entry_type {
-            StorageEntryType::Map { hashers, .. } => hashers.get(0),
+            StorageEntryType::Map { hashers, .. } => hashers.first(),
             _ => {
                 panic!("Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",)
             }
@@ -225,7 +225,7 @@ where
     let key_hash_pair = {
         let (hasher_1, hasher_2) = match storage_entry_type {
             StorageEntryType::Map { hashers, .. } => {
-                (hashers.get(0).unwrap(), hashers.get(1).unwrap())
+                (hashers.first().unwrap(), hashers.get(1).unwrap())
             }
             _ => {
                 panic!("Unexpected storage entry type. Expected map, got: {storage_entry_type:?}",)

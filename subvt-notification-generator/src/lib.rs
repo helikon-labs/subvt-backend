@@ -49,7 +49,7 @@ impl NotificationGenerator {
             if let Some(account) = substrate_client
                 .get_accounts(&[*validator_account_id], true, &block_hash)
                 .await?
-                .get(0)
+                .first()
             {
                 Some(serde_json::to_string(account)?)
             } else {

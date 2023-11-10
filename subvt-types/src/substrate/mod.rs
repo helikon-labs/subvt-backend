@@ -10,7 +10,9 @@ use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode, Error, Input};
 // pub use polkadot_primitives::v2::{ScrapedOnChainVotes, ValidityAttestation};
-pub use polkadot_primitives::v4::{ScrapedOnChainVotes, ValidityAttestation};
+use pallet_identity::simple::IdentityInfo;
+pub use polkadot_primitives::{ScrapedOnChainVotes, ValidityAttestation};
+pub use polkadot_runtime_parachains::scheduler::CoreOccupied;
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
 use sp_core::bounded::BoundedVec;
@@ -559,8 +561,11 @@ pub fn data_to_string(data: Data) -> Option<String> {
 
 impl IdentityRegistration {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let registration: Registration<Balance, ConstU32<{ u32::MAX }>, ConstU32<{ u32::MAX }>> =
-            Decode::decode(&mut bytes)?;
+        let registration: Registration<
+            Balance,
+            ConstU32<{ u32::MAX }>,
+            IdentityInfo<ConstU32<{ u32::MAX }>>,
+        > = Decode::decode(&mut bytes)?;
         let display = data_to_string(registration.info.display);
         let email = data_to_string(registration.info.email);
         let riot = data_to_string(registration.info.riot);

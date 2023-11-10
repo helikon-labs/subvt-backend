@@ -25,7 +25,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         } else if validators.len() == 1 {
             let query = Query {
                 query_type,
-                parameter: Some(validators.get(0).unwrap().id.to_string()),
+                parameter: Some(validators.first().unwrap().id.to_string()),
             };
             self.process_query(chat_id, None, &query).await?;
         } else {

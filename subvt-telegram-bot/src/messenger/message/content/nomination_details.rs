@@ -54,7 +54,7 @@ impl MessageType {
                     )
                 })
                 .collect();
-            let max_len = active_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+            let max_len = active_nominations.first().map(|n| n.1.len()).unwrap_or(0);
             context.insert(
                 "active_nomination_total",
                 &format_decimal(
@@ -104,7 +104,7 @@ impl MessageType {
             })
             .collect();
         if !inactive_nominations.is_empty() {
-            let max_len = inactive_nominations.get(0).map(|n| n.1.len()).unwrap_or(0);
+            let max_len = inactive_nominations.first().map(|n| n.1.len()).unwrap_or(0);
             context.insert(
                 "inactive_nomination_total",
                 &format_decimal(

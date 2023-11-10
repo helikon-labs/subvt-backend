@@ -55,7 +55,7 @@ pub(crate) fn get_grouped_renderer_context(
     notifications: &[Notification],
 ) -> anyhow::Result<Context> {
     let mut context = Context::new();
-    set_basic_context(network, notifications.get(0).unwrap(), &mut context)?;
+    set_basic_context(network, notifications.first().unwrap(), &mut context)?;
     match NotificationTypeCode::from(notification_type_code) {
         NotificationTypeCode::ChainValidatorBlockAuthorship => {
             set_block_authorship_grouped_context(notifications, &mut context)?;

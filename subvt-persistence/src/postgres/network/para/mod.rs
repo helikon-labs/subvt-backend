@@ -76,7 +76,7 @@ impl PostgreSQLNetworkStorage {
             .bind(block_hash)
             .bind(assignment.core_index as i64)
             .bind(assignment.para_id as i64)
-            .bind(format!("{}", assignment.para_assignment_kind))
+            .bind("")
             .bind(assignment.group_index as i64)
             .fetch_one(&self.connection_pool)
             .await?;

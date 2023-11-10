@@ -1,5 +1,6 @@
 //! SubVT Substrate client implementation.
 #![warn(clippy::disallowed_types)]
+
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_double_map_key, get_storage_map_key,
@@ -33,12 +34,11 @@ use subvt_types::substrate::metadata::{
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
-    Balance, Block, BlockHeader, BlockWrapper, Chain, DemocracyVoting, Epoch, Era, EraRewardPoints,
-    EraStakers, IdentityRegistration, LastRuntimeUpgradeInfo, Nomination, RewardDestination,
-    ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
-    ValidatorStake,
+    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting, CoreOccupied,
+    DemocracyVoting, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
+    LastRuntimeUpgradeInfo, Nomination, RewardDestination, ScrapedOnChainVotes, Stake,
+    SuperAccountId, SystemProperties, ValidatorPreferences, ValidatorStake,
 };
-use subvt_types::substrate::{BlockNumber, ConvictionVoting};
 /// Substrate client structure and its functions.
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
 use subvt_types::subvt::ValidatorDetails;
@@ -300,8 +300,8 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", params)
             .await?;
-        if let Some(value) = chunk_values.get(0) {
-            if let Some((_, Some(data))) = value.changes.get(0) {
+        if let Some(value) = chunk_values.first() {
+            if let Some((_, Some(data))) = value.changes.first() {
                 let bytes: [u8; 32] = (&data.0 as &[u8]).try_into()?;
                 return Ok(Some(AccountId::from(bytes)));
             }
@@ -325,8 +325,8 @@ impl SubstrateClient {
             .ws_client
             .request("state_queryStorageAt", params)
             .await?;
-        if let Some(value) = chunk_values.get(0) {
-            if let Some((_, Some(data))) = value.changes.get(0) {
+        if let Some(value) = chunk_values.first() {
+            if let Some((_, Some(data))) = value.changes.first() {
                 let stake = Stake::from_bytes(&data.0 as &[u8])?;
                 return Ok(Some(stake));
             }
@@ -1208,15 +1208,27 @@ impl SubstrateClient {
         &self,
         block_hash: &str,
     ) -> anyhow::Result<Option<Vec<ParaCoreAssignment>>> {
-        let params = get_rpc_storage_plain_params("ParaScheduler", "Scheduled", Some(block_hash));
-        let maybe_availability_core_vector_hex_string: Option<String> =
+        let params = get_rpc_storage_plain_params("ParaInherent", "OnChainVotes", Some(block_hash));
+        let maybe_votes_hex_string: Option<String> =
             self.ws_client.request("state_getStorage", params).await?;
-        if let Some(availability_core_vector_hex_string) = maybe_availability_core_vector_hex_string
-        {
-            let assignments = ParaCoreAssignment::from_core_assignment_vector_hex_string(
-                &availability_core_vector_hex_string,
-            )?;
-            Ok(Some(assignments))
+        if let Some(hex_string) = maybe_votes_hex_string {
+            let votes: ScrapedOnChainVotes = decode_hex_string(&hex_string)?;
+            // get availability cores
+            let params = get_rpc_storage_plain_params(
+                "ParaScheduler",
+                "AvailabilityCores",
+                Some(block_hash),
+            );
+            let maybe_cores_hex_string: Option<String> =
+                self.ws_client.request("state_getStorage", params).await?;
+            if let Some(cores_hex_string) = &maybe_cores_hex_string {
+                let cores: Vec<CoreOccupied<BlockNumber>> = decode_hex_string(cores_hex_string)?;
+                Ok(Some(ParaCoreAssignment::from_on_chain_votes(
+                    3, cores, votes,
+                )?))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -1324,8 +1336,8 @@ impl SubstrateClient {
                 rpc_params!(vec![storage_key], block_hash),
             )
             .await?;
-        if let Some(value) = chunk_values.get(0) {
-            if let Some((_, Some(data))) = value.changes.get(0) {
+        if let Some(value) = chunk_values.first() {
+            if let Some((_, Some(data))) = value.changes.first() {
                 let mut bytes: &[u8] = &data.0;
                 let voting: ConvictionVoting<
                     Balance,
@@ -1355,8 +1367,8 @@ impl SubstrateClient {
                 rpc_params!(vec![storage_key], block_hash),
             )
             .await?;
-        if let Some(value) = chunk_values.get(0) {
-            if let Some((_, Some(data))) = value.changes.get(0) {
+        if let Some(value) = chunk_values.first() {
+            if let Some((_, Some(data))) = value.changes.first() {
                 let mut bytes: &[u8] = &data.0;
                 let voting: DemocracyVoting<
                     Balance,

@@ -49,7 +49,7 @@ impl NotificationGenerator {
                 is_onekv,
             };
             for rule in rules {
-                if let Some(min_param) = rule.parameters.get(0) {
+                if let Some(min_param) = rule.parameters.first() {
                     if let Ok(min_amount) = min_param.value.parse::<Balance>() {
                         if new_nomination.stake.active_amount < min_amount {
                             continue;

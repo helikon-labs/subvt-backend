@@ -2,8 +2,9 @@ use crate::crypto::AccountId;
 use crate::substrate::error::DecodeError;
 use crate::substrate::event::SubstrateEvent;
 use crate::substrate::metadata::{decode_dispatch_error, decode_dispatch_info};
-use frame_support::dispatch::{DispatchError, DispatchInfo};
+use frame_support::dispatch::DispatchInfo;
 use parity_scale_codec::Decode;
+use sp_runtime::DispatchError;
 
 const CODE_UPDATED: &str = "CodeUpdated";
 const EXTRINSIC_SUCCESS: &str = "ExtrinsicSuccess";

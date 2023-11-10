@@ -1,5 +1,5 @@
-use parity_scale_codec::Decode;
-use polkadot_runtime_parachains::scheduler::{AssignmentKind, CoreAssignment};
+use crate::substrate::{BlockNumber, CoreOccupied};
+use polkadot_primitives::ScrapedOnChainVotes;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
@@ -26,27 +26,42 @@ impl Display for ParaAssignmentKind {
 pub struct ParaCoreAssignment {
     pub core_index: u32,
     pub para_id: u32,
-    pub para_assignment_kind: ParaAssignmentKind,
     pub group_index: u32,
 }
 
 impl ParaCoreAssignment {
-    pub fn from_core_assignment_vector_hex_string(hex_string: &str) -> anyhow::Result<Vec<Self>> {
-        let mut bytes: &[u8] = &hex::decode(hex_string.trim_start_matches("0x"))?;
-        let core_assignments: Vec<CoreAssignment> = Decode::decode(&mut bytes)?;
+    pub fn from_on_chain_votes(
+        group_size: u8,
+        cores: Vec<CoreOccupied<BlockNumber>>,
+        votes: ScrapedOnChainVotes,
+    ) -> anyhow::Result<Vec<Self>> {
         let mut result = Vec::new();
-        for core_assignment in core_assignments {
-            let id: Id = serde_json::from_str(&serde_json::to_string(&core_assignment.para_id)?)?;
-            let assignment = Self {
-                core_index: core_assignment.core.0,
-                para_id: id.0,
-                para_assignment_kind: match core_assignment.kind {
-                    AssignmentKind::Parachain => ParaAssignmentKind::Parachain,
-                    AssignmentKind::Parathread(_, _) => ParaAssignmentKind::Parathread,
-                },
-                group_index: core_assignment.group_idx.0,
-            };
-            result.push(assignment)
+        for votes in votes.backing_validators_per_candidate {
+            let para_id: u32 = votes.0.descriptor.para_id.into();
+            if let Some(vote) = votes.1.first() {
+                let group_index = vote.0 .0 / (group_size as u32);
+                // get core index
+                let mut maybe_core_index: Option<u32> = None;
+                for (index, core) in cores.iter().enumerate() {
+                    match core {
+                        CoreOccupied::Paras(entry) => {
+                            let core_para_id: u32 = entry.assignment.para_id.into();
+                            if core_para_id == para_id {
+                                maybe_core_index = Some(index as u32)
+                            }
+                        }
+                        CoreOccupied::Free => (),
+                    }
+                }
+                if let Some(core_index) = maybe_core_index {
+                    let assignment = Self {
+                        core_index,
+                        para_id,
+                        group_index,
+                    };
+                    result.push(assignment)
+                }
+            }
         }
         Ok(result)
     }

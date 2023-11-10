@@ -3,6 +3,7 @@ use frame_support::traits::Bounded;
 use pallet_conviction_voting::Tally;
 use pallet_referenda::ReferendumIndex;
 use parity_scale_codec::Decode;
+use sp_runtime::traits::BlakeTwo256;
 
 const APPROVED: &str = "Approved";
 const CANCELLED: &str = "Cancelled";
@@ -34,7 +35,7 @@ pub enum ReferendaEvent {
         referendum_index: ReferendumIndex,
         track_id: u16,
         // type parameter is dummy
-        proposal: Bounded<u8>,
+        proposal: Bounded<u8, BlakeTwo256>,
         tally: Tally<Balance, Balance>,
     },
     Killed {
@@ -52,7 +53,7 @@ pub enum ReferendaEvent {
         referendum_index: ReferendumIndex,
         track_id: u16,
         // type parameter is dummy
-        proposal: Bounded<u8>,
+        proposal: Bounded<u8, BlakeTwo256>,
     },
     TimedOut {
         extrinsic_index: Option<u32>,
