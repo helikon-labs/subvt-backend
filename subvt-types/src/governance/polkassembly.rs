@@ -13,6 +13,7 @@ pub enum ReferendumStatus {
     TimedOut,
     Cancelled,
     Rejected,
+    ConfirmStarted,
     Confirmed,
 }
 
@@ -27,6 +28,7 @@ impl Display for ReferendumStatus {
             ReferendumStatus::TimedOut => "TimedOut",
             ReferendumStatus::Cancelled => "Cancelled",
             ReferendumStatus::Rejected => "Rejected",
+            ReferendumStatus::ConfirmStarted => "ConfirmStarted",
             ReferendumStatus::Confirmed => "Confirmed",
         };
         write!(f, "{display}")
