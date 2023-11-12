@@ -15,6 +15,7 @@ pub enum ReferendumStatus {
     Rejected,
     ConfirmStarted,
     Confirmed,
+    Killed,
 }
 
 impl Display for ReferendumStatus {
@@ -30,6 +31,7 @@ impl Display for ReferendumStatus {
             ReferendumStatus::Rejected => "Rejected",
             ReferendumStatus::ConfirmStarted => "ConfirmStarted",
             ReferendumStatus::Confirmed => "Confirmed",
+            ReferendumStatus::Killed => "Killed",
         };
         write!(f, "{display}")
     }
