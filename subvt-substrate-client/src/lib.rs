@@ -720,13 +720,25 @@ impl SubstrateClient {
                     get_rpc_storage_plain_params("Session", "QueuedKeys", Some(block_hash)),
                 )
                 .await?;
-            let session_key_pairs: Vec<(AccountId, [u8; 225])> =
-                decode_hex_string(&hex_string).unwrap();
-            for session_key_pair in session_key_pairs.iter() {
-                let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
-                if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
-                    validator.is_active_next_session = true;
-                    validator.queued_session_keys = Some(session_keys.clone());
+            let maybe_session_key_pairs: anyhow::Result<Vec<(AccountId, [u8; 225])>> =
+                decode_hex_string(&hex_string);
+            if let Ok(session_key_pairs) = &maybe_session_key_pairs {
+                for session_key_pair in session_key_pairs.iter() {
+                    let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
+                    if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
+                        validator.is_active_next_session = true;
+                        validator.queued_session_keys = Some(session_keys.clone());
+                    }
+                }
+            } else {
+                let session_key_pairs: Vec<(AccountId, [u8; 192])> =
+                    decode_hex_string(&hex_string).unwrap();
+                for session_key_pair in session_key_pairs.iter() {
+                    let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
+                    if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
+                        validator.is_active_next_session = true;
+                        validator.queued_session_keys = Some(session_keys.clone());
+                    }
                 }
             }
         }

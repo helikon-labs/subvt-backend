@@ -6,6 +6,11 @@ const SET_KEYS: &str = "set_keys";
 
 #[derive(Clone, Debug)]
 pub enum SessionExtrinsic {
+    SetKeysLegacy {
+        maybe_signature: Option<Signature>,
+        session_keys: [u8; 192],
+        proof: Vec<u8>,
+    },
     SetKeys {
         maybe_signature: Option<Signature>,
         session_keys: [u8; 225],
@@ -25,6 +30,24 @@ impl SessionExtrinsic {
                 session_keys: Decode::decode(bytes)?,
                 proof: Decode::decode(bytes)?,
             })),
+            _ => None,
+        };
+        Ok(maybe_extrinsic)
+    }
+
+    pub fn decode_legacy(
+        name: &str,
+        maybe_signature: &Option<Signature>,
+        bytes: &mut &[u8],
+    ) -> Result<Option<SubstrateExtrinsic>, DecodeError> {
+        let maybe_extrinsic = match name {
+            SET_KEYS => Some(SubstrateExtrinsic::Session(
+                SessionExtrinsic::SetKeysLegacy {
+                    maybe_signature: maybe_signature.clone(),
+                    session_keys: Decode::decode(bytes)?,
+                    proof: Decode::decode(bytes)?,
+                },
+            )),
             _ => None,
         };
         Ok(maybe_extrinsic)

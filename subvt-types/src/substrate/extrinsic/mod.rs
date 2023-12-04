@@ -138,7 +138,17 @@ impl SubstrateExtrinsic {
                 bytes,
             )?,
             "Session" => {
-                session::SessionExtrinsic::decode(&call_variant.name, &maybe_signature, bytes)?
+                if let Ok(extrinsic) =
+                    session::SessionExtrinsic::decode(&call_variant.name, &maybe_signature, bytes)
+                {
+                    extrinsic
+                } else {
+                    session::SessionExtrinsic::decode_legacy(
+                        &call_variant.name,
+                        &maybe_signature,
+                        bytes,
+                    )?
+                }
             }
             "Timestamp" => {
                 timestamp::TimestampExtrinsic::decode(&call_variant.name, &maybe_signature, bytes)?
