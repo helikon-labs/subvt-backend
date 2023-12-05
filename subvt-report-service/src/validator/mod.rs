@@ -1,7 +1,8 @@
-use crate::{ResultResponse, ServiceState};
+use crate::{ResultResponse, ServiceState, CONFIG};
 use actix_web::{get, web, HttpResponse};
 use serde::Deserialize;
 use std::str::FromStr;
+use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
@@ -253,11 +254,12 @@ pub(crate) async fn validator_reward_chart_service(
     query: web::Query<ValidatorRewardChartQueryParameters>,
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
+    let substrate_client = SubstrateClient::new(&CONFIG).await?;
     let rewards = data
         .postgres
         .get_validator_total_rewards(query.start_timestamp, query.end_timestamp)
         .await?;
-    let block_hash = data.substrate_client.get_current_block_hash().await?;
+    let block_hash = substrate_client.get_current_block_hash().await?;
     let account_ids: Vec<AccountId> = rewards
         .iter()
         .map(|reward| reward.validator_account_id)
@@ -271,8 +273,7 @@ pub(crate) async fn validator_reward_chart_service(
             }
         }
     }
-    let new_accounts = data
-        .substrate_client
+    let new_accounts = substrate_client
         .get_accounts(&new_account_ids, false, &block_hash)
         .await?;
     let parent_account_ids: Vec<AccountId> = new_accounts
@@ -288,8 +289,7 @@ pub(crate) async fn validator_reward_chart_service(
             }
         }
     }
-    let new_parent_accounts = data
-        .substrate_client
+    let new_parent_accounts = substrate_client
         .get_accounts(&new_parent_account_ids, false, &block_hash)
         .await?;
     // write new accounts to cache
