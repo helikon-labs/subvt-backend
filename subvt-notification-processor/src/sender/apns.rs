@@ -1,6 +1,7 @@
 //! Apple Push Notification Service (APNS) sender. Sends notifications to Apple devices.
 use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
+use a2::request::payload::APSSound;
 use a2::ErrorReason;
 use async_trait::async_trait;
 use serde::Serialize;
@@ -65,9 +66,9 @@ impl APNSSender {
             },
             device_token: target,
             aps: a2::request::payload::APS {
-                alert: Some(a2::request::payload::APSAlert::Plain(message)),
+                alert: Some(a2::request::payload::APSAlert::Body(message)),
                 badge: None,
-                sound: Some("default"),
+                sound: Some(APSSound::Sound("default")),
                 content_available: Some(1),
                 category: None,
                 mutable_content: None,

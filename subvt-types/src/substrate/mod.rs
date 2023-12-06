@@ -6,11 +6,10 @@ use chrono::{DateTime, LocalResult, TimeZone, Utc};
 use frame_support::traits::ConstU32;
 pub use pallet_conviction_voting::{Conviction as DemocracyConviction, Voting as ConvictionVoting};
 pub use pallet_democracy::Voting as DemocracyVoting;
+use pallet_identity::legacy::IdentityInfo;
 use pallet_identity::{Data, Judgement, Registration};
 use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode, Error, Input};
-// pub use polkadot_primitives::v2::{ScrapedOnChainVotes, ValidityAttestation};
-use pallet_identity::simple::IdentityInfo;
 pub use polkadot_primitives::{ScrapedOnChainVotes, ValidityAttestation};
 pub use polkadot_runtime_parachains::scheduler::CoreOccupied;
 use serde::{Deserialize, Serialize};
@@ -23,6 +22,7 @@ use std::collections::BTreeMap;
 use std::convert::From;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
 use subvt_utility::decode_hex_string;
 use subvt_utility::text::get_condensed_address;
 
