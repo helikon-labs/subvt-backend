@@ -14,7 +14,7 @@ chrono = "0.4"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
 hex = "0.4"
 jsonrpsee = { version = "0.16", features = ["full"] }
-jsonrpsee-core = "0.16"
+jsonrpsee-core = "0.20"
 jsonrpsee-types = "0.16"
 log = { workspace = true }
 parity-scale-codec = { version = "3.4", default-features = false, features = ["derive", "full"] }
