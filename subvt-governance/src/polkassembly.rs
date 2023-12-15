@@ -27,10 +27,14 @@ pub async fn fetch_track_referenda(
         .header("x-network", &CONFIG.substrate.chain)
         .send()
         .await?;
-    let mut posts = response.json::<ReferendaQueryResponse>().await?.posts;
-    for post in &mut posts {
-        post.track_id = track_id;
-    }
+    let posts = response
+        .json::<ReferendaQueryResponse>()
+        .await?
+        .posts
+        .iter()
+        .filter(|post| post.track_no == track_id)
+        .cloned()
+        .collect();
     Ok(posts)
 }
 

@@ -65,8 +65,7 @@ pub struct ReferendaQueryResponse {
 #[derive(Clone, Debug, Deserialize)]
 pub struct ReferendumPost {
     pub post_id: u32,
-    #[serde(default)]
-    pub track_id: u16,
+    pub track_no: u16,
     pub proposer: AccountId,
     #[serde(rename = "title")]
     pub maybe_title: Option<String>,

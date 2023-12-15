@@ -32,7 +32,7 @@ impl PostgreSQLNetworkStorage {
             .bind(referendum.post_id as i32)
             .bind(referendum.proposer.to_string())
             .bind(&referendum.ty)
-            .bind(referendum.track_id as i16)
+            .bind(referendum.track_no as i16)
             .bind(&referendum.maybe_title)
             .bind(&referendum.maybe_method)
             .bind(referendum.status.to_string())
@@ -75,7 +75,7 @@ impl PostgreSQLNetworkStorage {
         for db_referendum in &db_referenda {
             referenda.push(ReferendumPost {
                 post_id: db_referendum.0 as u32,
-                track_id: db_referendum.3 as u16,
+                track_no: db_referendum.3 as u16,
                 proposer: AccountId::from_str(&db_referendum.1)?,
                 maybe_title: db_referendum.4.clone(),
                 maybe_method: db_referendum.5.clone(),

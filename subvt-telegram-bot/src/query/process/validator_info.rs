@@ -40,7 +40,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     if substrate_client
                         .get_account_referendum_conviction_vote(
                             &validator.account_id,
-                            referendum.track_id,
+                            referendum.track_no,
                             referendum.post_id,
                             None,
                         )
