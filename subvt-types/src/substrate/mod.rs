@@ -733,6 +733,7 @@ impl Default for RewardDestination {
 }
 
 impl RewardDestination {
+    #[allow(deprecated)]
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
         let destination: pallet_staking::RewardDestination<AccountId> = Decode::decode(&mut bytes)?;
         let destination = match destination {
