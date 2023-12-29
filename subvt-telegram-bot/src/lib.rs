@@ -4,12 +4,11 @@
 
 use crate::messenger::Messenger;
 use crate::{
-    api::AsyncApi,
     messenger::{message::MessageType, MessengerImpl},
     query::Query,
 };
 use async_trait::async_trait;
-pub use frankenstein::{AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
+pub use frankenstein::{AsyncApi, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
 use frankenstein::{ChatType, GetUpdatesParams, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -205,6 +204,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
         let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
+
         Ok(TelegramBot {
             app_postgres,
             network_postgres,
