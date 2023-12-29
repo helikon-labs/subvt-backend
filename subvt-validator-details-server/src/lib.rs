@@ -10,6 +10,7 @@ use async_trait::async_trait;
 use bus::Bus;
 use futures_util::StreamExt as _;
 use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
+use jsonrpsee_core::server::SubscriptionMessage;
 use lazy_static::lazy_static;
 use redis::RedisResult;
 use serde::Serialize;
@@ -97,164 +98,168 @@ impl ValidatorDetailsServer {
             "subscribe_validatorDetails",
             "subscribe_validatorDetails",
             "unsubscribe_validatorDetails",
-            move |params, mut sink, _| {
-                let account_id = match params.one::<String>() {
-                    Ok(param) => {
-                        if let Ok(account_id) = AccountId::from_str(&param) {
-                            account_id
-                        } else {
-                            let _ = sink.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
-                            return Ok(());
+            move |params, pending, _| {
+                let redis_client = redis_client.clone();
+                let data_connection = data_connection.clone();
+                let bus = bus.clone();
+                async move {
+                    let account_id = match params.one::<String>() {
+                        Ok(param) => {
+                            if let Ok(account_id) = AccountId::from_str(&param) {
+                                account_id
+                            } else {
+                                pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams).await;
+                                return Ok(());
+                            }
                         }
-                    }
-                    Err(_) => {
-                        let _ = sink.reject(jsonrpsee::types::error::ErrorCode::InvalidParams);
-                        return Ok(());
-                    }
-                };
-                log::info!("New subscription {}.", account_id);
-                metrics::subscription_count().inc();
-                let mut validator_details = {
-                    let validator_details = match ValidatorDetailsServer::fetch_validator_details(
-                        &account_id.to_string(),
-                        &redis_client,
-                    ) {
-                        Ok(validator_details) => validator_details,
-                        Err(error) => {
-                            log::error!("Error while fetching validator details: {:?}", error);
-                            let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
-                            let _ = sink.send(&error_message);
+                        Err(_) => {
+                            pending.reject(jsonrpsee::types::error::ErrorCode::InvalidParams).await;
                             return Ok(());
                         }
                     };
-                    let _ = sink.send(&ValidatorDetailsUpdate {
-                        finalized_block_number: Some(LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst)),
-                        validator_details: Some(validator_details.clone()),
-                        validator_details_update: None
-                    });
-                    validator_details
-                };
-                let mut bus_receiver = bus.lock().unwrap().add_rx();
-                let data_connection = data_connection.clone();
-                std::thread::spawn(move || {
-                    loop {
-                        if let Ok(update) = bus_receiver.recv() {
-                            if sink.is_closed() {
-                                log::info!("Subscription connection closed.");
-                                metrics::subscription_count().dec();
-                                return;
+                    let mut sink = pending.accept().await?;
+                    log::info!("New subscription {}.", account_id);
+                    metrics::subscription_count().inc();
+                    let mut validator_details = {
+                        let validator_details = match ValidatorDetailsServer::fetch_validator_details(
+                            &account_id.to_string(),
+                            &redis_client,
+                        ) {
+                            Ok(validator_details) => validator_details,
+                            Err(error) => {
+                                log::error!("Error while fetching validator details: {:?}", error);
+                                let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
+                                let subscription_message = SubscriptionMessage::from_json(&error_message).unwrap();
+                                sink.try_send(subscription_message)?;
+                                return Ok(());
                             }
-                            match update {
-                                BusEvent::NewFinalizedBlock(finalized_block_number) => {
-                                    let active_validator_storage_key_prefix =  format!(
-                                        "subvt:{}:validators:{}:active:validator:{}",
-                                        CONFIG.substrate.chain,
-                                        finalized_block_number,
-                                        account_id,
-                                    );
-                                    let inactive_validator_storage_key_prefix =  format!(
-                                        "subvt:{}:validators:{}:inactive:validator:{}",
-                                        CONFIG.substrate.chain,
-                                        finalized_block_number,
-                                        account_id,
-                                    );
-                                    let hash = {
-                                        let mut hasher = DefaultHasher::new();
-                                        validator_details.hash(&mut hasher);
-                                        hasher.finish()
-                                    };
-                                    let mut data_connection = data_connection.write().unwrap();
-                                    let (validator_storage_key_prefix, db_hash) = if let Ok(db_hash) = redis::cmd("GET")
-                                        .arg(format!(
-                                            "{active_validator_storage_key_prefix}:hash",
-                                        ))
-                                        .query::<u64>(&mut *data_connection) {
-                                        (active_validator_storage_key_prefix, db_hash)
-                                    } else if let Ok(db_hash) = redis::cmd("GET")
-                                        .arg(format!(
-                                            "{inactive_validator_storage_key_prefix}:hash",
-                                        ))
-                                        .query::<u64>(&mut *data_connection) {
-                                        (inactive_validator_storage_key_prefix, db_hash)
-                                    } else {
-                                        log::error!(
-                                            "Validator {} not found.",
-                                            account_id
+                        };
+                        let update = ValidatorDetailsUpdate {
+                            finalized_block_number: Some(LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst)),
+                            validator_details: Some(validator_details.clone()),
+                            validator_details_update: None
+                        };
+                        let subscription_message = SubscriptionMessage::from_json(&update).unwrap();
+                        sink.try_send(subscription_message)?;
+                        validator_details
+                    };
+                    let mut bus_receiver = bus.lock().unwrap().add_rx();
+                    let data_connection = data_connection.clone();
+                    std::thread::spawn(move || {
+                        loop {
+                            if let Ok(update) = bus_receiver.recv() {
+                                if sink.is_closed() {
+                                    log::info!("Subscription connection closed.");
+                                    metrics::subscription_count().dec();
+                                    return;
+                                }
+                                match update {
+                                    BusEvent::NewFinalizedBlock(finalized_block_number) => {
+                                        let active_validator_storage_key_prefix =  format!(
+                                            "subvt:{}:validators:{}:active:validator:{}",
+                                            CONFIG.substrate.chain,
+                                            finalized_block_number,
+                                            account_id,
                                         );
-                                        return;
-                                    };
-                                    let update = if hash != db_hash {
-                                        let validator_json_string_result = redis::cmd("GET")
-                                            .arg(&validator_storage_key_prefix)
-                                            .query::<String>(&mut *data_connection);
-                                        let validator_json_string = match validator_json_string_result {
-                                            Ok(validator_json_string) => validator_json_string,
-                                            Err(error) => {
-                                                log::error!(
-                                                    "Error while fetching validator JSON string for storage key {}: {:?}",
-                                                    validator_storage_key_prefix,
-                                                    error
-                                                );
-                                                return;
-                                            }
+                                        let inactive_validator_storage_key_prefix =  format!(
+                                            "subvt:{}:validators:{}:inactive:validator:{}",
+                                            CONFIG.substrate.chain,
+                                            finalized_block_number,
+                                            account_id,
+                                        );
+                                        let hash = {
+                                            let mut hasher = DefaultHasher::new();
+                                            validator_details.hash(&mut hasher);
+                                            hasher.finish()
                                         };
-                                        let db_validator_details_result =
-                                            serde_json::from_str::<ValidatorDetails>(&validator_json_string);
-                                        let db_validator_details = match db_validator_details_result {
-                                            Ok(db_validator_details) => db_validator_details,
-                                            Err(error) => {
-                                                log::error!(
-                                                    "Error while deserializing validator details for storage key {}: {:?}",
-                                                    validator_storage_key_prefix,
-                                                    error
-                                                );
-                                                return;
-                                            }
-                                        };
-                                        let update = ValidatorDetailsUpdate {
-                                            finalized_block_number: Some(finalized_block_number),
-                                            validator_details: None,
-                                            validator_details_update: Some(validator_details.get_diff(&db_validator_details)),
-                                        };
-                                        validator_details = db_validator_details;
-                                        update
-                                    } else {
-                                        ValidatorDetailsUpdate {
-                                            finalized_block_number: Some(finalized_block_number),
-                                            validator_details: None,
-                                            validator_details_update: None,
-                                        }
-                                    };
-                                    let send_result = sink.send(&update);
-                                    match send_result {
-                                        Err(error) => {
-                                            log::warn!("Error during publish: {:?}", error);
-                                            metrics::subscription_count().dec();
+                                        let mut data_connection = data_connection.write().unwrap();
+                                        let (validator_storage_key_prefix, db_hash) = if let Ok(db_hash) = redis::cmd("GET")
+                                            .arg(format!(
+                                                "{active_validator_storage_key_prefix}:hash",
+                                            ))
+                                            .query::<u64>(&mut *data_connection) {
+                                            (active_validator_storage_key_prefix, db_hash)
+                                        } else if let Ok(db_hash) = redis::cmd("GET")
+                                            .arg(format!(
+                                                "{inactive_validator_storage_key_prefix}:hash",
+                                            ))
+                                            .query::<u64>(&mut *data_connection) {
+                                            (inactive_validator_storage_key_prefix, db_hash)
+                                        } else {
+                                            log::error!(
+                                                "Validator {} not found.",
+                                                account_id
+                                            );
                                             return;
-                                        }
-                                        Ok(is_successful) => {
-                                            if is_successful {
-                                                log::debug!("Diff published.");
-                                            } else {
-                                                log::info!("Publish failed. Closing connection.");
+                                        };
+                                        let update = if hash != db_hash {
+                                            let validator_json_string_result = redis::cmd("GET")
+                                                .arg(&validator_storage_key_prefix)
+                                                .query::<String>(&mut *data_connection);
+                                            let validator_json_string = match validator_json_string_result {
+                                                Ok(validator_json_string) => validator_json_string,
+                                                Err(error) => {
+                                                    log::error!(
+                                                        "Error while fetching validator JSON string for storage key {}: {:?}",
+                                                        validator_storage_key_prefix,
+                                                        error
+                                                    );
+                                                    return;
+                                                }
+                                            };
+                                            let db_validator_details_result =
+                                                serde_json::from_str::<ValidatorDetails>(&validator_json_string);
+                                            let db_validator_details = match db_validator_details_result {
+                                                Ok(db_validator_details) => db_validator_details,
+                                                Err(error) => {
+                                                    log::error!(
+                                                        "Error while deserializing validator details for storage key {}: {:?}",
+                                                        validator_storage_key_prefix,
+                                                        error
+                                                    );
+                                                    return;
+                                                }
+                                            };
+                                            let update = ValidatorDetailsUpdate {
+                                                finalized_block_number: Some(finalized_block_number),
+                                                validator_details: None,
+                                                validator_details_update: Some(validator_details.get_diff(&db_validator_details)),
+                                            };
+                                            validator_details = db_validator_details;
+                                            update
+                                        } else {
+                                            ValidatorDetailsUpdate {
+                                                finalized_block_number: Some(finalized_block_number),
+                                                validator_details: None,
+                                                validator_details_update: None,
+                                            }
+                                        };
+                                        let subscription_message = SubscriptionMessage::from_json(&update).unwrap();
+                                        let send_result = sink.try_send(subscription_message);
+                                        match send_result {
+                                            Err(error) => {
+                                                log::warn!("Error during publish: {:?}", error);
                                                 metrics::subscription_count().dec();
                                                 return;
                                             }
+                                            Ok(()) => {
+                                                log::debug!("Diff published.");
+                                            }
                                         }
                                     }
-                                }
-                                BusEvent::Error => {
-                                    log::error!("Bus update receive error.");
-                                    return;
+                                    BusEvent::Error => {
+                                        log::error!("Bus update receive error.");
+                                        return;
+                                    }
                                 }
                             }
                         }
-                    }
-                });
-                Ok(())
+                    });
+                    Ok(())
+                }
             },
         )?;
-        Ok(rpc_ws_server.start(rpc_module)?)
+        Ok(rpc_ws_server.start(rpc_module))
     }
 }
 

@@ -1,11 +1,13 @@
 //! Subscribes to the network status data on Redis and publishes the data through
 //! websocket pub/sub.
 #![warn(clippy::disallowed_types)]
+
 use anyhow::Context;
 use async_trait::async_trait;
 use bus::Bus;
 use futures_util::StreamExt as _;
 use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
+use jsonrpsee::SubscriptionMessage;
 use lazy_static::lazy_static;
 use redis::aio::Connection;
 use std::sync::{Arc, Mutex, RwLock};
@@ -60,70 +62,73 @@ impl NetworkStatusServer {
             "subscribe_networkStatus",
             "subscribe_networkStatus",
             "unsubscribe_networkStatus",
-            move |_params, mut sink, _| {
-                log::info!("New subscription.");
-                metrics::subscription_count().inc();
-                let mut bus_receiver = bus.lock().unwrap().add_rx();
-                {
-                    let current_status = current_status.read().unwrap();
-                    if current_status.best_block_number != 0 {
-                        let update = NetworkStatusUpdate {
-                            network: CONFIG.substrate.chain.clone(),
-                            status: Some(current_status.clone()),
-                            diff_base_block_number: None,
-                            diff: None,
-                        };
-                        let _ = sink.send(&update);
-                    }
-                }
-                std::thread::spawn(move || loop {
-                    if let Ok(status_diff) = bus_receiver.recv() {
-                        if sink.is_closed() {
-                            log::info!("Subscription connection closed.");
-                            metrics::subscription_count().dec();
-                            return;
+            move |_params, pending, _| {
+                let current_status = current_status.clone();
+                let bus = bus.clone();
+                async move {
+                    let mut sink = pending.accept().await?;
+                    log::info!("New subscription.");
+                    metrics::subscription_count().inc();
+                    let mut bus_receiver = bus.lock().unwrap().add_rx();
+                    {
+                        let current_status = current_status.read().unwrap();
+                        if current_status.best_block_number != 0 {
+                            let update = NetworkStatusUpdate {
+                                network: CONFIG.substrate.chain.clone(),
+                                status: Some(current_status.clone()),
+                                diff_base_block_number: None,
+                                diff: None,
+                            };
+                            let subscription_message =
+                                SubscriptionMessage::from_json(&update).unwrap();
+                            sink.try_send(subscription_message)?;
                         }
-                        match status_diff {
-                            BusEvent::NewBlock(status_diff) => {
-                                let update = NetworkStatusUpdate {
-                                    network: CONFIG.substrate.chain.clone(),
-                                    status: None,
-                                    diff_base_block_number: None,
-                                    diff: Some(*status_diff.clone()),
-                                };
-                                let send_result = sink.send(&update);
-                                match send_result {
-                                    Err(error) => {
-                                        log::warn!("Error during publish: {:?}", error);
-                                        metrics::subscription_count().dec();
-                                        return;
-                                    }
-                                    Ok(is_successful) => {
-                                        if is_successful {
-                                            log::debug!("Diff published.");
-                                        } else {
-                                            log::info!("Publish failed. Closing connection.");
+                    }
+                    std::thread::spawn(move || loop {
+                        if let Ok(status_diff) = bus_receiver.recv() {
+                            if sink.is_closed() {
+                                log::info!("Subscription connection closed.");
+                                metrics::subscription_count().dec();
+                                return;
+                            }
+                            match status_diff {
+                                BusEvent::NewBlock(status_diff) => {
+                                    let update = NetworkStatusUpdate {
+                                        network: CONFIG.substrate.chain.clone(),
+                                        status: None,
+                                        diff_base_block_number: None,
+                                        diff: Some(*status_diff.clone()),
+                                    };
+                                    let subscription_message =
+                                        SubscriptionMessage::from_json(&update).unwrap();
+                                    let send_result = sink.try_send(subscription_message);
+                                    match send_result {
+                                        Err(error) => {
+                                            log::warn!("Error during publish: {:?}", error);
                                             metrics::subscription_count().dec();
                                             return;
                                         }
+                                        Ok(()) => {
+                                            log::debug!("Diff published.");
+                                        }
                                     }
                                 }
-                            }
-                            BusEvent::Error => {
-                                return;
+                                BusEvent::Error => {
+                                    return;
+                                }
                             }
                         }
-                    }
-                });
-                Ok(())
+                    });
+                    Ok(())
+                }
             },
         )?;
-        Ok(rpc_ws_server.start(rpc_module)?)
+        Ok(rpc_ws_server.start(rpc_module))
     }
 }
 
 /// Service implementation.
-#[async_trait(?Send)]
+#[async_trait(? Send)]
 impl Service for NetworkStatusServer {
     fn get_metrics_server_addr() -> (&'static str, u16) {
         (

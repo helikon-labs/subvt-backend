@@ -12,6 +12,7 @@ use bus::Bus;
 use clap::{arg, Command};
 use futures_util::StreamExt as _;
 use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
+use jsonrpsee::SubscriptionMessage;
 use lazy_static::lazy_static;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet, FxHasher};
 use std::hash::{Hash, Hasher};
@@ -68,59 +69,60 @@ impl ValidatorListServer {
             "subscribe_validatorList",
             "subscribe_validatorList",
             "unsubscribe_validatorList",
-            move |_params, mut sink, _| {
-                log::info!("New subscription.");
-                metrics::subscription_count().inc();
-                let mut bus_receiver = bus.lock().unwrap().add_rx();
-                {
-                    let validator_summaries: Vec<ValidatorSummary> = {
-                        let validator_map = validator_map.read().unwrap();
-                        validator_map.iter().map(|value| value.1.into()).collect()
-                    };
-                    let update = ValidatorListUpdate {
-                        insert: validator_summaries,
-                        ..Default::default()
-                    };
-                    let _ = sink.send(&update);
-                }
-                std::thread::spawn(move || loop {
-                    if let Ok(update) = bus_receiver.recv() {
-                        if sink.is_closed() {
-                            log::info!("Subscription connection closed.");
-                            metrics::subscription_count().dec();
-                            return;
-                        }
-                        match update {
-                            BusEvent::Update(update) => {
-                                let send_result = sink.send(&update);
-                                match send_result {
-                                    Err(error) => {
-                                        log::warn!("Error during publish: {:?}", error);
-                                        metrics::subscription_count().dec();
-                                        return;
-                                    }
-                                    Ok(is_successful) => {
-                                        if is_successful {
-                                            log::debug!("Diff published.");
-                                        } else {
-                                            log::info!("Publish failed. Closing connection.");
+            move |_params, pending, _| {
+                let validator_map = validator_map.clone();
+                let bus = bus.clone();
+                async move {
+                    let mut sink = pending.accept().await?;
+                    log::info!("New subscription.");
+                    metrics::subscription_count().inc();
+                    let mut bus_receiver = bus.lock().unwrap().add_rx();
+                    {
+                        let validator_summaries: Vec<ValidatorSummary> = {
+                            let validator_map = validator_map.read().unwrap();
+                            validator_map.iter().map(|value| value.1.into()).collect()
+                        };
+                        let update = ValidatorListUpdate {
+                            insert: validator_summaries,
+                            ..Default::default()
+                        };
+                        let message = SubscriptionMessage::from_json(&update).unwrap();
+                        sink.try_send(message)?;
+                    }
+                    std::thread::spawn(move || loop {
+                        if let Ok(update) = bus_receiver.recv() {
+                            if sink.is_closed() {
+                                log::info!("Subscription connection closed.");
+                                metrics::subscription_count().dec();
+                                return;
+                            }
+                            match update {
+                                BusEvent::Update(update) => {
+                                    let message = SubscriptionMessage::from_json(&update).unwrap();
+                                    let send_result = sink.try_send(message);
+                                    match send_result {
+                                        Err(error) => {
+                                            log::warn!("Error during publish: {:?}", error);
                                             metrics::subscription_count().dec();
                                             return;
                                         }
+                                        Ok(()) => {
+                                            log::debug!("Diff published.");
+                                        }
                                     }
                                 }
-                            }
-                            BusEvent::Error => {
-                                log::error!("Bus update receive error.");
-                                return;
+                                BusEvent::Error => {
+                                    log::error!("Bus update receive error.");
+                                    return;
+                                }
                             }
                         }
-                    }
-                });
-                Ok(())
+                    });
+                    Ok(())
+                }
             },
         )?;
-        Ok(rpc_ws_server.start(rpc_module)?)
+        Ok(rpc_ws_server.start(rpc_module))
     }
 }
 
