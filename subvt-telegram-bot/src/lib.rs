@@ -27,8 +27,6 @@ use subvt_types::app::{
 };
 use subvt_types::crypto::AccountId;
 use subvt_types::telegram::TelegramChatState;
-
-pub mod api;
 mod command;
 pub mod messenger;
 mod metrics;

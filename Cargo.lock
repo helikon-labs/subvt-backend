@@ -1318,22 +1318,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common-multipart-rfc7578"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5baee326bc603965b0f26583e1ecd7c111c41b49bd92a344897476a352798869"
-dependencies = [
- "bytes",
- "futures-core",
- "futures-util",
- "http 0.2.11",
- "mime",
- "mime_guess",
- "rand 0.8.5",
- "thiserror",
-]
-
-[[package]]
 name = "common-path"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3140,19 +3124,6 @@ dependencies = [
  "tokio",
  "tokio-rustls 0.23.4",
  "webpki-roots 0.22.6",
-]
-
-[[package]]
-name = "hyper-multipart-rfc7578"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0eb2cf73e96e9925f4bed948e763aa2901c2f1a3a5f713ee41917433ced6671"
-dependencies = [
- "bytes",
- "common-multipart-rfc7578",
- "futures-core",
- "http 0.2.11",
- "hyper",
 ]
 
 [[package]]
@@ -7866,9 +7837,6 @@ dependencies = [
  "enum-iterator",
  "frankenstein",
  "futures",
- "hyper",
- "hyper-multipart-rfc7578",
- "hyper-tls",
  "itertools 0.12.0",
  "lazy_static",
  "log",

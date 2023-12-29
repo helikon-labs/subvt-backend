@@ -1,5 +1,4 @@
 //! This module handles the sending of all the messages to a Telegram chat.
-use crate::api::{AsyncApi, Error};
 use crate::messenger::keyboard::referendum_tracks::get_referendum_tracks_keyboard;
 use crate::messenger::keyboard::settings::referenda::get_referenda_settings_keyboard;
 use crate::messenger::keyboard::{
@@ -21,9 +20,9 @@ use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use async_trait::async_trait;
 use frankenstein::{
-    AnswerCallbackQueryParams, AsyncTelegramApi, ChatId, DeleteMessageParams, EditMessageResponse,
-    EditMessageTextParams, Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup,
-    SendMessageParams, SendPhotoParams,
+    AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
+    EditMessageResponse, EditMessageTextParams, Error, Message as TelegramMessage, MethodResponse,
+    ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
 #[cfg(test)]
