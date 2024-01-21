@@ -12,7 +12,7 @@ impl PostgreSQLNetworkStorage {
         best_block_number: u64,
         best_block_hash: &str,
     ) -> anyhow::Result<Option<i64>> {
-        let maybe_result: Option<(i64,)> = sqlx::query_as(
+        let maybe_result: Option<(i64, )> = sqlx::query_as(
             r#"
             UPDATE sub_telemetry_node SET best_block_number = $1, best_block_hash = $2, updated_at = now()
             WHERE id = $3
@@ -37,7 +37,7 @@ impl PostgreSQLNetworkStorage {
         finalized_block_number: u64,
         finalized_block_hash: &str,
     ) -> anyhow::Result<Option<i64>> {
-        let maybe_result: Option<(i64,)> = sqlx::query_as(
+        let maybe_result: Option<(i64, )> = sqlx::query_as(
             r#"
             UPDATE sub_telemetry_node SET finalized_block_number = $1, finalized_block_hash = $2, updated_at = now()
             WHERE id = $3
@@ -61,7 +61,7 @@ impl PostgreSQLNetworkStorage {
         node_id: u64,
         location: &NodeLocation,
     ) -> anyhow::Result<Option<i64>> {
-        let maybe_result: Option<(i64,)> = sqlx::query_as(
+        let maybe_result: Option<(i64, )> = sqlx::query_as(
             r#"
             UPDATE sub_telemetry_node SET location = $1, latitude = $2, longitude = $3, updated_at = now()
             WHERE id = $4
@@ -81,6 +81,7 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
+    #[allow(clippy::useless_asref)]
     pub async fn save_node(
         &self,
         node_id: u64,

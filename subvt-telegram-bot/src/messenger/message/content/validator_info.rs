@@ -123,12 +123,8 @@ impl MessageType {
                 context.insert("onekv_invalidity_reasons", &invalidity_reasons);
             }
             context.insert(
-                "onekv_democracy_vote_count",
-                &onekv_summary.democracy_vote_count,
-            );
-            context.insert(
-                "onekv_council_vote_count",
-                &onekv_summary.council_votes.len(),
+                "onekv_conviction_vote_count",
+                &onekv_summary.conviction_vote_count,
             );
             match Utc::timestamp_opt(&Utc, onekv_summary.record_created_at as i64 / 1000, 0) {
                 LocalResult::Single(last_updated) => {

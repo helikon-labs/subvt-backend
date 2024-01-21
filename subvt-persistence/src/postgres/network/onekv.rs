@@ -19,7 +19,7 @@ type PostgresCandidateSummary = (
     Option<f64>,
     Option<String>,
     i64,
-    Vec<String>,
+    Vec<i64>,
     NaiveDateTime,
 );
 
@@ -39,8 +39,8 @@ impl PostgreSQLNetworkStorage {
         self.save_account(&validator_account_id).await?;
         let candidate_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_onekv_candidate (validator_account_id, kusama_account_id, discovered_at, inclusion, commission, is_active, unclaimed_eras, nominated_at, offline_accumulated, offline_since, name, location, rank, is_valid, fault_count, democracy_vote_count, democracy_votes, council_stake, council_votes, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_council_stake, score_democracy, score_asn, score_country, score_nominator_stake, score_provider, score_region)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40)
+            INSERT INTO sub_onekv_candidate (validator_account_id, kusama_account_id, discovered_at, inclusion, commission, is_active, unclaimed_eras, nominated_at, offline_accumulated, offline_since, name, location, rank, is_valid, fault_count, conviction_vote_count, conviction_votes, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_provider, score_opengov, score_country, score_nominator_stake, score_region)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
             RETURNING id
             "#,
         )
@@ -59,10 +59,8 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.rank)
             .bind(candidate.is_valid())
             .bind(candidate.fault_count)
-            .bind(candidate.democracy_vote_count.unwrap_or_default() as i64)
-            .bind(&candidate.democracy_votes.clone().unwrap_or_default().iter().map(|i| *i  as i64).collect::<Vec<i64>>())
-            .bind(&candidate.council_stake.clone().unwrap_or_default())
-            .bind(&candidate.council_votes.clone().unwrap_or_default())
+            .bind(candidate.conviction_vote_count as i64)
+            .bind(&candidate.conviction_votes.iter().map(|i| *i  as i64).collect::<Vec<i64>>())
             .bind(candidate.score.as_ref().map(|score| score.updated_at as i64))
             .bind(candidate.score.as_ref().map(|score| score.total))
             .bind(candidate.score.as_ref().map(|score| score.aggregate))
@@ -77,12 +75,10 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.score.as_ref().map(|score| score.randomness))
             .bind(candidate.score.as_ref().map(|score| score.span_inclusion))
             .bind(candidate.score.as_ref().map(|score| score.location))
-            .bind(candidate.score.as_ref().map(|score| score.council_stake))
-            .bind(candidate.score.as_ref().map(|score| score.democracy))
-            .bind(candidate.score.as_ref().map(|score| score.asn))
+            .bind(candidate.score.as_ref().map(|score| score.provider))
+            .bind(candidate.score.as_ref().map(|score| score.opengov))
             .bind(candidate.score.as_ref().map(|score| score.country))
             .bind(candidate.score.as_ref().map(|score| score.nominator_stake))
-            .bind(candidate.score.as_ref().map(|score| score.provider))
             .bind(candidate.score.as_ref().map(|score| score.region))
             .fetch_one(&self.connection_pool)
             .await?;
@@ -177,7 +173,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Option<OneKVCandidateSummary>> {
         let maybe_candidate_summary: Option<PostgresCandidateSummary> = sqlx::query_as(
             r#"
-            SELECT id, discovered_at, name, nominated_at, offline_since, rank, fault_count, score_total, score_aggregate, location, democracy_vote_count, council_votes, created_at
+            SELECT id, discovered_at, name, nominated_at, offline_since, rank, fault_count, score_total, score_aggregate, location, conviction_vote_count, conviction_votes, created_at
             FROM sub_onekv_candidate
             WHERE validator_account_id = $1
             ORDER BY id DESC
@@ -202,8 +198,8 @@ impl PostgreSQLNetworkStorage {
                     .get_onekv_candidate_validity_items(summary.0 as u32)
                     .await?,
                 location: summary.9,
-                democracy_vote_count: summary.10 as u32,
-                council_votes: summary.11,
+                conviction_vote_count: summary.10 as u32,
+                conviction_votes: summary.11.iter().map(|v| *v as u32).collect(),
                 record_created_at: summary.12.timestamp_millis() as u64,
             }))
         } else {

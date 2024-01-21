@@ -29,10 +29,9 @@ pub struct OneKVCandidate {
     pub unclaimed_eras: Option<Vec<u32>>,
     pub validity: Option<Vec<OneKVValidity>>,
     pub location: Option<String>,
-    pub democracy_vote_count: Option<u32>,
-    pub democracy_votes: Option<Vec<u32>>,
-    pub council_stake: Option<String>,
-    pub council_votes: Option<Vec<String>>,
+    pub provider: Option<String>,
+    pub conviction_vote_count: u32,
+    pub conviction_votes: Vec<u32>,
 }
 
 impl OneKVCandidate {
@@ -58,8 +57,8 @@ pub struct OneKVCandidateSummary {
     pub aggregate_score: Option<f64>,
     pub validity: Vec<OneKVValidity>,
     pub location: Option<String>,
-    pub democracy_vote_count: u32,
-    pub council_votes: Vec<String>,
+    pub conviction_vote_count: u32,
+    pub conviction_votes: Vec<u32>,
     pub record_created_at: u64,
 }
 
@@ -86,15 +85,15 @@ pub struct OneKVScore {
     pub offline: f64,
     pub randomness: f64,
     pub span_inclusion: f64,
+    #[serde(rename(deserialize = "openGov"))]
+    pub opengov: f64,
+    #[serde(rename(deserialize = "openGovDelegations"))]
+    pub opengov_delegations: f64,
     pub location: Option<f64>,
-    #[serde(rename(deserialize = "councilStake"))]
-    pub council_stake: Option<f64>,
-    pub democracy: Option<f64>,
-    pub asn: Option<f64>,
     pub country: Option<f64>,
+    pub provider: Option<f64>,
     #[serde(rename(deserialize = "nominatorStake"))]
     pub nominator_stake: Option<f64>,
-    pub provider: Option<f64>,
     pub region: Option<f64>,
 }
 
@@ -104,8 +103,17 @@ pub struct OneKVIdentity {
     #[serde(rename(deserialize = "_id"))]
     pub id: String,
     pub name: String,
-    pub sub: Option<String>,
+    pub sub_identities: Option<Vec<OneKVSubIdentity>>,
     pub verified: Option<bool>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OneKVSubIdentity {
+    #[serde(rename(deserialize = "_id"))]
+    pub id: String,
+    pub name: String,
+    pub address: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
