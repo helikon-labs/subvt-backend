@@ -21,8 +21,9 @@ use crate::{TelegramBotError, CONFIG};
 use async_trait::async_trait;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    EditMessageResponse, EditMessageTextParams, Error, Message as TelegramMessage, MethodResponse,
-    ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
+    EditMessageResponse, EditMessageTextParams, Error, LinkPreviewOptions,
+    Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup, SendMessageParams,
+    SendPhotoParams,
 };
 use message::MessageType;
 #[cfg(test)]
@@ -253,7 +254,7 @@ impl Messenger for MessengerImpl {
             text: message_type.get_content(&self.renderer),
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            link_preview_options: None,
+            link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             disable_notification: None,
             protect_content: None,
             reply_parameters: None,
@@ -339,7 +340,7 @@ impl Messenger for MessengerImpl {
                 .render("settings_prompt.html", &Context::new())?,
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            link_preview_options: None,
+            link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             reply_markup: Some(inline_keyboard),
         };
         match self.api.edit_message_text(&params).await {
@@ -372,7 +373,7 @@ impl Messenger for MessengerImpl {
             },
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            link_preview_options: None,
+            link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             reply_markup: Some(get_nft_collection_keyboard(
                 &self.renderer,
                 validator_id,
