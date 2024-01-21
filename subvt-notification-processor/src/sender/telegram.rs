@@ -30,11 +30,10 @@ impl TelegramSender {
             text: message,
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            disable_web_page_preview: Some(true),
+            link_preview_options: None,
             disable_notification: None,
             protect_content: None,
-            reply_to_message_id: None,
-            allow_sending_without_reply: None,
+            reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
         };

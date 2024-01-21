@@ -12,7 +12,7 @@ async-trait = "0.1"
 bus = "2.3"
 chrono = "0.4"
 clap = "4.1"
-env_logger = "0.10"
+env_logger = "0.11"
 futures-util = "0.3"
 jsonrpsee = { version = "0.21", features = ["full"] }
 lazy_static = { workspace = true }
@@ -27,4 +27,4 @@ subvt-metrics = { path = "../subvt-metrics" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
 subvt-logging = { path = "../subvt-logging" }
-tokio = { version = "1.34", features = ["full"] }
+tokio = { version = "1.35", features = ["full"] }

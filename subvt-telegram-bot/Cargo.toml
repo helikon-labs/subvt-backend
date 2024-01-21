@@ -6,11 +6,11 @@ rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
-async-recursion = "1.0.0"
+async-recursion = "1.0"
 async-trait = "0.1"
 chrono = "0.4"
 enum-iterator = "1.4"
-frankenstein = { version = "0.29", default-features = false, features = ["async-http-client", "async-telegram-trait"] }
+frankenstein = { version = "0.30.2", default-features = false, features = ["async-http-client", "async-telegram-trait"] }
 futures = "0.3"
 itertools = { workspace = true }
 lazy_static = { workspace = true }
@@ -33,7 +33,7 @@ subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tera = "1.16.0"
 thiserror = { workspace = true }
-tokio = { version = "1.34", features = ["full"] }
+tokio = { version = "1.35", features = ["full"] }
 
 [dev-dependencies]
 mockall = "0.12"

@@ -9,7 +9,7 @@ use crate::{
 };
 use async_trait::async_trait;
 pub use frankenstein::{AsyncApi, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
-use frankenstein::{ChatType, GetUpdatesParams, Message};
+use frankenstein::{ChatType, GetUpdatesParams, MaybeInaccessibleMessage, Message};
 use lazy_static::lazy_static;
 use regex::Regex;
 use rustc_hash::FxHashSet as HashSet;
@@ -502,7 +502,9 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                             // process callback query
                             frankenstein::UpdateContent::CallbackQuery(callback_query) => {
                                 if let Some(callback_data) = callback_query.data {
-                                    if let Some(message) = callback_query.message {
+                                    if let Some(MaybeInaccessibleMessage::Message(message)) =
+                                        callback_query.message
+                                    {
                                         self.save_or_restore_chat(message.chat.id).await?;
                                         tokio::spawn(async move {
                                             let query: Query = if let Ok(query) =

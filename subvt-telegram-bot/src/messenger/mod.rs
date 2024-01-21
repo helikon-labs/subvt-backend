@@ -170,8 +170,7 @@ impl Messenger for MessengerImpl {
             has_spoiler: None,
             disable_notification: None,
             protect_content: None,
-            reply_to_message_id: None,
-            allow_sending_without_reply: None,
+            reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
         };
@@ -254,11 +253,10 @@ impl Messenger for MessengerImpl {
             text: message_type.get_content(&self.renderer),
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            disable_web_page_preview: Some(true),
+            link_preview_options: None,
             disable_notification: None,
             protect_content: None,
-            reply_to_message_id: None,
-            allow_sending_without_reply: None,
+            reply_parameters: None,
             reply_markup: inline_keyboard,
             message_thread_id: None,
         };
@@ -341,7 +339,7 @@ impl Messenger for MessengerImpl {
                 .render("settings_prompt.html", &Context::new())?,
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            disable_web_page_preview: Some(true),
+            link_preview_options: None,
             reply_markup: Some(inline_keyboard),
         };
         match self.api.edit_message_text(&params).await {
@@ -374,7 +372,7 @@ impl Messenger for MessengerImpl {
             },
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            disable_web_page_preview: Some(true),
+            link_preview_options: None,
             reply_markup: Some(get_nft_collection_keyboard(
                 &self.renderer,
                 validator_id,

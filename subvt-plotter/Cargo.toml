@@ -7,18 +7,18 @@ rust-version = "1.67.0"
 [dependencies]
 anyhow = { workspace = true }
 chrono = "0.4"
-env_logger = "0.10"
+env_logger = "0.11"
 format_num = "0.1.0"
 itertools = { workspace = true }
 log = { workspace = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
 rand = "0.8.5"
-resvg = "0.36"
+resvg = "0.37"
 rustc-hash = "1.1.0"
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 svg = "0.14"
 tiny-skia = "0.11"
-usvg = "0.36"
+usvg = "0.37"
