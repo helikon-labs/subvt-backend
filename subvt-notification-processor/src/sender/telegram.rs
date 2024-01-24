@@ -2,7 +2,9 @@
 use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender};
 use async_trait::async_trait;
-use subvt_telegram_bot::{AsyncApi, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
+use subvt_telegram_bot::{
+    AsyncApi, AsyncTelegramApi, ChatId, LinkPreviewOptions, ParseMode, SendMessageParams,
+};
 use subvt_types::app::notification::{Notification, NotificationChannel};
 
 pub(crate) struct TelegramSender {
@@ -30,7 +32,7 @@ impl TelegramSender {
             text: message,
             parse_mode: Some(ParseMode::Html),
             entities: None,
-            link_preview_options: None,
+            link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             disable_notification: None,
             protect_content: None,
             reply_parameters: None,

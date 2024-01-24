@@ -8,7 +8,9 @@ use crate::{
     query::Query,
 };
 use async_trait::async_trait;
-pub use frankenstein::{AsyncApi, AsyncTelegramApi, ChatId, ParseMode, SendMessageParams};
+pub use frankenstein::{
+    AsyncApi, AsyncTelegramApi, ChatId, LinkPreviewOptions, ParseMode, SendMessageParams,
+};
 use frankenstein::{ChatType, GetUpdatesParams, MaybeInaccessibleMessage, Message};
 use lazy_static::lazy_static;
 use regex::Regex;

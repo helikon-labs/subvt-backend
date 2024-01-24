@@ -1,6 +1,6 @@
 [package]
 name = "subvt-substrate-client"
-version = "0.17.15"
+version = "0.17.16"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -8,8 +8,8 @@ rust-version = "1.67.0"
 anyhow = { workspace = true }
 async-lock = "3.3"
 async-recursion = "1.0"
-blake2-rfc = { version = "0.2.18", default-features = false }
-byteorder = { version = "1.4.3", default-features = false }
+blake2-rfc = { version = "0.2", default-features = false }
+byteorder = { version = "1.5", default-features = false }
 chrono = "0.4"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
 hex = "0.4"
@@ -17,8 +17,8 @@ jsonrpsee = { version = "0.21", features = ["full"] }
 jsonrpsee-core = "0.21"
 jsonrpsee-types = "0.21"
 log = { workspace = true }
-parity-scale-codec = { version = "3.4", default-features = false, features = ["derive", "full"] }
-rustc-hash = "1.1.0"
+parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
+rustc-hash = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
@@ -26,7 +26,7 @@ subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tokio = { version = "1.35", features = ["full"] }
-twox-hash = { version = "1.6.2", features = ["digest_0_9"] }
+twox-hash = { version = "1.6", features = ["digest_0_9"] }
 
 [dev-dependencies]
 hex = "0.4"

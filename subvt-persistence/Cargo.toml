@@ -1,6 +1,6 @@
 [package]
 name = "subvt-persistence"
-version = "0.17.15"
+version = "0.17.16"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -10,9 +10,9 @@ chrono = "0.4"
 hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
-parity-scale-codec = "3.4"
+parity-scale-codec = "3.6"
 redis = { version = "0.24", features = ["tokio-comp"] }
-rustc-hash = "1.1.0"
+rustc-hash = "1.1"
 serde = { version = "1.0" }
 serde_json = "1.0"
 subvt-config = { path = "../subvt-config" }

@@ -1,11 +1,11 @@
 [package]
 name = "subvt-service-common"
-version = "0.17.15"
+version = "0.17.16"
 edition = "2021"
 rust-version = "1.67.0"
 
 [dependencies]
-actix-web = "4.3"
+actix-web = "4.4"
 anyhow = { workspace = true }
 async-trait = "0.1"
 log = { workspace = true }

@@ -8,7 +8,7 @@ use rustc_hash::FxHashMap as HashMap;
 use std::path::PathBuf;
 use subvt_types::substrate::{Balance, Era};
 use subvt_utility::numeric::format_decimal;
-use usvg::{TreeParsing, TreeTextToPath};
+use usvg::{PostProcessingSteps, TreeParsing, TreePostProc};
 
 fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32, Balance>> {
     if rewards.is_empty() {
@@ -126,12 +126,20 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
     fontdb.set_sans_serif_family(&CONFIG.plotter.font_sans_serif_family);
     let svg_data = std::fs::read(&svg_path).unwrap();
     let mut rtree = usvg::Tree::from_data(&svg_data, &opt).unwrap();
-    rtree.convert_text(&fontdb);
+    rtree.postprocess(
+        PostProcessingSteps {
+            convert_text_into_paths: true,
+        },
+        &fontdb,
+    );
     //let pixmap_size = rtree.size.to_screen_size();
     let pixmap_size = rtree.size.to_int_size();
     let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
-    let rtree = resvg::Tree::from_usvg(&rtree);
-    rtree.render(tiny_skia::Transform::default(), &mut pixmap.as_mut());
+    resvg::render(
+        &rtree,
+        tiny_skia::Transform::default(),
+        &mut pixmap.as_mut(),
+    );
     pixmap.save_png(&png_path)?;
     // delete the svg file
     std::fs::remove_file(svg_path)?;
