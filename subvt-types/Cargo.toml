@@ -30,7 +30,7 @@ rustc-hash = "1.1"
 scale-info = "2.10"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
+sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.6.0" }
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
 sp-session = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
