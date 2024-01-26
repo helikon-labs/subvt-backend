@@ -45,7 +45,7 @@ impl ParaCoreAssignment {
                 for (index, core) in cores.iter().enumerate() {
                     match core {
                         CoreOccupied::Paras(entry) => {
-                            let core_para_id: u32 = entry.assignment.para_id.into();
+                            let core_para_id: u32 = entry.assignment.para_id().into();
                             if core_para_id == para_id {
                                 maybe_core_index = Some(index as u32)
                             }
