@@ -1,7 +1,7 @@
 use crate::crypto::AccountId;
 use crate::substrate::error::DecodeError;
 use crate::substrate::event::SubstrateEvent;
-use crate::substrate::Balance;
+use crate::substrate::{Balance, RewardDestination};
 use parity_scale_codec::Decode;
 use sp_staking::{EraIndex, SessionIndex};
 
@@ -57,6 +57,7 @@ pub enum StakingEvent {
     Rewarded {
         extrinsic_index: Option<u32>,
         rewardee_account_id: AccountId,
+        reward_destination: RewardDestination,
         amount: Balance,
     },
     Slashed {
@@ -167,6 +168,7 @@ impl StakingEvent {
             REWARDED | REWARD => Some(SubstrateEvent::Staking(StakingEvent::Rewarded {
                 extrinsic_index,
                 rewardee_account_id: Decode::decode(bytes)?,
+                reward_destination: Decode::decode(bytes)?,
                 amount: Decode::decode(bytes)?,
             })),
             SLASHED | SLASH => Some(SubstrateEvent::Staking(StakingEvent::Slashed {

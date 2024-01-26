@@ -75,6 +75,7 @@ pub(crate) async fn process_staking_event(
         StakingEvent::Rewarded {
             extrinsic_index,
             rewardee_account_id,
+            reward_destination: _reward_destination,
             amount,
         } => {
             let extrinsic_index = extrinsic_index.map(|extrinsic_index| extrinsic_index as i32);
