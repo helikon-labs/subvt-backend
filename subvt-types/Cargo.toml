@@ -34,7 +34,7 @@ sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", ta
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
 sp-session = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
-sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.5.0" }
+sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.6.0" }
 sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
