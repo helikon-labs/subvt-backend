@@ -9,7 +9,6 @@ use crate::substrate::{
     Stake, StakeSummary, ValidatorPreferences, ValidatorStake,
 };
 use serde::{Deserialize, Serialize};
-use std::convert::From;
 use subvt_proc_macro::Diff;
 
 /// Represents the network's status that changes with every block.

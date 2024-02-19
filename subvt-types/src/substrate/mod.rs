@@ -19,7 +19,6 @@ use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
 use sp_staking::EraIndex;
 use std::collections::BTreeMap;
-use std::convert::From;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
