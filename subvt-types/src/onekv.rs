@@ -155,7 +155,6 @@ pub struct OneKVNominator {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct OneKVNominatorSummary {
     pub id: u64,
     pub onekv_id: String,
