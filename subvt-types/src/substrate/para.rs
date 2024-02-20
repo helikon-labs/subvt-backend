@@ -1,4 +1,4 @@
-use crate::substrate::{BlockNumber, CoreOccupied};
+use crate::substrate::legacy::LegacyCoreOccupied;
 use polkadot_primitives::ScrapedOnChainVotes;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -32,7 +32,7 @@ pub struct ParaCoreAssignment {
 impl ParaCoreAssignment {
     pub fn from_on_chain_votes(
         group_size: u8,
-        cores: Vec<CoreOccupied<BlockNumber>>,
+        cores: Vec<LegacyCoreOccupied>,
         votes: ScrapedOnChainVotes,
     ) -> anyhow::Result<Vec<Self>> {
         let mut result = Vec::new();
@@ -44,13 +44,13 @@ impl ParaCoreAssignment {
                 let mut maybe_core_index: Option<u32> = None;
                 for (index, core) in cores.iter().enumerate() {
                     match core {
-                        CoreOccupied::Paras(entry) => {
-                            let core_para_id: u32 = entry.assignment.para_id().into();
+                        LegacyCoreOccupied::Paras(entry) => {
+                            let core_para_id = entry.assignment.para_id.0;
                             if core_para_id == para_id {
                                 maybe_core_index = Some(index as u32)
                             }
                         }
-                        CoreOccupied::Free => (),
+                        LegacyCoreOccupied::Free => (),
                     }
                 }
                 if let Some(core_index) = maybe_core_index {

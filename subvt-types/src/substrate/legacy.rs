@@ -1,6 +1,7 @@
 //! Types to support the older metadata/runtime versions.
 use frame_support::dispatch::{DispatchClass, Pays};
 use parity_scale_codec::Decode;
+use polkadot_core_primitives::BlockNumber;
 use sp_runtime::{ArithmeticError, DispatchError, ModuleError, Perbill, TokenError};
 
 pub type ValidatorIndex = u16;
@@ -75,3 +76,34 @@ impl From<LegacyDispatchError> for DispatchError {
         }
     }
 }
+
+#[derive(Clone, Debug, Decode)]
+#[cfg_attr(feature = "std", derive(PartialEq))]
+pub enum LegacyCoreOccupied {
+    /// No candidate is waiting availability on this core right now (the core is not occupied).
+    Free,
+    /// A para is currently waiting for availability/inclusion on this core.
+    Paras(LegacyParasEntry),
+}
+
+#[derive(Clone, Debug, Decode, PartialEq)]
+pub struct LegacyParasEntry {
+    /// The underlying `Assignment`
+    pub assignment: LegacyCoreAssignment,
+    /// The number of times the entry has timed out in availability already.
+    pub availability_timeouts: u32,
+    /// The block height until this entry needs to be backed.
+    ///
+    /// If missed the entry will be removed from the claim queue without ever having occupied
+    /// the core.
+    pub ttl: BlockNumber,
+}
+
+#[derive(Clone, Debug, Decode, PartialEq)]
+pub struct LegacyCoreAssignment {
+    /// Assignment's ParaId
+    pub para_id: ParaId,
+}
+
+#[derive(Clone, Debug, Decode, PartialEq)]
+pub struct ParaId(pub u32);

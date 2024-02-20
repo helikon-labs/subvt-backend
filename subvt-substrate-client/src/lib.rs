@@ -27,13 +27,14 @@ use subvt_types::substrate::democracy::{
     get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote, VoteType,
 };
 use subvt_types::substrate::error::DecodeError;
+use subvt_types::substrate::legacy::LegacyCoreOccupied;
 use subvt_types::substrate::metadata::{
     get_metadata_constant, get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
 };
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
-    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting, CoreOccupied,
+    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting,
     DemocracyVoting, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
     LastRuntimeUpgradeInfo, Nomination, RewardDestination, ScrapedOnChainVotes, Stake,
     SuperAccountId, SystemProperties, ValidatorPreferences, ValidatorStake,
@@ -1233,7 +1234,7 @@ impl SubstrateClient {
             let maybe_cores_hex_string: Option<String> =
                 self.ws_client.request("state_getStorage", params).await?;
             if let Some(cores_hex_string) = &maybe_cores_hex_string {
-                let cores: Vec<CoreOccupied<BlockNumber>> = decode_hex_string(cores_hex_string)?;
+                let cores: Vec<LegacyCoreOccupied> = decode_hex_string(cores_hex_string)?;
                 Ok(Some(ParaCoreAssignment::from_on_chain_votes(
                     3, cores, votes,
                 )?))
