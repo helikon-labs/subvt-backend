@@ -177,7 +177,7 @@ impl PostgreSQLNetworkStorage {
                 .bind(node_id as i64)
                 .bind(data.1[i])
                 .bind(data.0[i])
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
         }
         transaction.commit().await?;

@@ -38,5 +38,5 @@ sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "po
 sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
-scale-bits = "0.4"
+scale-bits = "0.5"
 thiserror = { workspace = true }

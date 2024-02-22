@@ -610,7 +610,7 @@ impl PostgreSQLAppStorage {
             )
                 .bind(user_notification_rule_id)
                 .bind(*user_validator_id as i32)
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
         }
         // insert channel ids
@@ -623,7 +623,7 @@ impl PostgreSQLAppStorage {
             )
                 .bind(user_notification_rule_id)
                 .bind(*user_notification_channel_id as i32)
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
         }
         // insert params
@@ -637,7 +637,7 @@ impl PostgreSQLAppStorage {
                 .bind(user_notification_rule_id)
                 .bind(param.parameter_type_id as i32)
                 .bind(&param.value)
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
         }
         transaction.commit().await?;

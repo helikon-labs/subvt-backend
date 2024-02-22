@@ -101,7 +101,7 @@ impl PostgreSQLNetworkStorage {
                     .bind(validity.is_valid)
                     .bind(&validity.ty)
                     .bind(validity.updated_at as i64)
-                    .execute(&mut transaction)
+                    .execute(&mut *transaction)
                     .await?;
             }
             transaction.commit().await?;
@@ -254,7 +254,7 @@ impl PostgreSQLNetworkStorage {
             .bind(nominator_save_result.0)
             .bind(stash_account_id.to_string())
             .bind(&nominee.name)
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
         }
         transaction.commit().await?;

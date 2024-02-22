@@ -14,7 +14,7 @@ chrono = "0.4"
 clap = "4.4"
 env_logger = "0.11"
 futures-util = "0.3"
-jsonrpsee = { version = "0.21", features = ["full"] }
+jsonrpsee = { version = "0.22", features = ["full"] }
 lazy_static = { workspace = true }
 log = { workspace = true }
 once_cell = "1"

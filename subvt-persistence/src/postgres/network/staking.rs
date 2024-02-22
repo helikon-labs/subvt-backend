@@ -139,7 +139,7 @@ impl PostgreSQLNetworkStorage {
                 "#,
             )
             .bind(validator_account_id.to_string())
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
             // create controller account id (if not exists)
             let maybe_controller_account_id = bonded_account_id_map.get(validator_account_id);
@@ -152,7 +152,7 @@ impl PostgreSQLNetworkStorage {
                     "#,
                 )
                 .bind(controller_account_id.to_string())
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
             }
             let maybe_active_validator_index = active_validator_account_ids
@@ -181,7 +181,7 @@ impl PostgreSQLNetworkStorage {
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.total_stake.to_string()))
                 .bind(maybe_validator_stake.map(|validator_stake| validator_stake.nominators.len() as i32))
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
         }
         transaction.commit().await?;
@@ -199,7 +199,7 @@ impl PostgreSQLNetworkStorage {
                 "#,
             )
             .bind(validator_stake.account.id.to_string())
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
             for nominator_stake in &validator_stake.nominators {
                 // create nominator account (if not exists)
@@ -211,7 +211,7 @@ impl PostgreSQLNetworkStorage {
                     "#,
                 )
                 .bind(nominator_stake.account.id.to_string())
-                .execute(&mut transaction)
+                .execute(&mut *transaction)
                 .await?;
                 sqlx::query(
                     r#"
@@ -224,7 +224,7 @@ impl PostgreSQLNetworkStorage {
                     .bind(validator_stake.account.id.to_string())
                     .bind(nominator_stake.account.id.to_string())
                     .bind(nominator_stake.stake.to_string())
-                    .execute(&mut transaction)
+                    .execute(&mut *transaction)
                     .await?;
             }
         }
@@ -325,7 +325,7 @@ impl PostgreSQLNetworkStorage {
             .bind(reward_points as i64)
             .bind(era_index as i64)
             .bind(validator_account_id.to_string())
-            .execute(&mut transaction)
+            .execute(&mut *transaction)
             .await?;
         }
         transaction.commit().await?;
