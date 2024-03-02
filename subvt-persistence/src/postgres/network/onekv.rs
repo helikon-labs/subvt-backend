@@ -39,8 +39,8 @@ impl PostgreSQLNetworkStorage {
         self.save_account(&validator_account_id).await?;
         let candidate_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_onekv_candidate (validator_account_id, kusama_account_id, discovered_at, inclusion, commission, is_active, unclaimed_eras, nominated_at, offline_accumulated, offline_since, name, location, rank, is_valid, fault_count, conviction_vote_count, conviction_votes, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_provider, score_opengov, score_country, score_nominator_stake, score_region)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
+            INSERT INTO sub_onekv_candidate (validator_account_id, kusama_account_id, discovered_at, inclusion, commission, is_active, unclaimed_eras, nominated_at, offline_accumulated, offline_since, name, location, rank, is_valid, fault_count, score_updated_at, score_total, score_aggregate, score_inclusion, score_discovered, score_nominated, score_rank, score_unclaimed, score_bonded, score_faults, score_offline, score_randomness, score_span_inclusion, score_location, score_provider, score_country, score_nominator_stake, score_region)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
             RETURNING id
             "#,
         )
@@ -59,8 +59,6 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.rank)
             .bind(candidate.is_valid())
             .bind(candidate.fault_count)
-            .bind(candidate.conviction_vote_count as i64)
-            .bind(&candidate.conviction_votes.iter().map(|i| *i  as i64).collect::<Vec<i64>>())
             .bind(candidate.score.as_ref().map(|score| score.updated_at as i64))
             .bind(candidate.score.as_ref().map(|score| score.total))
             .bind(candidate.score.as_ref().map(|score| score.aggregate))
@@ -76,7 +74,6 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.score.as_ref().map(|score| score.span_inclusion))
             .bind(candidate.score.as_ref().map(|score| score.location))
             .bind(candidate.score.as_ref().map(|score| score.provider))
-            .bind(candidate.score.as_ref().map(|score| score.opengov))
             .bind(candidate.score.as_ref().map(|score| score.country))
             .bind(candidate.score.as_ref().map(|score| score.nominator_stake))
             .bind(candidate.score.as_ref().map(|score| score.region))
@@ -222,8 +219,8 @@ impl PostgreSQLNetworkStorage {
         self.save_account(&proxy_account_id).await?;
         let nominator_save_result: (i32,) = sqlx::query_as(
             r#"
-            INSERT INTO sub_onekv_nominator (onekv_id, account_id, stash_account_id, proxy_account_id, bonded_amount, proxy_delay, last_nomination_at, nominator_created_at, average_stake, new_bonded_amount, reward_destination)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            INSERT INTO sub_onekv_nominator (onekv_id, account_id, stash_account_id, proxy_account_id, bonded_amount, proxy_delay, last_nomination_at, nominator_created_at, average_stake, reward_destination)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING id
             "#,
         )
@@ -236,7 +233,6 @@ impl PostgreSQLNetworkStorage {
             .bind(nominator.last_nomination_at as i64)
             .bind(nominator.created_at as i64)
             .bind(nominator.average_stake)
-            .bind(nominator.new_bonded_amount)
             .bind(&nominator.reward_destination)
             .fetch_one(&self.connection_pool)
             .await?;

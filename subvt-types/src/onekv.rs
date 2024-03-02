@@ -30,8 +30,6 @@ pub struct OneKVCandidate {
     pub validity: Option<Vec<OneKVValidity>>,
     pub location: Option<String>,
     pub provider: Option<String>,
-    pub conviction_vote_count: u32,
-    pub conviction_votes: Vec<u32>,
 }
 
 impl OneKVCandidate {
@@ -85,10 +83,6 @@ pub struct OneKVScore {
     pub offline: f64,
     pub randomness: f64,
     pub span_inclusion: f64,
-    #[serde(rename(deserialize = "openGov"))]
-    pub opengov: f64,
-    #[serde(rename(deserialize = "openGovDelegations"))]
-    pub opengov_delegations: f64,
     pub location: Option<f64>,
     pub country: Option<f64>,
     pub provider: Option<f64>,
@@ -150,7 +144,6 @@ pub struct OneKVNominator {
     pub created_at: u64,
     #[serde(rename(deserialize = "avgStake"))]
     pub average_stake: f64,
-    pub new_bonded_amount: f64,
     pub reward_destination: String,
 }
 
