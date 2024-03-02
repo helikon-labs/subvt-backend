@@ -171,7 +171,7 @@ impl NotificationProcessor {
                         notification.notification_channel,
                         notification.notification_target.clone(),
                     );
-                    if notification_groups.get(&key).is_none() {
+                    if !notification_groups.contains_key(&key) {
                         notification_groups.insert(key.clone(), vec![]);
                     }
                     notification_groups

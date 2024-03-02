@@ -24,9 +24,7 @@ fn get_monthly_rewards(rewards: &[(Era, Balance)]) -> anyhow::Result<HashMap<u32
     let min_month_index = *monthly_rewards.keys().min().unwrap();
     let max_month_index = *monthly_rewards.keys().max().unwrap();
     for i in min_month_index..=max_month_index {
-        if monthly_rewards.get(&i).is_none() {
-            monthly_rewards.insert(i, 0);
-        }
+        monthly_rewards.entry(i).or_insert(0);
     }
     Ok(monthly_rewards)
 }
