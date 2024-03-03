@@ -18,8 +18,6 @@ type PostgresCandidateSummary = (
     Option<f64>,
     Option<f64>,
     Option<String>,
-    i64,
-    Vec<i64>,
     NaiveDateTime,
 );
 
@@ -170,7 +168,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<Option<OneKVCandidateSummary>> {
         let maybe_candidate_summary: Option<PostgresCandidateSummary> = sqlx::query_as(
             r#"
-            SELECT id, discovered_at, name, nominated_at, offline_since, rank, fault_count, score_total, score_aggregate, location, conviction_vote_count, conviction_votes, created_at
+            SELECT id, discovered_at, name, nominated_at, offline_since, rank, fault_count, score_total, score_aggregate, location, created_at
             FROM sub_onekv_candidate
             WHERE validator_account_id = $1
             ORDER BY id DESC
@@ -195,9 +193,7 @@ impl PostgreSQLNetworkStorage {
                     .get_onekv_candidate_validity_items(summary.0 as u32)
                     .await?,
                 location: summary.9,
-                conviction_vote_count: summary.10 as u32,
-                conviction_votes: summary.11.iter().map(|v| *v as u32).collect(),
-                record_created_at: summary.12.timestamp_millis() as u64,
+                record_created_at: summary.10.timestamp_millis() as u64,
             }))
         } else {
             Ok(None)

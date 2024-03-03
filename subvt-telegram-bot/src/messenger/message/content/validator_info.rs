@@ -122,10 +122,6 @@ impl MessageType {
                     .collect();
                 context.insert("onekv_invalidity_reasons", &invalidity_reasons);
             }
-            context.insert(
-                "onekv_conviction_vote_count",
-                &onekv_summary.conviction_vote_count,
-            );
             match Utc::timestamp_opt(&Utc, onekv_summary.record_created_at as i64 / 1000, 0) {
                 LocalResult::Single(last_updated) => {
                     context.insert(

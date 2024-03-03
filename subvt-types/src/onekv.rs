@@ -55,8 +55,6 @@ pub struct OneKVCandidateSummary {
     pub aggregate_score: Option<f64>,
     pub validity: Vec<OneKVValidity>,
     pub location: Option<String>,
-    pub conviction_vote_count: u32,
-    pub conviction_votes: Vec<u32>,
     pub record_created_at: u64,
 }
 
