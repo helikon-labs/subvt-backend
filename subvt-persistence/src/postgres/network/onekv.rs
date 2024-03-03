@@ -54,7 +54,7 @@ impl PostgreSQLNetworkStorage {
             .bind(candidate.offline_since as i64)
             .bind(&candidate.name)
             .bind(&candidate.location)
-            .bind(candidate.rank)
+            .bind(candidate.rank.unwrap_or(0))
             .bind(candidate.is_valid())
             .bind(candidate.fault_count)
             .bind(candidate.score.as_ref().map(|score| score.updated_at as i64))

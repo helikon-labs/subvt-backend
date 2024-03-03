@@ -20,7 +20,7 @@ pub struct OneKVCandidate {
     pub nominated_at: Option<u64>,
     pub offline_accumulated: i64,
     pub offline_since: u64,
-    pub rank: i64,
+    pub rank: Option<i64>,
     #[serde(rename(deserialize = "faults"))]
     pub fault_count: i64,
     pub score: Option<OneKVScore>,
