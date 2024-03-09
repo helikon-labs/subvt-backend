@@ -891,8 +891,7 @@ impl SubstrateClient {
                         let account_id = &stake.stash_account_id;
                         if let Some(nomination) = nomination_map.get_mut(account_id) {
                             nomination.stake = stake;
-                        } else {
-                            let validator = validator_map.get_mut(account_id).unwrap();
+                        } else if let Some(validator) = validator_map.get_mut(account_id) {
                             validator.self_stake = stake;
                         }
                     }
