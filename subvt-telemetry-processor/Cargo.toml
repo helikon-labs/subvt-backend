@@ -1,6 +1,6 @@
 [package]
 name = "subvt-telemetry-processor"
-version = "0.17.22"
+version = "0.17.23"
 edition = "2021"
 rust-version = "1.67.0"
 
