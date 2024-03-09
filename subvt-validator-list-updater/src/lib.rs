@@ -230,7 +230,9 @@ impl ValidatorListUpdater {
             validator.offline_offence_count = db_validator_info.offline_offence_count;
             validator.active_era_count = db_validator_info.active_era_count;
             validator.inactive_era_count = db_validator_info.inactive_era_count;
-            validator.unclaimed_era_indices = db_validator_info.unclaimed_era_indices.clone();
+            validator
+                .unclaimed_era_indices
+                .clone_from(&db_validator_info.unclaimed_era_indices);
             validator.blocks_authored = db_validator_info.blocks_authored;
             validator.reward_points = db_validator_info.reward_points;
             validator.heartbeat_received = db_validator_info.heartbeat_received;
