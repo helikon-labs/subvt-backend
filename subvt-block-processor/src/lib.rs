@@ -415,9 +415,22 @@ impl BlockProcessor {
             }
         }
         // para core assignments
-        if let Some(para_core_assignments) = substrate_client
+        if let Ok(Some(para_core_assignments)) = substrate_client
             .get_para_core_assignments(&block_hash)
-            .await?
+            .await
+        {
+            for para_core_assignment in &para_core_assignments {
+                postgres
+                    .save_para_core_assignment(&block_hash, para_core_assignment)
+                    .await?;
+            }
+            log::debug!(
+                "Processed {} para core scheduler assignments.",
+                para_core_assignments.len()
+            );
+        } else if let Ok(Some(para_core_assignments)) = substrate_client
+            .get_para_core_assignments_legacy(&block_hash)
+            .await
         {
             for para_core_assignment in &para_core_assignments {
                 postgres

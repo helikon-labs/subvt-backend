@@ -18,7 +18,7 @@ use sp_core::bounded::BoundedVec;
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
 pub use sp_staking::PagedExposureMetadata;
-use sp_staking::{EraIndex, ExposurePage};
+use sp_staking::{EraIndex, Exposure, ExposurePage};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -427,6 +427,34 @@ pub struct ValidatorStake {
 }
 
 impl ValidatorStake {
+    pub fn from_bytes_legacy(
+        mut bytes: &[u8],
+        validator_account_id: AccountId,
+    ) -> anyhow::Result<Self> {
+        let exposure: Exposure<AccountId, Balance> = Decode::decode(&mut bytes)?;
+        let mut nominators: Vec<NominatorStake> = Vec::new();
+        for other in exposure.others {
+            let stake = other.value;
+            let account = Account {
+                id: other.who,
+                address: other.who.to_ss58_check(),
+                ..Default::default()
+            };
+            nominators.push(NominatorStake { account, stake });
+        }
+        let validator_stake = Self {
+            account: Account {
+                id: validator_account_id,
+                address: validator_account_id.to_ss58_check(),
+                ..Default::default()
+            },
+            self_stake: exposure.own,
+            total_stake: exposure.total,
+            nominators,
+        };
+        Ok(validator_stake)
+    }
+
     pub fn from_bytes(
         mut bytes: &[u8],
         validator_account_id: AccountId,

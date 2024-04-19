@@ -1,6 +1,6 @@
 [package]
 name = "subvt-substrate-client"
-version = "0.17.24"
+version = "0.17.25"
 edition = "2021"
 rust-version = "1.67.0"
 

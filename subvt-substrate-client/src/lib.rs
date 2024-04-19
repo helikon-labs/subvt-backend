@@ -4,6 +4,7 @@
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_double_map_key, get_storage_map_key,
+    module_has_storage_item,
 };
 use async_recursion::async_recursion;
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed, RuntimeMetadataV14};
@@ -27,6 +28,7 @@ use subvt_types::substrate::democracy::{
     get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote, VoteType,
 };
 use subvt_types::substrate::error::DecodeError;
+use subvt_types::substrate::legacy::LegacyCoreOccupied;
 use subvt_types::substrate::metadata::{
     get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
 };
@@ -1074,7 +1076,73 @@ impl SubstrateClient {
     }
 
     /// Get all the active stakes for the given era.
+    async fn get_era_stakers_legacy(
+        &self,
+        era: &Era,
+        clipped: bool,
+        block_hash: &str,
+    ) -> anyhow::Result<EraStakers> {
+        let mut all_keys: Vec<String> = Vec::new();
+        loop {
+            let last = all_keys.last();
+            let mut keys: Vec<String> = self
+                .ws_client
+                .request(
+                    "state_getKeysPaged",
+                    get_rpc_paged_map_keys_params(
+                        &self.metadata,
+                        "Staking",
+                        if clipped {
+                            "ErasStakersClipped"
+                        } else {
+                            "ErasStakers"
+                        },
+                        &era.index,
+                        KEY_QUERY_PAGE_SIZE,
+                        if let Some(last) = last {
+                            Some(last.as_str())
+                        } else {
+                            None
+                        },
+                        Some(block_hash),
+                    ),
+                )
+                .await?;
+            let keys_length = keys.len();
+            all_keys.append(&mut keys);
+            if keys_length < KEY_QUERY_PAGE_SIZE {
+                break;
+            }
+        }
+
+        let mut stakers: Vec<ValidatorStake> = Vec::new();
+        for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
+            let chunk_values: Vec<StorageChangeSet<String>> = self
+                .ws_client
+                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
+                .await?;
+
+            for (storage_key, data) in chunk_values[0].changes.iter() {
+                if let Some(data) = data {
+                    let validator_account_id = self.account_id_from_storage_key(storage_key);
+                    let nomination =
+                        ValidatorStake::from_bytes_legacy(&data.0, validator_account_id).unwrap();
+                    stakers.push(nomination);
+                }
+            }
+        }
+        stakers.sort_by_key(|validator_stake| validator_stake.total_stake);
+        Ok(EraStakers {
+            era: era.clone(),
+            stakers,
+        })
+    }
+
+    /// Get all the active stakes for the given era.
     pub async fn get_era_stakers(&self, era: &Era, block_hash: &str) -> anyhow::Result<EraStakers> {
+        if !module_has_storage_item(&self.metadata, "Staking", "ErasStakersPaged") {
+            return self.get_era_stakers_legacy(era, true, block_hash).await;
+        }
         let exposure_metadata_map = self.get_exposure_metadata_map(era, block_hash).await?;
         let mut all_keys: Vec<String> = Vec::new();
         loop {
@@ -1274,6 +1342,36 @@ impl SubstrateClient {
             self.ws_client.request("state_getStorage", params).await?;
         let groups = decode_hex_string(&group_double_vector_hex_string)?;
         Ok(groups)
+    }
+
+    pub async fn get_para_core_assignments_legacy(
+        &self,
+        block_hash: &str,
+    ) -> anyhow::Result<Option<Vec<ParaCoreAssignment>>> {
+        let params = get_rpc_storage_plain_params("ParaInherent", "OnChainVotes", Some(block_hash));
+        let maybe_votes_hex_string: Option<String> =
+            self.ws_client.request("state_getStorage", params).await?;
+        if let Some(hex_string) = maybe_votes_hex_string {
+            let votes: ScrapedOnChainVotes = decode_hex_string(&hex_string)?;
+            // get availability cores
+            let params = get_rpc_storage_plain_params(
+                "ParaScheduler",
+                "AvailabilityCores",
+                Some(block_hash),
+            );
+            let maybe_cores_hex_string: Option<String> =
+                self.ws_client.request("state_getStorage", params).await?;
+            if let Some(cores_hex_string) = &maybe_cores_hex_string {
+                let cores: Vec<LegacyCoreOccupied> = decode_hex_string(cores_hex_string)?;
+                Ok(Some(ParaCoreAssignment::from_on_chain_votes_legacy(
+                    3, cores, votes,
+                )?))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn get_para_core_assignments(
