@@ -62,24 +62,6 @@ pub fn get_rpc_paged_keys_params<'a>(
     params
 }
 
-pub fn module_has_storage_item(
-    metadata: &RuntimeMetadataV14,
-    module_name: &str,
-    storage_name: &str,
-) -> bool {
-    metadata
-        .pallets
-        .iter()
-        .find(|p| p.name == module_name)
-        .unwrap()
-        .storage
-        .as_ref()
-        .unwrap()
-        .entries
-        .iter()
-        .any(|s| s.name == storage_name)
-}
-
 fn get_map_key_hash<T>(
     metadata: &RuntimeMetadataV14,
     module_name: &str,

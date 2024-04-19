@@ -4,7 +4,6 @@
 use crate::storage_utility::{
     get_rpc_paged_keys_params, get_rpc_paged_map_keys_params, get_rpc_storage_map_params,
     get_rpc_storage_plain_params, get_storage_double_map_key, get_storage_map_key,
-    module_has_storage_item,
 };
 use async_recursion::async_recursion;
 use frame_metadata::{RuntimeMetadata, RuntimeMetadataPrefixed, RuntimeMetadataV14};
@@ -1140,9 +1139,6 @@ impl SubstrateClient {
 
     /// Get all the active stakes for the given era.
     pub async fn get_era_stakers(&self, era: &Era, block_hash: &str) -> anyhow::Result<EraStakers> {
-        if !module_has_storage_item(&self.metadata, "Staking", "ErasStakersPaged") {
-            return self.get_era_stakers_legacy(era, true, block_hash).await;
-        }
         let exposure_metadata_map = self.get_exposure_metadata_map(era, block_hash).await?;
         let mut all_keys: Vec<String> = Vec::new();
         loop {
@@ -1171,6 +1167,9 @@ impl SubstrateClient {
             if keys_length < KEY_QUERY_PAGE_SIZE {
                 break;
             }
+        }
+        if all_keys.is_empty() {
+            return self.get_era_stakers_legacy(era, true, block_hash).await;
         }
 
         let mut stakers: Vec<ValidatorStake> = Vec::new();
