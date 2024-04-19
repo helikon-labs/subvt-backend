@@ -161,7 +161,7 @@ impl NetworkStatusUpdater {
                 .context("Error while getting last era's total validator reward.")?;
             // era stakers
             let era_stakers = client
-                .get_era_stakers(&era, true, best_block_hash.as_str())
+                .get_era_stakers(&era, best_block_hash.as_str())
                 .await
                 .context("Error while getting last era's active stakers.")?;
             let total_stake = era_stakers.total_stake();

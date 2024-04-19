@@ -8,7 +8,7 @@ pub use pallet_conviction_voting::{Conviction as DemocracyConviction, Voting as 
 pub use pallet_democracy::Voting as DemocracyVoting;
 use pallet_identity::legacy::IdentityInfo;
 use pallet_identity::{Data, Judgement, Registration};
-use pallet_staking::{Exposure, UnlockChunk, ValidatorPrefs};
+use pallet_staking::{UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode, Error, Input};
 pub use polkadot_primitives::{ScrapedOnChainVotes, ValidityAttestation};
 pub use polkadot_runtime_parachains::scheduler::CoreOccupied;
@@ -17,7 +17,8 @@ use sp_consensus_babe::digests::PreDigest;
 use sp_core::bounded::BoundedVec;
 use sp_core::crypto::{AccountId32, Ss58AddressFormat};
 use sp_runtime::DigestItem;
-use sp_staking::EraIndex;
+pub use sp_staking::PagedExposureMetadata;
+use sp_staking::{EraIndex, ExposurePage};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -426,10 +427,14 @@ pub struct ValidatorStake {
 }
 
 impl ValidatorStake {
-    pub fn from_bytes(mut bytes: &[u8], validator_account_id: AccountId) -> anyhow::Result<Self> {
-        let exposure: Exposure<AccountId, Balance> = Decode::decode(&mut bytes)?;
+    pub fn from_bytes(
+        mut bytes: &[u8],
+        validator_account_id: AccountId,
+        self_stake: Balance,
+    ) -> anyhow::Result<Self> {
+        let stakers: ExposurePage<AccountId, Balance> = Decode::decode(&mut bytes)?;
         let mut nominators: Vec<NominatorStake> = Vec::new();
-        for other in exposure.others {
+        for other in stakers.others {
             let stake = other.value;
             let account = Account {
                 id: other.who,
@@ -444,8 +449,8 @@ impl ValidatorStake {
                 address: validator_account_id.to_ss58_check(),
                 ..Default::default()
             },
-            self_stake: exposure.own,
-            total_stake: exposure.total,
+            self_stake,
+            total_stake: stakers.page_total,
             nominators,
         };
         Ok(validator_stake)

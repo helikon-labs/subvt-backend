@@ -164,7 +164,7 @@ impl BlockProcessor {
             .await?;
         if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
             let era_stakers = substrate_client
-                .get_era_stakers(&active_era, true, &block_hash)
+                .get_era_stakers(&active_era, &block_hash)
                 .await?;
             if last_epoch_index != current_epoch.index {
                 log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
@@ -215,7 +215,7 @@ impl BlockProcessor {
             }
             if last_era_index != active_era.index {
                 let era_stakers = substrate_client
-                    .get_era_stakers(&active_era, true, &block_hash)
+                    .get_era_stakers(&active_era, &block_hash)
                     .await?;
                 self.persist_era_validators_and_stakers(
                     substrate_client,

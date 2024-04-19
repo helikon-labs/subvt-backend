@@ -155,7 +155,7 @@ impl PostgreSQLNetworkStorage {
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
         for i in 0..data.0.len() {
-            let date_time = match chrono::NaiveDateTime::from_timestamp_opt(
+            let date_time = match chrono::DateTime::from_timestamp(
                 data.2[i] as i64 / 1000,
                 (data.2[i] as i64 % 1000) as u32,
             ) {

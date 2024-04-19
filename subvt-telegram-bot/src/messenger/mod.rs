@@ -174,6 +174,7 @@ impl Messenger for MessengerImpl {
             reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
+            business_connection_id: None,
         };
         match self.api.send_photo(&params).await {
             Ok(response) => Ok(response),
@@ -260,6 +261,7 @@ impl Messenger for MessengerImpl {
             reply_parameters: None,
             reply_markup: inline_keyboard,
             message_thread_id: None,
+            business_connection_id: None,
         };
         log::info!(
             "Message to chat {}: {}",

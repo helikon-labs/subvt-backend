@@ -74,11 +74,7 @@ impl MessageType {
                         } else {
                             "".to_string()
                         },
-                        if let Some(conviction) = direct_vote.conviction {
-                            conviction
-                        } else {
-                            0
-                        },
+                        direct_vote.conviction.unwrap_or_default(),
                     ));
                 } else if let Some(delegated_vote) = vote.delegated_vote {
                     context_validator_votes.push((

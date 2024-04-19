@@ -27,17 +27,17 @@ use subvt_types::substrate::democracy::{
     get_democracy_conviction_u8, DelegatedVote, DirectVote, ReferendumVote, VoteType,
 };
 use subvt_types::substrate::error::DecodeError;
-use subvt_types::substrate::legacy::LegacyCoreOccupied;
 use subvt_types::substrate::metadata::{
-    get_metadata_constant, get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
+    get_metadata_epoch_duration_millis, get_metadata_era_duration_millis,
 };
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
-    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting,
+    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting, CoreOccupied,
     DemocracyVoting, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
-    LastRuntimeUpgradeInfo, Nomination, RewardDestination, ScrapedOnChainVotes, Stake,
-    SuperAccountId, SystemProperties, ValidatorPreferences, ValidatorStake,
+    LastRuntimeUpgradeInfo, Nomination, PagedExposureMetadata, RewardDestination,
+    ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
+    ValidatorStake,
 };
 /// Substrate client structure and its functions.
 /// This is the main gateway for SubVT to a Substrate node RPC interface.
@@ -587,11 +587,6 @@ impl SubstrateClient {
         era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
         log::info!("Getting all validators.");
-        let max_nominator_rewarded_per_validator: u32 = get_metadata_constant(
-            &self.metadata,
-            "Staking",
-            "MaxNominatorRewardedPerValidator",
-        )?;
         let all_keys: Vec<String> = self
             .get_all_keys_for_storage("Staking", "Validators", block_hash)
             .await?;
@@ -901,8 +896,7 @@ impl SubstrateClient {
                 for account_id in nomination.target_account_ids.iter() {
                     if let Some(validator) = validator_map.get_mut(account_id) {
                         validator.nominations.push(nomination.into());
-                        validator.oversubscribed = validator.nominations.len()
-                            > max_nominator_rewarded_per_validator as usize;
+                        validator.oversubscribed = false;
                     }
                 }
             }
@@ -935,8 +929,8 @@ impl SubstrateClient {
         // get active stakers
         {
             log::debug!("Get active stakers.");
-            let era_stakers = self.get_era_stakers(era, true, block_hash).await?;
-            for validator_stake in &era_stakers.stakers {
+            let era_stakers = self.get_era_stakers(era, block_hash).await?;
+            for validator_stake in era_stakers.stakers.iter() {
                 if let Some(validator) = validator_map.get_mut(&validator_stake.account.id) {
                     validator.validator_stake = Some(validator_stake.clone());
                 }
@@ -953,11 +947,22 @@ impl SubstrateClient {
             let average_stake = era_stakers.average_stake();
             for validator in validator_map.values_mut() {
                 validator.return_rate_per_billion = if validator.is_active {
-                    let return_rate = (average_stake * total_return_rate_per_billion
-                        / validator.validator_stake.as_ref().unwrap().total_stake)
-                        * (1_000_000_000 - (validator.preferences.commission_per_billion as u128))
-                        / 1_000_000_000;
-                    Some(return_rate as u32)
+                    if validator.validator_stake.is_none() {
+                        validator.validator_stake = Some(ValidatorStake {
+                            account: validator.account.clone(),
+                            self_stake: 0,
+                            total_stake: 0,
+                            nominators: Vec::new(),
+                        });
+                        Some(0)
+                    } else {
+                        let return_rate = (average_stake * total_return_rate_per_billion
+                            / validator.validator_stake.as_ref().unwrap().total_stake)
+                            * (1_000_000_000
+                                - (validator.preferences.commission_per_billion as u128))
+                            / 1_000_000_000;
+                        Some(return_rate as u32)
+                    }
                 } else {
                     None
                 }
@@ -1013,13 +1018,12 @@ impl SubstrateClient {
         decode_hex_string(hex_string.as_str())
     }
 
-    /// Get all the active stakes for the given era.
-    pub async fn get_era_stakers(
+    async fn get_exposure_metadata_map(
         &self,
         era: &Era,
-        clipped: bool,
         block_hash: &str,
-    ) -> anyhow::Result<EraStakers> {
+    ) -> anyhow::Result<HashMap<AccountId, PagedExposureMetadata<Balance>>> {
+        // önce overview'ları çek, sonra her biri için sayfaları çek ve topla
         let mut all_keys: Vec<String> = Vec::new();
         loop {
             let last = all_keys.last();
@@ -1030,11 +1034,59 @@ impl SubstrateClient {
                     get_rpc_paged_map_keys_params(
                         &self.metadata,
                         "Staking",
-                        if clipped {
-                            "ErasStakersClipped"
+                        "ErasStakersOverview",
+                        &era.index,
+                        KEY_QUERY_PAGE_SIZE,
+                        if let Some(last) = last {
+                            Some(last.as_str())
                         } else {
-                            "ErasStakers"
+                            None
                         },
+                        Some(block_hash),
+                    ),
+                )
+                .await?;
+            let keys_length = keys.len();
+            all_keys.append(&mut keys);
+            if keys_length < KEY_QUERY_PAGE_SIZE {
+                break;
+            }
+        }
+        let mut exposure_metadata_map: HashMap<AccountId, PagedExposureMetadata<Balance>> =
+            HashMap::default();
+        for chunk in all_keys.chunks(KEY_QUERY_PAGE_SIZE) {
+            let chunk_values: Vec<StorageChangeSet<String>> = self
+                .ws_client
+                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
+                .await?;
+
+            for (storage_key, data) in chunk_values[0].changes.iter() {
+                if let Some(data) = data {
+                    let validator_account_id: AccountId = storage_key.0[storage_key.0.len() - 32..]
+                        .try_into()
+                        .unwrap();
+                    let mut bytes: &[u8] = &data.0;
+                    exposure_metadata_map.insert(validator_account_id, Decode::decode(&mut bytes)?);
+                }
+            }
+        }
+        Ok(exposure_metadata_map)
+    }
+
+    /// Get all the active stakes for the given era.
+    pub async fn get_era_stakers(&self, era: &Era, block_hash: &str) -> anyhow::Result<EraStakers> {
+        let exposure_metadata_map = self.get_exposure_metadata_map(era, block_hash).await?;
+        let mut all_keys: Vec<String> = Vec::new();
+        loop {
+            let last = all_keys.last();
+            let mut keys: Vec<String> = self
+                .ws_client
+                .request(
+                    "state_getKeysPaged",
+                    get_rpc_paged_map_keys_params(
+                        &self.metadata,
+                        "Staking",
+                        "ErasStakersPaged",
                         &era.index,
                         KEY_QUERY_PAGE_SIZE,
                         if let Some(last) = last {
@@ -1062,9 +1114,18 @@ impl SubstrateClient {
 
             for (storage_key, data) in chunk_values[0].changes.iter() {
                 if let Some(data) = data {
-                    let validator_account_id = self.account_id_from_storage_key(storage_key);
-                    let nomination =
-                        ValidatorStake::from_bytes(&data.0, validator_account_id).unwrap();
+                    let validator_account_id: AccountId = storage_key.0
+                        [storage_key.0.len() - (32 + 12)..storage_key.0.len() - 12]
+                        .try_into()
+                        .unwrap();
+                    let validator_exposure =
+                        exposure_metadata_map.get(&validator_account_id).unwrap();
+                    let nomination = ValidatorStake::from_bytes(
+                        &data.0,
+                        validator_account_id,
+                        validator_exposure.own,
+                    )
+                    .unwrap();
                     stakers.push(nomination);
                 }
             }
@@ -1233,7 +1294,7 @@ impl SubstrateClient {
             let maybe_cores_hex_string: Option<String> =
                 self.ws_client.request("state_getStorage", params).await?;
             if let Some(cores_hex_string) = &maybe_cores_hex_string {
-                let cores: Vec<LegacyCoreOccupied> = decode_hex_string(cores_hex_string)?;
+                let cores: Vec<CoreOccupied<BlockNumber>> = decode_hex_string(cores_hex_string)?;
                 Ok(Some(ParaCoreAssignment::from_on_chain_votes(
                     3, cores, votes,
                 )?))

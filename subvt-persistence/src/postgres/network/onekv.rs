@@ -193,7 +193,7 @@ impl PostgreSQLNetworkStorage {
                     .get_onekv_candidate_validity_items(summary.0 as u32)
                     .await?,
                 location: summary.9,
-                record_created_at: summary.10.timestamp_millis() as u64,
+                record_created_at: summary.10.and_utc().timestamp_millis() as u64,
             }))
         } else {
             Ok(None)
