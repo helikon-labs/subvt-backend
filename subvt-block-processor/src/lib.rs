@@ -166,7 +166,6 @@ impl BlockProcessor {
             let era_stakers = substrate_client
                 .get_era_stakers(&active_era, &block_hash)
                 .await?;
-            log::error!("ERA STAKERS :: {}", era_stakers.stakers.len());
             if last_epoch_index != current_epoch.index {
                 log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
                 let total_stake = substrate_client
