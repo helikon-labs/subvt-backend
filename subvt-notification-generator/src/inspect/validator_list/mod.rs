@@ -5,7 +5,7 @@
 use crate::{metrics, NotificationGenerator, CONFIG};
 use anyhow::Context;
 use futures_util::StreamExt as _;
-use redis::aio::Connection as RedisConnection;
+use redis::aio::MultiplexedConnection as RedisConnection;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::sync::atomic::AtomicU32;
 use std::sync::Arc;
@@ -140,9 +140,8 @@ impl NotificationGenerator {
                 "Cannot connect to Redis at URL {}.",
                 CONFIG.redis.url
             ))?;
-            let mut redis_pubsub_connection =
-                redis_client.get_async_connection().await?.into_pubsub();
-            let mut redis_data_connection = redis_client.get_async_connection().await?;
+            let mut redis_pubsub_connection = redis_client.get_async_pubsub().await?;
+            let mut redis_data_connection = redis_client.get_multiplexed_async_connection().await?;
             redis_pubsub_connection
                 .subscribe(format!(
                     "subvt:{}:validators:publish:finalized_block_number",

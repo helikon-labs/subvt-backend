@@ -75,7 +75,7 @@ impl Service for ReportService {
             CONFIG.redis.url
         ))?;
         let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
-        let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        let mut pubsub_connection = redis_client.get_async_pubsub().await?;
         pubsub_connection
             .subscribe(format!(
                 "subvt:{}:validators:publish:finalized_block_number",

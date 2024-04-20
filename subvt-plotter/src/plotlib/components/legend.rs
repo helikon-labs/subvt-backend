@@ -111,14 +111,13 @@ impl LegendEntry {
         }
 
         group.append(
-            Text::new()
+            Text::new(self.label.clone())
                 .set("x", 2 * self.marker_size + self.marker_to_label_gap)
                 .set("y", self.marker_size)
                 .set("dy", ".35em")
                 .set("font-family", "sans-serif")
                 .set("fill", "#777")
-                .set("font-size", "12px")
-                .add(TextNode::new(self.label.clone())),
+                .set("font-size", "12px"),
         );
 
         Ok(group)

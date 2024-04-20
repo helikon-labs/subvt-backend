@@ -1,7 +1,7 @@
 use crate::{NotificationGenerator, CONFIG};
 use anyhow::Context;
 use chrono::Utc;
-use redis::aio::Connection as RedisConnection;
+use redis::aio::MultiplexedConnection as RedisConnection;
 use rustc_hash::FxHashMap as HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;

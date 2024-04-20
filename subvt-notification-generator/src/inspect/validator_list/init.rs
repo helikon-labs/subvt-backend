@@ -1,5 +1,5 @@
 use anyhow::Context;
-use redis::aio::Connection as RedisConnection;
+use redis::aio::MultiplexedConnection as RedisConnection;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use subvt_types::subvt::ValidatorDetails;
 

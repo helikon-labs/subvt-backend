@@ -40,10 +40,13 @@ impl ValidatorListUpdater {
     ) -> anyhow::Result<()> {
         // get redis connection
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let mut redis_connection = redis_client
+            .get_multiplexed_async_connection()
+            .await
+            .context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?;
         let prefix = format!(
             "subvt:{}:validators:{finalized_block_number}",
             CONFIG.substrate.chain,
@@ -156,10 +159,13 @@ impl ValidatorListUpdater {
     async fn clear_history(processed_block_numbers: &Arc<RwLock<Vec<u64>>>) -> anyhow::Result<()> {
         log::info!("Clean redundant Redis history.");
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let mut redis_connection = redis_client
+            .get_multiplexed_async_connection()
+            .await
+            .context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?;
         let mut redis_cmd_pipeline = Pipeline::new();
         let mut processed_block_numbers = processed_block_numbers.write().await;
         let to_delete: Vec<u64> = processed_block_numbers
@@ -269,10 +275,13 @@ impl ValidatorListUpdater {
 
     async fn store_processed_block_numbers(processed_block_numbers: &[u64]) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let mut redis_connection = redis_client
+            .get_multiplexed_async_connection()
+            .await
+            .context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?;
         redis::cmd("SET")
             .arg(&[
                 format!(
@@ -288,10 +297,13 @@ impl ValidatorListUpdater {
 
     async fn fetch_processed_block_numbers() -> anyhow::Result<Vec<u64>> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let mut redis_connection = redis_client
+            .get_multiplexed_async_connection()
+            .await
+            .context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?;
         let key = format!(
             "subvt:{}:validators:processed_block_numbers",
             CONFIG.substrate.chain

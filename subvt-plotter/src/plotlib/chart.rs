@@ -297,7 +297,7 @@ impl<'a> Chart<'a> {
                 .set("class", "g-title")
                 .set("transform", format!("translate({},{})", self.width / 2, 40))
                 .add(
-                    Text::new()
+                    Text::new(&self.title)
                         .set("x", 0)
                         .set("y", 0)
                         .set("dy", ".35em")
@@ -305,8 +305,7 @@ impl<'a> Chart<'a> {
                         .set("text-anchor", "middle")
                         .set("font-size", "17px")
                         .set("font-family", "sans-serif")
-                        .set("font-stype", "bold")
-                        .add(TextNode::new(&self.title)),
+                        .set("font-stype", "bold"),
                 );
             group.append(title_group);
         }
@@ -317,7 +316,7 @@ impl<'a> Chart<'a> {
                 .set("class", "g-subtitle")
                 .set("transform", format!("translate({},{})", self.width / 2, 64))
                 .add(
-                    Text::new()
+                    Text::new(&self.subtitle)
                         .set("x", 0)
                         .set("y", 0)
                         .set("dy", ".35em")
@@ -325,8 +324,7 @@ impl<'a> Chart<'a> {
                         .set("text-anchor", "middle")
                         .set("font-size", "14px")
                         .set("font-family", "sans-serif")
-                        .set("font-style", "italic")
-                        .add(TextNode::new(&self.subtitle)),
+                        .set("font-style", "italic"),
                 );
             group.append(subtitle_group);
         }
@@ -340,7 +338,7 @@ impl<'a> Chart<'a> {
                     format!("translate({},{})", self.width - 120, 40),
                 )
                 .add(
-                    Text::new()
+                    Text::new(summary)
                         .set("x", 0)
                         .set("y", 0)
                         .set("dy", ".35em")
@@ -348,8 +346,7 @@ impl<'a> Chart<'a> {
                         .set("text-anchor", "middle")
                         .set("font-size", "15px")
                         .set("font-family", "sans-serif")
-                        .set("font-style", "bold")
-                        .add(TextNode::new(summary)),
+                        .set("font-style", "bold"),
                 );
             group.append(summary_group);
         }

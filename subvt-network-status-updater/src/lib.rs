@@ -29,10 +29,13 @@ impl NetworkStatusUpdater {
     /// Updates the Redis database with the given network status data.
     async fn update_redis(status: &NetworkStatus) -> anyhow::Result<()> {
         let redis_client = redis::Client::open(CONFIG.redis.url.as_str())?;
-        let mut redis_connection = redis_client.get_async_connection().await.context(format!(
-            "Cannot connect to Redis at URL {}.",
-            CONFIG.redis.url
-        ))?;
+        let mut redis_connection = redis_client
+            .get_multiplexed_async_connection()
+            .await
+            .context(format!(
+                "Cannot connect to Redis at URL {}.",
+                CONFIG.redis.url
+            ))?;
         let status_json_string = serde_json::to_string(status)?;
         let mut redis_cmd_pipeline = Pipeline::new();
         redis_cmd_pipeline

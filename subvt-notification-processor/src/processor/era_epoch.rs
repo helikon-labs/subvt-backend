@@ -28,8 +28,8 @@ impl NotificationProcessor {
             "Cannot connect to {} Redis at URL {redis_url}.",
             network.display,
         ))?;
-        let mut data_connection = redis.get_async_connection().await?;
-        let mut pubsub_connection = redis.get_async_connection().await?.into_pubsub();
+        let mut data_connection = redis.get_multiplexed_async_connection().await?;
+        let mut pubsub_connection = redis.get_async_pubsub().await?;
         let mut maybe_active_era_index: Option<u32> = None;
         let mut maybe_current_epoch_index: Option<u64> = None;
         pubsub_connection

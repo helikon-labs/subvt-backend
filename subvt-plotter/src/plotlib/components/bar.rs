@@ -146,15 +146,14 @@ impl DatumRepresentation for Bar {
                     ),
                 };
 
-                let label = Text::new()
+                let label = Text::new(label_text)
                     .set(x_attr, label_x_attr_value)
                     .set(y_attr, self.bar_width / 2_f32)
                     .set("text-anchor", text_anchor)
                     .set("dy", ".35em")
                     .set("font-family", "sans-serif")
                     .set("fill", "#000")
-                    .set("font-size", "13px")
-                    .add(TextNode::new(label_text));
+                    .set("font-size", "13px");
 
                 group.append(label);
             }

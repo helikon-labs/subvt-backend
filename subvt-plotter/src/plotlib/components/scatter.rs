@@ -133,15 +133,11 @@ impl<T: Display, U: Display> DatumRepresentation for ScatterPoint<T, U> {
         };
 
         if self.label_visible {
-            let mut point_label = Text::new()
+            let mut point_label = Text::new(format!("({}, {})", self.x_label, self.y_label))
                 .set("dy", ".35em")
                 .set("font-family", "sans-serif")
                 .set("fill", "#333")
-                .set("font-size", "14px")
-                .add(TextNode::new(format!(
-                    "({}, {})",
-                    self.x_label, self.y_label
-                )));
+                .set("font-size", "14px");
 
             let label_offset = self.marker_size as isize;
             match self.label_position {

@@ -1,6 +1,6 @@
 use crate::NotificationGenerator;
 use anyhow::Context;
-use redis::aio::Connection as RedisConnection;
+use redis::aio::MultiplexedConnection as RedisConnection;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;

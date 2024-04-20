@@ -157,7 +157,7 @@ impl Service for ValidatorListServer {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        let mut pubsub_connection = redis_client.get_async_pubsub().await?;
         pubsub_connection
             .subscribe(format!(
                 "subvt:{}:validators:publish:finalized_block_number",

@@ -132,7 +132,7 @@ impl AxisTick {
             .set("stroke", "#333")
             .set("stroke-width", "1px");
 
-        let tick_label = Text::new()
+        let tick_label = Text::new(formatted_label)
             .set(
                 "transform",
                 format!(
@@ -146,8 +146,7 @@ impl AxisTick {
             .set("text-anchor", tick_label_text_anchor)
             .set("font-size", "12px")
             .set("font-family", "sans-serif")
-            .set("fill", "#111")
-            .add(TextNode::new(formatted_label));
+            .set("fill", "#111");
 
         group.append(tick_line);
         group.append(tick_label);

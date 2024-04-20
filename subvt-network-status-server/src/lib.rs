@@ -9,7 +9,7 @@ use futures_util::StreamExt as _;
 use jsonrpsee::server::{RpcModule, ServerBuilder, ServerHandle};
 use jsonrpsee::SubscriptionMessage;
 use lazy_static::lazy_static;
-use redis::aio::Connection;
+use redis::aio::MultiplexedConnection;
 use std::sync::{Arc, Mutex, RwLock};
 use subvt_config::Config;
 use subvt_service_common::Service;
@@ -32,7 +32,7 @@ pub struct NetworkStatusServer;
 
 impl NetworkStatusServer {
     async fn read_current_network_status(
-        connection: &mut Connection,
+        connection: &mut MultiplexedConnection,
     ) -> anyhow::Result<NetworkStatus> {
         let key = format!("subvt:{}:network_status", CONFIG.substrate.chain);
         let status_json_string: String = redis::cmd("GET")
@@ -145,14 +145,14 @@ impl Service for NetworkStatusServer {
             CONFIG.redis.url
         ))?;
 
-        let mut pubsub_connection = redis_client.get_async_connection().await?.into_pubsub();
+        let mut pubsub_connection = redis_client.get_async_pubsub().await?;
         pubsub_connection
             .subscribe(format!(
                 "subvt:{}:network_status:publish:best_block_number",
                 CONFIG.substrate.chain
             ))
             .await?;
-        let mut data_connection = redis_client.get_async_connection().await?;
+        let mut data_connection = redis_client.get_multiplexed_async_connection().await?;
         metrics::subscription_count().set(0);
         let server_stop_handle = NetworkStatusServer::run_rpc_server(&current_status, &bus).await?;
 
