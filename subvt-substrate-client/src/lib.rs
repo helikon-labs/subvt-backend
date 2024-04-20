@@ -1193,7 +1193,16 @@ impl SubstrateClient {
                         validator_exposure.own,
                     )
                     .unwrap();
-                    stakers.push(nomination);
+                    if let Some(index) = stakers
+                        .iter()
+                        .position(|stake| stake.account.id == validator_account_id)
+                    {
+                        for nominator in nomination.nominators.iter() {
+                            stakers[index].nominators.push(nominator.clone());
+                        }
+                    } else {
+                        stakers.push(nomination);
+                    }
                 }
             }
         }
