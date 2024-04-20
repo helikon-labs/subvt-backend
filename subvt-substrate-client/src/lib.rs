@@ -716,7 +716,7 @@ impl SubstrateClient {
                     get_rpc_storage_plain_params("Session", "QueuedKeys", Some(block_hash)),
                 )
                 .await?;
-            let maybe_session_key_pairs: anyhow::Result<Vec<(AccountId, [u8; 225])>> =
+            let maybe_session_key_pairs: anyhow::Result<Vec<(AccountId, [u8; 193])>> =
                 decode_hex_string(&hex_string);
             if let Ok(session_key_pairs) = &maybe_session_key_pairs {
                 for session_key_pair in session_key_pairs.iter() {
@@ -727,7 +727,7 @@ impl SubstrateClient {
                     }
                 }
             } else {
-                let session_key_pairs: Vec<(AccountId, [u8; 192])> =
+                let session_key_pairs: Vec<(AccountId, [u8; 225])> =
                     decode_hex_string(&hex_string).unwrap();
                 for session_key_pair in session_key_pairs.iter() {
                     let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
