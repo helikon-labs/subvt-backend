@@ -6,7 +6,7 @@ rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
-async-recursion = "1.0"
+async-recursion = "1.1"
 async-trait = "0.1"
 chrono = "0.4"
 enum-iterator = "2.0"
