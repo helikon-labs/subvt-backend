@@ -196,7 +196,7 @@ impl PostgreSQLAppStorage {
             r#"
             UPDATE app_user_notification_channel
             SET deleted_at = now()
-            WHERE notification_channel_code = $1 AND target = $2
+            WHERE notification_channel_code = $1 AND target = $2 AND deleted_at IS NULL
             RETURNING id
             "#,
         )

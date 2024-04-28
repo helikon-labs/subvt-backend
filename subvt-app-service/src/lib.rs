@@ -125,7 +125,7 @@ async fn add_user_notification_channel(
     auth: AuthenticatedUser,
 ) -> ResultResponse {
     input.user_id = auth.id;
-    // check notification channel exists
+    // check notification channel type exists
     if !state
         .postgres
         .notification_channel_exists(&input.channel)
