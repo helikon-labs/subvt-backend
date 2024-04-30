@@ -508,7 +508,7 @@ impl PostgreSQLAppStorage {
     }
 
     pub async fn user_has_created_rules(&self, user_id: u32) -> anyhow::Result<bool> {
-        let count: (i32,) = sqlx::query_as(
+        let count: (i64,) = sqlx::query_as(
             r#"
             SELECT COUNT(DISTINCT id)
             FROM app_user_notification_rule
