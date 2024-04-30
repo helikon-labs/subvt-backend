@@ -135,7 +135,23 @@ async fn add_user_notification_channel(
             HttpResponse::NotFound().json(ServiceError::from("Notification channel not found."))
         );
     }
-    // delete existing channels with the same code
+    // validate input
+    if input.target.is_empty() {
+        return Ok(
+            HttpResponse::BadRequest().json(ServiceError::from("Invalid notification target."))
+        );
+    }
+    // if channel exists, just return it
+    let user_notification_channels = state
+        .postgres
+        .get_user_notification_channels(auth.id)
+        .await?;
+    for channel in user_notification_channels.iter() {
+        if channel.channel == input.channel && channel.target == input.target {
+            return Ok(HttpResponse::Ok().json(input));
+        }
+    }
+    // delete existing channels with the same code, possibly for other users
     let deleted_channel_count = state
         .postgres
         .delete_existing_notification_channels_with_code(
@@ -148,21 +164,6 @@ async fn add_user_notification_channel(
         deleted_channel_count,
         input.channel.to_string().as_str(),
     );
-    if state
-        .postgres
-        .user_notification_channel_target_exists(&input)
-        .await?
-    {
-        return Ok(
-            HttpResponse::Conflict().json(ServiceError::from("This target exists for the user."))
-        );
-    }
-    // validate input
-    if input.target.is_empty() {
-        return Ok(
-            HttpResponse::BadRequest().json(ServiceError::from("Invalid notification target."))
-        );
-    }
     input.id = state
         .postgres
         .save_user_notification_channel(&input)
@@ -273,6 +274,25 @@ async fn create_default_user_notification_rules(
 ) -> ResultResponse {
     let mut channel_id_set = HashSet::default();
     channel_id_set.insert(input.user_notification_channel_id);
+    if state.postgres.user_has_created_rules(auth.id).await? {
+        let rules = state.postgres.get_user_notification_rules(auth.id).await?;
+        log::info!(
+            "User {} has already created rules. Add notification channel to {} rules if not added already.",
+            auth.id,
+            rules.len()
+        );
+        for rule in rules.iter() {
+            state
+                .postgres
+                .add_user_notification_channel_to_rule(
+                    input.user_notification_channel_id as i32,
+                    rule.id as i32,
+                )
+                .await?;
+        }
+        return Ok(HttpResponse::NoContent().finish());
+    }
+    log::info!("Create default notification rules for user {}.", auth.id);
     for rule in subvt_types::app::notification::rules::DEFAULT_RULES.iter() {
         state
             .postgres

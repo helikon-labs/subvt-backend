@@ -31,4 +31,23 @@ impl PostgreSQLAppStorage {
         .await?;
         Ok(record_count.0 > 0)
     }
+
+    pub async fn add_user_notification_channel_to_rule(
+        &self,
+        user_notification_channel_id: i32,
+        user_notification_rule_id: i32,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            r#"
+                INSERT INTO app_user_notification_rule_channel (user_notification_rule_id, user_notification_channel_id)
+                VALUES ($1, $2)
+                ON CONFLICT(user_notification_rule_id, user_notification_channel_id) DO NOTHING
+                "#,
+        )
+            .bind(user_notification_rule_id)
+            .bind(user_notification_channel_id)
+            .execute(&self.connection_pool)
+            .await?;
+        Ok(())
+    }
 }

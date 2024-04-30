@@ -507,6 +507,20 @@ impl PostgreSQLAppStorage {
         }))
     }
 
+    pub async fn user_has_created_rules(&self, user_id: u32) -> anyhow::Result<bool> {
+        let count: (i32,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT id)
+            FROM app_user_notification_rule
+            WHERE user_id = $1
+            "#,
+        )
+        .bind(user_id as i32)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(count.0 > 0)
+    }
+
     pub async fn get_user_notification_rules(
         &self,
         user_id: u32,
