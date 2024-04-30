@@ -1,6 +1,6 @@
 [package]
 name = "subvt-validator-list-updater"
-version = "0.17.32"
+version = "0.17.33"
 edition = "2021"
 rust-version = "1.67.0"
 
