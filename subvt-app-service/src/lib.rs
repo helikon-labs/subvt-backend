@@ -148,7 +148,13 @@ async fn add_user_notification_channel(
         .await?;
     for channel in user_notification_channels.iter() {
         if channel.channel == input.channel && channel.target == input.target {
-            return Ok(HttpResponse::Ok().json(input));
+            log::info!(
+                "{} channel with target {} exists for user {}. Not recreating.",
+                channel.channel,
+                channel.target,
+                auth.id
+            );
+            return Ok(HttpResponse::Ok().json(channel));
         }
     }
     // delete existing channels with the same code, possibly for other users
