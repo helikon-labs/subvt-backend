@@ -1,0 +1,1 @@
+ALTER TABLE sub_onekv_nominator DROP COLUMN page_index;

@@ -85,6 +85,41 @@ pub(crate) async fn process_staking_extrinsic(
                         &caller_account_id,
                         validator_account_id,
                         *era_index,
+                        None,
+                    )
+                    .await?;
+            } else {
+                log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
+            }
+        }
+        StakingExtrinsic::PayoutStakersByPage {
+            maybe_signature: signature,
+            validator_account_id,
+            era_index,
+            page_index,
+        } => {
+            let maybe_caller_account_id = if maybe_multisig_account_id.is_some() {
+                maybe_multisig_account_id
+            } else if maybe_real_account_id.is_some() {
+                maybe_real_account_id
+            } else {
+                match signature {
+                    Some(signature) => signature.get_signer_account_id(),
+                    _ => None,
+                }
+            };
+            if let Some(caller_account_id) = maybe_caller_account_id {
+                postgres
+                    .save_payout_stakers_extrinsic(
+                        &block_hash,
+                        index as i32,
+                        is_nested_call,
+                        maybe_nesting_index,
+                        is_successful,
+                        &caller_account_id,
+                        validator_account_id,
+                        *era_index,
+                        Some(*page_index),
                     )
                     .await?;
             } else {

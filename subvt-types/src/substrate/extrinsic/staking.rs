@@ -8,6 +8,7 @@ use sp_staking::EraIndex;
 const BOND: &str = "bond";
 const NOMINATE: &str = "nominate";
 const PAYOUT_STAKERS: &str = "payout_stakers";
+const PAYOUT_STAKERS_BY_PAGE: &str = "payout_stakers_by_page";
 const VALIDATE: &str = "validate";
 
 #[derive(Clone, Debug)]
@@ -25,6 +26,12 @@ pub enum StakingExtrinsic {
         maybe_signature: Option<Signature>,
         validator_account_id: AccountId,
         era_index: EraIndex,
+    },
+    PayoutStakersByPage {
+        maybe_signature: Option<Signature>,
+        validator_account_id: AccountId,
+        era_index: EraIndex,
+        page_index: u32,
     },
     Validate {
         maybe_signature: Option<Signature>,
@@ -57,6 +64,14 @@ impl StakingExtrinsic {
                     maybe_signature: maybe_signature.clone(),
                     validator_account_id: Decode::decode(bytes)?,
                     era_index: Decode::decode(bytes)?,
+                },
+            )),
+            PAYOUT_STAKERS_BY_PAGE => Some(SubstrateExtrinsic::Staking(
+                StakingExtrinsic::PayoutStakersByPage {
+                    maybe_signature: maybe_signature.clone(),
+                    validator_account_id: Decode::decode(bytes)?,
+                    era_index: Decode::decode(bytes)?,
+                    page_index: Decode::decode(bytes)?,
                 },
             )),
             VALIDATE => Some(SubstrateExtrinsic::Staking(StakingExtrinsic::Validate {
