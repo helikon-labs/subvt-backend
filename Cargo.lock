@@ -14,9 +14,9 @@ dependencies = [
 
 [[package]]
 name = "a2"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9113bcfcb2f288f0619d47d84f712ddad87b4d0a79245b2d61ffe13960fb8ac8"
+checksum = "f279fc8b1f1a64138f0f4b9cda9be488ae35bc2f8556c7ffe60730f1c07d005a"
 dependencies = [
  "base64 0.21.7",
  "erased-serde",
@@ -26,11 +26,13 @@ dependencies = [
  "hyper-rustls 0.26.0",
  "hyper-util",
  "openssl",
+ "parking_lot",
  "rustls 0.22.4",
  "rustls-pemfile 2.1.2",
  "serde",
  "serde_json",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]
