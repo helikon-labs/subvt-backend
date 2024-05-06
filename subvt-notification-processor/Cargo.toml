@@ -1,6 +1,6 @@
 [package]
 name = "subvt-notification-processor"
-version = "0.17.33"
+version = "0.17.34"
 edition = "2021"
 rust-version = "1.67.0"
 

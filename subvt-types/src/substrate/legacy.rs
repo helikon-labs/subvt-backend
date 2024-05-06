@@ -77,8 +77,7 @@ impl From<LegacyDispatchError> for DispatchError {
     }
 }
 
-#[derive(Clone, Debug, Decode)]
-#[cfg_attr(feature = "std", derive(PartialEq))]
+#[derive(Clone, Debug, Decode, PartialEq)]
 pub enum LegacyCoreOccupied {
     /// No candidate is waiting availability on this core right now (the core is not occupied).
     Free,
