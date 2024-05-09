@@ -3,6 +3,7 @@ use enum_iterator::Sequence;
 #[derive(Copy, Clone, Debug, PartialEq, Sequence)]
 pub enum Track {
     WhitelistedCaller,
+    WishForChange,
     // general admin
     StakingAdmin,
     Treasurer,
@@ -25,6 +26,7 @@ impl Track {
     pub fn id(&self) -> u16 {
         match self {
             Track::WhitelistedCaller => 1,
+            Track::WishForChange => 2,
             // general admin
             Track::StakingAdmin => 10,
             Track::Treasurer => 11,
@@ -47,6 +49,7 @@ impl Track {
     pub fn name(&self) -> &str {
         match self {
             Track::WhitelistedCaller => "Whitelisted Caller",
+            Track::WishForChange => "Wish For Change",
             // general admin
             Track::StakingAdmin => "Staking Admin",
             Track::Treasurer => "Treasurer",
@@ -69,6 +72,7 @@ impl Track {
     pub fn from_id(id: u16) -> Option<Track> {
         match id {
             1 => Some(Track::WhitelistedCaller),
+            2 => Some(Track::WishForChange),
             10 => Some(Track::StakingAdmin),
             11 => Some(Track::Treasurer),
             12 => Some(Track::LeaseAdmin),

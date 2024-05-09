@@ -2,7 +2,7 @@
 use crate::sender::{NotificationSender, NotificationSenderError};
 use crate::{ContentProvider, CONFIG};
 use a2::request::payload::APSSound;
-use a2::ErrorReason;
+use a2::{ClientConfig, ErrorReason};
 use async_trait::async_trait;
 use serde::Serialize;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
@@ -24,9 +24,9 @@ impl APNSSender {
             &CONFIG.notification_processor.apns_key_id,
             &CONFIG.notification_processor.apns_team_id,
             if CONFIG.notification_processor.apns_is_production {
-                a2::Endpoint::Production
+                ClientConfig::new(a2::Endpoint::Production)
             } else {
-                a2::Endpoint::Sandbox
+                ClientConfig::new(a2::Endpoint::Sandbox)
             },
         )?;
         let app_postgres =
