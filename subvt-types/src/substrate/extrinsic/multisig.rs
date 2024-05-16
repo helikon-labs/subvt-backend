@@ -3,6 +3,7 @@ use crate::substrate::error::DecodeError;
 use crate::substrate::extrinsic::{Signature, SubstrateExtrinsic};
 use crate::substrate::{BlockNumber, Chain};
 use frame_metadata::RuntimeMetadataV14;
+use frame_support::weights::Weight;
 use pallet_multisig::Timepoint;
 use parity_scale_codec::Decode;
 
@@ -17,12 +18,7 @@ pub enum MultisigExtrinsic {
         other_signatories: Vec<AccountId>,
         maybe_timepoint: Option<Timepoint<BlockNumber>>,
         call: Box<SubstrateExtrinsic>,
-        /*
-        Ignore the following - first one only exists on the older runtimes,
-        causing issues while decoding.
-        */
-        // store_call: bool,
-        // max_weight: Weight,
+        max_weight: Weight,
     },
     AsMultiThreshold1 {
         maybe_signature: Option<Signature>,
@@ -53,8 +49,7 @@ impl MultisigExtrinsic {
                     maybe_signature,
                     bytes,
                 )?),
-                // store_call: Decode::decode(bytes)?,
-                // max_weight: decode_weight(runtime_version, bytes)?,
+                max_weight: Decode::decode(bytes)?,
             })),
             AS_MULTI_THRESHOLD_1 => Some(SubstrateExtrinsic::Multisig(
                 MultisigExtrinsic::AsMultiThreshold1 {
