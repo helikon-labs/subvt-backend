@@ -9,9 +9,14 @@ use subvt_types::substrate::{Chain, ConvictionVoting};
 #[tokio::test]
 async fn test_get_block_hash() {
     let config = Config::test().expect("Cannot get test config.");
-    let substrate_client = SubstrateClient::new(&config)
-        .await
-        .expect("Cannot initialize client.");
+    let substrate_client = SubstrateClient::new(
+        config.substrate.rpc_url.as_str(),
+        config.substrate.network_id,
+        config.substrate.connection_timeout_seconds,
+        config.substrate.request_timeout_seconds,
+    )
+    .await
+    .expect("Cannot initialize client.");
     let block_number = 8_500_000;
     let hash = substrate_client
         .get_block_hash(block_number)
@@ -27,9 +32,14 @@ async fn test_get_block_hash() {
 #[tokio::test]
 async fn test_get_conviction_voting_direct() {
     let config = Config::test().expect("Cannot get test config.");
-    let substrate_client = SubstrateClient::new(&config)
-        .await
-        .expect("Cannot initialize client.");
+    let substrate_client = SubstrateClient::new(
+        config.substrate.rpc_url.as_str(),
+        config.substrate.network_id,
+        config.substrate.connection_timeout_seconds,
+        config.substrate.request_timeout_seconds,
+    )
+    .await
+    .expect("Cannot initialize client.");
     let account_id = AccountId::from_str("GC8fuEZG4E5epGf5KGXtcDfvrc6HXE7GJ5YnbiqSpqdQYLg")
         .expect("Cannot create account id.");
     let block_number = 18_497_450;
@@ -60,9 +70,14 @@ async fn test_get_conviction_voting_direct() {
 async fn test_get_conviction_voting_delegated() {
     Chain::Kusama.sp_core_set_default_ss58_version();
     let config = Config::test().expect("Cannot get test config.");
-    let substrate_client = SubstrateClient::new(&config)
-        .await
-        .expect("Cannot initialize client.");
+    let substrate_client = SubstrateClient::new(
+        config.substrate.rpc_url.as_str(),
+        config.substrate.network_id,
+        config.substrate.connection_timeout_seconds,
+        config.substrate.request_timeout_seconds,
+    )
+    .await
+    .expect("Cannot initialize client.");
     let account_id = AccountId::from_str("GkE7EHZNtcPoqYSBqB8r9n5GYHPwTFcsSpKzzsFo3ZmHCBk")
         .expect("Cannot create account id.");
     let block_number = 18_497_450;
@@ -100,9 +115,14 @@ async fn test_get_conviction_voting_delegated() {
 #[tokio::test]
 async fn test_get_conviction_referendum_voting_direct() {
     let config = Config::test().expect("Cannot get test config.");
-    let substrate_client = SubstrateClient::new(&config)
-        .await
-        .expect("Cannot initialize client.");
+    let substrate_client = SubstrateClient::new(
+        config.substrate.rpc_url.as_str(),
+        config.substrate.network_id,
+        config.substrate.connection_timeout_seconds,
+        config.substrate.request_timeout_seconds,
+    )
+    .await
+    .expect("Cannot initialize client.");
     let account_id = AccountId::from_str("GC8fuEZG4E5epGf5KGXtcDfvrc6HXE7GJ5YnbiqSpqdQYLg")
         .expect("Cannot create account id.");
     let block_number = 18_498_121;

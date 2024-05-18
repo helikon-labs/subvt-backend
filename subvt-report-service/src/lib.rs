@@ -74,7 +74,15 @@ impl Service for ReportService {
             "Cannot connect to Redis at URL {}.",
             CONFIG.redis.url
         ))?;
-        let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
+        let substrate_client = Arc::new(
+            SubstrateClient::new(
+                CONFIG.substrate.rpc_url.as_str(),
+                CONFIG.substrate.network_id,
+                CONFIG.substrate.connection_timeout_seconds,
+                CONFIG.substrate.request_timeout_seconds,
+            )
+            .await?,
+        );
         let mut pubsub_connection = redis_client.get_async_pubsub().await?;
         pubsub_connection
             .subscribe(format!(

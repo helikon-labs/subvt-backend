@@ -22,7 +22,13 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             let chat_validators = self.network_postgres.get_chat_validators(chat_id).await?;
             let mut chat_validator_votes: Vec<(TelegramChatValidator, Option<ReferendumVote>)> =
                 vec![];
-            let substrate_client = SubstrateClient::new(&CONFIG).await?;
+            let substrate_client = SubstrateClient::new(
+                CONFIG.substrate.rpc_url.as_str(),
+                CONFIG.substrate.network_id,
+                CONFIG.substrate.connection_timeout_seconds,
+                CONFIG.substrate.request_timeout_seconds,
+            )
+            .await?;
             for chat_validator in &chat_validators {
                 let vote = substrate_client
                     .get_account_referendum_conviction_vote(

@@ -254,7 +254,13 @@ pub(crate) async fn validator_reward_chart_service(
     query: web::Query<ValidatorRewardChartQueryParameters>,
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
-    let substrate_client = SubstrateClient::new(&CONFIG).await?;
+    let substrate_client = SubstrateClient::new(
+        CONFIG.substrate.rpc_url.as_str(),
+        CONFIG.substrate.network_id,
+        CONFIG.substrate.connection_timeout_seconds,
+        CONFIG.substrate.request_timeout_seconds,
+    )
+    .await?;
     let rewards = data
         .postgres
         .get_validator_total_rewards(query.start_timestamp, query.end_timestamp)

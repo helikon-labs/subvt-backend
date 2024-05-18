@@ -530,9 +530,22 @@ impl Service for BlockProcessor {
                 continue;
             }
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
-            let block_subscription_substrate_client = SubstrateClient::new(&CONFIG).await?;
-            let block_processor_substrate_client =
-                Arc::new(Mutex::new(SubstrateClient::new(&CONFIG).await?));
+            let block_subscription_substrate_client = SubstrateClient::new(
+                CONFIG.substrate.rpc_url.as_str(),
+                CONFIG.substrate.network_id,
+                CONFIG.substrate.connection_timeout_seconds,
+                CONFIG.substrate.request_timeout_seconds,
+            )
+            .await?;
+            let block_processor_substrate_client = Arc::new(Mutex::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            ));
             let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,

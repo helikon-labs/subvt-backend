@@ -34,7 +34,13 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         .await?;
                 }
                 let referenda = self.network_postgres.get_open_referenda(None).await?;
-                let substrate_client = SubstrateClient::new(&CONFIG).await?;
+                let substrate_client = SubstrateClient::new(
+                    CONFIG.substrate.rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?;
                 let mut missing_referendum_votes: Vec<u32> = vec![];
                 for referendum in &referenda {
                     if substrate_client

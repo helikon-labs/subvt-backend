@@ -288,7 +288,15 @@ impl Service for NetworkStatusUpdater {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
+            let substrate_client = Arc::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            );
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             substrate_client
                 .subscribe_to_new_blocks(

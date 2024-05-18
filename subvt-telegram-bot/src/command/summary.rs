@@ -21,7 +21,13 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         // get referenda
         let referenda = self.network_postgres.get_open_referenda(None).await?;
         let mut chat_validator_summaries: Vec<TelegramChatValidatorSummary> = vec![];
-        let substrate_client = SubstrateClient::new(&CONFIG).await?;
+        let substrate_client = SubstrateClient::new(
+            CONFIG.substrate.rpc_url.as_str(),
+            CONFIG.substrate.network_id,
+            CONFIG.substrate.connection_timeout_seconds,
+            CONFIG.substrate.request_timeout_seconds,
+        )
+        .await?;
         for chat_validator in chat_validators {
             if let Some(validator_details) = &self
                 .redis

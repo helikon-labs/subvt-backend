@@ -201,6 +201,7 @@ impl ValidatorListUpdater {
 
     async fn fetch_and_update_validator_list(
         client: &SubstrateClient,
+        people_client: &SubstrateClient,
         postgres: &PostgreSQLNetworkStorage,
         processed_block_numbers: &Arc<RwLock<Vec<u64>>>,
         finalized_block_header: &BlockHeader,
@@ -217,7 +218,7 @@ impl ValidatorListUpdater {
         let active_era = client.get_active_era(&finalized_block_hash).await?;
         // validator account ids
         let mut validators = client
-            .get_all_validators(finalized_block_hash.as_str(), &active_era)
+            .get_all_validators(people_client, finalized_block_hash.as_str(), &active_era)
             .await
             .context("Error while getting validators.")?;
         // enrich data with data from the relational database
@@ -349,7 +350,24 @@ impl Service for ValidatorListUpdater {
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
-            let substrate_client = Arc::new(SubstrateClient::new(&CONFIG).await?);
+            let substrate_client = Arc::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            );
+            let people_substrate_client = Arc::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.people_rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            );
             let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(
                 ValidatorListUpdater::fetch_processed_block_numbers().await?,
             ));
@@ -375,11 +393,13 @@ impl Service for ValidatorListUpdater {
                     IS_BUSY.store(true, Ordering::SeqCst);
                     let processed_block_numbers = processed_block_numbers.clone();
                     let substrate_client = Arc::clone(&substrate_client);
+                    let people_substrate_client = Arc::clone(&people_substrate_client);
                     let postgres = postgres.clone();
                     tokio::spawn(async move {
                         let start = std::time::Instant::now();
                         let update_result = ValidatorListUpdater::fetch_and_update_validator_list(
                             &substrate_client,
+                            &people_substrate_client,
                             &postgres,
                             &processed_block_numbers,
                             &finalized_block_header,

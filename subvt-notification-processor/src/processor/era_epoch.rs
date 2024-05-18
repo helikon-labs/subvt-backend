@@ -20,7 +20,7 @@ impl NotificationProcessor {
             network.display,
         );
         let redis_url = match Chain::from_str(&network.chain)? {
-            Chain::Kusama => &CONFIG.redis.kusama_url,
+            Chain::Kusama | Chain::KusamaPeople => &CONFIG.redis.kusama_url,
             Chain::Polkadot => &CONFIG.redis.polkadot_url,
             Chain::Westend => &CONFIG.redis.westend_url,
         };

@@ -20,7 +20,6 @@ use sp_core::ConstU32;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
-use subvt_config::Config;
 use subvt_types::app::event::democracy::{AccountVote, ConvictionVote};
 use subvt_types::crypto::AccountId;
 use subvt_types::substrate::democracy::{
@@ -79,16 +78,17 @@ async fn get_metadata_at_block(
 
 impl SubstrateClient {
     /// Connect to the node and construct a new Substrate client.
-    pub async fn new(config: &Config) -> anyhow::Result<Self> {
+    pub async fn new(
+        rpc_url: &str,
+        network_id: u32,
+        connection_timeout_seconds: u64,
+        request_timeout_seconds: u64,
+    ) -> anyhow::Result<Self> {
         log::info!("Constructing Substrate client.");
         let ws_client = WsClientBuilder::default()
-            .connection_timeout(std::time::Duration::from_secs(
-                config.substrate.connection_timeout_seconds,
-            ))
-            .request_timeout(std::time::Duration::from_secs(
-                config.substrate.request_timeout_seconds,
-            ))
-            .build(&config.substrate.rpc_url)
+            .connection_timeout(std::time::Duration::from_secs(connection_timeout_seconds))
+            .request_timeout(std::time::Duration::from_secs(request_timeout_seconds))
+            .build(rpc_url)
             .await?;
         log::info!("Substrate connection successful.");
         // get current block hash
@@ -114,7 +114,7 @@ impl SubstrateClient {
             .await?;
         log::info!("Got system properties. {:?}", system_properties);
         Ok(Self {
-            network_id: config.substrate.network_id,
+            network_id,
             chain,
             metadata,
             system_properties,
@@ -584,6 +584,7 @@ impl SubstrateClient {
     /// Get the complete details of all validators, active and inactive, at the given block.
     pub async fn get_all_validators(
         &self,
+        people_client: &SubstrateClient,
         block_hash: &str,
         era: &Era,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
@@ -653,7 +654,12 @@ impl SubstrateClient {
                 .iter()
                 .map(|key| self.account_id_from_storage_key_string(key))
                 .collect();
-            let accounts = self.get_accounts(&account_ids, true, block_hash).await?;
+            let _people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
+            let identity_hash = match self.chain {
+                Chain::Kusama => "e86e8022fc71349382f6c23cea028124eda34ab7acd7f07bee8374dbb33f7674",
+                _ => block_hash,
+            };
+            let accounts = self.get_accounts(&account_ids, true, identity_hash).await?;
             for account in accounts {
                 let is_active = active_validator_account_ids.contains(&account.id);
                 let is_para_validator =
