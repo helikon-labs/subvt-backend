@@ -420,6 +420,10 @@ impl SubstrateClient {
         account_ids: &[AccountId],
         block_hash: &str,
     ) -> anyhow::Result<HashMap<AccountId, (AccountId, Option<String>)>> {
+        let identity_hash = match self.chain {
+            Chain::Kusama => "e86e8022fc71349382f6c23cea028124eda34ab7acd7f07bee8374dbb33f7674",
+            _ => block_hash,
+        };
         let keys: Vec<String> = account_ids
             .iter()
             .map(|account_id| {
@@ -432,7 +436,7 @@ impl SubstrateClient {
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
+            .request("state_queryStorageAt", rpc_params!(keys, &identity_hash))
             .await?;
         log::trace!(
             "Got {} optional super accounts records.",
@@ -467,6 +471,10 @@ impl SubstrateClient {
         account_ids: &[AccountId],
         block_hash: &str,
     ) -> anyhow::Result<HashMap<AccountId, IdentityRegistration>> {
+        let identity_hash = match self.chain {
+            Chain::Kusama => "e86e8022fc71349382f6c23cea028124eda34ab7acd7f07bee8374dbb33f7674",
+            _ => block_hash,
+        };
         let keys: Vec<String> = account_ids
             .iter()
             .map(|account_id| {
@@ -479,7 +487,7 @@ impl SubstrateClient {
         }
         let values: Vec<StorageChangeSet<String>> = self
             .ws_client
-            .request("state_queryStorageAt", rpc_params!(keys, &block_hash))
+            .request("state_queryStorageAt", rpc_params!(keys, &identity_hash))
             .await?;
         log::trace!("Got {} optional identities.", values[0].changes.len());
         let mut identity_map: HashMap<AccountId, IdentityRegistration> = HashMap::default();
@@ -655,11 +663,7 @@ impl SubstrateClient {
                 .map(|key| self.account_id_from_storage_key_string(key))
                 .collect();
             let _people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
-            let identity_hash = match self.chain {
-                Chain::Kusama => "e86e8022fc71349382f6c23cea028124eda34ab7acd7f07bee8374dbb33f7674",
-                _ => block_hash,
-            };
-            let accounts = self.get_accounts(&account_ids, true, identity_hash).await?;
+            let accounts = self.get_accounts(&account_ids, true, block_hash).await?;
             for account in accounts {
                 let is_active = active_validator_account_ids.contains(&account.id);
                 let is_para_validator =
