@@ -218,7 +218,7 @@ impl PostgreSQLAppStorage {
             "#,
         )
             .bind(user_notification_channel.user_id as i32)
-            .bind(&user_notification_channel.channel.to_string())
+            .bind(user_notification_channel.channel.to_string())
             .bind(&user_notification_channel.target)
             .fetch_one(&self.connection_pool)
             .await?;
@@ -237,7 +237,7 @@ impl PostgreSQLAppStorage {
             "#,
         )
         .bind(user_notification_channel.user_id as i32)
-        .bind(&user_notification_channel.channel.to_string())
+        .bind(user_notification_channel.channel.to_string())
         .bind(&user_notification_channel.target)
         .fetch_one(&self.connection_pool)
         .await?;
