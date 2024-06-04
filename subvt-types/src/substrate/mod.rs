@@ -6,8 +6,7 @@ use chrono::{DateTime, LocalResult, TimeZone, Utc};
 use frame_support::traits::ConstU32;
 pub use pallet_conviction_voting::{Conviction as DemocracyConviction, Voting as ConvictionVoting};
 pub use pallet_democracy::Voting as DemocracyVoting;
-use pallet_identity::legacy::IdentityInfo;
-use pallet_identity::{Data, Judgement, Registration};
+use pallet_identity::{Data, Judgement};
 use pallet_staking::{UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode, Error, Input};
 pub use polkadot_primitives::{ScrapedOnChainVotes, ValidityAttestation};
@@ -565,6 +564,27 @@ impl Decode for ValidatorPreferences {
     }
 }
 
+#[derive(Clone, Debug, Decode, Encode)]
+pub struct IdentityInfo {
+    pub display: Data,
+    pub legal: Data,
+    pub web: Data,
+    pub riot: Data,
+    pub email: Data,
+    pub pgp_fingerprint: Option<[u8; 20]>,
+    pub image: Data,
+    pub twitter: Data,
+    pub github: Data,
+    pub discord: Data,
+}
+
+#[derive(Clone, Debug, Decode, Encode)]
+struct Registration {
+    pub judgements: BoundedVec<(u32, Judgement<Balance>), ConstU32<{ u32::MAX }>>,
+    pub deposit: Balance,
+    pub info: IdentityInfo,
+}
+
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub struct IdentityRegistration {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -596,11 +616,7 @@ pub fn data_to_string(data: Data) -> Option<String> {
 
 impl IdentityRegistration {
     pub fn from_bytes(mut bytes: &[u8]) -> anyhow::Result<Self> {
-        let registration: Registration<
-            Balance,
-            ConstU32<{ u32::MAX }>,
-            IdentityInfo<ConstU32<{ u32::MAX }>>,
-        > = Decode::decode(&mut bytes)?;
+        let registration: Registration = Decode::decode(&mut bytes)?;
         let display = data_to_string(registration.info.display);
         let email = data_to_string(registration.info.email);
         let riot = data_to_string(registration.info.riot);
