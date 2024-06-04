@@ -42,20 +42,20 @@ impl NotificationGenerator {
         if rules.is_empty() {
             return Ok(());
         }
-        let substrate_client: Arc<SubstrateClient> = Arc::new(
+        let people_client: Arc<SubstrateClient> = Arc::new(
             SubstrateClient::new(
-                CONFIG.substrate.rpc_url.as_str(),
+                CONFIG.substrate.people_rpc_url.as_str(),
                 CONFIG.substrate.network_id,
                 CONFIG.substrate.connection_timeout_seconds,
                 CONFIG.substrate.request_timeout_seconds,
             )
             .await?,
         );
-        let block_hash = substrate_client.get_block_hash(block_number).await?;
+        let block_hash = people_client.get_block_hash(block_number).await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists
         let account_json = if let Some(validator_account_id) = maybe_validator_account_id.as_ref() {
-            if let Some(account) = substrate_client
+            if let Some(account) = people_client
                 .get_accounts(&[*validator_account_id], true, &block_hash)
                 .await?
                 .first()

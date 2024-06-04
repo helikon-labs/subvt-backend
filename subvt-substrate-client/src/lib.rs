@@ -831,7 +831,7 @@ impl SubstrateClient {
                 let nominator_account_ids: Vec<AccountId> =
                     nomination_map.keys().cloned().collect();
                 for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
-                    let accounts = self
+                    let accounts = people_client
                         .get_accounts(account_id_chunk, true, block_hash)
                         .await?;
                     for account in accounts {
