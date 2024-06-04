@@ -477,7 +477,7 @@ impl SubstrateClient {
                 get_storage_map_key(&self.metadata, "Identity", "IdentityOf", account_id)
             })
             .collect();
-        log::debug!("Got {} storage keys for identities.", keys.len());
+        log::trace!("Got {} storage keys for identities.", keys.len());
         if keys.is_empty() {
             return Ok(HashMap::default());
         }

@@ -254,7 +254,7 @@ pub(crate) async fn validator_reward_chart_service(
     query: web::Query<ValidatorRewardChartQueryParameters>,
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
-    let substrate_client = SubstrateClient::new(
+    let people_client = SubstrateClient::new(
         CONFIG.substrate.rpc_url.as_str(),
         CONFIG.substrate.network_id,
         CONFIG.substrate.connection_timeout_seconds,
@@ -265,7 +265,6 @@ pub(crate) async fn validator_reward_chart_service(
         .postgres
         .get_validator_total_rewards(query.start_timestamp, query.end_timestamp)
         .await?;
-    let block_hash = substrate_client.get_current_block_hash().await?;
     let account_ids: Vec<AccountId> = rewards
         .iter()
         .map(|reward| reward.validator_account_id)
@@ -279,8 +278,9 @@ pub(crate) async fn validator_reward_chart_service(
             }
         }
     }
-    let new_accounts = substrate_client
-        .get_accounts(&new_account_ids, false, &block_hash)
+    let people_block_hash = people_client.get_current_block_hash().await?;
+    let new_accounts = people_client
+        .get_accounts(&new_account_ids, false, &people_block_hash)
         .await?;
     let parent_account_ids: Vec<AccountId> = new_accounts
         .iter()
@@ -295,8 +295,8 @@ pub(crate) async fn validator_reward_chart_service(
             }
         }
     }
-    let new_parent_accounts = substrate_client
-        .get_accounts(&new_parent_account_ids, false, &block_hash)
+    let new_parent_accounts = people_client
+        .get_accounts(&new_parent_account_ids, false, &people_block_hash)
         .await?;
     // write new accounts to cache
     {
