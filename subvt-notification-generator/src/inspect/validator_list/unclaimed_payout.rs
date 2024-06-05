@@ -20,7 +20,6 @@ impl NotificationGenerator {
         redis_connection: &mut RedisConnection,
         redis_storage_prefix: &str,
         last_active_era_index: &AtomicU32,
-        finalized_block_number: u64,
         validator_map: &HashMap<String, ValidatorDetails>,
     ) -> anyhow::Result<()> {
         // check era change & unclaimed payouts
@@ -56,7 +55,6 @@ impl NotificationGenerator {
                         self.generate_notifications(
                             app_postgres.clone(),
                             &rules,
-                            finalized_block_number,
                             &Some(validator.account.id),
                             Some(&validator.unclaimed_era_indices),
                         )

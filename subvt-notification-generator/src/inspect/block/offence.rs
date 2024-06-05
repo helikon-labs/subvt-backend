@@ -27,7 +27,6 @@ impl NotificationGenerator {
             self.generate_notifications(
                 app_postgres.clone(),
                 &rules,
-                block.number,
                 &Some(event.validator_account_id),
                 Some(&event.clone()),
             )

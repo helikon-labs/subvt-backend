@@ -35,7 +35,6 @@ impl NotificationGenerator {
         &self,
         app_postgres: Arc<PostgreSQLAppStorage>,
         rules: &[UserNotificationRule],
-        block_number: u64,
         maybe_validator_account_id: &Option<AccountId>,
         notification_data: Option<&T>,
     ) -> anyhow::Result<()> {
@@ -51,7 +50,7 @@ impl NotificationGenerator {
             )
             .await?,
         );
-        let block_hash = people_client.get_block_hash(block_number).await?;
+        let block_hash = people_client.get_finalized_block_hash().await?;
         // get account information for the validator stash address, which is used to display
         // identity information if exists
         let account_json = if let Some(validator_account_id) = maybe_validator_account_id.as_ref() {

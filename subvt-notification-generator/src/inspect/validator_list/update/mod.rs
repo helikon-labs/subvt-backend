@@ -113,15 +113,9 @@ impl NotificationGenerator {
             &current,
         )
         .await?;
-        self.inspect_onekv_changes(
-            network_postgres,
-            app_postgres.clone(),
-            finalized_block_number,
-            last,
-            &current,
-        )
-        .await?;
-        self.inspect_para_validating(app_postgres.clone(), finalized_block_number, last, &current)
+        self.inspect_onekv_changes(network_postgres, app_postgres.clone(), last, &current)
+            .await?;
+        self.inspect_para_validating(app_postgres.clone(), last, &current)
             .await?;
         Ok(Some(current))
     }

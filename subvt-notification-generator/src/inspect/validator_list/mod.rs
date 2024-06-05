@@ -120,7 +120,6 @@ impl NotificationGenerator {
             redis_connection,
             &redis_storage_prefix,
             last_active_era_index,
-            finalized_block_number,
             validator_map,
         )
         .await?;

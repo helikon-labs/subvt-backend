@@ -14,7 +14,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        finalized_block_number: u64,
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
@@ -24,7 +23,6 @@ impl NotificationGenerator {
         self.inspect_onekv_rank_change(
             network_postgres.clone(),
             app_postgres.clone(),
-            finalized_block_number,
             last,
             current,
         )
@@ -32,7 +30,6 @@ impl NotificationGenerator {
         self.inspect_onekv_location_change(
             network_postgres.clone(),
             app_postgres.clone(),
-            finalized_block_number,
             last,
             current,
         )
@@ -40,19 +37,12 @@ impl NotificationGenerator {
         self.inspect_onekv_validity_change(
             network_postgres.clone(),
             app_postgres.clone(),
-            finalized_block_number,
             last,
             current,
         )
         .await?;
-        self.inspect_onekv_online_status_change(
-            network_postgres,
-            app_postgres,
-            finalized_block_number,
-            last,
-            current,
-        )
-        .await?;
+        self.inspect_onekv_online_status_change(network_postgres, app_postgres, last, current)
+            .await?;
         Ok(())
     }
 }

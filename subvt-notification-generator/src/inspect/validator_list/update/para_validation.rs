@@ -8,7 +8,6 @@ impl NotificationGenerator {
     pub(crate) async fn inspect_para_validating(
         &self,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        finalized_block_number: u64,
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
@@ -24,7 +23,6 @@ impl NotificationGenerator {
             self.generate_notifications(
                 app_postgres,
                 &rules,
-                finalized_block_number,
                 &Some(current.account.id),
                 None::<&()>,
             )
@@ -41,7 +39,6 @@ impl NotificationGenerator {
             self.generate_notifications(
                 app_postgres,
                 &rules,
-                finalized_block_number,
                 &Some(current.account.id),
                 None::<&()>,
             )

@@ -11,7 +11,6 @@ impl NotificationGenerator {
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,
         app_postgres: Arc<PostgreSQLAppStorage>,
-        finalized_block_number: u64,
         last: &ValidatorDetails,
         current: &ValidatorDetails,
     ) -> anyhow::Result<()> {
@@ -41,7 +40,6 @@ impl NotificationGenerator {
             self.generate_notifications(
                 app_postgres,
                 &rules,
-                finalized_block_number,
                 &Some(current.account.id),
                 Some(&app_event::OneKVOnlineStatusChange {
                     validator_account_id: current.account.id,

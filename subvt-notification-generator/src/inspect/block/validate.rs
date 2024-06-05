@@ -27,7 +27,6 @@ impl NotificationGenerator {
             self.generate_notifications(
                 app_postgres.clone(),
                 &rules,
-                block.number,
                 &Some(extrinsic.stash_account_id),
                 Some(&extrinsic.clone()),
             )

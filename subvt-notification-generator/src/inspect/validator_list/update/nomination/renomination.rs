@@ -59,7 +59,6 @@ impl NotificationGenerator {
                 self.generate_notifications(
                     app_postgres.clone(),
                     &rules,
-                    finalized_block_number,
                     &Some(current.account.id),
                     Some(&event),
                 )

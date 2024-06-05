@@ -30,7 +30,6 @@ impl NotificationGenerator {
         self.generate_notifications(
             app_postgres,
             &rules,
-            block.number,
             &Some(*validator_account_id),
             Some(&block.clone()),
         )

@@ -47,14 +47,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -76,14 +70,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -105,14 +93,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -137,14 +119,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -166,14 +142,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -195,14 +165,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -224,14 +188,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
@@ -253,14 +211,8 @@ impl NotificationGenerator {
                     CONFIG.substrate.network_id,
                 )
                 .await?;
-            self.generate_notifications(
-                app_postgres.clone(),
-                &rules,
-                block.number,
-                &None,
-                Some(&event.clone()),
-            )
-            .await?;
+            self.generate_notifications(app_postgres.clone(), &rules, &None, Some(&event.clone()))
+                .await?;
         }
         Ok(())
     }
