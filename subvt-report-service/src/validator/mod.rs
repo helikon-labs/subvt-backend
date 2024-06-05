@@ -255,7 +255,7 @@ pub(crate) async fn validator_reward_chart_service(
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
     let people_client = SubstrateClient::new(
-        CONFIG.substrate.rpc_url.as_str(),
+        CONFIG.substrate.people_rpc_url.as_str(),
         CONFIG.substrate.network_id,
         CONFIG.substrate.connection_timeout_seconds,
         CONFIG.substrate.request_timeout_seconds,
