@@ -601,6 +601,7 @@ impl SubstrateClient {
             all_keys.len()
         );
         log::debug!("Get complete account, active and para-validator info for all validators.");
+        let people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
             let active_validator_account_ids =
@@ -658,7 +659,6 @@ impl SubstrateClient {
                 .iter()
                 .map(|key| self.account_id_from_storage_key_string(key))
                 .collect();
-            let people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
             let accounts = people_client
                 .get_accounts(&account_ids, true, people_finalized_block_hash.as_str())
                 .await?;
@@ -832,7 +832,7 @@ impl SubstrateClient {
                     nomination_map.keys().cloned().collect();
                 for account_id_chunk in nominator_account_ids.chunks(KEY_QUERY_PAGE_SIZE) {
                     let accounts = people_client
-                        .get_accounts(account_id_chunk, true, block_hash)
+                        .get_accounts(account_id_chunk, true, people_finalized_block_hash.as_str())
                         .await?;
                     for account in accounts {
                         nomination_map.get_mut(&account.id).unwrap().stash_account =
