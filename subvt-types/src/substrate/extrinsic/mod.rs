@@ -25,7 +25,6 @@ pub struct Signature {
     pub era: Option<sp_runtime::generic::Era>,
     pub nonce: Option<u32>,
     pub tip: Option<Balance>,
-    pub extra: Vec<u8>,
 }
 
 impl Signature {
@@ -72,14 +71,13 @@ impl SubstrateExtrinsic {
                 let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes)?;
                 let nonce: Compact<u32> = Decode::decode(&mut *bytes)?; // u32
                 let tip: Compact<Balance> = Decode::decode(&mut *bytes)?;
-                let extra: Vec<u8> = Decode::decode(&mut *bytes)?;
+                let _extra: u8 = Decode::decode(&mut *bytes)?;
                 let signature = Signature {
                     signer,
                     signature,
                     era: Some(era),
                     nonce: Some(nonce.0),
                     tip: Some(tip.0),
-                    extra,
                 };
                 Some(signature)
             } else {
