@@ -98,7 +98,7 @@ impl ValidatorDetailsServer {
             "subscribe_validatorDetails",
             "subscribe_validatorDetails",
             "unsubscribe_validatorDetails",
-            move |params, pending, _| {
+            move |params, pending, _, _| {
                 let redis_client = redis_client.clone();
                 let data_connection = data_connection.clone();
                 let bus = bus.clone();

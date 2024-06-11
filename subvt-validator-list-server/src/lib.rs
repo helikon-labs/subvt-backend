@@ -69,7 +69,7 @@ impl ValidatorListServer {
             "subscribe_validatorList",
             "subscribe_validatorList",
             "unsubscribe_validatorList",
-            move |_params, pending, _| {
+            move |_params, pending, _, _| {
                 let validator_map = validator_map.clone();
                 let bus = bus.clone();
                 async move {

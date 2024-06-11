@@ -62,7 +62,7 @@ impl NetworkStatusServer {
             "subscribe_networkStatus",
             "subscribe_networkStatus",
             "unsubscribe_networkStatus",
-            move |_params, pending, _| {
+            move |_params, pending, _, _| {
                 let current_status = current_status.clone();
                 let bus = bus.clone();
                 async move {
