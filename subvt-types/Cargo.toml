@@ -15,7 +15,7 @@ hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
 pallet-conviction-voting = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.12.0" }
-pallet-democracy = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.12.0" }
+pallet-democracy = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.13.0" }
 pallet-identity = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.12.0" }
 pallet-im-online = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.12.0" }
 pallet-multisig = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.12.0" }
