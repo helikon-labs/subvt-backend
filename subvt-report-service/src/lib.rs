@@ -21,6 +21,7 @@ use subvt_types::subvt::ValidatorSummary;
 
 mod era;
 mod metrics;
+mod network;
 mod onekv;
 mod session;
 mod staking;
