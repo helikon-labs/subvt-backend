@@ -230,6 +230,7 @@ impl Service for ReportService {
                 .service(validator::validator_reward_chart_service)
                 .service(staking::controller_service)
                 .service(staking::bond_service)
+                .service(network::get_network_status)
         })
         .workers(10)
         .disable_signals()
