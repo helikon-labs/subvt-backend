@@ -4,7 +4,7 @@ if [[ $1 == "" ]]
     then
     echo "Version parameter does not exist (eg 0.1.5)."
     exit 1
-elif [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+elif [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(\-[0-9]+)?$ ]]; then
     echo "Building and publishing SubVT Docker images v$1."
 else
     echo "Invalid version parameter: $1. Enter a valid semver version (eg 0.1.5)."
