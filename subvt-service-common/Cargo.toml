@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.67.0"
 
 [dependencies]
-actix-web = "4.4"
+actix-web = "4.8"
 anyhow = { workspace = true }
 async-trait = "0.1"
 log = { workspace = true }

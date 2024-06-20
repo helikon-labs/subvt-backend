@@ -7,7 +7,7 @@ rust-version = "1.67.0"
 [dependencies]
 actix-http = "3.5"
 actix-service = "2.0"
-actix-web = "4.4"
+actix-web = "4.8"
 anyhow = { workspace = true }
 async-trait = "0.1"
 futures = "0.3"
