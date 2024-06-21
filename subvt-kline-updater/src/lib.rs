@@ -141,13 +141,14 @@ impl Service for KLineUpdater {
                 // delete temp files
                 let _ = std::fs::remove_file(&zip_file_local_path);
                 let _ = std::fs::remove_file(&csv_file_local_path);
+                // publish metrics
+                metrics::kline_count().set(postgres.get_kline_count().await? as i64);
             }
             // publish total count
             log::info!(
                 "K-line updater completed. Will sleep for {} seconds",
                 sleep_seconds
             );
-            metrics::kline_count().set(postgres.get_kline_count().await? as i64);
             tokio::time::sleep(std::time::Duration::from_secs(sleep_seconds)).await;
         }
     }

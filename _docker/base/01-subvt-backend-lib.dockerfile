@@ -12,6 +12,7 @@ RUN cargo build --release
 # copy executables
 RUN cp target/release/subvt-app-service /subvt/bin/ \
   && cp target/release/subvt-block-processor /subvt/bin/ \
+  && cp target/release/subvt-kline-updater /subvt/bin/ \
   && cp target/release/subvt-network-status-server /subvt/bin/ \
   && cp target/release/subvt-network-status-updater /subvt/bin/ \
   && cp target/release/subvt-notification-generator /subvt/bin/ \
