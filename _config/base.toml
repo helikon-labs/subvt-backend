@@ -145,6 +145,7 @@ telemetry_processor_port = 11008
 validator_details_server_port = 11002
 validator_list_updater_port = 11001
 referendum_updater_port = 11014
+kline_updater_port = 11015
 
 [sub_id]
 api_url = "https://sub.id/api/v1/"
@@ -154,3 +155,10 @@ nfts_path = "/nfts"
 # max x users per IP per x minutes
 user_registration_per_ip_limit_time_window_mins = 10
 user_registration_per_ip_limit = 10
+
+[kline_updater]
+tmp_dir_path = "/path/to/the/temporary/image/dir"
+sleep_seconds = 10
+begin_year = 2022
+begin_month = 1
+begin_day = 1

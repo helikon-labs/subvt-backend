@@ -4,6 +4,7 @@ pub mod app;
 pub mod crypto;
 pub mod err;
 pub mod governance;
+pub mod kline;
 pub mod onekv;
 pub mod rdb;
 pub mod report;

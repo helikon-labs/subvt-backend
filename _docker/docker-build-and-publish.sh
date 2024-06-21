@@ -72,3 +72,6 @@ docker push --all-tags helikon/subvt-report-service
 # referendum updater
 docker build -t helikon/subvt-referendum-updater:"$1" -t helikon/subvt-referendum-updater:latest --no-cache --build-arg version="$1" -f ./network/14-subvt-referendum-updater.dockerfile ..
 docker push --all-tags helikon/subvt-referendum-updater
+# kline updater
+docker build -t helikon/subvt-kline-updater:"$1" -t helikon/subvt-kline-updater:latest --no-cache --build-arg version="$1" -f ./network/15-subvt-kline-updater.dockerfile ..
+docker push --all-tags helikon/subvt-kline-updater

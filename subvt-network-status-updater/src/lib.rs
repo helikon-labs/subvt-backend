@@ -38,7 +38,7 @@ impl NetworkStatusUpdater {
             ))?;
         let status_json_string = serde_json::to_string(status)?;
         let mut redis_cmd_pipeline = Pipeline::new();
-        redis_cmd_pipeline
+        () = redis_cmd_pipeline
             .cmd("SET")
             .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
             .arg(status_json_string)
@@ -185,7 +185,7 @@ impl NetworkStatusUpdater {
         };
         let last_era_total_reward_decimals: String = format!(
             "{}",
-            (last_era_total_reward % 10u128.pow(client.system_properties.token_decimals))
+            last_era_total_reward % 10u128.pow(client.system_properties.token_decimals)
         )
         .chars()
         .take(4)
@@ -323,7 +323,7 @@ impl Service for NetworkStatusUpdater {
                 "New block subscription exited. Will refresh connection and subscription after {} seconds.",
                 delay_seconds
             );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

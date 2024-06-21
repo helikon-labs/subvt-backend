@@ -12,6 +12,7 @@ pub mod era;
 pub mod error_log;
 pub mod event;
 pub mod extrinsic;
+pub mod kline;
 pub mod nft;
 pub mod notify;
 pub mod onekv;

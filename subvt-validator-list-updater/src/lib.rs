@@ -149,7 +149,7 @@ impl ValidatorListUpdater {
             ))
             .arg(finalized_block_number);
         log::info!("Write to Redis.");
-        redis_cmd_pipeline
+        () = redis_cmd_pipeline
             .query_async(&mut redis_connection)
             .await
             .context("Error while setting Redis validators.")?;
@@ -192,7 +192,7 @@ impl ValidatorListUpdater {
             }
             processed_block_numbers.remove(0);
         }
-        redis_cmd_pipeline
+        () = redis_cmd_pipeline
             .query_async(&mut redis_connection)
             .await
             .context("Error while setting Redis validators.")?;
@@ -283,7 +283,7 @@ impl ValidatorListUpdater {
                 "Cannot connect to Redis at URL {}.",
                 CONFIG.redis.url
             ))?;
-        redis::cmd("SET")
+        () = redis::cmd("SET")
             .arg(&[
                 format!(
                     "subvt:{}:validators:processed_block_numbers",

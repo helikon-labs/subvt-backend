@@ -236,6 +236,7 @@ pub struct MetricsConfig {
     pub telegram_bot_port: u16,
     pub app_service_port: u16,
     pub referendum_updater_port: u16,
+    pub kline_updater_port: u16,
 }
 
 /// Plotter config.
@@ -266,6 +267,15 @@ pub struct ReferendumUpdaterConfig {
     pub refresh_seconds: u64,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct KLineUpdaterConfig {
+    pub tmp_dir_path: String,
+    pub sleep_seconds: u64,
+    pub begin_year: i32,
+    pub begin_month: u32,
+    pub begin_day: u32,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -291,6 +301,7 @@ pub struct Config {
     pub sub_id: SubIDConfig,
     pub app_service: AppServiceConfig,
     pub referendum_updater: ReferendumUpdaterConfig,
+    pub kline_updater: KLineUpdaterConfig,
 }
 
 impl Config {

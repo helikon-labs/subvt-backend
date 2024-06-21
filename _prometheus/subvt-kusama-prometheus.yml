@@ -64,3 +64,8 @@ scrape_configs:
     static_configs:
       - targets: [ "subvt_kusama_telegram_bot:11012" ]
     metrics_path: "/metrics"
+  - job_name: subvt_kline_updater
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_kusama_kline_updater:11015" ]
+    metrics_path: "/metrics"
