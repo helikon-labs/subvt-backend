@@ -148,7 +148,7 @@ impl PostgreSQLAppStorage {
             .bind(&notification.validator_account_json)
             .bind(&notification.notification_type_code)
             .bind(notification.user_notification_channel_id as i32)
-            .bind(&notification.notification_channel.to_string())
+            .bind(notification.notification_channel.to_string())
             .bind(&notification.notification_target)
             .bind(&notification.data_json)
             .bind(&notification.error_log)

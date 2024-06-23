@@ -253,7 +253,7 @@ impl PostgreSQLNetworkStorage {
         )
         .bind(app_user_id as i32)
         .bind(telegram_chat_id)
-        .bind(&state.to_string())
+        .bind(state.to_string())
         .execute(&self.connection_pool)
         .await?;
         Ok(())
@@ -284,7 +284,7 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(telegram_chat_id)
-        .bind(&validator_account_id.to_string())
+        .bind(validator_account_id.to_string())
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(record_count.0 > 0)
@@ -307,7 +307,7 @@ impl PostgreSQLNetworkStorage {
             "#,
         )
         .bind(telegram_chat_id)
-        .bind(&account_id.to_string())
+        .bind(account_id.to_string())
         .bind(address)
         .bind(display)
         .fetch_one(&self.connection_pool)
@@ -348,7 +348,7 @@ impl PostgreSQLNetworkStorage {
             WHERE telegram_chat_id = $2
             "#,
         )
-        .bind(&state.to_string())
+        .bind(state.to_string())
         .bind(telegram_chat_id)
         .execute(&self.connection_pool)
         .await?;

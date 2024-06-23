@@ -1,9 +1,9 @@
 //! Generates notifications according to the notification rules depending on three sources of data:
 //! 1. Validator list updates from Redis, updated by `subvt-validator-list-updater`, and published
-//! using the Redis notification (PUBLISH) support.
+//!    using the Redis notification (PUBLISH) support.
 //! 2. Events and extrinsics in new blocks. Block are processed by `subvt-block-processor`, and the
-//! finishing of the processing of a block is signalled by the processor by means of PostgreSQL
-//! notifications.
+//!    finishing of the processing of a block is signalled by the processor by means of PostgreSQL
+//!    notifications.
 //! 3. Regular Telemetry checks (this is work in progress still).
 #![warn(clippy::disallowed_types)]
 use async_trait::async_trait;

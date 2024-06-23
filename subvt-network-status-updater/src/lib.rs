@@ -38,7 +38,7 @@ impl NetworkStatusUpdater {
             ))?;
         let status_json_string = serde_json::to_string(status)?;
         let mut redis_cmd_pipeline = Pipeline::new();
-        redis_cmd_pipeline
+        () = redis_cmd_pipeline
             .cmd("SET")
             .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
             .arg(status_json_string)

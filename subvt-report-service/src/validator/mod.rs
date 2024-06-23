@@ -1,13 +1,15 @@
 use crate::{ResultResponse, ServiceState, CONFIG};
 use actix_web::{get, web, HttpResponse};
+use chrono::{DateTime, Datelike, Months, NaiveDateTime, Utc};
 use serde::Deserialize;
 use std::str::FromStr;
 use subvt_substrate_client::SubstrateClient;
 use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
-    BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, ValidatorDetailsReport,
-    ValidatorListReport, ValidatorSummaryReport, ValidatorTotalRewardChartData,
+    BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, MonthlyIncome,
+    ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
+    ValidatorTotalRewardChartData,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
@@ -309,4 +311,58 @@ pub(crate) async fn validator_reward_chart_service(
         start_timestamp: query.start_timestamp,
         end_timestamp: query.end_timestamp,
     }))
+}
+
+#[get("/validator/{ss58_address_or_account_id}/income/monthly")]
+pub(crate) async fn validator_monhtly_income_service(
+    path: web::Path<ValidatorPathParameter>,
+    data: web::Data<ServiceState>,
+) -> ResultResponse {
+    let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
+        Ok(account_id) => account_id,
+        Err(response) => return Ok(response),
+    };
+    let now = Utc::now();
+    let start_date = now
+        .checked_sub_months(Months::new(12))
+        .unwrap()
+        .date_naive()
+        .with_day(1)
+        .unwrap();
+    let start_timestamp = NaiveDateTime::from(start_date).and_utc().timestamp_millis();
+    let end_timestamp = now.timestamp_millis();
+    let rewards = data
+        .postgres
+        .get_rewards_in_time_range(&account_id, start_timestamp as u64, end_timestamp as u64)
+        .await?;
+    let mut monthly_incomes: Vec<MonthlyIncome> = Vec::new();
+    let denominator = f64::powi(10.0, CONFIG.substrate.token_decimals as i32);
+    for reward in rewards.iter() {
+        let reward_day = DateTime::from_timestamp_millis(reward.block_timestamp as i64)
+            .unwrap()
+            .date_naive();
+        let reward_year = reward_day.year() as u32;
+        let reward_month = reward_day.month();
+        let reward_day_begin_timestamp =
+            NaiveDateTime::from(reward_day).and_utc().timestamp_millis();
+        let kline_close = data
+            .postgres
+            .get_kline(reward_day_begin_timestamp as u64)
+            .await?
+            .close_to_f64()
+            .unwrap();
+        let reward = (reward.amount as f64) * kline_close / denominator;
+        if let Some(monthly_income) = monthly_incomes.iter_mut().find(|monthly_income| {
+            monthly_income.month == reward_month && monthly_income.year == reward_year
+        }) {
+            monthly_income.income += reward;
+        } else {
+            monthly_incomes.push(MonthlyIncome {
+                year: reward_year,
+                month: reward_month,
+                income: reward,
+            });
+        }
+    }
+    Ok(HttpResponse::Ok().json(monthly_incomes))
 }

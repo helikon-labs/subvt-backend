@@ -28,7 +28,7 @@ impl Redis {
         block_summary: &BlockSummary,
     ) -> anyhow::Result<()> {
         let mut connection = self.client.get_multiplexed_async_connection().await?;
-        redis::cmd("MSET")
+        () = redis::cmd("MSET")
             .arg(format!(
                 "subvt:{}:validators:finalized_block_number",
                 CONFIG.substrate.chain
@@ -55,7 +55,7 @@ impl Redis {
         account_id: &AccountId,
     ) -> anyhow::Result<()> {
         let mut connection = self.client.get_multiplexed_async_connection().await?;
-        redis::cmd("SADD")
+        () = redis::cmd("SADD")
             .arg(format!(
                 "subvt:{}:validators:{finalized_block_number}:active:account_id_set",
                 CONFIG.substrate.chain,
@@ -73,7 +73,7 @@ impl Redis {
     ) -> anyhow::Result<()> {
         let mut connection = self.client.get_multiplexed_async_connection().await?;
         let validator_details_json = serde_json::to_string(validator_details)?;
-        redis::cmd("SET")
+        () = redis::cmd("SET")
             .arg(format!(
                 "subvt:{}:validators:{finalized_block_number}:active:validator:{}",
                 CONFIG.substrate.chain, validator_details.account.id,
@@ -171,7 +171,7 @@ impl Redis {
     pub async fn set_network_status(&self, network_status: &NetworkStatus) -> anyhow::Result<()> {
         let mut connection = self.client.get_multiplexed_async_connection().await?;
         let network_status_json = serde_json::to_string(network_status)?;
-        redis::cmd("SET")
+        () = redis::cmd("SET")
             .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
             .arg(network_status_json)
             .query_async(&mut connection)

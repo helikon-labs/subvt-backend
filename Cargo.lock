@@ -907,6 +907,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bigdecimal"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6773ddc0eafc0e509fb60e48dff7f450f8e674a0686ae8605e8d9901bd5eefa"
+dependencies = [
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "bitcoin-internals"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7189,6 +7200,7 @@ source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-
 dependencies = [
  "ahash 0.8.11",
  "atoi",
+ "bigdecimal",
  "byteorder",
  "bytes",
  "chrono",
@@ -7268,6 +7280,7 @@ source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-
 dependencies = [
  "atoi",
  "base64 0.21.7",
+ "bigdecimal",
  "bitflags 2.5.0",
  "byteorder",
  "bytes",
@@ -7310,6 +7323,7 @@ source = "git+https://github.com/helikon-labs/sqlx.git?branch=helikon-increased-
 dependencies = [
  "atoi",
  "base64 0.21.7",
+ "bigdecimal",
  "bitflags 2.5.0",
  "byteorder",
  "chrono",
@@ -7328,6 +7342,7 @@ dependencies = [
  "log",
  "md-5",
  "memchr",
+ "num-bigint",
  "once_cell",
  "rand 0.8.5",
  "serde",
@@ -7850,6 +7865,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "async-trait",
+ "chrono",
  "futures-util",
  "hex",
  "lazy_static",
@@ -7859,6 +7875,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "sqlx",
  "subvt-config",
  "subvt-logging",
  "subvt-metrics",
@@ -7990,6 +8007,7 @@ dependencies = [
  "hex",
  "lazy_static",
  "log",
+ "num-traits",
  "pallet-conviction-voting",
  "pallet-democracy",
  "pallet-identity",
