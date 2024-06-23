@@ -220,3 +220,22 @@ pub struct Bond {
     pub controller_address: String,
     pub bond: Stake,
 }
+
+#[derive(Clone, Debug)]
+pub struct Reward {
+    pub id: u32,
+    pub block_hash: String,
+    pub block_number: u64,
+    pub block_timestamp: u64,
+    pub extrinsic_index: u32,
+    pub event_index: u32,
+    pub rewardee_account_id: AccountId,
+    pub amount: Balance,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct MonthlyIncome {
+    pub year: u32,
+    pub month: u32,
+    pub income: f64,
+}

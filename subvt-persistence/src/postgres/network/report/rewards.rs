@@ -1,7 +1,7 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use std::str::FromStr;
 use subvt_types::crypto::AccountId;
-use subvt_types::report::ValidatorTotalReward;
+use subvt_types::report::{Reward, ValidatorTotalReward};
 use subvt_types::substrate::{Balance, Era};
 
 impl PostgreSQLNetworkStorage {
@@ -69,5 +69,42 @@ impl PostgreSQLNetworkStorage {
             })
         }
         Ok(result)
+    }
+
+    pub async fn get_rewards_in_time_range(
+        &self,
+        rewardee_account_id: &AccountId,
+        start_timestamp: u64,
+        end_timestamp: u64,
+    ) -> anyhow::Result<Vec<Reward>> {
+        let db_rewards: Vec<(i32, String, i64, i64, i32, i32, String)> = sqlx::query_as(
+            r#"
+            SELECT E.id, E.block_hash, B.number, B.timestamp, E.extrinsic_index, E.event_index, E.amount
+            FROM sub_event_rewarded E
+            INNER JOIN sub_block B ON B.hash = E.block_hash
+            WHERE B.timestamp >= $1 AND B.timestamp < $2
+            AND E.rewardee_account_id = $3
+            ORDER BY B.timestamp ASC
+            "#,
+        )
+            .bind(start_timestamp as i64)
+            .bind(end_timestamp as i64)
+            .bind(rewardee_account_id.to_string())
+            .fetch_all(&self.connection_pool)
+            .await?;
+        let mut rewards = Vec::new();
+        for db_reward in db_rewards.iter() {
+            rewards.push(Reward {
+                id: db_reward.0 as u32,
+                block_hash: db_reward.1.clone(),
+                block_number: db_reward.2 as u64,
+                block_timestamp: db_reward.3 as u64,
+                extrinsic_index: db_reward.4 as u32,
+                event_index: db_reward.5 as u32,
+                rewardee_account_id: *rewardee_account_id,
+                amount: db_reward.6.parse()?,
+            })
+        }
+        Ok(rewards)
     }
 }

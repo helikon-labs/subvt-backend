@@ -236,6 +236,7 @@ impl Service for ReportService {
                 .service(validator::validator_era_rewards_service)
                 .service(validator::validator_era_payouts_service)
                 .service(validator::validator_reward_chart_service)
+                .service(validator::validator_monhtly_income_service)
                 .service(staking::controller_service)
                 .service(staking::bond_service)
                 .service(network::get_network_status)

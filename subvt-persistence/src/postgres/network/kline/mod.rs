@@ -1,5 +1,23 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use sqlx::types::BigDecimal;
 use subvt_types::kline::KLine;
+
+type DBKline = (
+    i32,
+    i64,
+    String,
+    String,
+    BigDecimal,
+    BigDecimal,
+    BigDecimal,
+    BigDecimal,
+    BigDecimal,
+    i64,
+    BigDecimal,
+    i32,
+    BigDecimal,
+    BigDecimal,
+);
 
 impl PostgreSQLNetworkStorage {
     pub async fn kline_exists(
@@ -55,5 +73,34 @@ impl PostgreSQLNetworkStorage {
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(record_count.0 as u64)
+    }
+
+    pub async fn get_kline(&self, timestamp: u64) -> anyhow::Result<KLine> {
+        let db_kline: DBKline = sqlx::query_as(
+            r#"
+            SELECT id, open_time, source_ticker, target_ticker, "open", high, low, "close", volume, close_time, quote_volume, "count", taker_buy_volume, taker_buy_quote_volume
+            FROM sub_kline_historical
+            WHERE open_time = $1
+            "#,
+        )
+            .bind(timestamp as i64)
+            .fetch_one(&self.connection_pool)
+            .await?;
+        Ok(KLine {
+            id: db_kline.0 as u32,
+            open_time: db_kline.1 as u64,
+            source_ticker: db_kline.2,
+            target_ticker: db_kline.3,
+            open: db_kline.4,
+            high: db_kline.5,
+            low: db_kline.6,
+            close: db_kline.7,
+            volume: db_kline.8,
+            close_time: db_kline.9 as u64,
+            quote_volume: db_kline.10,
+            count: db_kline.11 as u32,
+            taker_buy_volume: db_kline.12,
+            taker_buy_quote_volume: db_kline.13,
+        })
     }
 }
