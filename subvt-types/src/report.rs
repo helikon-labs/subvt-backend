@@ -239,3 +239,10 @@ pub struct MonthlyIncome {
     pub month: u32,
     pub income: f64,
 }
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct MonthlyIncomeReport {
+    pub rewardee: AccountId,
+    pub token_symbol: String,
+    pub monthly_income: Vec<MonthlyIncome>,
+}
