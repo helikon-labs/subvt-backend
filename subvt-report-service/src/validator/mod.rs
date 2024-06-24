@@ -331,7 +331,9 @@ pub(crate) async fn validator_monhtly_income_service(
         .with_day(1)
         .unwrap();
     let start_timestamp = NaiveDateTime::from(start_date).and_utc().timestamp_millis();
-    let end_timestamp = now.timestamp_millis();
+    let end_timestamp = NaiveDateTime::from(now.date_naive())
+        .and_utc()
+        .timestamp_millis();
     let rewards = data
         .postgres
         .get_rewards_in_time_range(&account_id, start_timestamp as u64, end_timestamp as u64)
