@@ -8,7 +8,7 @@ use subvt_types::crypto::AccountId;
 use subvt_types::err::ServiceError;
 use subvt_types::report::{
     BlockSummary, EraValidatorPayoutReport, EraValidatorRewardReport, MonthlyIncome,
-    ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
+    MonthlyIncomeReport, ValidatorDetailsReport, ValidatorListReport, ValidatorSummaryReport,
     ValidatorTotalRewardChartData,
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
@@ -324,6 +324,7 @@ pub(crate) async fn validator_monhtly_income_service(
     path: web::Path<ValidatorPathParameter>,
     data: web::Data<ServiceState>,
 ) -> ResultResponse {
+    let token_symbol = "USDT";
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
         Err(response) => return Ok(response),
@@ -341,7 +342,7 @@ pub(crate) async fn validator_monhtly_income_service(
         .postgres
         .get_rewards_in_time_range(&account_id, start_timestamp as u64, end_timestamp as u64)
         .await?;
-    let mut monthly_incomes: Vec<MonthlyIncome> = Vec::new();
+    let mut monthly_income: Vec<MonthlyIncome> = Vec::new();
     let denominator = f64::powi(10.0, CONFIG.substrate.token_decimals as i32);
     for reward in rewards.iter() {
         let reward_day = DateTime::from_timestamp_millis(reward.block_timestamp as i64)
@@ -353,22 +354,33 @@ pub(crate) async fn validator_monhtly_income_service(
             NaiveDateTime::from(reward_day).and_utc().timestamp_millis();
         let kline_close = data
             .postgres
-            .get_kline(reward_day_begin_timestamp as u64)
+            .get_kline(
+                &CONFIG.substrate.token_ticker,
+                token_symbol,
+                reward_day_begin_timestamp as u64,
+            )
             .await?
             .close_to_f64()
             .unwrap();
         let reward = (reward.amount as f64) * kline_close / denominator;
-        if let Some(monthly_income) = monthly_incomes.iter_mut().find(|monthly_income| {
-            monthly_income.month == reward_month && monthly_income.year == reward_year
-        }) {
-            monthly_income.income += reward;
+        if let Some(monthly_income_instance) =
+            monthly_income.iter_mut().find(|monthly_income_instance| {
+                monthly_income_instance.month == reward_month
+                    && monthly_income_instance.year == reward_year
+            })
+        {
+            monthly_income_instance.income += reward;
         } else {
-            monthly_incomes.push(MonthlyIncome {
+            monthly_income.push(MonthlyIncome {
                 year: reward_year,
                 month: reward_month,
                 income: reward,
             });
         }
     }
-    Ok(HttpResponse::Ok().json(monthly_incomes))
+    Ok(HttpResponse::Ok().json(MonthlyIncomeReport {
+        rewardee: account_id,
+        token_symbol: token_symbol.to_string(),
+        monthly_income,
+    }))
 }

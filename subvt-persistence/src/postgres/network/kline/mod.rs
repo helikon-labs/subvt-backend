@@ -75,14 +75,21 @@ impl PostgreSQLNetworkStorage {
         Ok(record_count.0 as u64)
     }
 
-    pub async fn get_kline(&self, timestamp: u64) -> anyhow::Result<KLine> {
+    pub async fn get_kline(
+        &self,
+        source_ticker: &str,
+        target_ticker: &str,
+        timestamp: u64,
+    ) -> anyhow::Result<KLine> {
         let db_kline: DBKline = sqlx::query_as(
             r#"
             SELECT id, open_time, source_ticker, target_ticker, "open", high, low, "close", volume, close_time, quote_volume, "count", taker_buy_volume, taker_buy_quote_volume
             FROM sub_kline_historical
-            WHERE open_time = $1
+            WHERE source_ticker = $1 AND target_ticker= $2 AND open_time = $3
             "#,
         )
+            .bind(source_ticker)
+            .bind(target_ticker)
             .bind(timestamp as i64)
             .fetch_one(&self.connection_pool)
             .await?;
