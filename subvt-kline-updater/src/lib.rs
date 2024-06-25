@@ -47,7 +47,8 @@ impl Service for KLineUpdater {
             .unwrap();
             let mut day = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
             loop {
-                day = day.checked_sub_days(Days::new(1)).unwrap();
+                // start from 2 days prior to today
+                day = day.checked_sub_days(Days::new(2)).unwrap();
                 let start_of_day = NaiveDateTime::from(day);
                 let year = day.year();
                 let month = day.month();

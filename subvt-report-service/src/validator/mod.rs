@@ -1,6 +1,6 @@
 use crate::{ResultResponse, ServiceState, CONFIG};
 use actix_web::{get, web, HttpResponse};
-use chrono::{DateTime, Datelike, Months, NaiveDateTime, Utc};
+use chrono::{DateTime, Datelike, Days, Months, NaiveDateTime, Utc};
 use serde::Deserialize;
 use std::str::FromStr;
 use subvt_substrate_client::SubstrateClient;
@@ -337,9 +337,11 @@ pub(crate) async fn validator_monhtly_income_service(
         .with_day(1)
         .unwrap();
     let start_timestamp = NaiveDateTime::from(start_date).and_utc().timestamp_millis();
-    let end_timestamp = NaiveDateTime::from(now.date_naive())
-        .and_utc()
-        .timestamp_millis();
+    // start from 2 days prior to today
+    let end_timestamp =
+        NaiveDateTime::from(now.checked_sub_days(Days::new(1)).unwrap().date_naive())
+            .and_utc()
+            .timestamp_millis();
     let rewards = data
         .postgres
         .get_rewards_in_time_range(&account_id, start_timestamp as u64, end_timestamp as u64)
