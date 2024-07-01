@@ -71,6 +71,7 @@ impl SubstrateExtrinsic {
                 let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes)?;
                 let nonce: Compact<u32> = Decode::decode(&mut *bytes)?; // u32
                 let tip: Compact<Balance> = Decode::decode(&mut *bytes)?;
+                let _extra: u8 = Decode::decode(&mut *bytes)?;
                 let signature = Signature {
                     signer,
                     signature,
