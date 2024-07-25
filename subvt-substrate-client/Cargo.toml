@@ -13,15 +13,15 @@ byteorder = { version = "1.5", default-features = false }
 chrono = "0.4"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
 hex = "0.4"
-jsonrpsee = { version = "0.23", features = ["full"] }
-jsonrpsee-core = "0.23"
-jsonrpsee-types = "0.23"
+jsonrpsee = { version = "0.24", features = ["full"] }
+jsonrpsee-core = "0.24"
+jsonrpsee-types = "0.24"
 log = { workspace = true }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
 rustc-hash = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.13.0" }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.14.0" }
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }

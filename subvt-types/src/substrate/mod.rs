@@ -68,6 +68,7 @@ pub enum Chain {
     Polkadot,
     Westend,
     KusamaPeople,
+    PolkadotPeople,
 }
 
 impl FromStr for Chain {
@@ -80,6 +81,7 @@ impl FromStr for Chain {
             "polkadot" | "dot" => Ok(Self::Polkadot),
             "westend" | "wnd" => Ok(Self::Westend),
             "kusama people" | "ksm people" => Ok(Self::KusamaPeople),
+            "polkadot people" | "dot people" => Ok(Self::PolkadotPeople),
             _ => panic!("Unkown chain: {s}"),
         }
     }
@@ -93,6 +95,7 @@ impl Chain {
             Self::Polkadot => Ss58AddressFormat::from(0u16),
             Self::Westend => Ss58AddressFormat::from(42u16),
             Self::KusamaPeople => Ss58AddressFormat::from(2u16),
+            Self::PolkadotPeople => Ss58AddressFormat::from(0u16),
         }
     }
 
