@@ -217,73 +217,49 @@ impl<'a> Chart<'a> {
 
     /// Set the rotation in degrees of the bottom axis tick labels.
     pub fn set_bottom_axis_tick_label_rotation(mut self, rotation: isize) -> Self {
-        match &mut self.x_axis_bottom {
-            Some(axis) => axis.set_tick_label_rotation(rotation),
-            None => {}
-        }
+        if let Some(axis) = &mut self.x_axis_bottom { axis.set_tick_label_rotation(rotation) }
         self
     }
 
     /// Set the rotation in degrees of the top axis tick labels.
     pub fn set_top_axis_tick_label_rotation(mut self, rotation: isize) -> Self {
-        match &mut self.x_axis_top {
-            Some(axis) => axis.set_tick_label_rotation(rotation),
-            None => {}
-        }
+        if let Some(axis) = &mut self.x_axis_top { axis.set_tick_label_rotation(rotation) }
         self
     }
 
     /// Set the rotation in degrees of the left axis tick labels.
     pub fn set_left_axis_tick_label_rotation(mut self, rotation: isize) -> Self {
-        match &mut self.y_axis_left {
-            Some(axis) => axis.set_tick_label_rotation(rotation),
-            None => {}
-        }
+        if let Some(axis) = &mut self.y_axis_left { axis.set_tick_label_rotation(rotation) }
         self
     }
 
     /// Set the rotation in degrees of the right axis tick labels.
     pub fn set_right_axis_tick_label_rotation(mut self, rotation: isize) -> Self {
-        match &mut self.y_axis_right {
-            Some(axis) => axis.set_tick_label_rotation(rotation),
-            None => {}
-        }
+        if let Some(axis) = &mut self.y_axis_right { axis.set_tick_label_rotation(rotation) }
         self
     }
 
     /// Set the format type of labels on the left axis.
     pub fn set_left_axis_tick_label_format(mut self, format: &str) -> Self {
-        match &mut self.y_axis_left {
-            Some(axis) => axis.set_tick_label_format(format),
-            None => {}
-        }
+        if let Some(axis) = &mut self.y_axis_left { axis.set_tick_label_format(format) }
         self
     }
 
     /// Set the format type of labels on the right axis.
     pub fn set_right_axis_tick_label_format(mut self, format: &str) -> Self {
-        match &mut self.y_axis_right {
-            Some(axis) => axis.set_tick_label_format(format),
-            None => {}
-        }
+        if let Some(axis) = &mut self.y_axis_right { axis.set_tick_label_format(format) }
         self
     }
 
     /// Set the format type of labels on the top axis.
     pub fn set_top_axis_tick_label_format(mut self, format: &str) -> Self {
-        match &mut self.x_axis_top {
-            Some(axis) => axis.set_tick_label_format(format),
-            None => {}
-        }
+        if let Some(axis) = &mut self.x_axis_top { axis.set_tick_label_format(format) }
         self
     }
 
     /// Set the format type of labels on the bottom axis.
     pub fn set_bottom_axis_tick_label_format(mut self, format: &str) -> Self {
-        match &mut self.x_axis_bottom {
-            Some(axis) => axis.set_tick_label_format(format),
-            None => {}
-        }
+        if let Some(axis) = &mut self.x_axis_bottom { axis.set_tick_label_format(format) }
         self
     }
 
