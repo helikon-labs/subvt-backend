@@ -36,6 +36,6 @@ thiserror = { workspace = true }
 tokio = { version = "1.35", features = ["full"] }
 
 [dev-dependencies]
-mockall = "0.12"
+mockall = "0.13"
 mockito = "1"
 rand = "0.8.5"
