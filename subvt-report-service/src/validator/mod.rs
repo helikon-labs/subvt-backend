@@ -218,7 +218,8 @@ pub(crate) async fn validator_era_rewards_service(
     };
     let era_rewards: Vec<EraValidatorRewardReport> = data
         .postgres
-        .get_validator_all_era_rewards(&account_id)
+        //.get_validator_all_era_rewards(&account_id)
+        .get_validator_last_year_era_rewards(&account_id)
         .await?
         .iter()
         .map(EraValidatorRewardReport::from)
