@@ -317,7 +317,7 @@ impl ValidatorListUpdater {
             Ok(serde_json::from_str(
                 &redis::cmd("GET")
                     .arg(&key)
-                    .query_async::<_, String>(&mut redis_connection)
+                    .query_async::<String>(&mut redis_connection)
                     .await?,
             )?)
         } else {

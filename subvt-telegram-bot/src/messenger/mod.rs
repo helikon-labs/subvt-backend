@@ -168,9 +168,11 @@ impl Messenger for MessengerImpl {
             caption: None,
             parse_mode: Some(ParseMode::Html),
             caption_entities: None,
+            show_caption_above_media: None,
             has_spoiler: None,
             disable_notification: None,
             protect_content: None,
+            message_effect_id: None,
             reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
@@ -258,6 +260,7 @@ impl Messenger for MessengerImpl {
             link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             disable_notification: None,
             protect_content: None,
+            message_effect_id: None,
             reply_parameters: None,
             reply_markup: inline_keyboard,
             message_thread_id: None,
@@ -334,6 +337,7 @@ impl Messenger for MessengerImpl {
             }
         };
         let params = EditMessageTextParams {
+            business_connection_id: None,
             chat_id: Some(ChatId::Integer(chat_id)),
             message_id: Some(settings_message_id),
             inline_message_id: None,
@@ -365,6 +369,7 @@ impl Messenger for MessengerImpl {
         has_next: bool,
     ) -> anyhow::Result<EditMessageResponse> {
         let params = EditMessageTextParams {
+            business_connection_id: None,
             chat_id: Some(ChatId::Integer(chat_id)),
             message_id: Some(message_id),
             inline_message_id: None,

@@ -10,7 +10,7 @@ async-recursion = "1.0"
 async-trait = "0.1"
 chrono = "0.4"
 enum-iterator = "2.0"
-frankenstein = { version = "0.31", default-features = false, features = ["async-http-client", "async-telegram-trait"] }
+frankenstein = { version = "0.32", default-features = false, features = ["async-http-client", "async-telegram-trait"] }
 futures = "0.3"
 itertools = { workspace = true }
 lazy_static = { workspace = true }
@@ -36,6 +36,6 @@ thiserror = { workspace = true }
 tokio = { version = "1.35", features = ["full"] }
 
 [dev-dependencies]
-mockall = "0.12"
+mockall = "0.13"
 mockito = "1"
 rand = "0.8.5"

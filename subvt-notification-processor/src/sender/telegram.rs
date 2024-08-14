@@ -35,6 +35,7 @@ impl TelegramSender {
             link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             disable_notification: None,
             protect_content: None,
+            message_effect_id: None,
             reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
