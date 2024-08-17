@@ -21,7 +21,7 @@ impl PostgreSQLNetworkStorage {
             INNER JOIN sub_era E
                 ON E.index = EX.era_index
             WHERE EV.rewardee_account_id = $1
-            AND E.start_timestamp >= EXTRACT(EPOCH FROM NOW() - INTERVAL '1 year')::bigint
+            AND E.start_timestamp >= (EXTRACT(EPOCH FROM NOW() - INTERVAL '1 year')::bigint * 1000)
             GROUP BY E.index
             ORDER BY E.index ASC;
             "#,

@@ -1,6 +1,6 @@
 [package]
 name = "subvt-substrate-client"
-version = "0.20.6"
+version = "0.20.7"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -21,7 +21,7 @@ parity-scale-codec = { version = "3.6", default-features = false, features = ["d
 rustc-hash = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.15.0" }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.15.1" }
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
