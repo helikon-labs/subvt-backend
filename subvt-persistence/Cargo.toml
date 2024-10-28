@@ -11,7 +11,7 @@ hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
 parity-scale-codec = "3.6"
-redis = { version = "0.26", features = ["tokio-comp"] }
+redis = { version = "0.27", features = ["tokio-comp"] }
 rustc-hash = "2.0"
 serde = { version = "1.0" }
 serde_json = "1.0"

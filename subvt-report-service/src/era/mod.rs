@@ -123,9 +123,9 @@ pub(crate) async fn current_era_service(data: web::Data<ServiceState>) -> Result
     if let Some(era) = data.postgres.get_current_era().await? {
         Ok(HttpResponse::Ok().json(era))
     } else {
-        return Ok(HttpResponse::NotFound().json(ServiceError::from(
+        Ok(HttpResponse::NotFound().json(ServiceError::from(
             "Current era not found.".to_string().as_ref(),
-        )));
+        )))
     }
 }
 

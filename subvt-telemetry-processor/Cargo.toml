@@ -6,9 +6,9 @@ rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
-async-lock = "3.3"
+async-lock = "3.4"
 async-trait = "0.1"
-async-tungstenite = { version = "0.27", features = ["tokio-runtime", "tokio-native-tls"] }
+async-tungstenite = { version = "0.28", features = ["tokio-runtime", "tokio-native-tls"] }
 futures = "0.3"
 lazy_static = { workspace = true }
 log = { workspace = true }
@@ -22,4 +22,4 @@ subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-tokio = { version = "1.40", features = ["full"] }
+tokio = { version = "1.41", features = ["full"] }

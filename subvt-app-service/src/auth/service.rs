@@ -148,7 +148,7 @@ where
                 metrics::connection_count().dec();
                 return Err(auth_error);
             }
-            return match service.call(request).await {
+            match service.call(request).await {
                 Ok(response) => {
                     let status_code = response.response().status();
                     metrics::response_time_ms().observe(start.elapsed().as_millis() as f64);
@@ -163,7 +163,7 @@ where
                     metrics::connection_count().dec();
                     Err(error)
                 }
-            };
+            }
         }
         .boxed_local()
     }

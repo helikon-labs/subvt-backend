@@ -11,8 +11,8 @@ pub(crate) async fn current_session_service(data: web::Data<ServiceState>) -> Re
     if let Some(epoch) = data.postgres.get_current_epoch().await? {
         Ok(HttpResponse::Ok().json(epoch))
     } else {
-        return Ok(HttpResponse::NotFound().json(ServiceError::from(
+        Ok(HttpResponse::NotFound().json(ServiceError::from(
             "Current era not found.".to_string().as_ref(),
-        )));
+        )))
     }
 }
