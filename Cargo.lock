@@ -2360,7 +2360,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5bd4679ea85999e2b642cc0b909cf84b279f8bc679aea5c570323d8858b80b0"
 dependencies = [
  "async-trait",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "serde",
  "serde_json",
  "thiserror",
@@ -5790,9 +5790,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.8"
+version = "0.12.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f713147fbe92361e52392c73b8c9e48c04c6625bce969ef54dc901e58e042a7b"
+checksum = "a77c62af46e79de0a562e1a9849205ffcb7fc1238876e9bd743357570e04046f"
 dependencies = [
  "async-compression",
  "base64 0.22.1",
@@ -7617,7 +7617,7 @@ dependencies = [
  "anyhow",
  "lazy_static",
  "log",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "serde_json",
  "subvt-config",
  "subvt-types",
@@ -7634,7 +7634,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "serde",
  "serde_json",
  "subvt-config",
@@ -7724,7 +7724,7 @@ dependencies = [
  "anyhow",
  "lazy_static",
  "log",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "subvt-config",
  "subvt-types",
 ]
@@ -7803,7 +7803,7 @@ dependencies = [
  "once_cell",
  "prometheus",
  "rand 0.8.5",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "subvt-config",
  "subvt-logging",
  "subvt-metrics",
@@ -7877,7 +7877,7 @@ dependencies = [
  "once_cell",
  "prometheus",
  "rand 0.8.5",
- "reqwest 0.12.8",
+ "reqwest 0.12.9",
  "subvt-config",
  "subvt-governance",
  "subvt-logging",
