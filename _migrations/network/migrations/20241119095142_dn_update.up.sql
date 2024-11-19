@@ -1,0 +1,54 @@
+-- Add up migration script here
+ALTER TABLE sub_onekv_candidate DROP COLUMN kusama_account_id;
+ALTER TABLE sub_onekv_candidate DROP COLUMN discovered_at;
+ALTER TABLE sub_onekv_candidate DROP COLUMN inclusion;
+ALTER TABLE sub_onekv_candidate DROP COLUMN commission;
+ALTER TABLE sub_onekv_candidate DROP COLUMN is_active;
+ALTER TABLE sub_onekv_candidate DROP COLUMN unclaimed_eras;
+ALTER TABLE sub_onekv_candidate DROP COLUMN nominated_at;
+ALTER TABLE sub_onekv_candidate DROP COLUMN offline_accumulated;
+ALTER TABLE sub_onekv_candidate DROP COLUMN offline_since;
+ALTER TABLE sub_onekv_candidate DROP COLUMN name;
+ALTER TABLE sub_onekv_candidate DROP COLUMN location;
+ALTER TABLE sub_onekv_candidate DROP COLUMN rank;
+ALTER TABLE sub_onekv_candidate DROP COLUMN version;
+ALTER TABLE sub_onekv_candidate DROP COLUMN is_valid;
+ALTER TABLE sub_onekv_candidate DROP COLUMN fault_count;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_updated_at;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_total;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_aggregate;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_inclusion;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_discovered;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_nominated;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_rank;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_unclaimed;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_bonded;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_faults;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_offline;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_randomness;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_span_inclusion;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_location;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_country;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_nominator_stake;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_provider;
+ALTER TABLE sub_onekv_candidate DROP COLUMN score_region;
+ALTER TABLE sub_onekv_candidate DROP COLUMN created_at;
+
+ALTER TABLE sub_onekv_candidate ADD COLUMN IF NOT EXISTS identity text NOT NULL;
+ALTER TABLE sub_onekv_candidate ADD COLUMN IF NOT EXISTS status VARCHAR(256) NOT NULL;
+ALTER TABLE sub_onekv_candidate ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now();
+
+ALTER TABLE sub_onekv_nominator DROP COLUMN onekv_id;
+ALTER TABLE sub_onekv_nominator DROP COLUMN stash_account_id;
+ALTER TABLE sub_onekv_nominator DROP COLUMN proxy_account_id;
+ALTER TABLE sub_onekv_nominator DROP COLUMN bonded_amount;
+ALTER TABLE sub_onekv_nominator DROP COLUMN proxy_delay;
+ALTER TABLE sub_onekv_nominator DROP COLUMN last_nomination_at;
+ALTER TABLE sub_onekv_nominator DROP COLUMN nominator_created_at;
+ALTER TABLE sub_onekv_nominator DROP COLUMN average_stake;
+ALTER TABLE sub_onekv_nominator DROP COLUMN reward_destination;
+ALTER TABLE sub_onekv_nominator DROP COLUMN created_at;
+ALTER TABLE sub_onekv_nominator ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now();
+
+DROP TABLE sub_onekv_candidate_validity;
+DROP TABLE sub_onekv_nominee;

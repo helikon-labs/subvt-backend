@@ -11,11 +11,8 @@ pub struct ValidatorInfo {
     pub blocks_authored: Option<u64>,
     pub reward_points: Option<u64>,
     pub heartbeat_received: Option<bool>,
-    pub onekv_candidate_record_id: Option<u32>,
-    pub onekv_rank: Option<u64>,
-    pub onekv_location: Option<String>,
-    pub onekv_is_valid: Option<bool>,
-    pub onekv_offline_since: Option<u64>,
+    pub dn_record_id: Option<u32>,
+    pub dn_status: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

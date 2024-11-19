@@ -10,21 +10,11 @@ use crate::content::context::referenda::{
     set_referendum_submitted_context, set_referendum_timed_out_context,
 };
 use crate::content::context::{
-    basic::set_basic_context,
-    block_authorship::set_block_authorship_context,
-    identity::set_identity_changed_context,
-    lost_nomination::set_lost_nomination_context,
-    new_nomination::set_new_nomination_context,
-    offline_offence::set_offline_offence_context,
-    onekv::{
-        location::set_onekv_location_changed_context,
-        online_status::set_onekv_online_status_changed_context,
-        rank::set_onekv_rank_changed_context, validity::set_onekv_validity_changed_context,
-    },
-    payout::set_payout_context,
-    session_keys::set_session_keys_changed_context,
-    unclaimed_payout::set_unclaimed_payout_context,
-    validate::set_validate_extrinsic_context,
+    basic::set_basic_context, block_authorship::set_block_authorship_context,
+    identity::set_identity_changed_context, lost_nomination::set_lost_nomination_context,
+    new_nomination::set_new_nomination_context, offline_offence::set_offline_offence_context,
+    payout::set_payout_context, session_keys::set_session_keys_changed_context,
+    unclaimed_payout::set_unclaimed_payout_context, validate::set_validate_extrinsic_context,
     validator_active::set_validator_active_context,
     validator_chilled::set_validator_chilled_context,
 };
@@ -40,7 +30,6 @@ mod identity;
 mod lost_nomination;
 mod new_nomination;
 mod offline_offence;
-mod onekv;
 mod payout;
 mod referenda;
 mod session_keys;
@@ -119,18 +108,6 @@ pub(crate) fn get_renderer_context(
         }
         NotificationTypeCode::ChainValidatorStartedParaValidating => (),
         NotificationTypeCode::ChainValidatorStoppedParaValidating => (),
-        NotificationTypeCode::OneKVValidatorRankChange => {
-            set_onekv_rank_changed_context(notification, &mut context);
-        }
-        NotificationTypeCode::OneKVValidatorLocationChange => {
-            set_onekv_location_changed_context(notification, &mut context);
-        }
-        NotificationTypeCode::OneKVValidatorOnlineStatusChange => {
-            set_onekv_online_status_changed_context(notification, &mut context);
-        }
-        NotificationTypeCode::OneKVValidatorValidityChange => {
-            set_onekv_validity_changed_context(notification, &mut context);
-        }
         NotificationTypeCode::ReferendumApproved => {
             set_referendum_approved_context(notification, &mut context)
         }

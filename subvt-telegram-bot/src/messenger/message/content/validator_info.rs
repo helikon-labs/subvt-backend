@@ -1,8 +1,7 @@
 //! Content for the `/validatorinfo` request, after the selection of the validator.
 use super::MessageType;
 use crate::CONFIG;
-use chrono::{LocalResult, TimeZone, Utc};
-use subvt_types::onekv::OneKVCandidateSummary;
+use subvt_types::dn::DNNode;
 use subvt_types::subvt::ValidatorDetails;
 use subvt_utility::numeric::format_decimal;
 use subvt_utility::text::{get_condensed_address, get_condensed_session_keys};
@@ -14,7 +13,7 @@ impl MessageType {
         context: &mut Context,
         address: &str,
         maybe_validator_details: &Option<ValidatorDetails>,
-        maybe_onekv_candidate_summary: &Option<OneKVCandidateSummary>,
+        maybe_dn_node: &Option<DNNode>,
         missing_referendum_votes: &Vec<u32>,
     ) {
         context.insert("chain", &CONFIG.substrate.chain);
@@ -66,71 +65,10 @@ impl MessageType {
             context.insert("slash_count", &validator_details.slash_count);
         }
         context.insert("missing_referendum_votes", missing_referendum_votes);
-        context.insert("is_onekv", &maybe_onekv_candidate_summary.is_some());
-        if let Some(onekv_summary) = maybe_onekv_candidate_summary {
-            context.insert("onekv_name", &onekv_summary.name);
-            if let Some(location) = &onekv_summary.location {
-                context.insert("onekv_location", location);
-            }
-            let date_time_format = "%b %d, %Y %H:%M UTC";
-            match Utc::timestamp_opt(&Utc, onekv_summary.discovered_at as i64 / 1000, 0) {
-                LocalResult::Single(discovered_at) => {
-                    context.insert(
-                        "onekv_discovered_at",
-                        &discovered_at.format(date_time_format).to_string(),
-                    );
-                }
-                _ => context.insert("onekv_discovered_at", "-"),
-            }
-            if let Some(nominated_at) = onekv_summary.nominated_at {
-                match Utc::timestamp_opt(&Utc, nominated_at as i64 / 1000, 0) {
-                    LocalResult::Single(nominated_at) => {
-                        context.insert(
-                            "onekv_nominated_at",
-                            &nominated_at.format(date_time_format).to_string(),
-                        );
-                    }
-                    _ => context.insert("onekv_nominated_at", "-"),
-                }
-            }
-            if onekv_summary.offline_since > 0 {
-                match Utc::timestamp_opt(&Utc, onekv_summary.offline_since as i64 / 1000, 0) {
-                    LocalResult::Single(offline_since) => {
-                        context.insert(
-                            "onekv_offline_since",
-                            &offline_since.format(date_time_format).to_string(),
-                        );
-                    }
-                    _ => context.insert("onekv_offline_since", "-"),
-                }
-            }
-            if let Some(rank) = onekv_summary.rank {
-                context.insert("onekv_rank", &rank);
-            }
-            context.insert("onekv_fault_count", &onekv_summary.fault_count);
-            if let Some(score) = onekv_summary.total_score {
-                context.insert("onekv_score", &(score as u64));
-            }
-            let is_valid = onekv_summary.is_valid();
-            context.insert("onekv_is_valid", &is_valid);
-            if !is_valid {
-                let invalidity_reasons: Vec<String> = onekv_summary
-                    .validity
-                    .iter()
-                    .filter(|v| !v.is_valid)
-                    .map(|v| v.details.clone())
-                    .collect();
-                context.insert("onekv_invalidity_reasons", &invalidity_reasons);
-            }
-            match Utc::timestamp_opt(&Utc, onekv_summary.record_created_at as i64 / 1000, 0) {
-                LocalResult::Single(last_updated) => {
-                    context.insert(
-                        "onekv_last_updated",
-                        &last_updated.format(date_time_format).to_string(),
-                    );
-                }
-                _ => context.insert("onekv_last_updated", "-"),
-            }
+        context.insert("is_dn", &maybe_dn_node.is_some());
+        if let Some(dn_node) = maybe_dn_node {
+            context.insert("dn_identity", &dn_node.identity);
+            context.insert("dn_status", &dn_node.status);
         }
     }
 }

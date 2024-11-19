@@ -16,17 +16,8 @@
 ☠️ Slashed {{ slash_count }} times in the last 12 months{% endif %}{% else %}🙄 There is currently no active or waiting validator with address <pre>{{ condensed_address }}</pre>. Please make sure the validator still has a <pre>validate</pre> intention.{% endif %}
 
 <strong>OpenGov</strong>
-🗳 {% if missing_referendum_votes | length == 0 %}No missing votes for open referenda{% else %}Hasn't voted for {% for missing_referendum_vote in missing_referendum_votes %}<a href="https://{{ chain }}.subsquare.io/referenda/referendum/{{ missing_referendum_vote }}">#{{ missing_referendum_vote }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}{% if is_onekv %}
+🗳 {% if missing_referendum_votes | length == 0 %}No missing votes for open referenda{% else %}Hasn't voted for {% for missing_referendum_vote in missing_referendum_votes %}<a href="https://{{ chain }}.subsquare.io/referenda/referendum/{{ missing_referendum_vote }}">#{{ missing_referendum_vote }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}{% if is_dn %}
 
-<strong>Thousand Validators Info</strong>
-🏷 {{ onekv_name }}
-{% if onekv_offline_since %}🔴️ Offline since {{ onekv_offline_since }}{% else %}🟢️ Online{% endif %}
-{% if onekv_is_valid %}✅ Valid 1KV validator{% else %}❌ Invalid 1KV validator:{% for onekv_invalidity_reason in onekv_invalidity_reasons %}
-- {{ onekv_invalidity_reason }}{% endfor %}{% endif %}{% if onekv_rank %}
-📈 Rank {{ onekv_rank }}{% endif %}{% if onekv_score %}
-📊 Score {{ onekv_score }}{% endif %}
-🆘 {% if onekv_fault_count == 0 %}No{% else %}{{ onekv_fault_count }}{% endif %} offline fault{% if onekv_fault_count != 1 %}s{% endif %} {% if onekv_nominated_at %}
-💎 Last 1KV nomination {{ onekv_nominated_at }}{% endif %}{% if onekv_location %}
-🌍 {{ onekv_location }}{% endif %}
-📡 Discovered {{ onekv_discovered_at }}
-<i>1KV data last updated {{ onekv_last_updated }}</i>{% endif %}
+<strong>Decentralized Nodes Info</strong>
+🏷 {{ dn_identity }}
+📊 Status: {{ dn_status }}{% endif %}

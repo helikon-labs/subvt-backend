@@ -15,7 +15,6 @@ use subvt_types::subvt::ValidatorDetails;
 
 mod add;
 mod init;
-mod onekv;
 mod remove;
 mod unclaimed_payout;
 mod update;

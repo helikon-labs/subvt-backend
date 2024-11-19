@@ -11,11 +11,8 @@ DO $$ BEGIN
 		blocks_authored bigint,
 		reward_points bigint,
 		heartbeat_received boolean,
-		onekv_candidate_record_id INTEGER,
-		onekv_rank bigint,
-		onekv_location text,
-		onekv_is_valid boolean,
-		onekv_offline_since bigint
+		dn_node_record_id INTEGER,
+		dn_status text
 	);
 END $$;
 
@@ -95,9 +92,9 @@ BEGIN
         ) INTO result_record.heartbeat_received;
     end if;
 
-    SELECT id, rank, location, is_valid, offline_since
+    SELECT id, status
     FROM sub_onekv_candidate C
-    INTO result_record.onekv_candidate_record_id, result_record.onekv_rank, result_record.onekv_location, result_record.onekv_is_valid, result_record.onekv_offline_since
+    INTO result_record.dn_node_record_id, result_record.dn_status
     WHERE C.validator_account_id = account_id_param
     ORDER BY id DESC
     LIMIT 1;

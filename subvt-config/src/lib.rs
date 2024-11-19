@@ -143,13 +143,10 @@ pub struct ValidatorListUpdaterConfig {
     pub history_record_depth: u64,
 }
 
-/// 1KV configuration - only used for Polkadot and Kusama.
 #[derive(Clone, Debug, Deserialize)]
-pub struct OneKVConfig {
+pub struct DNConfig {
     pub candidate_history_record_count: u64,
-    pub candidate_list_endpoint: String,
-    pub candidate_details_endpoint: String,
-    pub nominator_list_endpoint: String,
+    pub data_endpoint: String,
     pub refresh_seconds: u64,
 }
 
@@ -285,7 +282,7 @@ pub struct Config {
     pub common: CommonConfig,
     pub http: HTTPConfig,
     pub log: LogConfig,
-    pub onekv: OneKVConfig,
+    pub dn: DNConfig,
     pub app_postgres: PostgreSQLConfig,
     pub network_postgres: PostgreSQLConfig,
     pub redis: RedisConfig,

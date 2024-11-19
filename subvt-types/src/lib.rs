@@ -2,10 +2,10 @@
 #![warn(clippy::disallowed_types)]
 pub mod app;
 pub mod crypto;
+pub mod dn;
 pub mod err;
 pub mod governance;
 pub mod kline;
-pub mod onekv;
 pub mod rdb;
 pub mod report;
 pub mod sub_id;

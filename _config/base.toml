@@ -68,12 +68,10 @@ start_block_number = 6_015_486
 [validator_list_updater]
 history_record_depth = 10
 
-[onekv]
+[dn]
 # this many most recent records will always be kept in the database for reference
 candidate_history_record_count = 5
-candidate_list_endpoint = "https://kusama.w3f.community/candidates"
-candidate_details_endpoint = "https://kusama.w3f.community/candidate/"
-nominator_list_endpoint = "https://kusama.w3f.community/nominators"
+data_endpoint = "https://nodes.web3.foundation/api/cohort/1/polkadot"
 refresh_seconds = 300
 
 [report]

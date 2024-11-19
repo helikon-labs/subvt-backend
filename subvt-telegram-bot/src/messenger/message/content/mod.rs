@@ -73,14 +73,14 @@ impl MessageType {
             Self::ValidatorInfo {
                 address,
                 maybe_validator_details,
-                maybe_onekv_candidate_summary,
+                maybe_dn_node,
                 missing_referendum_votes,
             } => {
                 self.fill_validator_info_context(
                     &mut context,
                     address,
                     maybe_validator_details,
-                    maybe_onekv_candidate_summary,
+                    maybe_dn_node,
                     missing_referendum_votes,
                 );
                 "validator_info.html"

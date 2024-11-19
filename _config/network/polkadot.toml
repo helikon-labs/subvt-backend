@@ -14,10 +14,8 @@ token_decimals = 10
 # first block of 2021 for Polkadot is 2_700_565
 start_block_number = 2_700_565
 
-[onekv]
-candidate_list_endpoint = "https://polkadot.w3f.community/candidates"
-candidate_details_endpoint = "https://polkadot.w3f.community/candidate/"
-nominator_list_endpoint = "https://polkadot.w3f.community/nominators"
+[dn]
+data_endpoint = "https://nodes.web3.foundation/api/cohort/1/polkadot"
 
 [notification_generator]
 unclaimed_payout_check_delay_hours = 9

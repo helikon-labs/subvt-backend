@@ -1,9 +1,9 @@
 //! This module manages the creation of the content for every message type.
 use crate::query::QueryType;
 use subvt_types::crypto::AccountId;
+use subvt_types::dn::DNNode;
 use subvt_types::governance::polkassembly::{ReferendumPost, ReferendumPostDetails};
 use subvt_types::governance::track::Track;
-use subvt_types::onekv::OneKVCandidateSummary;
 use subvt_types::sub_id::NFTCollection;
 use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
@@ -40,7 +40,7 @@ pub enum MessageType {
     ValidatorInfo {
         address: String,
         maybe_validator_details: Box<Option<ValidatorDetails>>,
-        maybe_onekv_candidate_summary: Box<Option<OneKVCandidateSummary>>,
+        maybe_dn_node: Box<Option<DNNode>>,
         missing_referendum_votes: Vec<u32>,
     },
     NominationSummary {

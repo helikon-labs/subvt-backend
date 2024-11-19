@@ -1,6 +1,5 @@
 //! SubVT application events, on top of the Substrate events.
 use crate::crypto::AccountId;
-use crate::onekv::OneKVValidity;
 use crate::substrate::Balance;
 use serde::{Deserialize, Serialize};
 
@@ -58,7 +57,6 @@ pub struct OneKVLocationChange {
 pub struct OneKVValidityChange {
     pub validator_account_id: AccountId,
     pub is_valid: bool,
-    pub validity_items: Vec<OneKVValidity>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

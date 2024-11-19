@@ -103,18 +103,6 @@ pub fn last_candidate_persist_error_count() -> IntGauge {
     METER.clone()
 }
 
-pub fn last_nominator_list_fetch_timestamp_ms() -> IntGauge {
-    static METER: Lazy<IntGauge> = Lazy::new(|| {
-        subvt_metrics::registry::register_int_gauge(
-            METRIC_PREFIX,
-            "last_nominator_list_fetch_timestamp_ms",
-            "Timestamp (ms) for the last nominator list fetch operation",
-        )
-        .unwrap()
-    });
-    METER.clone()
-}
-
 pub fn last_nominator_list_successful_fetch_timestamp_ms() -> IntGauge {
     static METER: Lazy<IntGauge> = Lazy::new(|| {
         subvt_metrics::registry::register_int_gauge(
