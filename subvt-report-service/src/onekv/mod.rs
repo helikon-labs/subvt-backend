@@ -27,7 +27,7 @@ pub(crate) async fn get_onekv_nominator_summaries(data: web::Data<ServiceState>)
             id,
             onekv_id: id.to_string(),
             stash_account_id: *stash_account_id,
-            stash_address: stash_account_id.to_string(),
+            stash_address: stash_account_id.to_ss58_check(),
             bonded_amount: 0,
             last_nomination_at: 0,
         });
