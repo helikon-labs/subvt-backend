@@ -20,7 +20,7 @@ pallet-democracy = { git = "https://github.com/paritytech/polkadot-sdk.git", tag
 pallet-identity = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
 pallet-im-online = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
 pallet-multisig = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
-pallet-referenda = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
+pallet-referenda = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.2" }
 pallet-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.1" }
