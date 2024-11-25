@@ -7812,7 +7812,7 @@ dependencies = [
  "once_cell",
  "prometheus",
  "subvt-config",
- "thiserror 1.0.69",
+ "thiserror 2.0.3",
  "tokio",
  "warp",
 ]
@@ -7934,7 +7934,7 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "tera",
- "thiserror 1.0.69",
+ "thiserror 2.0.3",
  "tokio",
 ]
 
@@ -7997,7 +7997,7 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "svg",
- "thiserror 1.0.69",
+ "thiserror 2.0.3",
  "tiny-skia",
  "usvg",
 ]
@@ -8143,7 +8143,7 @@ dependencies = [
  "subvt-types",
  "subvt-utility",
  "tera",
- "thiserror 1.0.69",
+ "thiserror 2.0.3",
  "tokio",
 ]
 
@@ -8210,7 +8210,7 @@ dependencies = [
  "sqlx",
  "subvt-proc-macro",
  "subvt-utility",
- "thiserror 1.0.69",
+ "thiserror 2.0.3",
 ]
 
 [[package]]
