@@ -77,7 +77,7 @@ pub struct BlockSummary {
     pub timestamp: u64,
 }
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Eq, PartialEq, Hash, Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ParaVotesSummary {
     pub explicit: u32,
     pub implicit: u32,
@@ -132,6 +132,12 @@ pub struct SessionValidatorParaVoteReport {
     pub para_validator_index: Option<u64>,
     pub para_votes_summary: Option<ParaVotesSummary>,
     pub para_votes: Option<Vec<ParaVote>>,
+}
+
+#[derive(Eq, PartialEq, Hash, Clone, Debug, Default, Deserialize, Serialize)]
+pub struct SessionValidatorParaVoteSummaryReport {
+    pub session_index: u64,
+    pub para_votes_summary: ParaVotesSummary,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]

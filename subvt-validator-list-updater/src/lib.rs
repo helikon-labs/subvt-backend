@@ -249,6 +249,10 @@ impl ValidatorListUpdater {
             validator.onekv_is_valid =
                 Some(db_validator_info.dn_status == Some("Active".to_string()));
             validator.onekv_offline_since = None;
+            // get para validation reports
+            validator.para_vote_summary_reports = postgres
+                .get_session_para_validator_vote_summaries(&validator.account.id, 10)
+                .await?;
         }
         log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();

@@ -1,4 +1,5 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use subvt_types::report::{ParaVoteType, ParaVotesSummary, SessionValidatorParaVoteSummaryReport};
 use subvt_types::{
     crypto::AccountId, report::SessionParaValidator, substrate::para::ParaCoreAssignment,
 };
@@ -120,5 +121,47 @@ impl PostgreSQLNetworkStorage {
             .fetch_one(&self.connection_pool)
             .await?;
         Ok(result.0)
+    }
+
+    pub async fn get_session_para_validator_vote_summaries(
+        &self,
+        validator_account_id: &AccountId,
+        session_count_limit: u16,
+    ) -> anyhow::Result<Vec<SessionValidatorParaVoteSummaryReport>> {
+        let sessions: Vec<(i64, i64)> = sqlx::query_as(
+            r#"
+                SELECT session_index, para_validator_index FROM sub_session_para_validator
+                WHERE validator_account_id = $1
+                ORDER BY id desc
+                LIMIT $2;
+                "#,
+        )
+        .bind(validator_account_id.to_string())
+        .bind(session_count_limit as i64)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        let mut result = Vec::new();
+        for (session_index, para_validator_index) in sessions.iter() {
+            let votes = self
+                .get_session_para_validator_votes(
+                    *session_index as u64,
+                    *para_validator_index as u64,
+                )
+                .await?;
+            let mut para_votes_summary = ParaVotesSummary::default();
+            for para_vote in votes.iter() {
+                match para_vote.vote {
+                    ParaVoteType::EXPLICIT => para_votes_summary.explicit += 1,
+                    ParaVoteType::IMPLICIT => para_votes_summary.implicit += 1,
+                    ParaVoteType::MISSED => para_votes_summary.missed += 1,
+                }
+            }
+            let report = SessionValidatorParaVoteSummaryReport {
+                session_index: *session_index as u64,
+                para_votes_summary,
+            };
+            result.push(report);
+        }
+        Ok(result)
     }
 }
