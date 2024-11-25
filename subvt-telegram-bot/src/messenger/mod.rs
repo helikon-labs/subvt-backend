@@ -5,6 +5,7 @@ use crate::messenger::keyboard::{
     confirmation::get_confirmation_keyboard,
     contact_type::get_contact_type_keyboard,
     nft::get_nft_collection_keyboard,
+    nomination_details::get_nomination_details_keyboard,
     nomination_summary::get_nomination_summary_keyboard,
     referendum_list::get_referendum_list_keyboard,
     settings::{
@@ -21,9 +22,8 @@ use crate::{TelegramBotError, CONFIG};
 use async_trait::async_trait;
 use frankenstein::{
     AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    EditMessageResponse, EditMessageTextParams, Error, LinkPreviewOptions,
-    Message as TelegramMessage, MethodResponse, ParseMode, ReplyMarkup, SendMessageParams,
-    SendPhotoParams,
+    EditMessageTextParams, Error, LinkPreviewOptions, Message as TelegramMessage, MessageOrBool,
+    MethodResponse, ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
 };
 use message::MessageType;
 #[cfg(test)]
@@ -78,7 +78,7 @@ pub trait Messenger {
         settings_message_id: i32,
         sub_section: SettingsSubSection,
         notification_rules: &[UserNotificationRule],
-    ) -> anyhow::Result<EditMessageResponse>;
+    ) -> anyhow::Result<MethodResponse<MessageOrBool>>;
 
     #[allow(clippy::too_many_arguments)]
     async fn update_nfts_message(
@@ -91,7 +91,7 @@ pub trait Messenger {
         page_index: usize,
         has_prev: bool,
         has_next: bool,
-    ) -> anyhow::Result<EditMessageResponse>;
+    ) -> anyhow::Result<MethodResponse<MessageOrBool>>;
 }
 
 /// Telegram messenger.
@@ -177,6 +177,7 @@ impl Messenger for MessengerImpl {
             reply_markup: None,
             message_thread_id: None,
             business_connection_id: None,
+            allow_paid_broadcast: None,
         };
         match self.api.send_photo(&params).await {
             Ok(response) => Ok(response),
@@ -223,6 +224,17 @@ impl Messenger for MessengerImpl {
                 *chat_validator_id,
                 validator_details,
             )?,
+            MessageType::NominationDetails {
+                chat_validator_id,
+                validator_details,
+                onekv_nominator_account_ids: _,
+                is_full,
+            } => get_nomination_details_keyboard(
+                &self.renderer,
+                *chat_validator_id,
+                validator_details,
+                *is_full,
+            )?,
             MessageType::Settings => Some(ReplyMarkup::InlineKeyboardMarkup(
                 get_settings_keyboard(&self.renderer)?,
             )),
@@ -265,6 +277,7 @@ impl Messenger for MessengerImpl {
             reply_markup: inline_keyboard,
             message_thread_id: None,
             business_connection_id: None,
+            allow_paid_broadcast: None,
         };
         log::info!(
             "Message to chat {}: {}",
@@ -295,7 +308,7 @@ impl Messenger for MessengerImpl {
         settings_message_id: i32,
         sub_section: SettingsSubSection,
         notification_rules: &[UserNotificationRule],
-    ) -> anyhow::Result<EditMessageResponse> {
+    ) -> anyhow::Result<MethodResponse<MessageOrBool>> {
         let inline_keyboard = match sub_section {
             SettingsSubSection::Root => get_settings_keyboard(&self.renderer)?,
             SettingsSubSection::ValidatorActivity => {
@@ -367,7 +380,7 @@ impl Messenger for MessengerImpl {
         page_index: usize,
         has_prev: bool,
         has_next: bool,
-    ) -> anyhow::Result<EditMessageResponse> {
+    ) -> anyhow::Result<MethodResponse<MessageOrBool>> {
         let params = EditMessageTextParams {
             business_connection_id: None,
             chat_id: Some(ChatId::Integer(chat_id)),

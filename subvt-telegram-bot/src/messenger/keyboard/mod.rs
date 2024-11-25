@@ -2,6 +2,7 @@
 pub mod confirmation;
 pub mod contact_type;
 pub mod nft;
+pub mod nomination_details;
 pub mod nomination_summary;
 pub mod referendum_list;
 pub mod referendum_tracks;

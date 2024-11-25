@@ -13,6 +13,7 @@ impl MessageType {
         context: &mut Context,
         validator_details: &ValidatorDetails,
         onekv_nominator_account_ids: &[AccountId],
+        is_full: bool,
     ) {
         let self_stake = validator_details.self_stake.active_amount;
         let self_stake_formatted = format_decimal(
@@ -26,6 +27,7 @@ impl MessageType {
         context.insert("validator_display", &validator_display);
         context.insert("token_ticker", &CONFIG.substrate.token_ticker);
         context.insert("self_stake", &self_stake_formatted);
+        context.insert("is_full", &is_full);
         let mut active_nominator_account_ids = Vec::new();
         if let Some(active_stake) = &validator_details.validator_stake {
             let mut active_nomination_total = 0;
@@ -36,7 +38,11 @@ impl MessageType {
                     active_nomination_total += n.stake;
                     active_nominator_account_ids.push(n.account.id);
                     (
-                        n.account.get_display_or_condensed_address(Some(3)),
+                        if is_full {
+                            n.account.get_display_or_full_address()
+                        } else {
+                            n.account.get_display_or_condensed_address(Some(3))
+                        },
                         n.stake,
                         onekv_nominator_account_ids.contains(&n.account.id),
                     )
@@ -85,7 +91,11 @@ impl MessageType {
             .map(|n| {
                 inactive_nomination_total += n.stake.active_amount;
                 (
-                    n.stash_account.get_display_or_condensed_address(Some(3)),
+                    if is_full {
+                        n.stash_account.get_display_or_full_address()
+                    } else {
+                        n.stash_account.get_display_or_condensed_address(Some(3))
+                    },
                     n.stake.active_amount,
                     onekv_nominator_account_ids.contains(&n.stash_account.id),
                 )

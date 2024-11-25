@@ -231,6 +231,14 @@ impl Account {
             get_condensed_address(&self.address, address_side_limit)
         }
     }
+
+    pub fn get_display_or_full_address(&self) -> String {
+        if let Some(display) = self.get_full_display() {
+            display
+        } else {
+            self.address.clone()
+        }
+    }
 }
 
 /// Block wrapper as returned by the RPC method.

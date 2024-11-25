@@ -58,6 +58,7 @@ pub fn query_call_counter(query: &QueryType) -> IntCounter {
         QueryType::Close => "Close",
         QueryType::ConfirmBroadcast => "ConfirmBroadcast",
         QueryType::NominationDetails => "NominationDetails",
+        QueryType::NominationDetailsFull => "NominationDetailsFull",
         QueryType::NominationSummary => "NominationSummary",
         QueryType::NFTs(..) => "NFTs",
         QueryType::NoOp => "NoOp",

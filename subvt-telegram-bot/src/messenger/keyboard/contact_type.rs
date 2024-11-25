@@ -21,6 +21,7 @@ pub fn get_contact_type_keyboard(renderer: &Tera) -> anyhow::Result<Option<Reply
                 switch_inline_query_chosen_chat: None,
                 callback_game: None,
                 pay: None,
+                copy_text: None,
             },
             InlineKeyboardButton {
                 text: renderer.render("report_feature_request.html", &Context::new())?,
@@ -36,6 +37,7 @@ pub fn get_contact_type_keyboard(renderer: &Tera) -> anyhow::Result<Option<Reply
                 switch_inline_query_chosen_chat: None,
                 callback_game: None,
                 pay: None,
+                copy_text: None,
             },
         ],
         vec![InlineKeyboardButton {
@@ -52,6 +54,7 @@ pub fn get_contact_type_keyboard(renderer: &Tera) -> anyhow::Result<Option<Reply
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         }],
     ];
     Ok(Some(ReplyMarkup::InlineKeyboardMarkup(

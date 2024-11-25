@@ -26,6 +26,8 @@ pub enum QueryType {
     NFTs(usize, bool),
     #[serde(rename = "ND")]
     NominationDetails,
+    #[serde(rename = "NDF")]
+    NominationDetailsFull,
     #[serde(rename = "NS")]
     NominationSummary,
     #[serde(rename = "NOP")]

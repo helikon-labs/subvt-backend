@@ -54,6 +54,7 @@ pub fn get_nft_collection_keyboard(
                     switch_inline_query_chosen_chat: None,
                     callback_game: None,
                     pay: None,
+                    copy_text: None,
                 }]);
             }
         }
@@ -87,6 +88,7 @@ pub fn get_nft_collection_keyboard(
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         });
         nav_rows.push(InlineKeyboardButton {
             text: if has_next {
@@ -115,6 +117,7 @@ pub fn get_nft_collection_keyboard(
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         });
         rows.push(nav_rows);
     }

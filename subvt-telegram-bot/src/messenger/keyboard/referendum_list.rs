@@ -44,6 +44,7 @@ pub fn get_referendum_list_keyboard(
                 switch_inline_query_chosen_chat: None,
                 callback_game: None,
                 pay: None,
+                copy_text: None,
             }]);
         }
         rows.push(vec![InlineKeyboardButton {
@@ -60,6 +61,7 @@ pub fn get_referendum_list_keyboard(
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         }]);
         Ok(Some(ReplyMarkup::InlineKeyboardMarkup(
             InlineKeyboardMarkup {

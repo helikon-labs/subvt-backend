@@ -92,13 +92,16 @@ impl MessageType {
                 "nomination_summary.html"
             }
             Self::NominationDetails {
+                chat_validator_id: _,
                 validator_details,
                 onekv_nominator_account_ids,
+                is_full,
             } => {
                 self.fill_nomination_details_context(
                     &mut context,
                     validator_details,
                     onekv_nominator_account_ids,
+                    *is_full,
                 );
                 "nomination_details.html"
             }

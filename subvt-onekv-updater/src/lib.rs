@@ -131,7 +131,7 @@ impl Service for OneKVUpdater {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         log::info!(
-            "1KV updater has started with {} seconds refresh wait period.",
+            "DN updater has started with {} seconds refresh wait period.",
             CONFIG.dn.refresh_seconds
         );
         let postgres =

@@ -19,6 +19,7 @@ pub fn get_confirmation_keyboard(query_type: QueryType) -> anyhow::Result<Option
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         }],
         vec![InlineKeyboardButton {
             text: "No".to_string(),
@@ -34,6 +35,7 @@ pub fn get_confirmation_keyboard(query_type: QueryType) -> anyhow::Result<Option
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         }],
     ];
     Ok(Some(ReplyMarkup::InlineKeyboardMarkup(

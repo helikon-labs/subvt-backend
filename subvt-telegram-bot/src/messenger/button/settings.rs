@@ -26,6 +26,7 @@ pub(crate) fn get_settings_button(
         switch_inline_query_chosen_chat: None,
         callback_game: None,
         pay: None,
+        copy_text: None,
     }])
 }
 
@@ -57,6 +58,7 @@ pub(crate) fn get_notification_on_off_button(
         switch_inline_query_chosen_chat: None,
         callback_game: None,
         pay: None,
+        copy_text: None,
     }])
 }
 
@@ -93,6 +95,7 @@ pub(crate) fn get_notification_period_button(
             switch_inline_query_chosen_chat: None,
             callback_game: None,
             pay: None,
+            copy_text: None,
         }]))
     } else {
         Ok(None)

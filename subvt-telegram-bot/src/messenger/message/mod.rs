@@ -48,8 +48,10 @@ pub enum MessageType {
         validator_details: ValidatorDetails,
     },
     NominationDetails {
+        chat_validator_id: u64,
         validator_details: ValidatorDetails,
         onekv_nominator_account_ids: Vec<AccountId>,
+        is_full: bool,
     },
     ValidatorRemoved(TelegramChatValidator),
     RemoveAllValidatorsConfirm,

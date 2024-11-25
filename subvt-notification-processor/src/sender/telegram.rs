@@ -40,6 +40,7 @@ impl TelegramSender {
             reply_markup: None,
             message_thread_id: None,
             business_connection_id: None,
+            allow_paid_broadcast: None,
         };
         match self.telegram_client.send_message(&params).await {
             Ok(response) => {

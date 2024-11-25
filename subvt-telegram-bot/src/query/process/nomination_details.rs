@@ -7,6 +7,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         chat_id: i64,
         original_message_id: Option<i32>,
         query: &Query,
+        is_full: bool,
     ) -> anyhow::Result<()> {
         if let Some(message_id) = original_message_id {
             self.messenger.delete_message(chat_id, message_id).await?;
@@ -39,8 +40,10 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                             &self.network_postgres,
                             chat_id,
                             Box::new(MessageType::NominationDetails {
+                                chat_validator_id: validator.id,
                                 validator_details,
                                 onekv_nominator_account_ids,
+                                is_full,
                             }),
                         )
                         .await?;

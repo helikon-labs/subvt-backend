@@ -51,7 +51,11 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 .await?;
             }
             QueryType::NominationDetails => {
-                self.process_nomination_details_query(chat_id, original_message_id, query)
+                self.process_nomination_details_query(chat_id, original_message_id, query, false)
+                    .await?;
+            }
+            QueryType::NominationDetailsFull => {
+                self.process_nomination_details_query(chat_id, original_message_id, query, true)
                     .await?;
             }
             QueryType::NominationSummary => {
