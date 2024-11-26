@@ -67,6 +67,7 @@ start_block_number = 6_015_486
 
 [validator_list_updater]
 history_record_depth = 10
+db_fetch_batch_size = 200
 
 [dn]
 # this many most recent records will always be kept in the database for reference

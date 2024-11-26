@@ -134,12 +134,6 @@ pub struct SessionValidatorParaVoteReport {
     pub para_votes: Option<Vec<ParaVote>>,
 }
 
-#[derive(Eq, PartialEq, Hash, Clone, Debug, Default, Deserialize, Serialize)]
-pub struct SessionValidatorParaVoteSummaryReport {
-    pub session_index: u64,
-    pub para_votes_summary: ParaVotesSummary,
-}
-
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct SessionParaVoteReport {
     pub para_id: u64,

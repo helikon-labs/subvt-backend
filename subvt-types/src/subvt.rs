@@ -3,7 +3,6 @@
 //! by other services that require it.
 
 use crate::crypto::AccountId;
-use crate::report::SessionValidatorParaVoteSummaryReport;
 use crate::substrate::para::ParaCoreAssignment;
 use crate::substrate::{
     Account, Balance, Epoch, Era, InactiveNominationsSummary, NominationSummary, RewardDestination,
@@ -88,7 +87,6 @@ pub struct ValidatorDetails {
     pub onekv_is_valid: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_offline_since: Option<u64>,
-    pub para_vote_summary_reports: Vec<SessionValidatorParaVoteSummaryReport>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
@@ -126,7 +124,6 @@ pub struct ValidatorSummary {
     pub heartbeat_received: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validator_stake: Option<ValidatorStakeSummary>,
-    pub para_vote_summary_reports: Vec<SessionValidatorParaVoteSummaryReport>,
 }
 
 impl From<&ValidatorDetails> for ValidatorSummary {
@@ -178,7 +175,6 @@ impl From<&ValidatorDetails> for ValidatorSummary {
                 .validator_stake
                 .as_ref()
                 .map(ValidatorStakeSummary::from),
-            para_vote_summary_reports: validator.para_vote_summary_reports.clone(),
         }
     }
 }

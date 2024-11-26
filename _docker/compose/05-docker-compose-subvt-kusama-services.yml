@@ -45,6 +45,7 @@ services:
       - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
       # history depth
       - SUBVT__VALIDATOR_LIST_UPDATER__HISTORY_RECORD_DEPTH=${KUSAMA_VALIDATOR_LIST_UPDATER_HISTORY_DEPTH}
+      - SUBVT__VALIDATOR_LIST_UPDATER__DB_FETCH_BATCH_SIZE=${KUSAMA_VALIDATOR_LIST_UPDATER_DB_FETCH_BATCH_SIZE}
   subvt_kusama_active_validator_list_server:
     container_name: subvt_kusama_active_validator_list_server
     restart: unless-stopped

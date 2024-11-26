@@ -3462,9 +3462,9 @@ dependencies = [
 
 [[package]]
 name = "itoa"
-version = "1.0.13"
+version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "540654e97a3f4470a492cd30ff187bc95d89557a903a2bbf112e2fae98104ef2"
+checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
 
 [[package]]
 name = "jni"
@@ -3799,9 +3799,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.164"
+version = "0.2.165"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "433bfe06b8c75da9b2e3fbea6e5329ff87748f0b144ef75306e674c3f6f7c13f"
+checksum = "fcb4d3d38eab6c5239a362fa8bae48c03baf980a6e7079f063942d563ef3533e"
 
 [[package]]
 name = "libm"
@@ -4945,9 +4945,9 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pathdiff"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d61c5ce1153ab5b689d0c074c4e7fc613e942dfb7dd9eea5ab202d2ad91fe361"
+checksum = "df94ce210e5bc13cb6651479fa48d14f601d9858cfe0467f43ae157023b938d3"
 
 [[package]]
 name = "pbkdf2"
@@ -6284,9 +6284,9 @@ dependencies = [
 
 [[package]]
 name = "scale-bits"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e57b1e7f6b65ed1f04e79a85a57d755ad56d76fdf1e9bddcc9ae14f71fcdcf54"
+checksum = "27243ab0d2d6235072b017839c5f0cd1a3b1ce45c0f7a715363b0c7d36c76c94"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -7696,7 +7696,7 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "subvt-app-service"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "actix-http",
  "actix-rt",
@@ -7725,7 +7725,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-block-processor"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7751,7 +7751,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-config"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "config",
  "serde",
@@ -7759,7 +7759,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-governance"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -7773,7 +7773,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-kline-updater"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7796,7 +7796,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-logging"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "env_logger",
  "log",
@@ -7805,7 +7805,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-metrics"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "env_logger",
  "log",
@@ -7819,7 +7819,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-server"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7844,7 +7844,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-network-status-updater"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7866,7 +7866,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-nft"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "lazy_static",
@@ -7878,7 +7878,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-generator"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -7905,7 +7905,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-notification-processor"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "a2",
  "anyhow",
@@ -7940,7 +7940,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-onekv-updater"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -7962,7 +7962,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-persistence"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "chrono",
@@ -7981,7 +7981,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-plotter"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "chrono",
@@ -8004,7 +8004,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-proc-macro"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -8013,7 +8013,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-referendum-updater"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8037,7 +8037,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-report-service"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8065,7 +8065,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-service-common"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8082,7 +8082,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-substrate-client"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -8111,7 +8111,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telegram-bot"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-recursion",
@@ -8149,7 +8149,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-telemetry-processor"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-lock",
@@ -8173,7 +8173,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-types"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "chrono",
@@ -8215,7 +8215,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-utility"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "hex",
@@ -8225,7 +8225,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-details-server"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8249,7 +8249,7 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-server"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8276,13 +8276,14 @@ dependencies = [
 
 [[package]]
 name = "subvt-validator-list-updater"
-version = "0.21.3"
+version = "0.21.4"
 dependencies = [
  "anyhow",
  "async-lock",
  "async-trait",
  "chrono",
  "hex",
+ "itertools 0.13.0",
  "lazy_static",
  "log",
  "once_cell",
@@ -8787,9 +8788,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.32"
+version = "0.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06d3da6113f116aaee68e4d601191614c9053067f9ab7f6edbcb161237daa54"
+checksum = "e672c95779cf947c5311f83787af4fa8fffd12fb27e4993211a84bdfd9610f9c"
 dependencies = [
  "once_cell",
  "valuable",

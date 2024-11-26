@@ -9,7 +9,7 @@ use subvt_types::{
     substrate::{Balance, Epoch, Era, EraStakers, ValidatorPreferences, ValidatorStake},
 };
 
-type PostgresValidatorInfo = (
+pub type PostgresValidatorInfo = (
     Option<i64>,
     i64,
     i64,
@@ -329,6 +329,31 @@ impl PostgreSQLNetworkStorage {
         Ok(())
     }
 
+    fn db_record_into_validator_info(db_validator_info: &PostgresValidatorInfo) -> ValidatorInfo {
+        let mut unclaimed_era_indices: Vec<u32> = Vec::new();
+        if let Some(concated_string) = &db_validator_info.5 {
+            for unclaimed_era_index_string in concated_string.split(',') {
+                if let Ok(unclaimed_era_index) = unclaimed_era_index_string.parse::<u32>() {
+                    unclaimed_era_indices.push(unclaimed_era_index);
+                }
+            }
+        }
+        unclaimed_era_indices.sort_unstable();
+        ValidatorInfo {
+            discovered_at: db_validator_info.0.map(|value| value as u64),
+            slash_count: db_validator_info.1 as u64,
+            offline_offence_count: db_validator_info.2 as u64,
+            active_era_count: db_validator_info.3 as u64,
+            inactive_era_count: db_validator_info.4 as u64,
+            unclaimed_era_indices,
+            blocks_authored: db_validator_info.6.map(|value| value as u64),
+            reward_points: db_validator_info.7.map(|value| value as u64),
+            heartbeat_received: db_validator_info.8,
+            dn_record_id: db_validator_info.9.map(|value| value as u32),
+            dn_status: db_validator_info.10.clone(),
+        }
+    }
+
     pub async fn get_validator_info(
         &self,
         block_hash: &str,
@@ -336,7 +361,7 @@ impl PostgreSQLNetworkStorage {
         is_active: bool,
         era_index: u32,
     ) -> anyhow::Result<ValidatorInfo> {
-        let validator_info: PostgresValidatorInfo = sqlx::query_as(
+        let db_validator_info: PostgresValidatorInfo = sqlx::query_as(
             r#"
             SELECT discovered_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, dn_node_record_id, dn_status
             FROM sub_get_validator_info($1, $2, $3, $4)
@@ -348,27 +373,35 @@ impl PostgreSQLNetworkStorage {
             .bind(era_index as i64)
             .fetch_one(&self.connection_pool)
             .await?;
-        let mut unclaimed_era_indices: Vec<u32> = Vec::new();
-        if let Some(concated_string) = validator_info.5 {
-            for unclaimed_era_index_string in concated_string.split(',') {
-                if let Ok(unclaimed_era_index) = unclaimed_era_index_string.parse::<u32>() {
-                    unclaimed_era_indices.push(unclaimed_era_index);
-                }
-            }
-        }
-        unclaimed_era_indices.sort_unstable();
-        Ok(ValidatorInfo {
-            discovered_at: validator_info.0.map(|value| value as u64),
-            slash_count: validator_info.1 as u64,
-            offline_offence_count: validator_info.2 as u64,
-            active_era_count: validator_info.3 as u64,
-            inactive_era_count: validator_info.4 as u64,
-            unclaimed_era_indices,
-            blocks_authored: validator_info.6.map(|value| value as u64),
-            reward_points: validator_info.7.map(|value| value as u64),
-            heartbeat_received: validator_info.8,
-            dn_record_id: validator_info.9.map(|value| value as u32),
-            dn_status: validator_info.10,
-        })
+        Ok(Self::db_record_into_validator_info(&db_validator_info))
+    }
+
+    pub async fn get_validator_info_batch(
+        &self,
+        block_hash: &str,
+        validator_account_id_batch: &[AccountId],
+        is_active_batch: &[bool],
+        era_index: u32,
+    ) -> anyhow::Result<Vec<ValidatorInfo>> {
+        let validator_accounts_id_strs: Vec<String> = validator_account_id_batch
+            .iter()
+            .map(|account_id| account_id.to_string())
+            .collect();
+        let validator_infos: Vec<PostgresValidatorInfo> = sqlx::query_as(
+            r#"
+            SELECT *
+            FROM sub_get_validator_info_batch($1, $2, $3, $4)
+            "#,
+        )
+        .bind(block_hash)
+        .bind(validator_accounts_id_strs)
+        .bind(is_active_batch)
+        .bind(era_index as i64)
+        .fetch_all(&self.connection_pool)
+        .await?;
+        Ok(validator_infos
+            .iter()
+            .map(Self::db_record_into_validator_info)
+            .collect())
     }
 }

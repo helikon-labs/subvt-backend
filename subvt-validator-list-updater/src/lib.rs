@@ -17,6 +17,8 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
+use subvt_types::crypto::AccountId;
+use subvt_types::rdb::ValidatorInfo;
 use subvt_types::substrate::{BlockHeader, Era};
 use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
 
@@ -222,37 +224,45 @@ impl ValidatorListUpdater {
             .await
             .context("Error while getting validators.")?;
         // enrich data with data from the relational database
-        log::info!("Get RDB content.");
-        for validator in validators.iter_mut() {
-            let db_validator_info = postgres
-                .get_validator_info(
+        log::info!("Get RDB content for {} validators.", validators.len());
+        let mut db_validator_infos: Vec<ValidatorInfo> = Vec::new();
+        let batches = validators.chunks(CONFIG.validator_list_updater.db_fetch_batch_size);
+        let batch_count = batches.len();
+        for (i, validator_batch) in batches.enumerate() {
+            log::info!("Batch {} of {batch_count}.", i + 1);
+            let account_id_batch: Vec<AccountId> =
+                validator_batch.iter().map(|v| v.account.id).collect();
+            let is_active_batch: Vec<bool> = validator_batch.iter().map(|v| v.is_active).collect();
+            let mut db_validator_info_batch = postgres
+                .get_validator_info_batch(
                     &finalized_block_hash,
-                    &validator.account.id,
-                    validator.is_active,
+                    &account_id_batch,
+                    &is_active_batch,
                     active_era.index,
                 )
                 .await?;
-            validator.account.discovered_at = db_validator_info.discovered_at;
-            validator.slash_count = db_validator_info.slash_count;
-            validator.offline_offence_count = db_validator_info.offline_offence_count;
-            validator.active_era_count = db_validator_info.active_era_count;
-            validator.inactive_era_count = db_validator_info.inactive_era_count;
-            validator
-                .unclaimed_era_indices
-                .clone_from(&db_validator_info.unclaimed_era_indices);
-            validator.blocks_authored = db_validator_info.blocks_authored;
-            validator.reward_points = db_validator_info.reward_points;
-            validator.heartbeat_received = db_validator_info.heartbeat_received;
-            validator.onekv_candidate_record_id = db_validator_info.dn_record_id;
-            validator.onekv_rank = db_validator_info.dn_record_id.map(|_| 0);
-            validator.onekv_location = db_validator_info.dn_record_id.map(|_| "".to_string());
-            validator.onekv_is_valid =
-                Some(db_validator_info.dn_status == Some("Active".to_string()));
-            validator.onekv_offline_since = None;
-            // get para validation reports
-            validator.para_vote_summary_reports = postgres
-                .get_session_para_validator_vote_summaries(&validator.account.id, 10)
-                .await?;
+            db_validator_infos.append(&mut db_validator_info_batch);
+        }
+        for (i, validator) in validators.iter_mut().enumerate() {
+            if let Some(db_validator_info) = db_validator_infos.get(i) {
+                validator.account.discovered_at = db_validator_info.discovered_at;
+                validator.slash_count = db_validator_info.slash_count;
+                validator.offline_offence_count = db_validator_info.offline_offence_count;
+                validator.active_era_count = db_validator_info.active_era_count;
+                validator.inactive_era_count = db_validator_info.inactive_era_count;
+                validator
+                    .unclaimed_era_indices
+                    .clone_from(&db_validator_info.unclaimed_era_indices);
+                validator.blocks_authored = db_validator_info.blocks_authored;
+                validator.reward_points = db_validator_info.reward_points;
+                validator.heartbeat_received = db_validator_info.heartbeat_received;
+                validator.onekv_candidate_record_id = db_validator_info.dn_record_id;
+                validator.onekv_rank = db_validator_info.dn_record_id.map(|_| 0);
+                validator.onekv_location = db_validator_info.dn_record_id.map(|_| "".to_string());
+                validator.onekv_is_valid =
+                    Some(db_validator_info.dn_status == Some("Active".to_string()));
+                validator.onekv_offline_since = None;
+            }
         }
         log::info!("Got RDB content. Update Redis.");
         let start = std::time::Instant::now();

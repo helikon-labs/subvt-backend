@@ -141,6 +141,7 @@ pub struct BlockProcessorConfig {
 pub struct ValidatorListUpdaterConfig {
     /// Keep this many records in Redis for the past validator list updates.
     pub history_record_depth: u64,
+    pub db_fetch_batch_size: usize,
 }
 
 #[derive(Clone, Debug, Deserialize)]
