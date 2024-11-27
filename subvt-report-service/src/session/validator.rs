@@ -130,17 +130,10 @@ async fn get_session_validator_report(
         None => return Ok(Some(report)),
     }
     // get votes (summary)
-    let mut para_votes_summary = ParaVotesSummary::default();
     let votes = postgres
         .get_session_para_validator_votes(session_index, report.para_validator_index.unwrap())
         .await?;
-    for vote in votes {
-        match vote.vote {
-            ParaVoteType::EXPLICIT => para_votes_summary.explicit += 1,
-            ParaVoteType::IMPLICIT => para_votes_summary.implicit += 1,
-            ParaVoteType::MISSED => para_votes_summary.missed += 1,
-        }
-    }
+    let para_votes_summary = ParaVotesSummary::from_para_votes(&votes);
     report.para_votes_summary = Some(para_votes_summary);
     Ok(Some(report))
 }

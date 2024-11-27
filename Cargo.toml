@@ -19,6 +19,7 @@ members = [
     "subvt-referendum-updater",
     "subvt-report-service",
     "subvt-service-common",
+    "subvt-session-validator-performance-updater",
     "subvt-substrate-client",
     "subvt-telegram-bot",
     "subvt-telemetry-processor",

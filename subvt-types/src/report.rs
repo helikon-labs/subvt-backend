@@ -84,6 +84,20 @@ pub struct ParaVotesSummary {
     pub missed: u32,
 }
 
+impl ParaVotesSummary {
+    pub fn from_para_votes(para_votes: &[ParaVote]) -> ParaVotesSummary {
+        let mut para_votes_summary = ParaVotesSummary::default();
+        for vote in para_votes {
+            match vote.vote {
+                ParaVoteType::EXPLICIT => para_votes_summary.explicit += 1,
+                ParaVoteType::IMPLICIT => para_votes_summary.implicit += 1,
+                ParaVoteType::MISSED => para_votes_summary.missed += 1,
+            }
+        }
+        para_votes_summary
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ParaVoteType {
     #[serde(rename = "explicit")]

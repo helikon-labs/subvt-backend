@@ -57,3 +57,5 @@ docker build -t helikon/subvt-report-service:"$1" --no-cache --build-arg version
 docker build -t helikon/subvt-referendum-updater:"$1" --no-cache --build-arg version="$1" -f ./network/14-subvt-referendum-updater.dockerfile ..
 # kline updater
 docker build -t helikon/subvt-kline-updater:"$1" --no-cache --build-arg version="$1" -f ./network/15-subvt-kline-updater.dockerfile ..
+# session validator performance updater
+docker build -t helikon/subvt-session-validator-performance-updater:"$1" --no-cache --build-arg version="$1" -f ./network/16-subvt-session-validator-performance-updater.dockerfile ..

@@ -75,3 +75,6 @@ docker push --all-tags helikon/subvt-referendum-updater
 # kline updater
 docker build -t helikon/subvt-kline-updater:"$1" -t helikon/subvt-kline-updater:latest --no-cache --build-arg version="$1" -f ./network/15-subvt-kline-updater.dockerfile ..
 docker push --all-tags helikon/subvt-kline-updater
+# session validator performance updater
+docker build -t helikon/subvt-session-validator-performance-updater:"$1" -t helikon/subvt-session-validator-performance-updater:latest --no-cache --build-arg version="$1" -f ./network/16-subvt-session-validator-performance-updater.dockerfile ..
+docker push --all-tags helikon/subvt-session-validator-performance-updater

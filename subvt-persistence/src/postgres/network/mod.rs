@@ -17,6 +17,7 @@ pub mod nft;
 pub mod notify;
 pub mod onekv;
 pub mod para;
+pub mod performance;
 pub mod referendum;
 pub mod report;
 pub mod staking;

@@ -494,6 +494,10 @@ impl BlockProcessor {
                     }
                 }
             }
+            // save disputes
+            for statement_set in votes.disputes {
+                for _statement in statement_set.statements {}
+            }
             log::debug!(
                 "Processed {} para votes for {} paras.",
                 total_vote_count,

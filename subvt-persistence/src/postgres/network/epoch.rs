@@ -15,6 +15,7 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(maybe_db_epoch.map(|db_epoch| Epoch {
             index: db_epoch.0 as u64,
+            era_index: db_epoch.1 as u32,
             start_block_number: db_epoch.2 as u32,
             start_timestamp: db_epoch.3 as u64,
             end_timestamp: db_epoch.4 as u64,
@@ -34,6 +35,7 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(maybe_db_epoch.map(|db_epoch| Epoch {
             index: db_epoch.0 as u64,
+            era_index: db_epoch.1 as u32,
             start_block_number: db_epoch.2 as u32,
             start_timestamp: db_epoch.3 as u64,
             end_timestamp: db_epoch.4 as u64,

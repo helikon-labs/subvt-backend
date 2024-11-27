@@ -252,6 +252,7 @@ impl SubstrateClient {
     /// Get current epoch at the given block.
     pub async fn get_current_epoch(&self, block_hash: &str) -> anyhow::Result<Epoch> {
         let index = self.get_current_epoch_index(block_hash).await?;
+        let era = self.get_active_era(block_hash).await?;
         let start_block_number = {
             let hex_string: String = self
                 .ws_client
@@ -267,6 +268,7 @@ impl SubstrateClient {
         let end_timestamp = start_timestamp + get_metadata_epoch_duration_millis(&self.metadata)?;
         Ok(Epoch {
             index,
+            era_index: era.index,
             start_block_number,
             start_timestamp,
             end_timestamp,

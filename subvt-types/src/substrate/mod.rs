@@ -401,6 +401,7 @@ impl Era {
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Epoch {
     pub index: u64,
+    pub era_index: u32,
     pub start_block_number: u32,
     pub start_timestamp: u64,
     pub end_timestamp: u64,

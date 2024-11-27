@@ -235,6 +235,7 @@ pub struct MetricsConfig {
     pub app_service_port: u16,
     pub referendum_updater_port: u16,
     pub kline_updater_port: u16,
+    pub session_validator_performance_updater_port: u16,
 }
 
 /// Plotter config.
@@ -274,6 +275,12 @@ pub struct KLineUpdaterConfig {
     pub begin_day: u32,
 }
 
+#[derive(Clone, Debug, Deserialize)]
+pub struct SessionValidatorPerformanceUpdaterConfig {
+    pub start_session_index: u64,
+    pub sleep_seconds: u64,
+}
+
 /// Whole configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -300,6 +307,7 @@ pub struct Config {
     pub app_service: AppServiceConfig,
     pub referendum_updater: ReferendumUpdaterConfig,
     pub kline_updater: KLineUpdaterConfig,
+    pub session_validator_performance_updater: SessionValidatorPerformanceUpdaterConfig,
 }
 
 impl Config {

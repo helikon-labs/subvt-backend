@@ -145,6 +145,7 @@ validator_details_server_port = 11002
 validator_list_updater_port = 11001
 referendum_updater_port = 11014
 kline_updater_port = 11015
+session_validator_performance_updater_port = 11016
 
 [sub_id]
 api_url = "https://sub.id/api/v1/"
@@ -161,3 +162,7 @@ sleep_seconds = 3600
 begin_year = 2022
 begin_month = 1
 begin_day = 1
+
+[session_validator_performance_updater]
+start_session_index = 5000
+sleep_seconds = 60

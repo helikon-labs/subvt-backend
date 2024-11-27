@@ -6,6 +6,7 @@ pub mod dn;
 pub mod err;
 pub mod governance;
 pub mod kline;
+pub mod performance;
 pub mod rdb;
 pub mod report;
 pub mod sub_id;
