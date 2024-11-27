@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS sub_session_validator_performance
 
 CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_account_id
     ON sub_session_validator_performance (validator_account_id);
-    CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_session_index
-        ON sub_session_validator_performance (session_index);
+CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_session_index
+    ON sub_session_validator_performance (session_index);
 CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_account_id_session_index_desc
     ON sub_session_validator_performance (validator_account_id, session_index DESC);
 CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_account_id_active_validator_index_session_index_desc
