@@ -88,4 +88,23 @@ impl PostgreSQLNetworkStorage {
         .await?;
         Ok(processed_block_height.0 as u64)
     }
+
+    pub async fn get_number_of_blocks_in_epoch_by_validator(
+        &self,
+        epoch_index: u64,
+        validator_account_id: &AccountId,
+    ) -> anyhow::Result<u32> {
+        let number_of_blocks: (i64,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(DISTINCT hash) from sub_block
+            WHERE epoch_index = $1
+            AND author_account_id = $2
+            "#,
+        )
+        .bind(epoch_index as i64)
+        .bind(validator_account_id.to_string())
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(number_of_blocks.0 as u32)
+    }
 }

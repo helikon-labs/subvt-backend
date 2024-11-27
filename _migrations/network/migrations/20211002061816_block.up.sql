@@ -40,3 +40,5 @@ CREATE INDEX IF NOT EXISTS sub_block_idx_author_account_id
     ON sub_block (author_account_id);
 CREATE INDEX IF NOT EXISTS sub_block_idx_era_index_author_account_id
     ON sub_block (era_index, author_account_id);
+CREATE INDEX IF NOT EXISTS sub_block_idx_author_account_id_epoch_index
+    ON sub_block (author_account_id, epoch_index);

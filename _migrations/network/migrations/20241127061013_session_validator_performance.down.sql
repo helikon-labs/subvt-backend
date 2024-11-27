@@ -1,1 +1,1 @@
--- Add down migration script here
+DROP TABLE sub_session_validator_performance CASCADE;

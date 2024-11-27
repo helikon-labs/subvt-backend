@@ -33,6 +33,7 @@ impl SessionValidatorPerformanceUpdater {
             active_validator_account_ids.len(),
             session.index
         );
+        log::debug!("Get era validator records.");
         let mut era_active_validators = Vec::new();
         for account_id in active_validator_account_ids.iter() {
             let era_validator = match postgres
@@ -44,6 +45,7 @@ impl SessionValidatorPerformanceUpdater {
             };
             era_active_validators.push(era_validator);
         }
+        log::debug!("Get performance data.");
         let mut session_validator_performances = Vec::new();
         for era_active_validator in era_active_validators.iter() {
             let mut performance = SessionValidatorPerformance {
@@ -53,6 +55,13 @@ impl SessionValidatorPerformanceUpdater {
                 active_validator_index: era_active_validator.active_validator_index.unwrap(),
                 ..Default::default()
             };
+            // block count
+            performance.authored_block_count = postgres
+                .get_number_of_blocks_in_epoch_by_validator(
+                    session.index,
+                    &era_active_validator.validator_account_id,
+                )
+                .await?;
             // para-related
             let maybe_para_validator = postgres
                 .get_session_para_validator(
@@ -74,18 +83,21 @@ impl SessionValidatorPerformanceUpdater {
                 performance.implicit_attestation_count = Some(votes_summary.implicit);
                 performance.explicit_attestation_count = Some(votes_summary.explicit);
                 performance.missed_attestation_count = Some(votes_summary.missed);
-                let attestation_count = votes_summary.implicit + votes_summary.explicit;
+                let attestation_count = (votes_summary.implicit + votes_summary.explicit) as u64;
                 let total_attestation_slots =
-                    votes_summary.implicit + votes_summary.explicit + votes_summary.missed;
+                    (votes_summary.implicit + votes_summary.explicit + votes_summary.missed) as u64;
                 let attestations_per_billion =
-                    (attestation_count / total_attestation_slots) * 1_000_000_000;
-                performance.attestations_per_billion = Some(attestations_per_billion);
+                    attestation_count * 1_000_000_000 / total_attestation_slots;
+                performance.attestations_per_billion = Some(attestations_per_billion as u32);
             }
             session_validator_performances.push(performance);
         }
-        // persist performances & update state
+        log::info!("Persist session performance data.");
+        postgres
+            .save_session_validator_performances(&session_validator_performances)
+            .await?;
         log::info!(
-            "Persist {} validator performances for session {}.",
+            "Persisted {} validator performances for session {}.",
             session_validator_performances.len(),
             session.index
         );
@@ -120,7 +132,7 @@ impl Service for SessionValidatorPerformanceUpdater {
                 .map(|epoch| epoch.index)
                 .unwrap_or(1);
             let start_session_index = max(
-                last_processed_session_index,
+                last_processed_session_index + 1,
                 CONFIG
                     .session_validator_performance_updater
                     .start_session_index,
@@ -128,7 +140,7 @@ impl Service for SessionValidatorPerformanceUpdater {
             log::info!(
                 "Process sessions {}-{}.",
                 start_session_index,
-                (current_session_index - 1)
+                current_session_index - 1,
             );
             if start_session_index >= (current_session_index - 1) {
                 log::warn!(

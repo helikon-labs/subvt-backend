@@ -21,4 +21,4 @@ data_endpoint = "https://nodes.web3.foundation/api/cohort/1/kusama"
 unclaimed_payout_check_delay_hours = 3
 
 [session_validator_performance_updater]
-start_session_index = 5000
+start_session_index = 40900
