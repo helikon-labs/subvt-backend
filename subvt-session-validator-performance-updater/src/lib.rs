@@ -86,8 +86,11 @@ impl SessionValidatorPerformanceUpdater {
                 let attestation_count = (votes_summary.implicit + votes_summary.explicit) as u64;
                 let total_attestation_slots =
                     (votes_summary.implicit + votes_summary.explicit + votes_summary.missed) as u64;
-                let attestations_per_billion =
-                    attestation_count * 1_000_000_000 / total_attestation_slots;
+                let attestations_per_billion = if total_attestation_slots > 0 {
+                    attestation_count * 1_000_000_000 / total_attestation_slots
+                } else {
+                    0
+                };
                 performance.attestations_per_billion = Some(attestations_per_billion as u32);
             }
             session_validator_performances.push(performance);

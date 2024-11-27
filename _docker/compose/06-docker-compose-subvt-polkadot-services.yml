@@ -298,7 +298,7 @@ services:
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
       # kline updater
       - SUBVT__KLINE_UPDATER__TMP_DIR_PATH=/subvt/tmp
-  subvt_session_validator_performance_updater:
+  subvt_polkadot_session_validator_performance_updater:
     container_name: subvt_session_validator_performance_updater
     restart: unless-stopped
     image: "helikon/subvt-session-validator-performance-updater:${VERSION}"
