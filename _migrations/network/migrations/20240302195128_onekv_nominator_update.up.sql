@@ -1,2 +1,2 @@
 -- Add up migration script here
-ALTER TABLE sub_onekv_nominator DROP COLUMN new_bonded_amount;
+ALTER TABLE sub_onekv_nominator DROP COLUMN IF EXISTS new_bonded_amount;

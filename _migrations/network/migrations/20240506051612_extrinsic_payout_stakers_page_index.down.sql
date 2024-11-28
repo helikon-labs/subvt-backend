@@ -1,1 +1,1 @@
-ALTER TABLE sub_onekv_nominator DROP COLUMN page_index;
+ALTER TABLE sub_onekv_nominator DROP COLUMN IF EXISTS page_index;
