@@ -166,7 +166,10 @@ impl Service for SessionValidatorPerformanceUpdater {
                 "Sleep for {} seconds.",
                 CONFIG.session_validator_performance_updater.sleep_seconds
             );
-            tokio::time::sleep(std::time::Duration::from_secs(CONFIG.dn.refresh_seconds)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(
+                CONFIG.session_validator_performance_updater.sleep_seconds,
+            ))
+            .await;
         }
     }
 }

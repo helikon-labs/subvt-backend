@@ -21,6 +21,7 @@ pub type PostgresValidatorInfo = (
     Option<bool>,
     Option<i32>,
     Option<String>,
+    Vec<String>,
 );
 
 impl PostgreSQLNetworkStorage {
@@ -339,6 +340,16 @@ impl PostgreSQLNetworkStorage {
             }
         }
         unclaimed_era_indices.sort_unstable();
+        let performance: Vec<Vec<u32>> = db_validator_info
+            .11
+            .iter()
+            .map(|session_performance| {
+                session_performance
+                    .split(',')
+                    .map(|v| v.parse::<u32>().unwrap())
+                    .collect()
+            })
+            .collect();
         ValidatorInfo {
             discovered_at: db_validator_info.0.map(|value| value as u64),
             slash_count: db_validator_info.1 as u64,
@@ -351,29 +362,8 @@ impl PostgreSQLNetworkStorage {
             heartbeat_received: db_validator_info.8,
             dn_record_id: db_validator_info.9.map(|value| value as u32),
             dn_status: db_validator_info.10.clone(),
+            performance,
         }
-    }
-
-    pub async fn get_validator_info(
-        &self,
-        block_hash: &str,
-        validator_account_id: &AccountId,
-        is_active: bool,
-        era_index: u32,
-    ) -> anyhow::Result<ValidatorInfo> {
-        let db_validator_info: PostgresValidatorInfo = sqlx::query_as(
-            r#"
-            SELECT discovered_at, slash_count, offline_offence_count, active_era_count, inactive_era_count, unclaimed_eras, blocks_authored, reward_points, heartbeat_received, dn_node_record_id, dn_status
-            FROM sub_get_validator_info($1, $2, $3, $4)
-            "#
-        )
-            .bind(block_hash)
-            .bind(validator_account_id.to_string())
-            .bind(is_active)
-            .bind(era_index as i64)
-            .fetch_one(&self.connection_pool)
-            .await?;
-        Ok(Self::db_record_into_validator_info(&db_validator_info))
     }
 
     pub async fn get_validator_info_batch(

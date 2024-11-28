@@ -87,6 +87,7 @@ pub struct ValidatorDetails {
     pub onekv_is_valid: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub onekv_offline_since: Option<u64>,
+    pub performance: Vec<Vec<u32>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Diff, Eq, Hash, PartialEq, Serialize)]
@@ -124,6 +125,7 @@ pub struct ValidatorSummary {
     pub heartbeat_received: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub validator_stake: Option<ValidatorStakeSummary>,
+    pub performance: Vec<Vec<u32>>,
 }
 
 impl From<&ValidatorDetails> for ValidatorSummary {
@@ -175,6 +177,7 @@ impl From<&ValidatorDetails> for ValidatorSummary {
                 .validator_stake
                 .as_ref()
                 .map(ValidatorStakeSummary::from),
+            performance: validator.performance.clone(),
         }
     }
 }

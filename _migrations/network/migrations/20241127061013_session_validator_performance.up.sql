@@ -12,9 +12,7 @@ CREATE TABLE IF NOT EXISTS sub_session_validator_performance
     explicit_attestation_count  INT,
     missed_attestation_count    INT,
     attestations_per_billion    INT,
-    created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT sub_era_validator_u_era_index_validator
-            UNIQUE (validator_account_id, era_index, session_index)
+    created_at                  TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_account_id
@@ -29,3 +27,5 @@ CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_accou
     ON sub_session_validator_performance (validator_account_id, para_validator_index, session_index DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS sub_session_validator_performance_u_validator_era_session
     ON sub_session_validator_performance (validator_account_id, era_index, session_index);
+CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_para_id
+    ON sub_session_validator_performance (validator_account_id, para_validator_index, id DESC);

@@ -262,6 +262,7 @@ impl ValidatorListUpdater {
                 validator.onekv_is_valid =
                     Some(db_validator_info.dn_status == Some("Active".to_string()));
                 validator.onekv_offline_since = None;
+                validator.performance = db_validator_info.performance.clone();
             }
         }
         log::info!("Got RDB content. Update Redis.");

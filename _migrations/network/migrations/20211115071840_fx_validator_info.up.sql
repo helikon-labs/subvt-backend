@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS sub_get_validator_info_batch;
+
 DO $$ BEGIN
 	DROP FUNCTION IF EXISTS sub_get_validator_info;
 	DROP TYPE IF EXISTS sub_validator_info;
@@ -12,7 +14,8 @@ DO $$ BEGIN
 		reward_points bigint,
 		heartbeat_received boolean,
 		dn_node_record_id INTEGER,
-		dn_status text
+		dn_status text,
+		performance TEXT[]
 	);
 END $$;
 
@@ -98,7 +101,48 @@ BEGIN
     WHERE C.validator_account_id = account_id_param
     ORDER BY id DESC
     LIMIT 1;
+
+    SELECT COALESCE(
+        ARRAY_AGG(performance),
+        ARRAY[]::TEXT[]
+    )
+    FROM(
+        SELECT (
+            era_index::TEXT || ',' ||
+            session_index::TEXT || ',' ||
+            implicit_attestation_count::TEXT || ',' ||
+            explicit_attestation_count::TEXT || ',' ||
+            missed_attestation_count::TEXT || ',' ||
+            attestations_per_billion::TEXT
+        ) AS performance
+        FROM sub_session_validator_performance
+        WHERE validator_account_id = account_id_param
+        AND para_validator_index IS NOT NULL
+        ORDER BY id DESC
+        LIMIT 10
+    ) AS subquery
+    INTO result_record.performance;
 	
     RETURN result_record;
+END
+$$ LANGUAGE plpgsql PARALLEL SAFE STABLE;
+
+CREATE OR REPLACE FUNCTION sub_get_validator_info_batch (block_hash_param VARCHAR(66), account_ids_param VARCHAR(66)[], is_active_param boolean[], era_index_param bigint)
+RETURNS SETOF sub_validator_info
+AS $$
+
+DECLARE
+    validator_info sub_validator_info;
+    account_id VARCHAR(66);
+    i INT = 1;
+    is_active BOOLEAN = false;
+BEGIN
+    FOREACH account_id IN ARRAY account_ids_param
+    LOOP
+        is_active := is_active_param[i];
+        validator_info := sub_get_validator_info(block_hash_param, account_id, is_active, era_index_param);
+        RETURN NEXT validator_info;
+        i:= i + 1;
+    END LOOP;
 END
 $$ LANGUAGE plpgsql PARALLEL SAFE STABLE;

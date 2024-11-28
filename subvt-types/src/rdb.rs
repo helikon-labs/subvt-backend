@@ -13,6 +13,7 @@ pub struct ValidatorInfo {
     pub heartbeat_received: Option<bool>,
     pub dn_record_id: Option<u32>,
     pub dn_status: Option<String>,
+    pub performance: Vec<Vec<u32>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
