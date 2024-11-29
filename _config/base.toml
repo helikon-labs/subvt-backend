@@ -157,7 +157,6 @@ user_registration_per_ip_limit_time_window_mins = 10
 user_registration_per_ip_limit = 10
 
 [kline_updater]
-tmp_dir_path = "/path/to/the/temporary/image/dir"
 sleep_seconds = 3600
 begin_year = 2022
 begin_month = 1

@@ -14,10 +14,38 @@ lazy_static! {
     static ref CONFIG: Config = Config::default();
 }
 
-#[derive(Default)]
-pub struct KLineUpdater {}
+type KLineRecord = (
+    u64,
+    String,
+    String,
+    String,
+    String,
+    String,
+    u64,
+    String,
+    u32,
+    String,
+    String,
+    String,
+);
 
-impl KLineUpdater {}
+pub struct KLineUpdater {
+    http_client: reqwest::Client,
+}
+
+impl Default for KLineUpdater {
+    fn default() -> Self {
+        let http_client: reqwest::Client = reqwest::Client::builder()
+            .gzip(true)
+            .brotli(true)
+            .timeout(std::time::Duration::from_secs(
+                CONFIG.http.request_timeout_seconds,
+            ))
+            .build()
+            .unwrap();
+        Self { http_client }
+    }
+}
 
 #[async_trait(?Send)]
 impl Service for KLineUpdater {
@@ -47,8 +75,7 @@ impl Service for KLineUpdater {
             .unwrap();
             let mut day = NaiveDate::from_ymd_opt(now.year(), now.month(), now.day()).unwrap();
             loop {
-                // start from 2 days prior to today
-                day = day.checked_sub_days(Days::new(2)).unwrap();
+                day = day.checked_sub_days(Days::new(1)).unwrap();
                 let start_of_day = NaiveDateTime::from(day);
                 let year = day.year();
                 let month = day.month();
@@ -86,66 +113,37 @@ impl Service for KLineUpdater {
                     continue;
                 }
                 let pair = format!("{}{}", CONFIG.substrate.token_ticker, target_ticker);
-                let zip_file_name =
-                    format!("{}-1d-{}-{}-{}.zip", pair, year, month_padded, day_padded,);
-                let csv_file_name =
-                    format!("{}-1d-{}-{}-{}.csv", pair, year, month_padded, day_padded,);
-                let zip_file_local_path =
-                    format!("{}/{}", CONFIG.kline_updater.tmp_dir_path, zip_file_name,);
-                let csv_file_local_path =
-                    format!("{}/{}", CONFIG.kline_updater.tmp_dir_path, csv_file_name,);
-                if !std::path::Path::new(&zip_file_local_path).is_file() {
-                    let url = format!("https://data.binance.vision/data/spot/daily/klines/{pair}/1d/{zip_file_name}");
-                    log::info!("Downloading file {url}.");
-                    let response = reqwest::get(url).await?;
-                    let mut zip_file = std::fs::File::create(&zip_file_local_path)?;
-                    let mut content = std::io::Cursor::new(response.bytes().await?);
-                    std::io::copy(&mut content, &mut zip_file)?;
-                    log::info!("Download complete. Zip file saved at {zip_file_local_path}.");
-                } else {
-                    log::info!("Zip file exists.");
-                }
-                // unzip
-                if !std::path::Path::new(&csv_file_local_path).is_file() {
-                    let target_dir = std::path::PathBuf::from(&CONFIG.kline_updater.tmp_dir_path);
-                    let zip_source = std::fs::read(&zip_file_local_path)?;
-                    zip_extract::extract(std::io::Cursor::new(zip_source), &target_dir, true)?;
-                    log::info!("Zip file extracted.");
-                } else {
-                    log::info!("CSV file exists.");
-                }
-                // read file
-                let csv_content = std::fs::read_to_string(&csv_file_local_path)?;
-                let fields: Vec<&str> = csv_content.split(",").collect();
+
+                // https://api.binance.com/api/v3/klines?symbol=KSMUSDT&interval=1d&limit=1&startTime=1732838400000
+                let url = format!("https://api.binance.com/api/v3/klines?symbol={pair}&interval=1d&limit=1&startTime={timestamp}");
+                let response = self.http_client.get(&url).send().await?;
+                let records: Vec<KLineRecord> = response.json().await?;
+                let fields = records.first().unwrap();
                 // save record
                 let kline = KLine {
                     id: 0,
-                    open_time: fields[0].parse()?,
+                    open_time: fields.0,
                     source_ticker: CONFIG.substrate.token_ticker.clone(),
                     target_ticker: target_ticker.to_string(),
-                    open: BigDecimal::from_str(fields[1])?,
-                    high: BigDecimal::from_str(fields[2])?,
-                    low: BigDecimal::from_str(fields[3])?,
-                    close: BigDecimal::from_str(fields[4])?,
-                    volume: BigDecimal::from_str(fields[5])?,
-                    close_time: fields[6].parse()?,
-                    quote_volume: BigDecimal::from_str(fields[7])?,
-                    count: fields[8].parse()?,
-                    taker_buy_volume: BigDecimal::from_str(fields[9])?,
-                    taker_buy_quote_volume: BigDecimal::from_str(fields[10])?,
+                    open: BigDecimal::from_str(&fields.1)?,
+                    high: BigDecimal::from_str(&fields.2)?,
+                    low: BigDecimal::from_str(&fields.3)?,
+                    close: BigDecimal::from_str(&fields.4)?,
+                    volume: BigDecimal::from_str(&fields.5)?,
+                    close_time: fields.6,
+                    quote_volume: BigDecimal::from_str(&fields.7)?,
+                    count: fields.8,
+                    taker_buy_volume: BigDecimal::from_str(&fields.9)?,
+                    taker_buy_quote_volume: BigDecimal::from_str(&fields.10)?,
                 };
                 postgres.save_kline(&kline).await?;
                 log::info!(
                     "Saved {}-{target_ticker} {day_padded}-{month_padded}-{year}.",
                     CONFIG.substrate.token_ticker,
                 );
-                // delete temp files
-                let _ = std::fs::remove_file(&zip_file_local_path);
-                let _ = std::fs::remove_file(&csv_file_local_path);
             }
             // publish metrics
             metrics::kline_count().set(postgres.get_kline_count().await? as i64);
-            // publish total count
             log::info!(
                 "K-line updater completed. Will sleep for {} seconds",
                 sleep_seconds

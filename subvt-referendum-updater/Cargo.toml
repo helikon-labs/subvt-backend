@@ -1,6 +1,6 @@
 [package]
 name = "subvt-referendum-updater"
-version = "0.22.3"
+version = "0.22.4"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -14,14 +14,10 @@ enum-iterator = "2.0"
 lazy_static = { workspace = true }
 log = { workspace = true }
 once_cell = "1"
-prometheus = { version = "0.13", features = ["process"] }
-rand = "0.8"
-reqwest = { version = "0.12", features = ["blocking", "json", "gzip", "brotli"] }
 subvt-config = { path = "../subvt-config" }
 subvt-governance = { path = "../subvt-governance" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-subvt-logging = { path = "../subvt-logging" }
 tokio = { version = "1.41", features = ["full"] }

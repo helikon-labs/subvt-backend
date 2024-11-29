@@ -268,7 +268,6 @@ pub struct ReferendumUpdaterConfig {
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct KLineUpdaterConfig {
-    pub tmp_dir_path: String,
     pub sleep_seconds: u64,
     pub begin_year: i32,
     pub begin_month: u32,

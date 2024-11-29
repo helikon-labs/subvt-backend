@@ -1,6 +1,6 @@
 [package]
 name = "subvt-validator-list-server"
-version = "0.22.3"
+version = "0.22.4"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -10,9 +10,7 @@ rust-version = "1.67.0"
 anyhow = { workspace = true }
 async-trait = "0.1"
 bus = "2.4"
-chrono = "0.4"
 clap = "4.4"
-env_logger = "0.11"
 futures-util = "0.3"
 jsonrpsee = { version = "0.24", features = ["full"] }
 lazy_static = { workspace = true }
@@ -26,5 +24,5 @@ subvt-config = { path = "../subvt-config" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-subvt-logging = { path = "../subvt-logging" }
+
 tokio = { version = "1.41", features = ["full"] }

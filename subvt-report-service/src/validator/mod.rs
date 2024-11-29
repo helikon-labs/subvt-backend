@@ -338,7 +338,7 @@ pub(crate) async fn validator_monhtly_income_service(
         .with_day(1)
         .unwrap();
     let start_timestamp = NaiveDateTime::from(start_date).and_utc().timestamp_millis();
-    // start from 2 days prior to today
+    // start from 1 day prior to today
     let end_timestamp =
         NaiveDateTime::from(now.checked_sub_days(Days::new(1)).unwrap().date_naive())
             .and_utc()

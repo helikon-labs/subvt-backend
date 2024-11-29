@@ -1,18 +1,16 @@
 [package]
 name = "subvt-session-validator-performance-updater"
-version = "0.22.3"
+version = "0.22.4"
 edition = "2021"
 rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
-async-lock = "3.4"
 async-trait = "0.1"
 lazy_static = { workspace = true }
 log = { workspace = true }
 once_cell = "1"
 subvt-config = { path = "../subvt-config" }
-subvt-logging = { path = "../subvt-logging" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }

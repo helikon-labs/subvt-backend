@@ -1,21 +1,15 @@
 [package]
 name = "subvt-substrate-client"
-version = "0.22.3"
+version = "0.22.4"
 edition = "2021"
 rust-version = "1.67.0"
 
 [dependencies]
 anyhow = { workspace = true }
-async-lock = "3.4"
 async-recursion = "1.0"
-blake2-rfc = { version = "0.2", default-features = false }
-byteorder = { version = "1.5", default-features = false }
-chrono = "0.4"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
 hex = "0.4"
 jsonrpsee = { version = "0.24", features = ["full"] }
-jsonrpsee-core = "0.24"
-jsonrpsee-types = "0.24"
 log = { workspace = true }
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
 rustc-hash = "2.0"
@@ -26,10 +20,8 @@ subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
 tokio = { version = "1.41", features = ["full"] }
-twox-hash = { version = "1.6", features = ["digest_0_9"] }
 
 [dev-dependencies]
 hex = "0.4"
-lazy_static = { workspace = true }
 subvt-config = { path = "../subvt-config" }
 tokio = { version = "1.41", features = ["full"] }
