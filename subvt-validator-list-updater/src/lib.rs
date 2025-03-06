@@ -226,7 +226,12 @@ impl ValidatorListUpdater {
         log::info!("Get RDB content for {} validators.", validators.len());
         let mut db_validator_infos: Vec<ValidatorInfo> = Vec::new();
         for (i, validator) in validators.iter().enumerate() {
-            log::info!("Validator {} of {}.", i + 1, db_validator_infos.len());
+            log::info!(
+                "Validator {} of {} : {}",
+                i + 1,
+                validators.len(),
+                validator.account.id
+            );
             let db_validator = postgres
                 .get_validator_info(
                     &finalized_block_hash,
