@@ -366,6 +366,28 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
+    pub async fn get_validator_info(
+        &self,
+        block_hash: &str,
+        validator_account_id: &AccountId,
+        is_active_batch: bool,
+        era_index: u32,
+    ) -> anyhow::Result<ValidatorInfo> {
+        let validator_info: PostgresValidatorInfo = sqlx::query_as(
+            r#"
+            SELECT *
+            FROM sub_get_validator_info($1, $2, $3, $4)
+            "#,
+        )
+        .bind(block_hash)
+        .bind(validator_account_id.to_string())
+        .bind(is_active_batch)
+        .bind(era_index as i64)
+        .fetch_one(&self.connection_pool)
+        .await?;
+        Ok(Self::db_record_into_validator_info(&validator_info))
+    }
+
     pub async fn get_validator_info_batch(
         &self,
         block_hash: &str,

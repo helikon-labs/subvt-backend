@@ -17,7 +17,6 @@ use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
 use subvt_substrate_client::SubstrateClient;
-use subvt_types::crypto::AccountId;
 use subvt_types::rdb::ValidatorInfo;
 use subvt_types::substrate::{BlockHeader, Era};
 use subvt_types::subvt::{ValidatorDetails, ValidatorSummary};
@@ -226,6 +225,19 @@ impl ValidatorListUpdater {
         // enrich data with data from the relational database
         log::info!("Get RDB content for {} validators.", validators.len());
         let mut db_validator_infos: Vec<ValidatorInfo> = Vec::new();
+        for (i, validator) in validators.iter().enumerate() {
+            log::info!("Validator {} of {}.", i + 1, db_validator_infos.len());
+            let db_validator = postgres
+                .get_validator_info(
+                    &finalized_block_hash,
+                    &validator.account.id,
+                    validator.is_active,
+                    active_era.index,
+                )
+                .await?;
+            db_validator_infos.push(db_validator);
+        }
+        /*
         let batches = validators.chunks(CONFIG.validator_list_updater.db_fetch_batch_size);
         let batch_count = batches.len();
         for (i, validator_batch) in batches.enumerate() {
@@ -243,6 +255,7 @@ impl ValidatorListUpdater {
                 .await?;
             db_validator_infos.append(&mut db_validator_info_batch);
         }
+         */
         for (i, validator) in validators.iter_mut().enumerate() {
             if let Some(db_validator_info) = db_validator_infos.get(i) {
                 validator.account.discovered_at = db_validator_info.discovered_at;

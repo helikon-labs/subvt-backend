@@ -1,5 +1,5 @@
 {{ validator_display }}
 ⭐️ received a new nomination{% if notification_period_type %} in the last {% if notification_period > 1 %}{{ notification_period }} {% endif %}{{ notification_period_type }}{% if notification_period > 1 %}s{% endif %}{% endif %}!
-Nominator: {{ nominator_display }}{% if is_onekv %} (1KV){% endif %}
+Nominator: {{ nominator_display }}{% if is_onekv %} (DN){% endif %}
 Amount: {{ nomination_amount }} {{ token_ticker }}
 Nominee Count: {{ nominee_count }}

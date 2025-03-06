@@ -616,11 +616,7 @@ pub fn data_to_string(data: Data) -> Option<String> {
     match data {
         Data::Raw(raw) => {
             let maybe_string = String::from_utf8(raw.into_inner());
-            if let Ok(string) = maybe_string {
-                Some(string)
-            } else {
-                None
-            }
+            maybe_string.ok()
         }
         _ => None,
     }

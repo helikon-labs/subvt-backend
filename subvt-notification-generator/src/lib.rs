@@ -96,11 +96,7 @@ impl NotificationGenerator {
                     sent_at: None,
                     delivered_at: None,
                     read_at: None,
-                    data_json: if let Ok(data_json) = serde_json::to_string(&notification_data) {
-                        Some(data_json)
-                    } else {
-                        None
-                    },
+                    data_json: serde_json::to_string(&notification_data).ok(),
                 };
                 let _ = app_postgres.save_notification(&notification).await?;
                 metrics::notification_counter(

@@ -1,1 +1,1 @@
-ALTER TABLE sub_extrinsic_payout_stakers ADD COLUMN IF NOT EXISTS page_index INTEGER;
+    ALTER TABLE sub_extrinsic_payout_stakers ADD COLUMN IF NOT EXISTS page_index INTEGER;
