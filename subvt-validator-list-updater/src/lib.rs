@@ -13,6 +13,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+use std::time::Instant;
 use subvt_config::Config;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_service_common::Service;
@@ -226,12 +227,7 @@ impl ValidatorListUpdater {
         log::info!("Get RDB content for {} validators.", validators.len());
         let mut db_validator_infos: Vec<ValidatorInfo> = Vec::new();
         for (i, validator) in validators.iter().enumerate() {
-            log::info!(
-                "Validator {} of {} : {}",
-                i + 1,
-                validators.len(),
-                validator.account.id
-            );
+            let start = Instant::now();
             let db_validator = postgres
                 .get_validator_info(
                     &finalized_block_hash,
@@ -240,6 +236,20 @@ impl ValidatorListUpdater {
                     active_era.index,
                 )
                 .await?;
+            let duration = start.elapsed();
+            log::info!(
+                "Era {} :: {} :: Validator {} of {} : {} :: {} ms",
+                active_era.index,
+                if validator.is_active {
+                    "Active"
+                } else {
+                    "Inactive"
+                },
+                i + 1,
+                validators.len(),
+                validator.account.id,
+                duration.as_millis(),
+            );
             db_validator_infos.push(db_validator);
         }
         /*
