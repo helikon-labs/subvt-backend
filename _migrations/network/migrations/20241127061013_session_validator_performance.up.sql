@@ -28,4 +28,5 @@ CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_accou
 CREATE UNIQUE INDEX IF NOT EXISTS sub_session_validator_performance_u_validator_era_session
     ON sub_session_validator_performance (validator_account_id, era_index, session_index);
 CREATE INDEX IF NOT EXISTS sub_session_validator_performance_idx_validator_para_id
-    ON sub_session_validator_performance (validator_account_id, para_validator_index, id DESC);
+    ON sub_session_validator_performance (validator_account_id, para_validator_index, id DESC)
+    INCLUDE (era_index, session_index, implicit_attestation_count, explicit_attestation_count, missed_attestation_count, attestations_per_billion);
