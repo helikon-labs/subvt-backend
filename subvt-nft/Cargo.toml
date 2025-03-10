@@ -1,6 +1,6 @@
 [package]
 name = "subvt-nft"
-version = "0.22.7"
+version = "0.22.8"
 edition = "2021"
 rust-version = "1.67.0"
 

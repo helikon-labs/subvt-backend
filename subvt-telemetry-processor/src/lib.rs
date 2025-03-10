@@ -6,7 +6,7 @@ use anyhow::Context;
 use async_lock::Mutex;
 use async_trait::async_trait;
 use async_tungstenite::{tokio::connect_async, tungstenite::Message};
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use lazy_static::lazy_static;
 use rustc_hash::FxHashMap as HashMap;
 use std::sync::mpsc::{self, Receiver, Sender};
