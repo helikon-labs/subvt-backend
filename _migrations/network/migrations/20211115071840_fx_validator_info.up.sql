@@ -102,26 +102,23 @@ BEGIN
     ORDER BY id DESC
     LIMIT 1;
 
-    SELECT COALESCE(
-        ARRAY_AGG(performance),
-        ARRAY[]::TEXT[]
-    )
-    FROM(
-        SELECT (
-            era_index::TEXT || ',' ||
-            session_index::TEXT || ',' ||
-            implicit_attestation_count::TEXT || ',' ||
-            explicit_attestation_count::TEXT || ',' ||
-            missed_attestation_count::TEXT || ',' ||
-            attestations_per_billion::TEXT
-        ) AS performance
-        FROM sub_session_validator_performance
-        WHERE validator_account_id = account_id_param
-        AND para_validator_index IS NOT NULL
-        ORDER BY id DESC
-        LIMIT 10
-    ) AS subquery
-    INTO result_record.performance;
+    EXECUTE format(
+        'SELECT COALESCE(ARRAY_AGG(performance), ARRAY[]::TEXT[]) FROM (
+            SELECT (
+                era_index::TEXT || '','' ||
+                session_index::TEXT || '','' ||
+                implicit_attestation_count::TEXT || '','' ||
+                explicit_attestation_count::TEXT || '','' ||
+                missed_attestation_count::TEXT || '','' ||
+                attestations_per_billion::TEXT
+            ) AS performance
+            FROM sub_session_validator_performance
+            WHERE validator_account_id = $1
+            AND para_validator_index IS NOT NULL
+            ORDER BY id DESC
+            LIMIT 10
+        ) AS subquery'
+    ) INTO result_record.performance USING account_id_param;
 	
     RETURN result_record;
 END
