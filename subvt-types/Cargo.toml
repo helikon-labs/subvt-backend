@@ -25,7 +25,7 @@ pallet-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag =
 parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.5" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.5" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.16.5" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.18.4" }
 rustc-hash = "2.0"
 scale-info = "2.10"
 serde = { version = "1.0", features = ["derive"] }
