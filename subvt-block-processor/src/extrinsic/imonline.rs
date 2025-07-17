@@ -38,9 +38,7 @@ pub(crate) async fn process_imonline_extrinsic(
                     .await?;
             } else {
                 log::error!(
-                    "Cannot find active validator account id with index {}. Cannot persist heartbeat extrinsic in block {}.",
-                    validator_index,
-                    block_hash
+                    "Cannot find active validator account id with index {validator_index}. Cannot persist heartbeat extrinsic in block {block_hash}.",
                 );
             }
         }

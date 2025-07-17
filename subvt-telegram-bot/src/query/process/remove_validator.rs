@@ -12,7 +12,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             self.messenger.delete_message(chat_id, message_id).await?;
         }
         if let Some(id_str) = &query.parameter {
-            log::info!("Validator selected for removal in chat {}.", chat_id);
+            log::info!("Validator selected for removal in chat {chat_id}.");
             if let Some(validator) = self
                 .network_postgres
                 .get_chat_validator_by_id(chat_id, id_str.parse()?)

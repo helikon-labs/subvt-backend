@@ -36,7 +36,7 @@ impl FCMSender {
                 Ok(format!("{response:?}"))
             }
             Err(error) => {
-                log::error!("FCM message send error: {:?}.", error,);
+                log::error!("FCM message send error: {error:?}.",);
                 Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }

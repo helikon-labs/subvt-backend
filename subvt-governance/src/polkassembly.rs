@@ -42,8 +42,7 @@ pub async fn fetch_referendum_details(id: u32) -> anyhow::Result<ReferendumPostD
     let http_client = get_http_client()?;
     let response = http_client
         .get(format!(
-            "https://api.polkassembly.io/api/v1/posts/on-chain-post?postId={}&proposalType=referendums_v2",
-            id,
+            "https://api.polkassembly.io/api/v1/posts/on-chain-post?postId={id}&proposalType=referendums_v2",
         ))
         .header(
             "x-network",

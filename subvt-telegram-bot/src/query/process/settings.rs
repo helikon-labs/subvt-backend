@@ -27,9 +27,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             return Ok(());
         }
         log::debug!(
-            "Create non-existent rule {} for user {}.",
-            type_code.to_string(),
-            user_id,
+            "Create non-existent rule {type_code} for user {user_id}.",
         );
         let telegram_channel_id = self
             .app_postgres
@@ -119,6 +117,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         Ok(())
     }
 
+    #[allow(clippy::cognitive_complexity)]
     pub async fn process_settings_edit_query(
         &self,
         chat_id: i64,

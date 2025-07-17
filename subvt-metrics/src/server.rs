@@ -22,7 +22,7 @@ pub async fn start<T: ToSocketAddrs + Debug>(address: T) {
         .and(with(registry))
         .and_then(metrics_text_handler);
 
-    log::info!("Metrics server started on {:?}", address);
+    log::info!("Metrics server started on {address:?}");
     let routes = route.with(warp::log("subvt_metrics_server"));
     warp::serve(routes)
         .run(

@@ -5,6 +5,7 @@ use subvt_types::substrate::extrinsic::staking::StakingExtrinsic;
 use subvt_types::substrate::MultiAddress;
 
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::cognitive_complexity)]
 pub(crate) async fn process_staking_extrinsic(
     substrate_client: &SubstrateClient,
     postgres: &PostgreSQLNetworkStorage,
@@ -56,7 +57,7 @@ pub(crate) async fn process_staking_extrinsic(
                     )
                     .await?;
             } else {
-                log::error!("Cannot get nominator account id from signature for extrinsic #{} Staking.nominate.", index);
+                log::error!("Cannot get nominator account id from signature for extrinsic #{index} Staking.nominate.");
             }
         }
         StakingExtrinsic::PayoutStakers {
@@ -89,7 +90,7 @@ pub(crate) async fn process_staking_extrinsic(
                     )
                     .await?;
             } else {
-                log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
+                log::error!("Cannot get caller account id from signature for extrinsic #{index} Staking.payout_stakers.");
             }
         }
         StakingExtrinsic::PayoutStakersByPage {
@@ -123,7 +124,7 @@ pub(crate) async fn process_staking_extrinsic(
                     )
                     .await?;
             } else {
-                log::error!("Cannot get caller account id from signature for extrinsic #{} Staking.payout_stakers.", index);
+                log::error!("Cannot get caller account id from signature for extrinsic #{index} Staking.payout_stakers.");
             }
         }
         StakingExtrinsic::Validate {
@@ -158,13 +159,10 @@ pub(crate) async fn process_staking_extrinsic(
                         )
                         .await?;
                 } else {
-                    log::error!(
-                        "Cannot get stash account id for controller {}.",
-                        controller_account_id.to_string()
-                    );
+                    log::error!("Cannot get stash account id for controller {controller_account_id}.");
                 }
             } else {
-                log::error!("Cannot get controller account id from signature for extrinsic #{} Staking.validate.", index);
+                log::error!("Cannot get controller account id from signature for extrinsic #{index} Staking.validate.");
             }
         }
     }

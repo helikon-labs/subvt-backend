@@ -27,7 +27,7 @@ impl NotificationProcessor {
                             )
                             .await
                         {
-                            log::error!("Error while processing hourly notifications: {:?}", error);
+                            log::error!("Error while processing hourly notifications: {error:?}");
                         }
                     });
                 },
@@ -46,7 +46,7 @@ impl NotificationProcessor {
                             )
                             .await
                         {
-                            log::error!("Error while processing daily notifications: {:?}", error);
+                            log::error!("Error while processing daily notifications: {error:?}");
                         }
                     });
                 },

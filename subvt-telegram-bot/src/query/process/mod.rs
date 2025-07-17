@@ -24,7 +24,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         original_message_id: Option<i32>,
         query: &Query,
     ) -> anyhow::Result<()> {
-        log::info!("Process query: {:?}", query);
+        log::info!("Process query: {query:?}");
         crate::metrics::query_call_counter(&query.query_type).inc();
         self.network_postgres
             .save_chat_query_log(chat_id, &format!("{query:?}"))

@@ -112,7 +112,7 @@ impl SubstrateClient {
         let system_properties: SystemProperties = ws_client
             .request("system_properties", rpc_params!())
             .await?;
-        log::info!("Got system properties. {:?}", system_properties);
+        log::info!("Got system properties. {system_properties:?}");
         Ok(Self {
             network_id,
             chain,
@@ -588,6 +588,7 @@ impl SubstrateClient {
     }
 
     /// Get the complete details of all validators, active and inactive, at the given block.
+    #[allow(clippy::cognitive_complexity)]
     pub async fn get_all_validators(
         &self,
         people_client: &SubstrateClient,
@@ -1755,7 +1756,7 @@ impl SubstrateClient {
         {
             Ok(subscription) => subscription,
             Err(error) => {
-                log::error!("Error while subscribing to blocks: {:?}", error);
+                log::error!("Error while subscribing to blocks: {error:?}");
                 return;
             }
         };
@@ -1770,12 +1771,12 @@ impl SubstrateClient {
                 Some(block_header_result) => match block_header_result {
                     Ok(block_header) => {
                         if let Err(error) = callback(block_header).await {
-                            log::error!("Error in callback: {:?}", error);
+                            log::error!("Error in callback: {error:?}");
                             break;
                         }
                     }
                     Err(error) => {
-                        log::error!("Error while getting block header: {:?}", error);
+                        log::error!("Error while getting block header: {error:?}");
                         log::error!("Will exit new block subscription.");
                         break;
                     }

@@ -215,7 +215,7 @@ impl SubstrateExtrinsic {
                             "[Cannot get block number: {error:?}] Error decoding extrinsic #{extrinsic_index} for block {block_hash}: {decode_error:?}",
                         ),
                     };
-                    log::error!("{}", error_log);
+                    log::error!("{error_log}");
                     result.push(Err(decode_error));
                 }
             }

@@ -25,6 +25,7 @@ lazy_static! {
 pub struct TelemetryProcessor;
 
 impl TelemetryProcessor {
+    #[allow(clippy::cognitive_complexity)]
     async fn process_feed_message(
         postgres: &PostgreSQLNetworkStorage,
         node_map: &Mutex<HashMap<u64, NodeDetails>>,
@@ -32,7 +33,7 @@ impl TelemetryProcessor {
     ) -> anyhow::Result<()> {
         match feed_message {
             FeedMessage::Version(version) => {
-                log::debug!("Version: {}.", version);
+                log::debug!("Version: {version}.");
             }
             FeedMessage::BestBlock {
                 block_number,
@@ -40,10 +41,7 @@ impl TelemetryProcessor {
                 avg_block_time,
             } => {
                 log::debug!(
-                    "Best block: {} {} {:?}.",
-                    block_number,
-                    timestamp,
-                    avg_block_time
+                    "Best block: {block_number} {timestamp} {avg_block_time:?}.",
                 );
                 metrics::best_block_number().set(*block_number as i64);
                 postgres
@@ -54,7 +52,7 @@ impl TelemetryProcessor {
                 block_number,
                 block_hash,
             } => {
-                log::debug!("Finalized block: {} {}.", block_number, block_hash);
+                log::debug!("Finalized block: {block_number} {block_hash}.");
                 metrics::finalized_block_number().set(*block_number as i64);
                 postgres
                     .update_finalized_block_number(
@@ -73,7 +71,7 @@ impl TelemetryProcessor {
                 location,
                 startup_time,
             } => {
-                log::debug!("Add node #{} :: {:?}.", node_id, node_details);
+                log::debug!("Add node #{node_id} :: {node_details:?}.");
                 let mut map = node_map.lock().await;
                 if map.insert(*node_id, *node_details.clone()).is_none() {
                     metrics::node_count().inc();
@@ -83,7 +81,7 @@ impl TelemetryProcessor {
                     .await?;
             }
             FeedMessage::RemovedNode { node_id } => {
-                log::debug!("Removed node #{}.", node_id);
+                log::debug!("Removed node #{node_id}.");
                 let mut map = node_map.lock().await;
                 if map.remove(node_id).is_some() {
                     metrics::node_count().dec();
@@ -121,19 +119,19 @@ impl TelemetryProcessor {
                 block_number,
                 block_hash,
             } => {
-                log::trace!("Node #{} finalized block #{}.", node_id, block_number);
+                log::trace!("Node #{node_id} finalized block #{block_number}.");
                 postgres
                     .update_node_finalized_block(*node_id, *block_number, block_hash)
                     .await?;
             }
             FeedMessage::NodeStatsUpdate { node_id, stats } => {
-                log::trace!("Node #{} status {:?}.", node_id, stats);
+                log::trace!("Node #{node_id} status {stats:?}.");
                 if let Err(error) = postgres.save_node_stats(*node_id, stats).await {
-                    log::error!("Error while saving node stats: {:?}", error);
+                    log::error!("Error while saving node stats: {error:?}");
                 }
             }
             FeedMessage::NodeHardware { node_id, hardware } => {
-                log::trace!("Node #{} hardware {:?}.", node_id, hardware);
+                log::trace!("Node #{node_id} hardware {hardware:?}.");
                 if hardware.0.len() != hardware.1.len() || hardware.1.len() != hardware.2.len() {
                     log::warn!(
                         "Invalid node network stats data. Timestamp [{}], download bandwidth [{}] and upload bandwidth [{}] vectors are not of equal lengths.",
@@ -144,36 +142,36 @@ impl TelemetryProcessor {
                 } else if let Err(error) =
                     postgres.save_node_network_stats(*node_id, hardware).await
                 {
-                    log::error!("Error while saving node network stats: {:?}", error);
+                    log::error!("Error while saving node network stats: {error:?}");
                 }
             }
             FeedMessage::TimeSync { time } => {
-                log::debug!("Time sync :: {}", time);
+                log::debug!("Time sync :: {time}");
             }
             FeedMessage::AddedChain {
                 name,
                 genesis_hash,
                 node_count,
             } => {
-                log::debug!("Added chain {} {} {}", name, genesis_hash, node_count);
+                log::debug!("Added chain {name} {genesis_hash} {node_count}");
             }
             FeedMessage::RemovedChain { genesis_hash } => {
-                log::debug!("Removed chain {}", genesis_hash);
+                log::debug!("Removed chain {genesis_hash}");
             }
             FeedMessage::SubscribedTo { genesis_hash } => {
-                log::debug!("Subscribed to chain {}", genesis_hash);
+                log::debug!("Subscribed to chain {genesis_hash}");
             }
             FeedMessage::UnsubscribedFrom { genesis_hash } => {
-                log::debug!("Unsubscribed from chain {}", genesis_hash);
+                log::debug!("Unsubscribed from chain {genesis_hash}");
             }
             FeedMessage::Pong { message } => {
-                log::trace!("Pong :: {}", message);
+                log::trace!("Pong :: {message}");
             }
             FeedMessage::StaleNode { node_id } => {
-                log::trace!("Stale node #{}.", node_id);
+                log::trace!("Stale node #{node_id}.");
             }
             FeedMessage::NodeIOUpdate { node_id, io } => {
-                log::trace!("IO update #{} :: {:?}", node_id, io);
+                log::trace!("IO update #{node_id} :: {io:?}");
             }
             _ => (),
         }
@@ -205,7 +203,7 @@ impl TelemetryProcessor {
             let message = match message_result {
                 Ok(message) => message,
                 Err(error) => {
-                    log::error!("Error while receiving Telemetry message: {:?}", error);
+                    log::error!("Error while receiving Telemetry message: {error:?}");
                     break error.into();
                 }
             };
@@ -213,7 +211,7 @@ impl TelemetryProcessor {
             let feed_messages = match FeedMessage::from_bytes(bytes) {
                 Ok(feed_messages) => feed_messages,
                 Err(error) => {
-                    log::error!("Error while decoding Telemetry feed message: {:?}", error);
+                    log::error!("Error while decoding Telemetry feed message: {error:?}");
                     break error;
                 }
             };
@@ -255,13 +253,13 @@ impl Service for TelemetryProcessor {
             loop {
                 let tx = tx.clone();
                 if let Err(error) = TelemetryProcessor::receive_messages(tx).await {
-                    log::error!("Error while receiving feed messages: {:?}", error);
+                    log::error!("Error while receiving feed messages: {error:?}");
                 }
             }
         });
         let node_map: Mutex<HashMap<u64, NodeDetails>> = Default::default();
         if let Err(error) = TelemetryProcessor::process_messages(node_map, rx).await {
-            log::error!("Error while processing feed messages: {:?}", error);
+            log::error!("Error while processing feed messages: {error:?}");
         }
         Ok(())
     }

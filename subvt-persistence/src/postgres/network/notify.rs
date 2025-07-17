@@ -60,19 +60,19 @@ impl PostgreSQLNetworkStorage {
         let mut listener = match PgListener::connect(&self.uri).await {
             Ok(listener) => listener,
             Err(error) => {
-                log::error!("Error while getting Postgres listener: {:?}", error);
+                log::error!("Error while getting Postgres listener: {error:?}");
                 return;
             }
         };
         if let Err(error) = listener.listen(Channel::BlockProcessed.get_name()).await {
-            log::error!("Error while trying to listen to Postgres: {:?}", error);
+            log::error!("Error while trying to listen to Postgres: {error:?}");
             return;
         }
         loop {
             let pg_notification = match listener.recv().await {
                 Ok(pg_notification) => pg_notification,
                 Err(error) => {
-                    log::error!("Error while getting Postgres notification: {:?}", error);
+                    log::error!("Error while getting Postgres notification: {error:?}");
                     return;
                 }
             };
@@ -81,14 +81,13 @@ impl PostgreSQLNetworkStorage {
                     Ok(notification) => notification,
                     Err(error) => {
                         log::error!(
-                            "Error while deserializing Postgres notification JSON: {:?}",
-                            error
+                            "Error while deserializing Postgres notification JSON: {error:?}",
                         );
                         break;
                     }
                 };
             if let Err(error) = callback(notification).await {
-                log::error!("Error in callback: {:?}", error);
+                log::error!("Error in callback: {error:?}");
                 break;
             }
         }

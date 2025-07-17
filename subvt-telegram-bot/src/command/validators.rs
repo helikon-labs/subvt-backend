@@ -29,7 +29,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             };
             self.process_query(chat_id, None, &query).await?;
         } else {
-            log::info!("Send validator list for query: {:?}", query_type);
+            log::info!("Send validator list for query: {query_type:?}");
             validators.sort_by(|v1, v2| {
                 if let Some(v1_display) = &v1.display {
                     if let Some(v2_display) = &v2.display {

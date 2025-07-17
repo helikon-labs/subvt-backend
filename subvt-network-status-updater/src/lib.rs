@@ -72,9 +72,7 @@ impl NetworkStatusUpdater {
             .await
             .context("Error while fetching best block hash.")?;
         log::debug!(
-            "Best block #{} hash {}.",
-            best_block_number,
-            best_block_hash
+            "Best block #{best_block_number} hash {best_block_hash}.",
         );
         // finalized block number & hash
         let finalized_block_hash = client
@@ -89,9 +87,7 @@ impl NetworkStatusUpdater {
             .get_number()
             .context("Error while extracting finalized block number.")?;
         log::debug!(
-            "Finalized block #{} hash {}.",
-            finalized_block_number,
-            finalized_block_hash
+            "Finalized block #{finalized_block_number} hash {finalized_block_hash}.",
         );
         // epoch index & time
         let epoch = client
@@ -211,7 +207,7 @@ impl NetworkStatusUpdater {
             .await
             .context("Error while getting current era reward points.")?
             .total;
-        log::debug!("{} total reward points so far.", era_reward_points);
+        log::debug!("{era_reward_points} total reward points so far.");
         // prepare data
         let network_status = NetworkStatus {
             finalized_block_number,
@@ -246,7 +242,7 @@ impl NetworkStatusUpdater {
     ) -> anyhow::Result<()> {
         if let Ok(best_block_number) = best_block_header.get_number() {
             metrics::target_best_block_number().set(best_block_number as i64);
-            log::info!("New best block #{}.", best_block_number);
+            log::info!("New best block #{best_block_number}.");
         }
         let start = std::time::Instant::now();
         let update_result = self
@@ -265,7 +261,7 @@ impl NetworkStatusUpdater {
                 Ok(())
             }
             Err(error) => {
-                log::error!("{:?}", error);
+                log::error!("{error:?}");
                 log::error!(
                     "Network status update failed for block #{}. Will try again with the next block.",
                     best_block_header.get_number().unwrap_or(0),
@@ -320,8 +316,7 @@ impl Service for NetworkStatusUpdater {
                 .await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
-                "New block subscription exited. Will refresh connection and subscription after {} seconds.",
-                delay_seconds
+                "New block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.",
             );
             tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }

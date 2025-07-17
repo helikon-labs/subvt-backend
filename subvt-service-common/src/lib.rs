@@ -26,13 +26,12 @@ pub trait Service {
         loop {
             let result = self.run().await;
             if let Err(error) = result {
-                log::error!("{:?}", error);
+                log::error!("{error:?}");
             }
             log::error!(
-                "Process exited. Will try again in {} seconds.",
-                delay_seconds,
+                "Process exited. Will try again in {delay_seconds} seconds.",
             );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

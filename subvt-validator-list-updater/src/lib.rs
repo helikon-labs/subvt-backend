@@ -179,7 +179,7 @@ impl ValidatorListUpdater {
                     .saturating_sub(CONFIG.validator_list_updater.history_record_depth as usize),
             )
             .collect();
-        log::info!("Delete from history: {:?}", to_delete);
+        log::info!("Delete from history: {to_delete:?}");
         for delete in to_delete {
             let keys: Vec<String> = redis::cmd("KEYS")
                 .arg(format!(
@@ -211,7 +211,7 @@ impl ValidatorListUpdater {
         let finalized_block_number = finalized_block_header
             .get_number()
             .context("Error while extracting finalized block number.")?;
-        log::info!("Process new finalized block #{}.", finalized_block_number);
+        log::info!("Process new finalized block #{finalized_block_number}.");
         let finalized_block_hash = client
             .get_block_hash(finalized_block_number)
             .await
@@ -355,10 +355,7 @@ impl Service for ValidatorListUpdater {
         loop {
             if IS_BUSY.load(Ordering::SeqCst) {
                 let delay_seconds = CONFIG.common.recovery_retry_seconds;
-                log::warn!(
-                    "Busy processing past state. Hold re-instantiation for {} seconds.",
-                    delay_seconds
-                );
+                log::warn!("Busy processing past state. Hold re-instantiation for {delay_seconds} seconds.");
                 tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
                 continue;
             }
@@ -397,13 +394,13 @@ impl Service for ValidatorListUpdater {
                     let finalized_block_number = match finalized_block_header.get_number() {
                         Ok(block_number) => block_number,
                         Err(error) => {
-                            log::error!("Cannot get block number for header: {:?}", finalized_block_header);
+                            log::error!("Cannot get block number for header: {finalized_block_header:?}");
                             return Err(anyhow::anyhow!("{:?}", error));
                         }
                     };
                     metrics::target_finalized_block_number().set(finalized_block_number as i64);
                     if IS_BUSY.load(Ordering::SeqCst) {
-                        log::debug!("Busy processing a past block. Skip block #{}.", finalized_block_number);
+                        log::debug!("Busy processing a past block. Skip block #{finalized_block_number}.");
                         return Ok(());
                     }
                     IS_BUSY.store(true, Ordering::SeqCst);
@@ -421,7 +418,7 @@ impl Service for ValidatorListUpdater {
                             &finalized_block_header,
                         ).await;
                         if let Err(error) = update_result {
-                            log::error!("{:?}", error);
+                            log::error!("{error:?}");
                             log::error!(
                                 "Validator list update failed for block #{}. Will try again with the next block.",
                                 finalized_block_header.get_number().unwrap_or(0),
@@ -436,10 +433,7 @@ impl Service for ValidatorListUpdater {
                     Ok(())
             }).await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
-            log::error!(
-                "New block subscription exited. Will refresh connection and subscription after {} seconds.",
-                delay_seconds
-            );
+            log::error!("New block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.");
             tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }

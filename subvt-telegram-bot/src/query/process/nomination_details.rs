@@ -27,8 +27,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     .await?
                 {
                     log::info!(
-                        "Validator selected for nomination details in chat {}.",
-                        chat_id
+                        "Validator selected for nomination details in chat {chat_id}.",
                     );
                     let onekv_nominator_account_ids = self
                         .network_postgres
@@ -49,8 +48,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         .await?;
                 } else {
                     log::warn!(
-                        "Validator not found! Selected for nomination details in chat {}.",
-                        chat_id
+                        "Validator not found! Selected for nomination details in chat {chat_id}.",
                     );
                     self.messenger
                         .send_message(

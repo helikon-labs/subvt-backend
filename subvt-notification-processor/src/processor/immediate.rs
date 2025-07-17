@@ -15,8 +15,7 @@ impl NotificationProcessor {
                 .await
             {
                 log::error!(
-                    "Error while processing immediate notifications: {:?}",
-                    error
+                    "Error while processing immediate notifications: {error:?}",
                 );
             }
             tokio::time::sleep(std::time::Duration::from_millis(

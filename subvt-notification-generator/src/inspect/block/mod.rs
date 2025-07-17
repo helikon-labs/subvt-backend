@@ -23,11 +23,11 @@ impl NotificationGenerator {
         app_postgres: Arc<PostgreSQLAppStorage>,
         block_number: u64,
     ) -> anyhow::Result<()> {
-        log::info!("Inspect block #{}.", block_number);
+        log::info!("Inspect block #{block_number}.");
         let block = match network_postgres.get_block_by_number(block_number).await? {
             Some(block) => block,
             None => {
-                log::error!("Block #{} not found.", block_number);
+                log::error!("Block #{block_number} not found.");
                 return Ok(());
             }
         };
@@ -51,7 +51,7 @@ impl NotificationGenerator {
         network_postgres
             .save_notification_generator_state(&block.hash, block_number)
             .await?;
-        log::info!("Completed the inspection of block #{}.", block_number);
+        log::info!("Completed the inspection of block #{block_number}.");
         Ok(())
     }
 
@@ -130,7 +130,7 @@ impl NotificationGenerator {
                                     .observe(start.elapsed().as_millis() as f64);
                             }
                             Err(error) => {
-                                log::error!("Error while processing block: {:?}.", error);
+                                log::error!("Error while processing block: {error:?}.");
                                 metrics::block_processor_error_counter().inc();
                                 let _ = error_cell.set(error);
                             }
@@ -140,11 +140,8 @@ impl NotificationGenerator {
                 })
                 .await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
-            log::error!(
-                "Block inspection exited. Will restart after {} seconds.",
-                delay_seconds
-            );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            log::error!("Block inspection exited. Will restart after {delay_seconds} seconds.");
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

@@ -72,7 +72,7 @@ db_fetch_batch_size = 200
 [dn]
 # this many most recent records will always be kept in the database for reference
 candidate_history_record_count = 5
-data_endpoint = "https://nodes.web3.foundation/api/cohort/2/polkadot"
+data_endpoint = "https://nodes.web3.foundation/api/cohort/2-1/polkadot"
 refresh_seconds = 300
 
 [report]

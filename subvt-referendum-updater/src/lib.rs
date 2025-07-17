@@ -56,7 +56,7 @@ impl Service for ReferendumUpdater {
                             page += 1;
                         }
                         Err(error) => {
-                            log::error!("Error while fetching referenda: {:?}", error);
+                            log::error!("Error while fetching referenda: {error:?}");
                             break;
                         }
                     }

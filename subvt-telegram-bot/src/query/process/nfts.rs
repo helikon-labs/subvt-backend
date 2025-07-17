@@ -18,7 +18,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             }
         }
         if let Some(id_str) = &query.parameter {
-            log::info!("Validator selected for NFTs in chat {}.", chat_id);
+            log::info!("Validator selected for NFTs in chat {chat_id}.");
             let validator_id: u64 = id_str.parse()?;
             if let Some(validator) = self
                 .network_postgres

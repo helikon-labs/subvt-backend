@@ -197,8 +197,7 @@ fn decode_bit_sequence(
                 }
                 _ => {
                     return Err(DecodeError::Error(format!(
-                        "Unexpected bit sequence primitive: {:?}",
-                        ty,
+                        "Unexpected bit sequence primitive: {ty:?}",
                     ))
                     .into())
                 }
@@ -218,16 +217,14 @@ fn decode_bit_sequence(
                 }
                 _ => {
                     return Err(DecodeError::Error(format!(
-                        "Unexpected bit sequence primitive: {:?}",
-                        ty,
+                        "Unexpected bit sequence primitive: {ty:?}",
                     ))
                     .into())
                 }
             },
             _ => {
                 return Err(DecodeError::Error(format!(
-                    "Unexpected bit sequence order: {}",
-                    bit_order_type_path,
+                    "Unexpected bit sequence order: {bit_order_type_path}",
                 ))
                 .into())
             }
@@ -546,8 +543,7 @@ fn get_bit_sequence_type_code(
         "bitvec::order::Msb0" => code.push_str("msb0,"),
         _ => {
             return Err(DecodeError::Error(format!(
-                "Unexpected bit sequence order: {}",
-                bit_order_type_path
+                "Unexpected bit sequence order: {bit_order_type_path}",
             )))
         }
     }
@@ -560,8 +556,7 @@ fn get_bit_sequence_type_code(
             TypeDefPrimitive::U128 => code.push_str("u128"),
             _ => {
                 return Err(DecodeError::Error(format!(
-                    "Unexpected bit sequence primitive: {:?}",
-                    ty
+                    "Unexpected bit sequence primitive: {ty:?}",
                 )))
             }
         },
@@ -612,16 +607,14 @@ pub fn decode_dispatch_error(
         match LegacyDispatchError::decode(&mut *bytes) {
             Ok(legacy_dispatch_error) => Ok(legacy_dispatch_error.into()),
             Err(error) => Err(DecodeError::Error(format!(
-                "Cannot decode legacy dispatch error: {:?}",
-                error
+                "Cannot decode legacy dispatch error: {error:?}",
             ))),
         }
     } else {
         match DispatchError::decode(&mut *bytes) {
             Ok(dispatch_error) => Ok(dispatch_error),
             Err(error) => Err(DecodeError::Error(format!(
-                "Cannot decode dispatch error: {:?}",
-                error
+                "Cannot decode dispatch error: {error:?}",
             ))),
         }
     }

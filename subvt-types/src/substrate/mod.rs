@@ -284,20 +284,20 @@ impl BlockHeader {
                 Some(authority_index as usize)
             }
             "aura" => {
-                log::error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{consensus_engine}] not supported.");
                 None
             }
             "FRNK" => {
                 // GRANDPA
-                log::error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{consensus_engine}] not supported.");
                 None
             }
             "pow_" => {
-                log::error!("Consensus engine [{}] not supported.", consensus_engine);
+                log::error!("Consensus engine [{consensus_engine}] not supported.");
                 None
             }
             _ => {
-                log::error!("Unknown consensus engine [{}].", consensus_engine);
+                log::error!("Unknown consensus engine [{consensus_engine}].");
                 None
             }
         }

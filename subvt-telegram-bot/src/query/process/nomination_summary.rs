@@ -26,8 +26,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     .await?
                 {
                     log::info!(
-                        "Validator selected for nomination summary in chat {}.",
-                        chat_id
+                        "Validator selected for nomination summary in chat {chat_id}.",
                     );
                     self.network_postgres
                         .update_chat_validator_display(
@@ -48,8 +47,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         .await?;
                 } else {
                     log::warn!(
-                        "Validator not found! Selected for nomination summary in chat {}.",
-                        chat_id
+                        "Validator not found! Selected for nomination summary in chat {chat_id}.",
                     );
                     self.messenger
                         .send_message(

@@ -30,10 +30,7 @@ impl NotificationGenerator {
         finalized_block_number: u64,
         last_active_era_index: &AtomicU32,
     ) -> anyhow::Result<()> {
-        log::info!(
-            "Process new update from validator list updater. Block #{}.",
-            finalized_block_number
-        );
+        log::info!("Process new update from validator list updater. Block #{finalized_block_number}.");
         let redis_storage_prefix = format!(
             "subvt:{}:validators:{finalized_block_number}",
             CONFIG.substrate.chain,
@@ -164,10 +161,7 @@ impl NotificationGenerator {
                 }
                 let finalized_block_number: u64 = payload.unwrap();
                 if last_finalized_block_number == finalized_block_number {
-                    log::warn!(
-                        "Skip duplicate finalized block #{}.",
-                        finalized_block_number
-                    );
+                    log::warn!("Skip duplicate finalized block #{finalized_block_number}.");
                     continue;
                 }
                 let start = std::time::Instant::now();
@@ -189,18 +183,15 @@ impl NotificationGenerator {
                 metrics::validator_list_processing_time_ms()
                     .observe(start.elapsed().as_millis() as f64);
                 log::info!(
-                    "Completed validator list inspections for block #{}.",
-                    finalized_block_number
+                    "Completed validator list inspections for block #{finalized_block_number}.",
                 );
                 last_finalized_block_number = finalized_block_number;
             };
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
-                "Error while processing validator list: {:?}. Sleep for {} seconds, then retry.",
-                error,
-                delay_seconds,
+                "Error while processing validator list: {error:?}. Sleep for {delay_seconds} seconds, then retry.",
             );
-            std::thread::sleep(std::time::Duration::from_secs(delay_seconds));
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
     }
 }

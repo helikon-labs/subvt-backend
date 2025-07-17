@@ -85,10 +85,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                                 .await?;
                             self.update_metrics_validator_count().await?;
                             log::info!(
-                                "Validator {} added to chat #{}. Record id: {}.",
-                                account_id.to_string(),
-                                chat_id,
-                                id
+                                "Validator {account_id} added to chat #{chat_id}. Record id: {id}.",
                             );
                             // attach the validator to the SubVT user too so that the notification
                             // conditions can be processed

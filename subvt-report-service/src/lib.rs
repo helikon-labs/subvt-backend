@@ -105,28 +105,22 @@ impl Service for ReportService {
                     match updater_redis.get_finalized_block_summary().await {
                         Ok(block_summary) => block_summary,
                         Err(error) => {
-                            log::error!("{:?}", error);
+                            log::error!("{error:?}");
                             continue;
                         }
                     };
                 let finalized_block_number: u64 = finalized_block_summary.number;
                 if last_finalized_block_number == finalized_block_number {
-                    log::warn!(
-                        "Skip duplicate finalized block #{}.",
-                        finalized_block_number
-                    );
+                    log::warn!("Skip duplicate finalized block #{finalized_block_number}.");
                     continue;
                 }
-                log::info!("New finalized block #{}.", finalized_block_number);
+                log::info!("New finalized block #{finalized_block_number}.");
                 // finalized block
                 {
                     match updater_finalized_block_summary.write() {
                         Ok(mut lock) => (*lock) = finalized_block_summary,
                         Err(error) => {
-                            log::error!(
-                                "Cannot get write lock for finalized block summary: {}",
-                                error
-                            );
+                            log::error!("Cannot get write lock for finalized block summary: {error}");
                             continue;
                         }
                     }
@@ -139,7 +133,7 @@ impl Service for ReportService {
                     {
                         Ok(list) => list,
                         Err(error) => {
-                            log::error!("Cannot get active validator list from Redis: {}", error);
+                            log::error!("Cannot get active validator list from Redis: {error}");
                             continue;
                         }
                     };
@@ -147,8 +141,7 @@ impl Service for ReportService {
                         Ok(mut lock) => (*lock) = current_active_validator_list,
                         Err(error) => {
                             log::error!(
-                                "Cannot get write lock for active validator list: {}",
-                                error
+                                "Cannot get write lock for active validator list: {error}",
                             );
                             continue;
                         }
@@ -162,7 +155,7 @@ impl Service for ReportService {
                     {
                         Ok(list) => list,
                         Err(error) => {
-                            log::error!("Cannot get inactive validator list from Redis: {}", error);
+                            log::error!("Cannot get inactive validator list from Redis: {error}");
                             continue;
                         }
                     };
@@ -170,8 +163,7 @@ impl Service for ReportService {
                         Ok(mut lock) => (*lock) = current_inactive_validator_list,
                         Err(error) => {
                             log::error!(
-                                "Cannot get write lock for inactive validator list: {}",
-                                error
+                                "Cannot get write lock for inactive validator list: {error}",
                             );
                             continue;
                         }

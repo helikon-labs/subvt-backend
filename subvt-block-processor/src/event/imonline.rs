@@ -34,7 +34,7 @@ pub(crate) async fn process_imonline_event(
                         .await?;
                 }
                 Err(error) => {
-                    log::error!("Cannot persist heartbeat event: {:?}", error);
+                    log::error!("Cannot persist heartbeat event: {error:?}");
                 }
             }
         }

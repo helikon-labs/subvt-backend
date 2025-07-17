@@ -56,7 +56,7 @@ impl NotificationProcessor {
                     }
                 }
                 Err(error) => {
-                    log::error!("Error while sending grouped notification: {:?}", error,);
+                    log::error!("Error while sending grouped notification: {error:?}");
                     metrics::channel_error_counter(&format!("{channel}")).inc();
                     for notification in notification_group.iter() {
                         let _ = postgres.mark_notification_failed(notification.id).await;
@@ -147,9 +147,7 @@ impl NotificationProcessor {
         period: u32,
     ) -> anyhow::Result<()> {
         log::info!(
-            "Process {} notifications for period {}.",
-            period_type,
-            period,
+            "Process {period_type} notifications for period {period}.",
         );
         match self
             .postgres
@@ -202,10 +200,7 @@ impl NotificationProcessor {
             }
             Err(error) => {
                 log::error!(
-                    "Error while getting pending {}({}) notifications: {:?}",
-                    period,
-                    period_type,
-                    error
+                    "Error while getting pending {period}({period_type}) notifications: {error:?}",
                 )
             }
         }

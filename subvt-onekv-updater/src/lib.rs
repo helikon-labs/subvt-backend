@@ -108,7 +108,7 @@ impl OneKVUpdater {
                 }
                 Err(error) => {
                     error_count += 1;
-                    log::error!("Error while persisting nominator {}:{:?}", nominator, error);
+                    log::error!("Error while persisting nominator {nominator}:{error:?}");
                 }
             }
         }
@@ -144,7 +144,7 @@ impl Service for OneKVUpdater {
                 metrics::last_candidate_list_fetch_success_status().set(0);
                 metrics::last_candidate_persist_success_count().set(0);
                 metrics::last_candidate_persist_error_count().set(0);
-                log::error!("DN update has failed: {:?}", error);
+                log::error!("DN update has failed: {error:?}");
             }
             log::info!("Sleep for {} seconds.", CONFIG.dn.refresh_seconds);
             tokio::time::sleep(std::time::Duration::from_secs(CONFIG.dn.refresh_seconds)).await;

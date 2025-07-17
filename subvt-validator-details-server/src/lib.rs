@@ -118,7 +118,7 @@ impl ValidatorDetailsServer {
                         }
                     };
                     let mut sink = pending.accept().await?;
-                    log::info!("New subscription {}.", account_id);
+                    log::info!("New subscription {account_id}.");
                     metrics::subscription_count().inc();
                     let mut validator_details = {
                         let validator_details = match ValidatorDetailsServer::fetch_validator_details(
@@ -127,7 +127,7 @@ impl ValidatorDetailsServer {
                         ) {
                             Ok(validator_details) => validator_details,
                             Err(error) => {
-                                log::error!("Error while fetching validator details: {:?}", error);
+                                log::error!("Error while fetching validator details: {error:?}");
                                 let error_message = "Error while fetching validator details. Please make sure you are sending a valid validator account id.".to_string();
                                 let subscription_message = SubscriptionMessage::from_json(&error_message).unwrap();
                                 sink.try_send(subscription_message)?;
@@ -186,10 +186,7 @@ impl ValidatorDetailsServer {
                                             .query::<u64>(&mut *data_connection) {
                                             (inactive_validator_storage_key_prefix, db_hash)
                                         } else {
-                                            log::error!(
-                                                "Validator {} not found.",
-                                                account_id
-                                            );
+                                            log::error!("Validator {account_id} not found.");
                                             return;
                                         };
                                         let update = if hash != db_hash {
@@ -199,11 +196,7 @@ impl ValidatorDetailsServer {
                                             let validator_json_string = match validator_json_string_result {
                                                 Ok(validator_json_string) => validator_json_string,
                                                 Err(error) => {
-                                                    log::error!(
-                                                        "Error while fetching validator JSON string for storage key {}: {:?}",
-                                                        validator_storage_key_prefix,
-                                                        error
-                                                    );
+                                                    log::error!("Error while fetching validator JSON string for storage key {validator_storage_key_prefix}: {error:?}");
                                                     return;
                                                 }
                                             };
@@ -213,9 +206,7 @@ impl ValidatorDetailsServer {
                                                 Ok(db_validator_details) => db_validator_details,
                                                 Err(error) => {
                                                     log::error!(
-                                                        "Error while deserializing validator details for storage key {}: {:?}",
-                                                        validator_storage_key_prefix,
-                                                        error
+                                                        "Error while deserializing validator details for storage key {validator_storage_key_prefix}: {error:?}",
                                                     );
                                                     return;
                                                 }
@@ -238,7 +229,7 @@ impl ValidatorDetailsServer {
                                         let send_result = sink.try_send(subscription_message);
                                         match send_result {
                                             Err(error) => {
-                                                log::warn!("Error during publish: {:?}", error);
+                                                log::warn!("Error during publish: {error:?}");
                                                 metrics::subscription_count().dec();
                                                 return;
                                             }
@@ -308,12 +299,11 @@ impl Service for ValidatorDetailsServer {
             let finalized_block_number: u64 = payload.unwrap();
             if LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst) == finalized_block_number {
                 log::warn!(
-                    "Skip duplicate finalized block #{}.",
-                    finalized_block_number
+                    "Skip duplicate finalized block #{finalized_block_number}.",
                 );
                 continue;
             }
-            log::info!("New finalized block #{}.", finalized_block_number);
+            log::info!("New finalized block #{finalized_block_number}.");
             metrics::current_finalized_block_number().set(finalized_block_number as i64);
             {
                 let mut bus = bus.lock().unwrap();

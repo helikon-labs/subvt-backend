@@ -249,8 +249,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
     /// Create a SubVT application user for the Telegram chat.
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
         log::info!(
-            "Create new app user, notification channel and rules for chat {}.",
-            chat_id
+            "Create new app user, notification channel and rules for chat {chat_id}.",
         );
         // save app user
         let app_user_id = self.app_postgres.save_user(&User::default(), None).await?;
@@ -282,7 +281,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 self.network_postgres.undelete_chat(chat_id).await?;
             } else {
                 let app_user_id = self.create_app_user(chat_id).await?;
-                log::info!("Save new chat {}. App user id {}.", chat_id, app_user_id);
+                log::info!("Save new chat {chat_id}. App user id {app_user_id}.");
                 self.network_postgres
                     .save_chat(app_user_id, chat_id, &TelegramChatState::Default)
                     .await?;
@@ -292,6 +291,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         Ok(())
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn process_message(&self, message: &Message) -> anyhow::Result<()> {
         // group chat started - send intro
         if let Some(group_chat_created) = message.group_chat_created {
@@ -312,7 +312,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         if let Some(text) = message.text.clone() {
             let text = text.trim();
             if CMD_REGEX.is_match(text) {
-                log::info!("New command: {}", text);
+                log::info!("New command: {text}");
                 self.reset_chat_state(message.chat.id).await?;
                 let (command, arguments): (String, Vec<String>) = {
                     let parts: Vec<String> = SPLITTER_REGEX.split(text).map(String::from).collect();
@@ -329,7 +329,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 self.process_command(message.chat.id, &command, &arguments)
                     .await?;
             } else {
-                log::info!("New text message: {}", text);
+                log::info!("New text message: {text}");
                 let maybe_state = self
                     .network_postgres
                     .get_chat_state(message.chat.id)
@@ -516,8 +516,7 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                                             } else {
                                                 // log and ignore unknown query
                                                 return log::error!(
-                                                    "Unknown query: {}",
-                                                    callback_data
+                                                    "Unknown query: {callback_data}",
                                                 );
                                             };
                                             if let Err(error) = tokio::try_join!(
@@ -556,7 +555,7 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                     }
                 }
                 Err(error) => {
-                    log::error!("Error while receiving updates: {:?}", error);
+                    log::error!("Error while receiving updates: {error:?}");
                 }
             }
         }

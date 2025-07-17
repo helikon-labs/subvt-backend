@@ -92,8 +92,7 @@ impl BlockProcessor {
     ) -> anyhow::Result<()> {
         if !postgres.era_exists(era_index).await? {
             log::info!(
-                "Era {} does not exist in the database. Cannot persist reward points.",
-                era_index
+                "Era {era_index} does not exist in the database. Cannot persist reward points.",
             );
             return Ok(());
         }
@@ -115,10 +114,11 @@ impl BlockProcessor {
         postgres
             .update_era_validator_reward_points(era_index, era_reward_points_map)
             .await?;
-        log::info!("Era {} rewards persisted.", era_index);
+        log::info!("Era {era_index} rewards persisted.");
         Ok(())
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn process_block(
         &self,
         substrate_client: &mut SubstrateClient,
@@ -322,7 +322,7 @@ impl BlockProcessor {
                         let error_log = format!(
                             "Error while processing event #{index} of block #{block_number}: {error:?}",
                         );
-                        log::error!("{}", error_log);
+                        log::error!("{error_log}");
                         metrics::event_process_error_count().inc();
                         postgres
                             .save_event_process_error_log(
@@ -384,7 +384,7 @@ impl BlockProcessor {
                         let error_log = format!(
                             "Error while processing extrinsic #{index} of block #{block_number}: {error:?}",
                         );
-                        log::error!("{}", error_log);
+                        log::error!("{error_log}");
                         metrics::extrinsic_process_error_count().inc();
                         postgres
                             .save_extrinsic_process_error_log(
@@ -526,10 +526,7 @@ impl Service for BlockProcessor {
         loop {
             if IS_BUSY.load(Ordering::SeqCst) {
                 let delay_seconds = CONFIG.common.recovery_retry_seconds;
-                log::warn!(
-                    "Busy processing past blocks. Hold re-instantiation for {} seconds.",
-                    delay_seconds
-                );
+                log::warn!("Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
                 tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
                 continue;
             }
@@ -570,13 +567,13 @@ impl Service for BlockProcessor {
                     let finalized_block_number = match finalized_block_header.get_number() {
                         Ok(block_number) => block_number,
                         Err(error) => {
-                            log::error!("Cannot get block number for header: {:?}", finalized_block_header);
-                            return Err(anyhow::anyhow!("{:?}", error));
+                            log::error!("Cannot get block number for header: {finalized_block_header:?}");
+                            return Err(anyhow::anyhow!("{error:?}"));
                         }
                     };
                     metrics::target_finalized_block_number().set(finalized_block_number as i64);
                     if IS_BUSY.load(Ordering::SeqCst) {
-                        log::debug!("Busy processing past blocks. Skip block #{} for now.", finalized_block_number);
+                        log::debug!("Busy processing past blocks. Skip block #{finalized_block_number} for now.");
                         return Ok(());
                     }
 
@@ -589,7 +586,7 @@ impl Service for BlockProcessor {
                         let processed_block_height = match postgres.get_processed_block_height().await {
                             Ok(processed_block_height) => processed_block_height,
                             Err(error) => {
-                                log::error!("Cannot get processed block height from the database: {:?}", error);
+                                log::error!("Cannot get processed block height from the database: {error:?}");
                                 let _ = error_cell.set(error);
                                 IS_BUSY.store(false, Ordering::SeqCst);
                                 return;
@@ -602,9 +599,7 @@ impl Service for BlockProcessor {
                             );
                             while block_number <= finalized_block_number {
                                 log::info!(
-                                    "Process block #{}. Target #{}.",
-                                    block_number,
-                                    finalized_block_number
+                                    "Process block #{block_number}. Target #{finalized_block_number}.",
                                 );
                                 let start = std::time::Instant::now();
                                 let process_result = self.process_block(
@@ -621,10 +616,9 @@ impl Service for BlockProcessor {
                                         block_number += 1
                                     },
                                     Err(error) => {
-                                        log::error!("{:?}", error);
+                                        log::error!("{error:?}");
                                         log::error!(
-                                            "History block processing failed for block #{}.",
-                                            block_number,
+                                            "History block processing failed for block #{block_number}.",
                                         );
                                         let _ = error_cell.set(error);
                                         break;
@@ -635,7 +629,7 @@ impl Service for BlockProcessor {
                             // update current era reward points every 3 minutes
                             let blocks_per_3_minutes = 3 * 60 * 1000
                                 / get_metadata_expected_block_time_millis(&block_processor_substrate_client.metadata).unwrap();
-                            log::info!("Process block #{}.", finalized_block_number);
+                            log::info!("Process block #{finalized_block_number}.");
                             let start = std::time::Instant::now();
                             let update_result = self.process_block(
                                 &mut block_processor_substrate_client,
@@ -650,7 +644,7 @@ impl Service for BlockProcessor {
                                     metrics::processed_finalized_block_number().set(finalized_block_number as i64);
                                 },
                                 Err(error) => {
-                                    log::error!("{:?}", error);
+                                    log::error!("{error:?}");
                                     log::error!(
                                         "Block processing failed for finalized block #{}. Will try again with the next block.",
                                         finalized_block_header.get_number().unwrap_or(0),
@@ -665,8 +659,7 @@ impl Service for BlockProcessor {
             }).await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
-                "Finalized block subscription exited. Will refresh connection and subscription after {} seconds.",
-                delay_seconds
+                "Finalized block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.",
             );
             tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }

@@ -145,8 +145,7 @@ impl Service for KLineUpdater {
             // publish metrics
             metrics::kline_count().set(postgres.get_kline_count().await? as i64);
             log::info!(
-                "K-line updater completed. Will sleep for {} seconds",
-                sleep_seconds
+                "K-line updater completed. Will sleep for {sleep_seconds} seconds",
             );
             tokio::time::sleep(std::time::Duration::from_secs(sleep_seconds)).await;
         }

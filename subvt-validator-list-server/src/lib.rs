@@ -102,7 +102,7 @@ impl ValidatorListServer {
                                     let send_result = sink.try_send(message);
                                     match send_result {
                                         Err(error) => {
-                                            log::warn!("Error during publish: {:?}", error);
+                                            log::warn!("Error during publish: {error:?}");
                                             metrics::subscription_count().dec();
                                             return;
                                         }
@@ -192,12 +192,11 @@ impl Service for ValidatorListServer {
             let finalized_block_number: u64 = payload.unwrap();
             if last_finalized_block_number == finalized_block_number {
                 log::warn!(
-                    "Skip duplicate finalized block #{}.",
-                    finalized_block_number
+                    "Skip duplicate finalized block #{finalized_block_number}.",
                 );
                 continue 'outer;
             }
-            log::info!("New finalized block #{}.", finalized_block_number);
+            log::info!("New finalized block #{finalized_block_number}.");
             metrics::target_finalized_block_number().set(finalized_block_number as i64);
             let prefix = format!(
                 "subvt:{}:validators:{}:{}",
@@ -254,7 +253,7 @@ impl Service for ValidatorListServer {
                             .query(&mut data_connection)
                             .context("Can't read validator summary hash from Redis.")?;
                         if summary_hash != db_summary_hash {
-                            log::info!("Summary hash changed for {}.", validator_account_id);
+                            log::info!("Summary hash changed for {validator_account_id}.");
                             let validator_json_string: String = redis::cmd("GET")
                                 .arg(prefix)
                                 .query(&mut data_connection)

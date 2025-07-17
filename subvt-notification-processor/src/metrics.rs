@@ -77,8 +77,7 @@ pub(crate) fn observe_notification_send_time_ms(notification_channel: &str, elap
         Ok(metrics) => metrics.observe(elapsed_ms),
         Err(metrics_error) => {
             log::error!(
-                "Cannot access notification send time metrics: {:?}",
-                metrics_error
+                "Cannot access notification send time metrics: {metrics_error:?}",
             );
         }
     }

@@ -104,7 +104,7 @@ impl NetworkStatusServer {
                                     let send_result = sink.try_send(subscription_message);
                                     match send_result {
                                         Err(error) => {
-                                            log::warn!("Error during publish: {:?}", error);
+                                            log::warn!("Error during publish: {error:?}");
                                             metrics::subscription_count().dec();
                                             return;
                                         }
@@ -171,11 +171,11 @@ impl Service for NetworkStatusServer {
             {
                 let current_status = current_status.read().unwrap();
                 if current_status.best_block_number == best_block_number {
-                    log::warn!("Skip duplicate best block #{}.", best_block_number);
+                    log::warn!("Skip duplicate best block #{best_block_number}.");
                     continue;
                 }
             }
-            log::info!("New best block #{}.", best_block_number);
+            log::info!("New best block #{best_block_number}.");
             metrics::target_best_block_number().set(best_block_number as i64);
             match NetworkStatusServer::read_current_network_status(&mut data_connection).await {
                 Ok(new_status) => {

@@ -48,7 +48,7 @@ impl TelegramSender {
                 Ok(format!("{response:?}"))
             }
             Err(error) => {
-                log::error!("Telegram notification send error: {:?}.", error,);
+                log::error!("Telegram notification send error: {error:?}.",);
                 Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }

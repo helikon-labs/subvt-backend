@@ -25,10 +25,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         args: &[String],
     ) -> anyhow::Result<()> {
         log::info!(
-            "Process command {} for chat {} with arguments: {:?}",
-            command,
-            chat_id,
-            args,
+            "Process command {command} for chat {chat_id} with arguments: {args:?}",
         );
         match command {
             "/about" => {

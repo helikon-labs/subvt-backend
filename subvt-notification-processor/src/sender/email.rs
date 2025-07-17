@@ -72,7 +72,7 @@ impl EmailSender {
                 Ok(format!("{response:?}"))
             }
             Err(error) => {
-                log::error!("Mail send error: {:?}.", error,);
+                log::error!("Mail send error: {error:?}.",);
                 Err(NotificationSenderError::Error(format!("{error:?}")).into())
             }
         }

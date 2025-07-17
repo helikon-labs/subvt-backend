@@ -96,14 +96,13 @@ impl APNSSender {
                 Ok(format!("{response:?}"))
             }
             Err(error) => {
-                log::error!("APNS notification send error: {:?}.", error);
+                log::error!("APNS notification send error: {error:?}.");
                 if let a2::Error::ResponseError(response) = &error {
                     if let Some(error) = &response.error {
                         match error.reason {
                             ErrorReason::BadDeviceToken => {
                                 log::error!(
-                                    "APNS Error: bad device token. Delete user notification APNS channel #{}.",
-                                    user_notification_channel_id
+                                    "APNS Error: bad device token. Delete user notification APNS channel #{user_notification_channel_id}.",
                                 );
                                 self.app_postgres
                                     .delete_user_notification_channel(user_notification_channel_id)
@@ -111,8 +110,7 @@ impl APNSSender {
                             }
                             ErrorReason::DeviceTokenNotForTopic => {
                                 log::error!(
-                                    "APNS Error: device token not for topic. Delete user notification APNS channel #{}.",
-                                    user_notification_channel_id
+                                    "APNS Error: device token not for topic. Delete user notification APNS channel #{user_notification_channel_id}.",
                                 );
                                 self.app_postgres
                                     .delete_user_notification_channel(user_notification_channel_id)
@@ -120,8 +118,7 @@ impl APNSSender {
                             }
                             ErrorReason::Unregistered => {
                                 log::error!(
-                                    "APNS Error: unregistered device token. Delete user notification APNS channel #{}.",
-                                    user_notification_channel_id
+                                    "APNS Error: unregistered device token. Delete user notification APNS channel #{user_notification_channel_id}.",
                                 );
                                 self.app_postgres
                                     .delete_user_notification_channel(user_notification_channel_id)
@@ -131,8 +128,7 @@ impl APNSSender {
                         }
                     } else if response.code == 410 {
                         log::warn!(
-                            "APNS Error: no response error body. Response code 410. Delete user notification APNS channel #{}.",
-                            user_notification_channel_id
+                            "APNS Error: no response error body. Response code 410. Delete user notification APNS channel #{user_notification_channel_id}.",
                         );
                     }
                 }
