@@ -24,9 +24,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         command: &str,
         args: &[String],
     ) -> anyhow::Result<()> {
-        log::info!(
-            "Process command {command} for chat {chat_id} with arguments: {args:?}",
-        );
+        log::info!("Process command {command} for chat {chat_id} with arguments: {args:?}",);
         match command {
             "/about" => {
                 crate::metrics::command_call_counter(command).inc();

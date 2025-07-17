@@ -159,7 +159,9 @@ pub(crate) async fn process_staking_extrinsic(
                         )
                         .await?;
                 } else {
-                    log::error!("Cannot get stash account id for controller {controller_account_id}.");
+                    log::error!(
+                        "Cannot get stash account id for controller {controller_account_id}."
+                    );
                 }
             } else {
                 log::error!("Cannot get controller account id from signature for extrinsic #{index} Staking.validate.");

@@ -22,9 +22,9 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                 .await
             {
                 Ok(_) => log::info!("Broadcast sent to chat {chat_id}."),
-                Err(error) => log::error!(
-                    "Error while sending broadcast to chat {chat_id}: {error:?}",
-                ),
+                Err(error) => {
+                    log::error!("Error while sending broadcast to chat {chat_id}: {error:?}",)
+                }
             }
         }
         Ok(())

@@ -146,9 +146,7 @@ impl NotificationProcessor {
         period_type: NotificationPeriodType,
         period: u32,
     ) -> anyhow::Result<()> {
-        log::info!(
-            "Process {period_type} notifications for period {period}.",
-        );
+        log::info!("Process {period_type} notifications for period {period}.",);
         match self
             .postgres
             .get_pending_notifications_by_period_type(maybe_network_id, &period_type, period)

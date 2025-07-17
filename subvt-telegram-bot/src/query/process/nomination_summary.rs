@@ -25,9 +25,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     )
                     .await?
                 {
-                    log::info!(
-                        "Validator selected for nomination summary in chat {chat_id}.",
-                    );
+                    log::info!("Validator selected for nomination summary in chat {chat_id}.",);
                     self.network_postgres
                         .update_chat_validator_display(
                             &validator.account_id,

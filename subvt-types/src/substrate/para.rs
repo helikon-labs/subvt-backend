@@ -5,9 +5,6 @@ use polkadot_runtime_parachains::scheduler::CoreOccupied;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-struct Id(pub u32);
-
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 pub enum ParaAssignmentKind {
     Parathread,

@@ -40,9 +40,7 @@ impl TelemetryProcessor {
                 timestamp,
                 avg_block_time,
             } => {
-                log::debug!(
-                    "Best block: {block_number} {timestamp} {avg_block_time:?}.",
-                );
+                log::debug!("Best block: {block_number} {timestamp} {avg_block_time:?}.",);
                 metrics::best_block_number().set(*block_number as i64);
                 postgres
                     .update_best_block_number(*block_number, *timestamp, *avg_block_time)

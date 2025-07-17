@@ -248,9 +248,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
 
     /// Create a SubVT application user for the Telegram chat.
     async fn create_app_user(&self, chat_id: i64) -> anyhow::Result<u32> {
-        log::info!(
-            "Create new app user, notification channel and rules for chat {chat_id}.",
-        );
+        log::info!("Create new app user, notification channel and rules for chat {chat_id}.",);
         // save app user
         let app_user_id = self.app_postgres.save_user(&User::default(), None).await?;
         // save notification channel

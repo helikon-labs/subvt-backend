@@ -191,9 +191,7 @@ impl Service for ValidatorListServer {
             }
             let finalized_block_number: u64 = payload.unwrap();
             if last_finalized_block_number == finalized_block_number {
-                log::warn!(
-                    "Skip duplicate finalized block #{finalized_block_number}.",
-                );
+                log::warn!("Skip duplicate finalized block #{finalized_block_number}.",);
                 continue 'outer;
             }
             log::info!("New finalized block #{finalized_block_number}.");

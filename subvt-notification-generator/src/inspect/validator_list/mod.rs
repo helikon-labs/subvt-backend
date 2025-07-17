@@ -30,7 +30,9 @@ impl NotificationGenerator {
         finalized_block_number: u64,
         last_active_era_index: &AtomicU32,
     ) -> anyhow::Result<()> {
-        log::info!("Process new update from validator list updater. Block #{finalized_block_number}.");
+        log::info!(
+            "Process new update from validator list updater. Block #{finalized_block_number}."
+        );
         let redis_storage_prefix = format!(
             "subvt:{}:validators:{finalized_block_number}",
             CONFIG.substrate.chain,

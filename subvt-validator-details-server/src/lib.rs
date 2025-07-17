@@ -298,9 +298,7 @@ impl Service for ValidatorDetailsServer {
             }
             let finalized_block_number: u64 = payload.unwrap();
             if LAST_FINALIZED_BLOCK_NUMBER.load(Ordering::SeqCst) == finalized_block_number {
-                log::warn!(
-                    "Skip duplicate finalized block #{finalized_block_number}.",
-                );
+                log::warn!("Skip duplicate finalized block #{finalized_block_number}.",);
                 continue;
             }
             log::info!("New finalized block #{finalized_block_number}.");

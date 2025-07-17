@@ -26,9 +26,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         if rule_exists {
             return Ok(());
         }
-        log::debug!(
-            "Create non-existent rule {type_code} for user {user_id}.",
-        );
+        log::debug!("Create non-existent rule {type_code} for user {user_id}.",);
         let telegram_channel_id = self
             .app_postgres
             .get_user_notification_channels(user_id)

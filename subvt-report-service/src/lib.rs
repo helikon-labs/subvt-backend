@@ -120,7 +120,9 @@ impl Service for ReportService {
                     match updater_finalized_block_summary.write() {
                         Ok(mut lock) => (*lock) = finalized_block_summary,
                         Err(error) => {
-                            log::error!("Cannot get write lock for finalized block summary: {error}");
+                            log::error!(
+                                "Cannot get write lock for finalized block summary: {error}"
+                            );
                             continue;
                         }
                     }
@@ -140,9 +142,7 @@ impl Service for ReportService {
                     match updater_active_validator_list.write() {
                         Ok(mut lock) => (*lock) = current_active_validator_list,
                         Err(error) => {
-                            log::error!(
-                                "Cannot get write lock for active validator list: {error}",
-                            );
+                            log::error!("Cannot get write lock for active validator list: {error}",);
                             continue;
                         }
                     }
