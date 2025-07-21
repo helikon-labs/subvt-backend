@@ -3,12 +3,12 @@ use crate::sender::NotificationSenderError;
 use crate::{ContentProvider, NotificationSender};
 use async_trait::async_trait;
 use subvt_telegram_bot::{
-    AsyncApi, AsyncTelegramApi, ChatId, LinkPreviewOptions, ParseMode, SendMessageParams,
+    AsyncTelegramApi, Bot, ChatId, LinkPreviewOptions, ParseMode, SendMessageParams,
 };
 use subvt_types::app::notification::{Notification, NotificationChannel};
 
 pub(crate) struct TelegramSender {
-    telegram_client: AsyncApi,
+    telegram_client: Bot,
     content_provider: ContentProvider,
 }
 
@@ -17,7 +17,7 @@ impl TelegramSender {
         api_token: &str,
         content_provider: ContentProvider,
     ) -> anyhow::Result<TelegramSender> {
-        let telegram_client = AsyncApi::new(api_token);
+        let telegram_client = Bot::new(api_token);
         Ok(TelegramSender {
             telegram_client,
             content_provider,

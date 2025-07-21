@@ -1,4 +1,5 @@
-use frankenstein::{Chat, ChatType, Message, MethodResponse};
+use frankenstein::response::MethodResponse;
+use frankenstein::types::{Chat, ChatType, Message};
 use subvt_persistence::redis::Redis;
 use subvt_types::crypto::AccountId;
 use subvt_types::report::BlockSummary;

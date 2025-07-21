@@ -1,7 +1,7 @@
 //! Keyboard for the selection of the `/contact` type: bug report or feature request.
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 use tera::{Context, Tera};
 
 pub fn get_contact_type_keyboard(renderer: &Tera) -> anyhow::Result<Option<ReplyMarkup>> {

@@ -1,6 +1,6 @@
 [package]
 name = "subvt-kline-updater"
-version = "0.22.8"
+version = "0.23.0"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -17,4 +17,4 @@ subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-service-common = { path = "../subvt-service-common" }
 subvt-types = { path = "../subvt-types" }
-tokio = { version = "1.41", features = ["full"] }
+tokio = { version = "1.46", features = ["full"] }

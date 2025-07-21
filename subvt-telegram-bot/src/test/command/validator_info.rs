@@ -62,8 +62,8 @@ async fn test_validator_info_single_validator() {
 #[tokio::test]
 #[allow(clippy::borrowed_box)]
 async fn test_validator_info_multiple_validators() {
-    let mut rng = rand::thread_rng();
-    let validator_count = rng.gen_range(3..15);
+    let mut rng = rand::rng();
+    let validator_count = rng.random_range(3..15);
     let chat_id = get_random_chat_id();
     let mut messenger = MockMessenger::new();
     messenger

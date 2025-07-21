@@ -2,7 +2,7 @@
 //! validators and the selection of one of them is required.
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 use subvt_types::telegram::TelegramChatValidator;
 use subvt_utility::text::get_condensed_address;
 use tera::{Context, Tera};

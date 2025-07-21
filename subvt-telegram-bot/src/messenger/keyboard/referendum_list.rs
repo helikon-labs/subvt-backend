@@ -2,7 +2,7 @@
 //! displayed on a click on it.
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 use subvt_types::governance::polkassembly::ReferendumPost;
 use tera::{Context, Tera};
 

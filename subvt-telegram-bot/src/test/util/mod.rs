@@ -1,6 +1,8 @@
 //! Test utilities.
+
 use crate::messenger::MockMessenger;
-use crate::{AsyncApi, TelegramBot, CONFIG};
+use crate::{TelegramBot, CONFIG};
+use frankenstein::client_reqwest::Bot;
 use rand::Rng;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
@@ -14,7 +16,7 @@ pub async fn new_test_bot(messenger: MockMessenger) -> anyhow::Result<TelegramBo
     let network_postgres =
         PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
     let redis = Redis::new()?;
-    let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
+    let api = Bot::new(&CONFIG.telegram_bot.api_token);
     Ok(TelegramBot {
         app_postgres,
         network_postgres,
@@ -25,11 +27,11 @@ pub async fn new_test_bot(messenger: MockMessenger) -> anyhow::Result<TelegramBo
 }
 
 pub fn get_random_chat_id() -> i64 {
-    let mut rng = rand::thread_rng();
-    rng.gen()
+    let mut rng = rand::rng();
+    rng.random()
 }
 
 pub fn get_random_account_id() -> AccountId {
-    let mut rng = rand::thread_rng();
-    AccountId::new(rng.gen())
+    let mut rng = rand::rng();
+    AccountId::new(rng.random())
 }

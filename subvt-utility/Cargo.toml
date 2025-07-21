@@ -1,6 +1,6 @@
 [package]
 name = "subvt-utility"
-version = "0.22.8"
+version = "0.23.0"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -8,4 +8,4 @@ rust-version = "1.67.0"
 anyhow = { workspace = true }
 hex = "0.4"
 num-format = "0.4"
-parity-scale-codec = { version = "3.6", default-features = false, features = ["derive", "full"] }
+parity-scale-codec = { version = "3.7", default-features = false, features = ["derive", "full"] }

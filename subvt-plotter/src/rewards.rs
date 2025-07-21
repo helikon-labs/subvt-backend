@@ -76,7 +76,7 @@ pub fn plot_era_rewards(title: &str, rewards: &[(Era, Balance)]) -> anyhow::Resu
         .load_data(&data)
         .unwrap();
     let millis = chrono::Utc::now().timestamp_millis();
-    let random: u16 = rand::thread_rng().gen();
+    let random: u16 = rand::rng().random();
     // save svg
     let svg_path = format!(
         "{}{}{}_{}.svg",

@@ -2,7 +2,7 @@
 //! for a validator.
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 use subvt_types::subvt::ValidatorDetails;
 use tera::{Context, Tera};
 

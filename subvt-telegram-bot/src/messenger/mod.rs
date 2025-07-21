@@ -20,11 +20,15 @@ use crate::messenger::keyboard::{
 use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
 use crate::{TelegramBotError, CONFIG};
 use async_trait::async_trait;
-use frankenstein::{
-    AnswerCallbackQueryParams, AsyncApi, AsyncTelegramApi, ChatId, DeleteMessageParams,
-    EditMessageTextParams, Error, LinkPreviewOptions, Message as TelegramMessage, MessageOrBool,
-    MethodResponse, ParseMode, ReplyMarkup, SendMessageParams, SendPhotoParams,
+use frankenstein::client_reqwest::Bot;
+use frankenstein::input_file::FileUpload::InputFile;
+use frankenstein::methods::{
+    AnswerCallbackQueryParams, DeleteMessageParams, EditMessageTextParams, SendMessageParams,
+    SendPhotoParams,
 };
+use frankenstein::response::{MessageOrBool, MethodResponse};
+use frankenstein::types::{ChatId, LinkPreviewOptions, Message as TelegramMessage, ReplyMarkup};
+use frankenstein::{AsyncTelegramApi, Error, ParseMode};
 use message::MessageType;
 #[cfg(test)]
 use mockall::automock;
@@ -97,7 +101,7 @@ pub trait Messenger {
 /// Telegram messenger.
 pub struct MessengerImpl {
     /// Async Telegram API.
-    api: AsyncApi,
+    api: Bot,
     /// Template renderer.
     renderer: Tera,
 }
@@ -113,7 +117,7 @@ impl MessengerImpl {
             std::path::MAIN_SEPARATOR,
         ))?;
         // init the async Telegram API
-        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
+        let api = Bot::new(&CONFIG.telegram_bot.api_token);
         Ok(MessengerImpl { api, renderer })
     }
 }
@@ -162,9 +166,7 @@ impl Messenger for MessengerImpl {
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
         let params = SendPhotoParams {
             chat_id: ChatId::Integer(chat_id),
-            photo: frankenstein::api_params::FileUpload::InputFile(frankenstein::InputFile {
-                path: path.into(),
-            }),
+            photo: InputFile(frankenstein::input_file::InputFile { path: path.into() }),
             caption: None,
             parse_mode: Some(ParseMode::Html),
             caption_entities: None,

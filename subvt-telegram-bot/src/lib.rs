@@ -8,10 +8,12 @@ use crate::{
     query::Query,
 };
 use async_trait::async_trait;
-pub use frankenstein::{
-    AsyncApi, AsyncTelegramApi, ChatId, LinkPreviewOptions, ParseMode, SendMessageParams,
-};
-use frankenstein::{ChatType, GetUpdatesParams, MaybeInaccessibleMessage, Message};
+pub use frankenstein::client_reqwest::Bot;
+use frankenstein::methods::GetUpdatesParams;
+pub use frankenstein::methods::SendMessageParams;
+pub use frankenstein::types::{ChatId, LinkPreviewOptions};
+use frankenstein::types::{ChatType, MaybeInaccessibleMessage, Message};
+pub use frankenstein::{AsyncTelegramApi, ParseMode};
 use lazy_static::lazy_static;
 use regex::Regex;
 use rustc_hash::FxHashSet as HashSet;
@@ -191,7 +193,7 @@ pub struct TelegramBot<M: Messenger + Send + Sync> {
     /// SubVT application deployment Redis helper.
     redis: Redis,
     /// Telegram API helper.
-    api: AsyncApi,
+    api: Bot,
     /// Telegram messenger struct.
     messenger: M,
 }
@@ -203,7 +205,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
         let network_postgres =
             PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?;
         let redis = Redis::new()?;
-        let api = AsyncApi::new(&CONFIG.telegram_bot.api_token);
+        let api = Bot::new(&CONFIG.telegram_bot.api_token);
 
         Ok(TelegramBot {
             app_postgres,
@@ -462,8 +464,8 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
             limit: None,
             timeout: None,
             allowed_updates: Some(vec![
-                frankenstein::AllowedUpdate::Message,
-                frankenstein::AllowedUpdate::CallbackQuery,
+                frankenstein::types::AllowedUpdate::Message,
+                frankenstein::types::AllowedUpdate::CallbackQuery,
             ]),
         };
         // update metrics
@@ -478,7 +480,7 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                         update_params.offset = Some((update.update_id + 1).into());
                         match update.content {
                             // process message
-                            frankenstein::UpdateContent::Message(message) => {
+                            frankenstein::updates::UpdateContent::Message(message) => {
                                 self.save_or_restore_chat(message.chat.id).await?;
                                 tokio::spawn(async move {
                                     if let Err(error) = self.process_message(&message).await {
@@ -500,11 +502,13 @@ impl<M: Messenger + Send + Sync> Service for TelegramBot<M> {
                                 });
                             }
                             // process callback query
-                            frankenstein::UpdateContent::CallbackQuery(callback_query) => {
-                                if let Some(callback_data) = callback_query.data {
+                            frankenstein::updates::UpdateContent::CallbackQuery(callback_query) => {
+                                if let Some(callback_data) = &callback_query.data {
                                     if let Some(MaybeInaccessibleMessage::Message(message)) =
-                                        callback_query.message
+                                        &callback_query.message
                                     {
+                                        let callback_data = callback_data.clone();
+                                        let message = message.clone();
                                         self.save_or_restore_chat(message.chat.id).await?;
                                         tokio::spawn(async move {
                                             let query: Query = if let Ok(query) =

@@ -1,6 +1,6 @@
 use crate::messenger::button::settings::get_settings_button;
 use crate::query::{QueryType, SettingsSubSection};
-use frankenstein::InlineKeyboardMarkup;
+use frankenstein::types::InlineKeyboardMarkup;
 use tera::Tera;
 
 pub(crate) mod active_inactive;

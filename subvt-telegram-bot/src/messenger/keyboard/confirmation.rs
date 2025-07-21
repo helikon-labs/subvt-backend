@@ -1,7 +1,7 @@
 //! Keyboard for the confirmation of a request. Displays Yes/No buttons.
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 
 pub fn get_confirmation_keyboard(query_type: QueryType) -> anyhow::Result<Option<ReplyMarkup>> {
     let rows = vec![

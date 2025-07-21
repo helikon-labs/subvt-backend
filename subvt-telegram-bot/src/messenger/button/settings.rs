@@ -1,7 +1,8 @@
 //! Manages the creation of different types of `/settings` buttons.
+
 use crate::query::{Query, QueryType, SettingsEditQueryType};
 use crate::CONFIG;
-use frankenstein::InlineKeyboardButton;
+use frankenstein::types::InlineKeyboardButton;
 use subvt_types::app::notification::{
     NotificationPeriodType, NotificationTypeCode, UserNotificationRule,
 };

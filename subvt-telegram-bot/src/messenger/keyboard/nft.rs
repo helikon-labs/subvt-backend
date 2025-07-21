@@ -2,7 +2,7 @@
 use crate::messenger::button::settings::get_settings_button;
 use crate::query::QueryType;
 use crate::Query;
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup};
 use itertools::Itertools;
 use subvt_types::sub_id::NFTCollection;
 use tera::{Context, Tera};

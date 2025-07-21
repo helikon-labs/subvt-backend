@@ -1,5 +1,5 @@
 use crate::query::{Query, QueryType};
-use frankenstein::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
+use frankenstein::types::{InlineKeyboardButton, InlineKeyboardMarkup, ReplyMarkup};
 use subvt_types::governance::track::Track;
 use tera::{Context, Tera};
 

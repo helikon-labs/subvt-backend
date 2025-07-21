@@ -1,6 +1,6 @@
 use crate::messenger::button::settings::{get_notification_on_off_button, get_settings_button};
 use crate::query::{QueryType, SettingsEditQueryType, SettingsSubSection};
-use frankenstein::InlineKeyboardMarkup;
+use frankenstein::types::InlineKeyboardMarkup;
 use subvt_types::app::notification::{NotificationTypeCode, UserNotificationRule};
 use tera::Tera;
 
