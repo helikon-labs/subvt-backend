@@ -1,8 +1,9 @@
 use crate::substrate::legacy::LegacyCoreOccupied;
-use crate::substrate::BlockNumber;
+use crate::substrate::CoreAssignment;
 use polkadot_primitives::ScrapedOnChainVotes;
-use polkadot_runtime_parachains::scheduler::CoreOccupied;
+use polkadot_runtime_parachains::scheduler::common::Assignment;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -65,33 +66,43 @@ impl ParaCoreAssignment {
         Ok(result)
     }
 
-    pub fn from_on_chain_votes(
-        group_size: u8,
-        cores: Vec<CoreOccupied<BlockNumber>>,
+    pub fn from_claim_queue(
+        group_size: u32,
+        claim_queue: BTreeMap<u32, Vec<CoreAssignment>>,
         votes: ScrapedOnChainVotes,
     ) -> anyhow::Result<Vec<Self>> {
         let mut result = Vec::new();
         for votes in votes.backing_validators_per_candidate {
-            let para_id: u32 = votes.0.descriptor.para_id.into();
+            let vote_para_id: u32 = votes.0.descriptor.para_id.into();
             if let Some(vote) = votes.1.first() {
-                let group_index = vote.0 .0 / (group_size as u32);
+                let group_index = vote.0 .0 / group_size;
                 // get core index
                 let mut maybe_core_index: Option<u32> = None;
-                for (index, core) in cores.iter().enumerate() {
-                    match core {
-                        CoreOccupied::Paras(entry) => {
-                            let core_para_id: u32 = entry.assignment.para_id().into();
-                            if core_para_id == para_id {
-                                maybe_core_index = Some(index as u32)
+                for (core_index, assignments) in claim_queue.iter() {
+                    for assignment in assignments.iter() {
+                        match assignment {
+                            Assignment::Pool {
+                                para_id,
+                                core_index,
+                            } => {
+                                let core_para_id: u32 = (*para_id).into();
+                                if core_para_id == vote_para_id {
+                                    maybe_core_index = Some(core_index.0)
+                                }
+                            }
+                            Assignment::Bulk(core_para_id) => {
+                                let core_para_id: u32 = (*core_para_id).into();
+                                if core_para_id == vote_para_id {
+                                    maybe_core_index = Some(*core_index)
+                                }
                             }
                         }
-                        CoreOccupied::Free => (),
                     }
                 }
                 if let Some(core_index) = maybe_core_index {
                     let assignment = Self {
                         core_index,
-                        para_id,
+                        para_id: vote_para_id,
                         group_index,
                     };
                     result.push(assignment)

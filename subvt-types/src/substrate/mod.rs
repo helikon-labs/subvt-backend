@@ -10,7 +10,7 @@ use pallet_identity::{Data, Judgement};
 use pallet_staking::{UnlockChunk, ValidatorPrefs};
 use parity_scale_codec::{Decode, Encode, Error, Input};
 pub use polkadot_primitives::{ScrapedOnChainVotes, ValidityAttestation};
-pub use polkadot_runtime_parachains::scheduler::CoreOccupied;
+pub use polkadot_runtime_parachains::scheduler::common::Assignment as CoreAssignment;
 use serde::{Deserialize, Serialize};
 use sp_consensus_babe::digests::PreDigest;
 use sp_core::bounded::BoundedVec;

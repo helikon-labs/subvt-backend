@@ -17,6 +17,8 @@ use parity_scale_codec::Decode;
 use rustc_hash::{FxHashMap as HashMap, FxHasher};
 use sp_core::storage::{StorageChangeSet, StorageKey};
 use sp_core::ConstU32;
+use std::cmp::max;
+use std::collections::BTreeMap;
 use std::future::Future;
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -33,8 +35,8 @@ use subvt_types::substrate::metadata::{
 use subvt_types::substrate::para::ParaCoreAssignment;
 use subvt_types::substrate::{
     event::SubstrateEvent, extrinsic::SubstrateExtrinsic, legacy::LegacyValidatorPrefs, Account,
-    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting, CoreOccupied,
-    DemocracyVoting, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
+    Balance, Block, BlockHeader, BlockNumber, BlockWrapper, Chain, ConvictionVoting,
+    CoreAssignment, DemocracyVoting, Epoch, Era, EraRewardPoints, EraStakers, IdentityRegistration,
     LastRuntimeUpgradeInfo, Nomination, PagedExposureMetadata, RewardDestination,
     ScrapedOnChainVotes, Stake, SuperAccountId, SystemProperties, ValidatorPreferences,
     ValidatorStake,
@@ -1373,11 +1375,8 @@ impl SubstrateClient {
         if let Some(hex_string) = maybe_votes_hex_string {
             let votes: ScrapedOnChainVotes = decode_hex_string(&hex_string)?;
             // get availability cores
-            let params = get_rpc_storage_plain_params(
-                "ParaScheduler",
-                "AvailabilityCores",
-                Some(block_hash),
-            );
+            let params =
+                get_rpc_storage_plain_params("ParaScheduler", "ClaimQueue", Some(block_hash));
             let maybe_cores_hex_string: Option<String> =
                 self.ws_client.request("state_getStorage", params).await?;
             if let Some(cores_hex_string) = &maybe_cores_hex_string {
@@ -1402,18 +1401,22 @@ impl SubstrateClient {
             self.ws_client.request("state_getStorage", params).await?;
         if let Some(hex_string) = maybe_votes_hex_string {
             let votes: ScrapedOnChainVotes = decode_hex_string(&hex_string)?;
-            // get availability cores
-            let params = get_rpc_storage_plain_params(
-                "ParaScheduler",
-                "AvailabilityCores",
-                Some(block_hash),
-            );
+            let mut group_size: u32 = 0;
+            for (_, votes) in votes.backing_validators_per_candidate.iter() {
+                group_size = max(group_size, votes.len() as u32);
+            }
+            // get core claim queue
+            let params =
+                get_rpc_storage_plain_params("ParaScheduler", "ClaimQueue", Some(block_hash));
             let maybe_cores_hex_string: Option<String> =
                 self.ws_client.request("state_getStorage", params).await?;
             if let Some(cores_hex_string) = &maybe_cores_hex_string {
-                let cores: Vec<CoreOccupied<BlockNumber>> = decode_hex_string(cores_hex_string)?;
-                Ok(Some(ParaCoreAssignment::from_on_chain_votes(
-                    3, cores, votes,
+                let claim_queue: BTreeMap<u32, Vec<CoreAssignment>> =
+                    decode_hex_string(cores_hex_string)?;
+                Ok(Some(ParaCoreAssignment::from_claim_queue(
+                    group_size,
+                    claim_queue,
+                    votes,
                 )?))
             } else {
                 Ok(None)

@@ -630,7 +630,8 @@ pub fn decode_dispatch_info(
                 DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
             })?;
         let dispatch_info = DispatchInfo {
-            weight: legacy_dispatch_info.weight.0.into(),
+            call_weight: legacy_dispatch_info.weight.0.into(),
+            extension_weight: Default::default(),
             class: legacy_dispatch_info.class,
             pays_fee: legacy_dispatch_info.pays_fee,
         };
