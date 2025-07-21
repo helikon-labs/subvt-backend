@@ -626,17 +626,21 @@ pub fn decode_dispatch_info(
     runtime_version: u32,
     bytes: &mut &[u8],
 ) -> anyhow::Result<DispatchInfo, DecodeError> {
+    let mut cloned_bytes = *bytes;
     if is_weight_legacy(runtime_version) {
-        let dispatch_info: LegacyDispatchInfo = Decode::decode(&mut *bytes).map_err(|error| {
-            DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
-        })?;
+        let dispatch_info: LegacyDispatchInfo =
+            Decode::decode(&mut cloned_bytes).map_err(|error| {
+                DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
+            })?;
+        LegacyDispatchInfo::decode(&mut *bytes)?;
         Ok(DispatchInfo {
             call_weight: dispatch_info.weight.0.into(),
             extension_weight: Default::default(),
             class: dispatch_info.class,
             pays_fee: dispatch_info.pays_fee,
         })
-    } else if let Ok(dispatch_info) = DispatchInfo::decode(&mut *bytes) {
+    } else if let Ok(dispatch_info) = DispatchInfo::decode(&mut cloned_bytes) {
+        DispatchInfo::decode(&mut *bytes)?;
         Ok(dispatch_info)
     } else {
         let dispatch_info: LegacyDispatchInfo2 = Decode::decode(&mut *bytes).map_err(|error| {
