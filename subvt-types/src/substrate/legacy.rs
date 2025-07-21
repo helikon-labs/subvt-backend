@@ -1,5 +1,6 @@
 //! Types to support the older metadata/runtime versions.
 use frame_support::dispatch::{DispatchClass, Pays};
+use frame_support::pallet_prelude::Weight;
 use parity_scale_codec::Decode;
 use polkadot_core_primitives::BlockNumber;
 use sp_runtime::{ArithmeticError, DispatchError, ModuleError, Perbill, TokenError};
@@ -14,6 +15,13 @@ pub struct OldWeight(pub u64);
 #[derive(Clone, Debug, Decode)]
 pub struct LegacyDispatchInfo {
     pub weight: OldWeight,
+    pub class: DispatchClass,
+    pub pays_fee: Pays,
+}
+
+#[derive(Clone, Debug, Decode)]
+pub struct LegacyDispatchInfo2 {
+    pub call_weight: Weight,
     pub class: DispatchClass,
     pub pays_fee: Pays,
 }

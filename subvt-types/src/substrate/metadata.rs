@@ -1,6 +1,8 @@
 use crate::substrate::bits::{DecodedBits, Lsb0, Msb0};
 use crate::substrate::error::DecodeError;
-use crate::substrate::legacy::{LegacyDispatchError, LegacyDispatchInfo, OldWeight};
+use crate::substrate::legacy::{
+    LegacyDispatchError, LegacyDispatchInfo, LegacyDispatchInfo2, OldWeight,
+};
 use frame_metadata::{v14::StorageHasher, RuntimeMetadataV14};
 use frame_support::dispatch::{DispatchInfo, DispatchResult};
 use frame_support::weights::Weight;
@@ -625,21 +627,27 @@ pub fn decode_dispatch_info(
     bytes: &mut &[u8],
 ) -> anyhow::Result<DispatchInfo, DecodeError> {
     if is_weight_legacy(runtime_version) {
-        let legacy_dispatch_info: LegacyDispatchInfo =
-            Decode::decode(&mut *bytes).map_err(|error| {
-                DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
-            })?;
-        let dispatch_info = DispatchInfo {
-            call_weight: legacy_dispatch_info.weight.0.into(),
+        let dispatch_info: LegacyDispatchInfo = Decode::decode(&mut *bytes).map_err(|error| {
+            DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
+        })?;
+        Ok(DispatchInfo {
+            call_weight: dispatch_info.weight.0.into(),
             extension_weight: Default::default(),
-            class: legacy_dispatch_info.class,
-            pays_fee: legacy_dispatch_info.pays_fee,
-        };
+            class: dispatch_info.class,
+            pays_fee: dispatch_info.pays_fee,
+        })
+    } else if let Ok(dispatch_info) = DispatchInfo::decode(&mut *bytes) {
         Ok(dispatch_info)
     } else {
-        Ok(DispatchInfo::decode(&mut *bytes).map_err(|error| {
-            DecodeError::Error(format!("Cannot decode dispatch info: {error:?}",))
-        })?)
+        let dispatch_info: LegacyDispatchInfo2 = Decode::decode(&mut *bytes).map_err(|error| {
+            DecodeError::Error(format!("Cannot decode legacy dispatch info: {error:?}",))
+        })?;
+        Ok(DispatchInfo {
+            call_weight: dispatch_info.call_weight,
+            extension_weight: Default::default(),
+            class: dispatch_info.class,
+            pays_fee: dispatch_info.pays_fee,
+        })
     }
 }
 
