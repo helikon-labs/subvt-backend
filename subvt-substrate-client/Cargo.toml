@@ -9,7 +9,7 @@ anyhow = { workspace = true }
 async-recursion = "1.0"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
 hex = "0.4"
-jsonrpsee = { version = "0.24", features = ["full"] }
+jsonrpsee = { version = "0.25", features = ["full"] }
 log = { workspace = true }
 parity-scale-codec = { version = "3.7", default-features = false, features = ["derive", "full"] }
 rustc-hash = "2.1"
