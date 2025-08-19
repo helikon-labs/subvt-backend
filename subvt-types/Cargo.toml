@@ -9,7 +9,7 @@ anyhow = { workspace = true }
 chrono = { version = "0.4", default-features = true, features = ["serde"] }
 enum-iterator = "2.1"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.18.7" }
+frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.1" }
 frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.18.7" }
 hex = "0.4"
 lazy_static = { workspace = true }
