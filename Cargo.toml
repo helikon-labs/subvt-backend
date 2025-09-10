@@ -33,7 +33,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
-itertools = "0.13"
+itertools = "0.14"
 lazy_static = "1.4"
 log = "0.4"
 num-traits = "0.2"

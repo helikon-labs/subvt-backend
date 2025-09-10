@@ -15,7 +15,7 @@ token_decimals = 12
 start_block_number = 6_015_486
 
 [dn]
-data_endpoint = "https://nodes.web3.foundation/api/cohort/2-1/kusama"
+data_endpoint = "https://nodes.web3.foundation/api/cohort/3/kusama"
 
 [notification_generator]
 unclaimed_payout_check_delay_hours = 3
