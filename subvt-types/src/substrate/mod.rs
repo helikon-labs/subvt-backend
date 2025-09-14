@@ -775,20 +775,15 @@ impl From<&Stake> for StakeSummary {
     }
 }
 
-#[derive(Clone, Decode, Debug, Deserialize, Encode, Eq, Hash, PartialEq, Serialize)]
+#[derive(Clone, Decode, Debug, Deserialize, Encode, Eq, Hash, PartialEq, Serialize, Default)]
 #[serde(tag = "destination_type", content = "destination")]
 pub enum RewardDestination {
     Staked,
     Stash,
     Controller,
     Account(AccountId),
+    #[default]
     None,
-}
-
-impl Default for RewardDestination {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl RewardDestination {
