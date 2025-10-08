@@ -10,9 +10,7 @@ use parity_scale_codec::{Compact, Decode};
 
 pub mod democracy;
 pub mod identity;
-pub mod im_online;
 pub mod multisig;
-pub mod offences;
 pub mod proxy;
 pub mod referenda;
 pub mod staking;
@@ -23,9 +21,7 @@ pub mod utility;
 pub enum SubstrateEvent {
     Democracy(democracy::DemocracyEvent),
     Identity(identity::IdentityEvent),
-    ImOnline(im_online::ImOnlineEvent),
     Multisig(multisig::MultisigEvent),
-    Offences(offences::OffencesEvent),
     Proxy(proxy::ProxyEvent),
     Referenda(referenda::ReferendaEvent),
     Staking(staking::StakingEvent),
@@ -43,9 +39,7 @@ impl SubstrateEvent {
         match self {
             Self::Democracy(event) => event.get_extrinsic_index(),
             Self::Identity(event) => event.get_extrinsic_index(),
-            Self::ImOnline(event) => event.get_extrinsic_index(),
             Self::Multisig(event) => event.get_extrinsic_index(),
-            Self::Offences(event) => event.get_extrinsic_index(),
             Self::Proxy(event) => event.get_extrinsic_index(),
             Self::Referenda(event) => event.get_extrinsic_index(),
             Self::Staking(event) => event.get_extrinsic_index(),
@@ -121,19 +115,7 @@ impl SubstrateEvent {
                 extrinsic_index,
                 event_bytes,
             )?,
-            "ImOnline" => im_online::ImOnlineEvent::decode(
-                runtime_version,
-                &event_variant.name,
-                extrinsic_index,
-                event_bytes,
-            )?,
             "Multisig" => multisig::MultisigEvent::decode(
-                runtime_version,
-                &event_variant.name,
-                extrinsic_index,
-                event_bytes,
-            )?,
-            "Offences" => offences::OffencesEvent::decode(
                 runtime_version,
                 &event_variant.name,
                 extrinsic_index,

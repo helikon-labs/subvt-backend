@@ -109,9 +109,6 @@ async fn get_session_validator_report(
         }
         None => return Ok(Some(report)),
     }
-    report.heartbeat_event = postgres
-        .get_validator_session_heartbeat_event(validator_account_id, session_index)
-        .await?;
     report.blocks_authored = Some(
         postgres
             .get_blocks_by_validator_in_session(session_index, validator_account_id)

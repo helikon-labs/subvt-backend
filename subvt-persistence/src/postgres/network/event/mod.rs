@@ -1,11 +1,9 @@
 pub mod chilled;
 pub mod democracy;
 pub mod era_paid;
-pub mod hearbeat;
 pub mod killed_account;
 pub mod new_account;
 pub mod nominator_kicked;
-pub mod offline;
 pub mod payout_started;
 pub mod referenda;
 pub mod rewarded;

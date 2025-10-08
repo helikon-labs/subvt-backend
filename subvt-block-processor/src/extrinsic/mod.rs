@@ -1,5 +1,4 @@
 use crate::event::update_event_nesting_indices;
-use crate::extrinsic::imonline::process_imonline_extrinsic;
 use crate::extrinsic::staking::process_staking_extrinsic;
 use crate::BlockProcessor;
 use async_recursion::async_recursion;
@@ -12,7 +11,6 @@ use subvt_types::substrate::event::{
 };
 use subvt_types::substrate::extrinsic::SubstrateExtrinsic;
 
-mod imonline;
 mod multisig;
 mod proxy;
 mod staking;
@@ -105,23 +103,6 @@ impl BlockProcessor {
         extrinsic: &SubstrateExtrinsic,
     ) -> anyhow::Result<bool> {
         match extrinsic {
-            SubstrateExtrinsic::ImOnline(imonline_extrinsic) => {
-                let is_successful = !batch_fail
-                    && consume_call_events(postgres, &block_hash, maybe_nesting_index, events)
-                        .await?;
-                process_imonline_extrinsic(
-                    postgres,
-                    &block_hash,
-                    active_validator_account_ids,
-                    index,
-                    is_nested_call,
-                    maybe_nesting_index,
-                    is_successful,
-                    imonline_extrinsic,
-                )
-                .await?;
-                Ok(is_successful)
-            }
             SubstrateExtrinsic::Multisig(multisig_extrinsic) => {
                 let is_successful = self
                     .process_multisig_extrinsic(

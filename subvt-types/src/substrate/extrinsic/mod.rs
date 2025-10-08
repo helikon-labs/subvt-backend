@@ -10,7 +10,6 @@ use frame_metadata::RuntimeMetadataV14;
 use parity_scale_codec::{Compact, Decode, Input};
 
 pub mod conviction_voting;
-pub mod im_online;
 pub mod multisig;
 pub mod proxy;
 pub mod session;
@@ -36,7 +35,6 @@ impl Signature {
 #[derive(Clone, Debug)]
 pub enum SubstrateExtrinsic {
     ConvictionVoting(conviction_voting::ConvictionVotingExtrinsic),
-    ImOnline(im_online::ImOnlineExtrinsic),
     Multisig(multisig::MultisigExtrinsic),
     Proxy(proxy::ProxyExtrinsic),
     Session(session::SessionExtrinsic),
@@ -116,9 +114,6 @@ impl SubstrateExtrinsic {
                 &maybe_signature,
                 bytes,
             )?,
-            "ImOnline" => {
-                im_online::ImOnlineExtrinsic::decode(&call_variant.name, &maybe_signature, bytes)?
-            }
             "Multisig" => multisig::MultisigExtrinsic::decode(
                 chain,
                 runtime_version,

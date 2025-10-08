@@ -685,8 +685,9 @@ impl SubstrateClient {
         let people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
-            let active_validator_account_ids =
-                self.get_active_validator_account_ids(block_hash).await?;
+            let active_validator_account_ids = relay_client
+                .get_active_validator_account_ids(block_hash)
+                .await?;
             log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
                 HashMap::default();
@@ -1313,27 +1314,6 @@ impl SubstrateClient {
             .await?;
         let upgrade_info = LastRuntimeUpgradeInfo::from_substrate_hex_string(hex_string)?;
         Ok(upgrade_info)
-    }
-
-    /// Figure the account id of the owner of an imonline key at a given block.
-    pub async fn get_im_online_key_owner_account_id(
-        &self,
-        block_hash: &str,
-        im_online_key_hex_string: &str,
-    ) -> anyhow::Result<AccountId> {
-        let im_online_key_bytes: &[u8] =
-            &hex::decode(im_online_key_hex_string.trim_start_matches("0x")).unwrap();
-        let params = get_rpc_storage_map_params(
-            &self.metadata,
-            "Session",
-            "KeyOwner",
-            &(sp_core::crypto::key_types::IM_ONLINE, im_online_key_bytes),
-            Some(block_hash),
-        );
-        let account_id_hex_string: String =
-            self.ws_client.request("state_getStorage", params).await?;
-        let account_id = decode_hex_string(&account_id_hex_string)?;
-        Ok(account_id)
     }
 
     /// Get the indices of the paravalidators at the given block.

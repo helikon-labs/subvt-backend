@@ -119,6 +119,109 @@ impl BlockProcessor {
     }
 
     #[allow(clippy::cognitive_complexity)]
+    async fn _process_relay_block(
+        &self,
+        relay_substrate_client: &mut SubstrateClient,
+        _runtime_information: &Arc<RwLock<RuntimeInformation>>,
+        postgres: &PostgreSQLNetworkStorage,
+        block_number: u64,
+        _persist_era_reward_points: bool,
+    ) -> anyhow::Result<()> {
+        let block_hash = relay_substrate_client.get_block_hash(block_number).await?;
+        // para core assignments
+        if let Ok(Some(para_core_assignments)) = relay_substrate_client
+            .get_para_core_assignments(&block_hash)
+            .await
+        {
+            for para_core_assignment in &para_core_assignments {
+                postgres
+                    .save_para_core_assignment(&block_hash, para_core_assignment)
+                    .await?;
+            }
+            log::debug!(
+                "Processed {} para core scheduler assignments.",
+                para_core_assignments.len()
+            );
+        } else if let Ok(Some(para_core_assignments)) = relay_substrate_client
+            .get_para_core_assignments_legacy(&block_hash)
+            .await
+        {
+            for para_core_assignment in &para_core_assignments {
+                postgres
+                    .save_para_core_assignment(&block_hash, para_core_assignment)
+                    .await?;
+            }
+            log::debug!(
+                "Processed {} para core scheduler assignments.",
+                para_core_assignments.len()
+            );
+        }
+        // para groups
+        let para_groups = relay_substrate_client
+            .get_para_validator_groups(&block_hash)
+            .await?;
+        // para votes
+        if let Some(votes) = relay_substrate_client.get_para_votes(&block_hash).await? {
+            let session_index: u32 = votes.session;
+            let mut total_vote_count = 0;
+            for backing in &votes.backing_validators_per_candidate {
+                let para_id: u32 = backing.0.descriptor.para_id.into();
+                // get scheduled para validators from previous block
+                total_vote_count += backing.1.len();
+                let mut voted_para_validator_indices = vec![];
+                for validator_vote in &backing.1 {
+                    let para_validator_index = validator_vote.0 .0;
+                    let is_explicit = match validator_vote.1 {
+                        ValidityAttestation::Implicit(_) => false,
+                        ValidityAttestation::Explicit(_) => true,
+                    };
+                    voted_para_validator_indices.push(para_validator_index);
+                    postgres
+                        .save_para_vote(
+                            &block_hash,
+                            session_index,
+                            para_id,
+                            para_validator_index,
+                            Some(is_explicit),
+                        )
+                        .await?;
+                }
+                // save missing votes
+                if let Some(first_para_validator_index) = voted_para_validator_indices.first() {
+                    for para_group in &para_groups {
+                        if para_group.contains(first_para_validator_index) {
+                            for para_validator_index in para_group {
+                                if !voted_para_validator_indices.contains(para_validator_index) {
+                                    postgres
+                                        .save_para_vote(
+                                            &block_hash,
+                                            session_index,
+                                            para_id,
+                                            *para_validator_index,
+                                            None,
+                                        )
+                                        .await?;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            // save disputes
+            for statement_set in votes.disputes {
+                for _statement in statement_set.statements {}
+            }
+            log::debug!(
+                "Processed {} para votes for {} paras.",
+                total_vote_count,
+                votes.backing_validators_per_candidate.len(),
+            );
+        }
+        Ok(())
+    }
+
+    #[allow(clippy::cognitive_complexity)]
     async fn process_block(
         &self,
         relay_substrate_client: &mut SubstrateClient,
@@ -342,9 +445,7 @@ impl BlockProcessor {
                         }
                     }
                     if let Err(error) = process_event(
-                        relay_substrate_client,
                         postgres,
-                        current_epoch.index,
                         &relay_block_hash,
                         relay_block_number,
                         block_timestamp,
@@ -448,99 +549,6 @@ impl BlockProcessor {
                 },
             }
         }
-        // para core assignments
-        if let Ok(Some(para_core_assignments)) = relay_substrate_client
-            .get_para_core_assignments(&relay_block_hash)
-            .await
-        {
-            for para_core_assignment in &para_core_assignments {
-                postgres
-                    .save_para_core_assignment(&relay_block_hash, para_core_assignment)
-                    .await?;
-            }
-            log::debug!(
-                "Processed {} para core scheduler assignments.",
-                para_core_assignments.len()
-            );
-        } else if let Ok(Some(para_core_assignments)) = relay_substrate_client
-            .get_para_core_assignments_legacy(&relay_block_hash)
-            .await
-        {
-            for para_core_assignment in &para_core_assignments {
-                postgres
-                    .save_para_core_assignment(&relay_block_hash, para_core_assignment)
-                    .await?;
-            }
-            log::debug!(
-                "Processed {} para core scheduler assignments.",
-                para_core_assignments.len()
-            );
-        }
-        // para groups
-        let para_groups = relay_substrate_client
-            .get_para_validator_groups(&relay_block_hash)
-            .await?;
-        // para votes
-        if let Some(votes) = relay_substrate_client
-            .get_para_votes(&relay_block_hash)
-            .await?
-        {
-            let session_index: u32 = votes.session;
-            let mut total_vote_count = 0;
-            for backing in &votes.backing_validators_per_candidate {
-                let para_id: u32 = backing.0.descriptor.para_id.into();
-                // get scheduled para validators from previous block
-                total_vote_count += backing.1.len();
-                let mut voted_para_validator_indices = vec![];
-                for validator_vote in &backing.1 {
-                    let para_validator_index = validator_vote.0 .0;
-                    let is_explicit = match validator_vote.1 {
-                        ValidityAttestation::Implicit(_) => false,
-                        ValidityAttestation::Explicit(_) => true,
-                    };
-                    voted_para_validator_indices.push(para_validator_index);
-                    postgres
-                        .save_para_vote(
-                            &relay_block_hash,
-                            session_index,
-                            para_id,
-                            para_validator_index,
-                            Some(is_explicit),
-                        )
-                        .await?;
-                }
-                // save missing votes
-                if let Some(first_para_validator_index) = voted_para_validator_indices.first() {
-                    for para_group in &para_groups {
-                        if para_group.contains(first_para_validator_index) {
-                            for para_validator_index in para_group {
-                                if !voted_para_validator_indices.contains(para_validator_index) {
-                                    postgres
-                                        .save_para_vote(
-                                            &relay_block_hash,
-                                            session_index,
-                                            para_id,
-                                            *para_validator_index,
-                                            None,
-                                        )
-                                        .await?;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            // save disputes
-            for statement_set in votes.disputes {
-                for _statement in statement_set.statements {}
-            }
-            log::debug!(
-                "Processed {} para votes for {} paras.",
-                total_vote_count,
-                votes.backing_validators_per_candidate.len(),
-            );
-        }
         // notify
         postgres
             .notify_block_processed(relay_block_number, relay_block_hash)
@@ -568,14 +576,14 @@ impl Service for BlockProcessor {
                 continue;
             }
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
-            let block_subscription_substrate_client = SubstrateClient::new(
+            let relay_finalized_block_subscription_substrate_client = SubstrateClient::new(
                 CONFIG.substrate.rpc_url.as_str(),
                 CONFIG.substrate.network_id,
                 CONFIG.substrate.connection_timeout_seconds,
                 CONFIG.substrate.request_timeout_seconds,
             )
             .await?;
-            let block_processor_substrate_client = Arc::new(Mutex::new(
+            let relay_substrate_client = Arc::new(Mutex::new(
                 SubstrateClient::new(
                     CONFIG.substrate.rpc_url.as_str(),
                     CONFIG.substrate.network_id,
@@ -603,7 +611,7 @@ impl Service for BlockProcessor {
             metrics::event_process_error_count()
                 .set(postgres.get_event_process_error_log_count().await? as i64);
 
-            block_subscription_substrate_client.subscribe_to_finalized_blocks(
+            relay_finalized_block_subscription_substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,
                 |finalized_block_header| async {
                     let error_cell = error_cell.clone();
@@ -623,7 +631,7 @@ impl Service for BlockProcessor {
                         return Ok(());
                     }
 
-                    let block_processor_substrate_client = block_processor_substrate_client.clone();
+                    let block_processor_substrate_client = relay_substrate_client.clone();
                     let asset_hub_substrate_client = asset_hub_substrate_client.clone();
                     let runtime_information = runtime_information.clone();
                     let postgres = postgres.clone();

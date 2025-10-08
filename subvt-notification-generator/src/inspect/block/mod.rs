@@ -11,7 +11,6 @@ use subvt_types::rdb::BlockProcessedNotification;
 
 mod authorship;
 mod chilling;
-mod offence;
 mod payout;
 mod referenda;
 mod validate;
@@ -32,8 +31,6 @@ impl NotificationGenerator {
             }
         };
         self.inspect_block_authorship(app_postgres.clone(), &block)
-            .await?;
-        self.inspect_offline_offences(network_postgres.clone(), app_postgres.clone(), &block)
             .await?;
         self.inspect_chillings(network_postgres.clone(), app_postgres.clone(), &block)
             .await?;
