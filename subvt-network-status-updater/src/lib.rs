@@ -67,33 +67,33 @@ impl NetworkStatusUpdater {
         // relay best block number
         let relay_best_block_number = relay_best_block_header
             .get_number()
-            .context("Error while extracting relay best block number.")?;
+            .context("RELAY Error while extracting best block number.")?;
         let relay_best_block_hash = relay_client
             .get_block_hash(relay_best_block_number)
             .await
-            .context("Error while fetching relay best block hash.")?;
-        log::debug!("Relay best block #{relay_best_block_number} hash {relay_best_block_hash}.",);
+            .context("RELAY Error while fetching best block hash.")?;
+        log::debug!("RELAY Best block #{relay_best_block_number} hash {relay_best_block_hash}.",);
         // relay finalized block number & hash
         let relay_finalized_block_hash = relay_client
             .get_finalized_block_hash()
             .await
-            .context("Error while fetching relay finalized block hash.")?;
+            .context("RELAY Error while fetching finalized block hash.")?;
         let relay_finalized_block_header = relay_client
             .get_block_header(relay_finalized_block_hash.as_str())
             .await
-            .context("Error while fetching relay finalized block header.")?;
-        let finalized_block_number = relay_finalized_block_header
+            .context("RELAY Error while fetching finalized block header.")?;
+        let relay_finalized_block_number = relay_finalized_block_header
             .get_number()
-            .context("Error while extracting relay finalized block number.")?;
+            .context("RELAY Error while extracting finalized block number.")?;
         log::debug!(
-            "Relay finalized block #{finalized_block_number} hash {relay_finalized_block_hash}.",
+            "RELAY Finalized block #{relay_finalized_block_number} hash {relay_finalized_block_hash}.",
         );
         // asset hub finalized block number & hash
         let asset_hub_finalized_block_hash = asset_hub_client
             .get_finalized_block_hash()
             .await
-            .context("Error while fetching asset hub finalized block hash.")?;
-        log::debug!("Asset hub finalized block hash {asset_hub_finalized_block_hash}.",);
+            .context("ASSET_HUB Error while fetching finalized block hash.")?;
+        log::debug!("ASSET_HUB Finalized block hash {asset_hub_finalized_block_hash}.",);
 
         let era = asset_hub_client
             .get_active_era(
@@ -101,11 +101,11 @@ impl NetworkStatusUpdater {
                 &relay_client.metadata,
             )
             .await
-            .context("Error while getting current era from asset hub.")?;
+            .context("ASSET_HUB Error while getting current era.")?;
         let epoch = relay_client
             .get_current_epoch(&era, relay_finalized_block_hash.as_str())
             .await
-            .context("Error while getting current epoch from relay.")?;
+            .context("RELAY Error while getting current epoch.")?;
         let epoch_remaining = epoch.get_end_date_time() - Utc::now();
         log::debug!(
             "Epoch {} start {} end {}. {} days {} hours {} minutes {} seconds.",
@@ -118,8 +118,8 @@ impl NetworkStatusUpdater {
             epoch_remaining.num_seconds() - epoch_remaining.num_minutes() * 60,
         );
         // active and inactive validator counts
-        let active_validator_account_ids = asset_hub_client
-            .get_active_validator_account_ids(asset_hub_finalized_block_hash.as_str())
+        let active_validator_account_ids = relay_client
+            .get_active_validator_account_ids(relay_finalized_block_hash.as_str())
             .await
             .context("Error while getting active validator addresses from asset hub.")?;
         // number of validators
@@ -225,7 +225,7 @@ impl NetworkStatusUpdater {
         log::debug!("{era_reward_points} total reward points so far.");
         // prepare data
         let network_status = NetworkStatus {
-            finalized_block_number,
+            finalized_block_number: relay_finalized_block_number,
             finalized_block_hash: relay_finalized_block_hash,
             best_block_number: relay_best_block_number,
             best_block_hash: relay_best_block_hash,

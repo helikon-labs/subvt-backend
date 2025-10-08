@@ -39,13 +39,13 @@ impl PostgreSQLNetworkStorage {
     pub async fn notify_block_processed(
         &self,
         block_number: u64,
-        block_hash: String,
+        block_hash: &str,
     ) -> anyhow::Result<()> {
         self.notify(
             Channel::BlockProcessed.get_name(),
             &BlockProcessedNotification {
                 block_number,
-                block_hash,
+                block_hash: block_hash.to_string(),
             },
         )
         .await

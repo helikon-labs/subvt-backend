@@ -6,8 +6,10 @@ use subvt_types::app::Block;
 use subvt_types::{crypto::AccountId, substrate::BlockHeader};
 
 impl PostgreSQLNetworkStorage {
+    #[allow(clippy::too_many_arguments)]
     pub async fn save_finalized_block(
         &self,
+        chain_type: &str,
         block_hash: &str,
         block_header: &BlockHeader,
         block_timestamp: u64,
@@ -22,12 +24,13 @@ impl PostgreSQLNetworkStorage {
         }
         let maybe_result: Option<(String, )> = sqlx::query_as(
             r#"
-            INSERT INTO sub_block (hash, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, is_finalized, metadata_version, runtime_version)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            INSERT INTO sub_block (hash, chain_type, number, timestamp, author_account_id, era_index, epoch_index, parent_hash, state_root, extrinsics_root, is_finalized, metadata_version, runtime_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             ON CONFLICT (hash) DO NOTHING
             RETURNING hash
             "#)
             .bind(block_hash)
+            .bind(chain_type)
             .bind(block_header.get_number()? as i64)
             .bind(block_timestamp as i64)
             .bind(maybe_author_account_id_hex)
@@ -78,12 +81,13 @@ impl PostgreSQLNetworkStorage {
         }
     }
 
-    pub async fn get_processed_block_height(&self) -> anyhow::Result<u64> {
+    pub async fn get_processed_block_height(&self, chain_type: &str) -> anyhow::Result<u64> {
         let processed_block_height: (i64,) = sqlx::query_as(
             r#"
-            SELECT COALESCE(MAX(number), 0) from sub_block
+            SELECT COALESCE(MAX(number), 0) from sub_block WHERE chain_type = $1
             "#,
         )
+        .bind(chain_type)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(processed_block_height.0 as u64)

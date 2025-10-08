@@ -871,18 +871,11 @@ impl SubstrateClient {
                 }
             }
 
-            log::debug!("Get validator controller account ids.");
-            let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::default();
-            for validator_account_id in validator_map.keys() {
-                controller_account_id_map.insert(*validator_account_id, *validator_account_id);
-            }
             log::debug!("Get nomination amounts and self stakes.");
-            let controller_account_ids: Vec<AccountId> =
-                controller_account_id_map.values().cloned().collect();
-            let ledger_storage_keys: Vec<String> = controller_account_ids
-                .iter()
-                .map(|controller_account_id| {
-                    get_storage_map_key(&self.metadata, "Staking", "Ledger", &controller_account_id)
+            let ledger_storage_keys: Vec<String> = nomination_map
+                .keys()
+                .map(|stash_account_id| {
+                    get_storage_map_key(&self.metadata, "Staking", "Ledger", &stash_account_id)
                 })
                 .collect();
             for chunk in ledger_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {

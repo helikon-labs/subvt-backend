@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS sub_block
 (
     hash                VARCHAR(66) PRIMARY KEY,
+    chain_type          VARCHAR(64) NOT NULL,
     number              bigint NOT NULL,
     timestamp           bigint NOT NULL,
     author_account_id   VARCHAR(66),
@@ -28,6 +29,8 @@ CREATE TABLE IF NOT EXISTS sub_block
 
 CREATE INDEX IF NOT EXISTS sub_block_idx_epoch_index
     ON sub_block (epoch_index);
+CREATE INDEX IF NOT EXISTS sub_block_idx_number_chain_type
+    ON sub_block (number, chain_type);
 CREATE INDEX IF NOT EXISTS sub_block_idx_era_index
     ON sub_block (era_index);
 CREATE INDEX IF NOT EXISTS sub_block_idx_number

@@ -29,7 +29,8 @@ mod metrics;
 
 lazy_static! {
     static ref CONFIG: Config = Config::default();
-    static ref IS_BUSY: AtomicBool = AtomicBool::new(false);
+    static ref RELAY_IS_BUSY: AtomicBool = AtomicBool::new(false);
+    static ref ASSET_HUB_IS_BUSY: AtomicBool = AtomicBool::new(false);
 }
 
 #[derive(Default)]
@@ -119,17 +120,173 @@ impl BlockProcessor {
     }
 
     #[allow(clippy::cognitive_complexity)]
-    async fn _process_relay_block(
-        &self,
-        relay_substrate_client: &mut SubstrateClient,
-        _runtime_information: &Arc<RwLock<RuntimeInformation>>,
+    async fn process_relay_block(
+        &'static self,
+        substrate_client: &mut SubstrateClient,
+        asset_hub_substrate_client: &mut SubstrateClient,
+        runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
-        _persist_era_reward_points: bool,
     ) -> anyhow::Result<()> {
-        let block_hash = relay_substrate_client.get_block_hash(block_number).await?;
+        let block_hash = substrate_client.get_block_hash(block_number).await?;
+        let block_header = substrate_client.get_block_header(&block_hash).await?;
+        let block_timestamp = substrate_client.get_block_timestamp(&block_hash).await?;
+        let maybe_validator_index = block_header.get_validator_index();
+        let runtime_upgrade_info = substrate_client
+            .get_last_runtime_upgrade_info(&block_hash)
+            .await?;
+        let asset_hub_block_hash = asset_hub_substrate_client
+            .get_finalized_block_hash()
+            .await?;
+        let active_era = {
+            asset_hub_substrate_client
+                .get_active_era(&asset_hub_block_hash, &substrate_client.metadata)
+                .await?
+        };
+        // check metadata version
+        if substrate_client.last_runtime_upgrade_info.spec_version
+            != runtime_upgrade_info.spec_version
+        {
+            log::info!(
+                "RELAY Different runtime version #{} than client's #{}. Will reset metadata.",
+                runtime_upgrade_info.spec_version,
+                substrate_client.last_runtime_upgrade_info.spec_version
+            );
+            substrate_client
+                .set_metadata_at_block(block_number, &block_hash)
+                .await?;
+            log::info!(
+                "RELAY Runtime {} metadata fetched.",
+                substrate_client.last_runtime_upgrade_info.spec_version
+            );
+        }
+        let (last_era_index, last_epoch_index) = {
+            let runtime_information = runtime_information.read().unwrap();
+            (
+                runtime_information.era_index,
+                runtime_information.epoch_index,
+            )
+        };
+        let active_validator_account_ids = substrate_client
+            .get_active_validator_account_ids(&block_hash)
+            .await?;
+        let current_epoch = substrate_client
+            .get_current_epoch(&active_era, &block_hash)
+            .await?;
+        if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
+            let era_stakers = asset_hub_substrate_client
+                .get_era_stakers(&active_era, &asset_hub_block_hash)
+                .await?;
+            if last_epoch_index != current_epoch.index {
+                log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
+                let total_stake = asset_hub_substrate_client
+                    .get_era_total_stake(active_era.index, &asset_hub_block_hash)
+                    .await?;
+                postgres
+                    .save_era(&active_era, total_stake, &era_stakers)
+                    .await?;
+                postgres
+                    .save_epoch(&current_epoch, active_era.index)
+                    .await?;
+                // save session para validators
+                if let Some(para_validator_indices) = substrate_client
+                    .get_paras_active_validator_indices(&block_hash)
+                    .await?
+                {
+                    log::info!(
+                        "Persist {} session para validators.",
+                        para_validator_indices.len()
+                    );
+                    let para_validator_groups = substrate_client
+                        .get_para_validator_groups(&block_hash)
+                        .await?;
+                    for (group_index, group_para_validator_indices) in
+                        para_validator_groups.iter().enumerate()
+                    {
+                        for group_para_validator_index in group_para_validator_indices {
+                            let active_validator_index =
+                                para_validator_indices[*group_para_validator_index as usize];
+                            let active_validator_account_id =
+                                active_validator_account_ids[active_validator_index as usize];
+                            postgres
+                                .save_session_para_validator(
+                                    active_era.index,
+                                    current_epoch.index,
+                                    &active_validator_account_id,
+                                    active_validator_index,
+                                    group_index as u32,
+                                    *group_para_validator_index,
+                                )
+                                .await?;
+                        }
+                    }
+                } else {
+                    log::info!("Parachains not active at this block height.");
+                }
+            }
+            if last_era_index != active_era.index {
+                let era_stakers = asset_hub_substrate_client
+                    .get_era_stakers(&active_era, &asset_hub_block_hash)
+                    .await?;
+                self.persist_era_validators_and_stakers(
+                    substrate_client,
+                    postgres,
+                    &active_era,
+                    block_hash.as_str(),
+                    &active_validator_account_ids,
+                    &era_stakers,
+                )
+                .await?;
+                // update last era
+                let last_era_total_validator_reward = asset_hub_substrate_client
+                    .get_era_total_validator_reward(active_era.index - 1, &asset_hub_block_hash)
+                    .await?;
+                postgres
+                    .update_era_total_validator_reward(
+                        active_era.index - 1,
+                        last_era_total_validator_reward,
+                    )
+                    .await?;
+                self.persist_era_reward_points(
+                    substrate_client,
+                    postgres,
+                    &block_hash,
+                    active_era.index - 1,
+                )
+                .await?;
+            }
+        }
+        {
+            let mut runtime_information = runtime_information.write().unwrap();
+            runtime_information.era_index = active_era.index;
+            runtime_information.epoch_index = current_epoch.index;
+        }
+
+        let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
+            active_validator_account_ids
+                .get(validator_index)
+                .map(|a| a.to_owned())
+        } else {
+            None
+        };
+        let runtime_version = substrate_client.last_runtime_upgrade_info.spec_version as i16;
+        let current_epoch = substrate_client
+            .get_current_epoch(&active_era, &block_hash)
+            .await?;
+        postgres
+            .save_finalized_block(
+                "relay",
+                &block_hash,
+                &block_header,
+                block_timestamp,
+                maybe_author_account_id,
+                (active_era.index, current_epoch.index as u32),
+                (14, runtime_version),
+            )
+            .await?;
+
         // para core assignments
-        if let Ok(Some(para_core_assignments)) = relay_substrate_client
+        if let Ok(Some(para_core_assignments)) = substrate_client
             .get_para_core_assignments(&block_hash)
             .await
         {
@@ -142,7 +299,7 @@ impl BlockProcessor {
                 "Processed {} para core scheduler assignments.",
                 para_core_assignments.len()
             );
-        } else if let Ok(Some(para_core_assignments)) = relay_substrate_client
+        } else if let Ok(Some(para_core_assignments)) = substrate_client
             .get_para_core_assignments_legacy(&block_hash)
             .await
         {
@@ -157,11 +314,11 @@ impl BlockProcessor {
             );
         }
         // para groups
-        let para_groups = relay_substrate_client
+        let para_groups = substrate_client
             .get_para_validator_groups(&block_hash)
             .await?;
         // para votes
-        if let Some(votes) = relay_substrate_client.get_para_votes(&block_hash).await? {
+        if let Some(votes) = substrate_client.get_para_votes(&block_hash).await? {
             let session_index: u32 = votes.session;
             let mut total_vote_count = 0;
             for backing in &votes.backing_validators_per_candidate {
@@ -222,208 +379,79 @@ impl BlockProcessor {
     }
 
     #[allow(clippy::cognitive_complexity)]
-    async fn process_block(
-        &self,
+    async fn process_asset_hub_block(
+        &'static self,
+        substrate_client: &mut SubstrateClient,
         relay_substrate_client: &mut SubstrateClient,
-        asset_hub_substrate_client: &mut SubstrateClient,
-        runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
-        relay_block_number: u64,
+        block_number: u64,
         persist_era_reward_points: bool,
     ) -> anyhow::Result<()> {
-        // relay block
-        let relay_block_hash = relay_substrate_client
-            .get_block_hash(relay_block_number)
+        let block_hash = substrate_client.get_block_hash(block_number).await?;
+        let block_header = substrate_client.get_block_header(&block_hash).await?;
+        let runtime_upgrade_info = substrate_client
+            .get_last_runtime_upgrade_info(&block_hash)
             .await?;
-        let relay_block_header = relay_substrate_client
-            .get_block_header(&relay_block_hash)
-            .await?;
-        let maybe_validator_index = relay_block_header.get_validator_index();
-        let runtime_upgrade_info = relay_substrate_client
-            .get_last_runtime_upgrade_info(&relay_block_hash)
-            .await?;
-        // asset hub block
-        let asset_hub_finalized_block_hash = asset_hub_substrate_client
-            .get_finalized_block_hash()
-            .await?;
+        let relay_block_hash = relay_substrate_client.get_finalized_block_hash().await?;
         // check metadata version
-        if relay_substrate_client
-            .last_runtime_upgrade_info
-            .spec_version
+        if substrate_client.last_runtime_upgrade_info.spec_version
             != runtime_upgrade_info.spec_version
         {
             log::info!(
-                "Different runtime version #{} than client's #{}. Will reset metadata.",
+                "ASSET_HUB Different runtime version #{} than client's #{}. Will reset metadata.",
                 runtime_upgrade_info.spec_version,
-                relay_substrate_client
-                    .last_runtime_upgrade_info
-                    .spec_version
+                substrate_client.last_runtime_upgrade_info.spec_version
             );
-            relay_substrate_client
-                .set_metadata_at_block(relay_block_number, &relay_block_hash)
+            substrate_client
+                .set_metadata_at_block(block_number, &block_hash)
                 .await?;
             log::info!(
-                "Relay runtime {} metadata fetched.",
-                relay_substrate_client
-                    .last_runtime_upgrade_info
-                    .spec_version
+                "ASSET_HUB Runtime {} metadata fetched.",
+                substrate_client.last_runtime_upgrade_info.spec_version
             );
         }
-        let (last_era_index, last_epoch_index) = {
-            let runtime_information = runtime_information.read().unwrap();
-            (
-                runtime_information.era_index,
-                runtime_information.epoch_index,
-            )
-        };
-        let active_era = asset_hub_substrate_client
-            .get_active_era(
-                &asset_hub_finalized_block_hash,
-                &relay_substrate_client.metadata,
-            )
+        let active_validator_account_ids = relay_substrate_client
+            .get_active_validator_account_ids(&relay_block_hash)
+            .await?;
+        let active_era = substrate_client
+            .get_active_era(&block_hash, &relay_substrate_client.metadata)
             .await?;
         let current_epoch = relay_substrate_client
             .get_current_epoch(&active_era, &relay_block_hash)
             .await?;
-        let active_validator_account_ids = asset_hub_substrate_client
-            .get_active_validator_account_ids(&asset_hub_finalized_block_hash)
-            .await?;
-        if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
-            let era_stakers = asset_hub_substrate_client
-                .get_era_stakers(&active_era, &asset_hub_finalized_block_hash)
-                .await?;
-            if last_epoch_index != current_epoch.index {
-                log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
-                let total_stake = asset_hub_substrate_client
-                    .get_era_total_stake(active_era.index, &asset_hub_finalized_block_hash)
-                    .await?;
-                postgres
-                    .save_era(&active_era, total_stake, &era_stakers)
-                    .await?;
-                postgres
-                    .save_epoch(&current_epoch, active_era.index)
-                    .await?;
-                // save session para validators
-                if let Some(para_validator_indices) = relay_substrate_client
-                    .get_paras_active_validator_indices(&relay_block_hash)
-                    .await?
-                {
-                    log::info!(
-                        "Persist {} session para validators.",
-                        para_validator_indices.len()
-                    );
-                    let para_validator_groups = relay_substrate_client
-                        .get_para_validator_groups(&relay_block_hash)
-                        .await?;
-                    for (group_index, group_para_validator_indices) in
-                        para_validator_groups.iter().enumerate()
-                    {
-                        for group_para_validator_index in group_para_validator_indices {
-                            let active_validator_index =
-                                para_validator_indices[*group_para_validator_index as usize];
-                            let active_validator_account_id =
-                                active_validator_account_ids[active_validator_index as usize];
-                            postgres
-                                .save_session_para_validator(
-                                    active_era.index,
-                                    current_epoch.index,
-                                    &active_validator_account_id,
-                                    active_validator_index,
-                                    group_index as u32,
-                                    *group_para_validator_index,
-                                )
-                                .await?;
-                        }
-                    }
-                } else {
-                    log::info!("Parachains not active at this block height.");
-                }
-            }
-            if last_era_index != active_era.index {
-                let era_stakers = asset_hub_substrate_client
-                    .get_era_stakers(&active_era, &asset_hub_finalized_block_hash)
-                    .await?;
-                self.persist_era_validators_and_stakers(
-                    asset_hub_substrate_client,
-                    postgres,
-                    &active_era,
-                    asset_hub_finalized_block_hash.as_str(),
-                    &active_validator_account_ids,
-                    &era_stakers,
-                )
-                .await?;
-                // update last era
-                let last_era_total_validator_reward = asset_hub_substrate_client
-                    .get_era_total_validator_reward(
-                        active_era.index - 1,
-                        &asset_hub_finalized_block_hash,
-                    )
-                    .await?;
-                postgres
-                    .update_era_total_validator_reward(
-                        active_era.index - 1,
-                        last_era_total_validator_reward,
-                    )
-                    .await?;
-                self.persist_era_reward_points(
-                    asset_hub_substrate_client,
-                    postgres,
-                    &asset_hub_finalized_block_hash,
-                    active_era.index - 1,
-                )
-                .await?;
-            }
-        }
         if persist_era_reward_points {
             self.persist_era_reward_points(
-                asset_hub_substrate_client,
+                substrate_client,
                 postgres,
-                &asset_hub_finalized_block_hash,
+                &block_hash,
                 active_era.index,
             )
             .await?;
-        }
-        {
-            let mut runtime_information = runtime_information.write().unwrap();
-            runtime_information.era_index = active_era.index;
-            runtime_information.epoch_index = current_epoch.index;
         }
         let event_results = relay_substrate_client
             .get_block_events(&relay_block_hash)
             .await?;
         log::info!(
-            "Got {} events for block #{}.",
+            "ASSET_HUB Got {} events for block #{}.",
             event_results.len(),
-            relay_block_number
+            block_number
         );
-        let extrinsic_results = relay_substrate_client
-            .get_block_extrinsics(&relay_block_hash)
-            .await?;
+        let extrinsic_results = substrate_client.get_block_extrinsics(&block_hash).await?;
         log::info!(
-            "Got {} extrinsics for block #{}.",
+            "ASSET_HUB Got {} extrinsics for block #{}.",
             extrinsic_results.len(),
-            relay_block_number
+            block_number
         );
 
-        let block_timestamp = relay_substrate_client
-            .get_block_timestamp(&relay_block_hash)
-            .await?;
-        let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
-            active_validator_account_ids
-                .get(validator_index)
-                .map(|a| a.to_owned())
-        } else {
-            None
-        };
-        let runtime_version = relay_substrate_client
-            .last_runtime_upgrade_info
-            .spec_version as i16;
+        let block_timestamp = substrate_client.get_block_timestamp(&block_hash).await?;
+        let runtime_version = substrate_client.last_runtime_upgrade_info.spec_version as i16;
         postgres
             .save_finalized_block(
-                &relay_block_hash,
-                &relay_block_header,
+                "asset_hub",
+                &block_hash,
+                &block_header,
                 block_timestamp,
-                maybe_author_account_id,
+                None,
                 (active_era.index, current_epoch.index as u32),
                 (14, runtime_version),
             )
@@ -446,8 +474,8 @@ impl BlockProcessor {
                     }
                     if let Err(error) = process_event(
                         postgres,
-                        &relay_block_hash,
-                        relay_block_number,
+                        &block_hash,
+                        block_number,
                         block_timestamp,
                         index,
                         event,
@@ -455,14 +483,14 @@ impl BlockProcessor {
                     .await
                     {
                         let error_log = format!(
-                            "Error while processing event #{index} of block #{relay_block_number}: {error:?}",
+                            "Error while processing event #{index} of block #{block_number}: {error:?}",
                         );
                         log::error!("{error_log}");
                         metrics::event_process_error_count().inc();
                         postgres
                             .save_event_process_error_log(
-                                &relay_block_hash,
-                                relay_block_number,
+                                &block_hash,
+                                block_number,
                                 index,
                                 "process",
                                 &error_log,
@@ -475,18 +503,14 @@ impl BlockProcessor {
                         metrics::event_process_error_count().inc();
                         postgres
                             .save_event_process_error_log(
-                                &relay_block_hash,
-                                relay_block_number,
+                                &block_hash,
+                                block_number,
                                 index,
                                 "decode",
                                 error_log,
                             )
                             .await?;
                         panic!("Panic due to event decode error: {error_log:?}");
-                        /*
-                        log::error!("Event decode error - skip the rest of the events in block: {error_log:?}");
-                        break;
-                         */
                     }
                 },
             }
@@ -498,10 +522,10 @@ impl BlockProcessor {
                     // check events for batch & batch_all
                     if let Err(error) = self
                         .process_extrinsic(
-                            relay_substrate_client,
+                            substrate_client,
                             postgres,
-                            relay_block_hash.clone(),
-                            relay_block_number,
+                            block_hash.clone(),
+                            block_number,
                             &active_validator_account_ids,
                             index,
                             false,
@@ -517,14 +541,14 @@ impl BlockProcessor {
                         .await
                     {
                         let error_log = format!(
-                            "Error while processing extrinsic #{index} of block #{relay_block_number}: {error:?}",
+                            "Error while processing extrinsic #{index} of block #{block_number}: {error:?}",
                         );
                         log::error!("{error_log}");
                         metrics::extrinsic_process_error_count().inc();
                         postgres
                             .save_extrinsic_process_error_log(
-                                &relay_block_hash,
-                                relay_block_number,
+                                &block_hash,
+                                block_number,
                                 index,
                                 "process",
                                 &error_log,
@@ -537,8 +561,8 @@ impl BlockProcessor {
                         metrics::extrinsic_process_error_count().inc();
                         postgres
                             .save_extrinsic_process_error_log(
-                                &relay_block_hash,
-                                relay_block_number,
+                                &block_hash,
+                                block_number,
                                 index,
                                 "decode",
                                 error_log,
@@ -551,31 +575,22 @@ impl BlockProcessor {
         }
         // notify
         postgres
-            .notify_block_processed(relay_block_number, relay_block_hash)
+            .notify_block_processed(block_number, &block_hash)
             .await?;
         Ok(())
     }
 }
 
-/// Service implementation.
-#[async_trait(?Send)]
-impl Service for BlockProcessor {
-    fn get_metrics_server_addr() -> (&'static str, u16) {
-        (
-            CONFIG.metrics.host.as_str(),
-            CONFIG.metrics.block_processor_port,
-        )
-    }
-
-    async fn run(&'static self) -> anyhow::Result<()> {
+impl BlockProcessor {
+    async fn subscribe_relay_chain(&'static self) -> anyhow::Result<()> {
         loop {
-            if IS_BUSY.load(Ordering::SeqCst) {
+            if RELAY_IS_BUSY.load(Ordering::SeqCst) {
                 let delay_seconds = CONFIG.common.recovery_retry_seconds;
-                log::warn!("Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
+                log::warn!("RELAY Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
                 tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
                 continue;
             }
-            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
+            let relay_error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
             let relay_finalized_block_subscription_substrate_client = SubstrateClient::new(
                 CONFIG.substrate.rpc_url.as_str(),
                 CONFIG.substrate.network_id,
@@ -601,7 +616,7 @@ impl Service for BlockProcessor {
                 )
                 .await?,
             ));
-            let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
+            let relay_runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
@@ -614,37 +629,36 @@ impl Service for BlockProcessor {
             relay_finalized_block_subscription_substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,
                 |finalized_block_header| async {
-                    let error_cell = error_cell.clone();
+                    let error_cell = relay_error_cell.clone();
                     if let Some(error) = error_cell.get() {
-                        return Err(anyhow::anyhow!("{:?}", error));
+                        return Err(anyhow::anyhow!("RELAY  {:?}", error));
                     }
                     let finalized_block_number = match finalized_block_header.get_number() {
                         Ok(block_number) => block_number,
                         Err(error) => {
-                            log::error!("Cannot get block number for header: {finalized_block_header:?}");
+                            log::error!("RELAY Cannot get block number for header: {finalized_block_header:?}");
                             return Err(anyhow::anyhow!("{error:?}"));
                         }
                     };
                     metrics::target_finalized_block_number().set(finalized_block_number as i64);
-                    if IS_BUSY.load(Ordering::SeqCst) {
-                        log::debug!("Busy processing past blocks. Skip block #{finalized_block_number} for now.");
+                    if RELAY_IS_BUSY.load(Ordering::SeqCst) {
+                        log::debug!("RELAY Busy processing past blocks. Skip block #{finalized_block_number} for now.");
                         return Ok(());
                     }
-
                     let block_processor_substrate_client = relay_substrate_client.clone();
                     let asset_hub_substrate_client = asset_hub_substrate_client.clone();
-                    let runtime_information = runtime_information.clone();
+                    let runtime_information = relay_runtime_information.clone();
                     let postgres = postgres.clone();
-                    IS_BUSY.store(true, Ordering::SeqCst);
+                    RELAY_IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
                         let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
                         let mut asset_hub_substrate_client = asset_hub_substrate_client.lock().await;
-                        let processed_block_height = match postgres.get_processed_block_height().await {
+                        let processed_block_height = match postgres.get_processed_block_height("relay").await {
                             Ok(processed_block_height) => processed_block_height,
                             Err(error) => {
-                                log::error!("Cannot get processed block height from the database: {error:?}");
+                                log::error!("RELAY Cannot get processed block height from the database: {error:?}");
                                 let _ = error_cell.set(error);
-                                IS_BUSY.store(false, Ordering::SeqCst);
+                                RELAY_IS_BUSY.store(false, Ordering::SeqCst);
                                 return;
                             }
                         };
@@ -655,13 +669,160 @@ impl Service for BlockProcessor {
                             );
                             while block_number <= finalized_block_number {
                                 log::info!(
-                                    "Process block #{block_number}. Target #{finalized_block_number}.",
+                                    "RELAY Process block #{block_number}. Target #{finalized_block_number}.",
                                 );
                                 let start = std::time::Instant::now();
-                                let process_result = self.process_block(
+                                let process_result = self.process_relay_block(
                                     &mut block_processor_substrate_client,
                                     &mut asset_hub_substrate_client,
                                     &runtime_information,
+                                    &postgres,
+                                    block_number,
+                                ).await;
+                                metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                                match process_result {
+                                    Ok(_) => {
+                                        metrics::processed_finalized_block_number().set(block_number as i64);
+                                        block_number += 1
+                                    },
+                                    Err(error) => {
+                                        log::error!("RELAY {error:?}");
+                                        log::error!(
+                                            "RELAY History block processing failed for block #{block_number}.",
+                                        );
+                                        let _ = error_cell.set(error);
+                                        break;
+                                    }
+                                }
+                            }
+                        } else {
+                            log::info!("RELAY Process block #{finalized_block_number}.");
+                            let start = std::time::Instant::now();
+                            let update_result = self.process_relay_block(
+                                &mut block_processor_substrate_client,
+                                &mut asset_hub_substrate_client,
+                                &runtime_information,
+                                &postgres,
+                                finalized_block_number,
+                            ).await;
+                            metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                            match update_result {
+                                Ok(_) => {
+                                    metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+                                },
+                                Err(error) => {
+                                    log::error!("RELAY {error:?}");
+                                    log::error!(
+                                        "RELAY Block processing failed for finalized block #{}. Will try again with the next block.",
+                                        finalized_block_header.get_number().unwrap_or(0),
+                                    );
+                                    let _ = error_cell.set(error);
+                                }
+                            }
+                        }
+                        RELAY_IS_BUSY.store(false, Ordering::SeqCst);
+                    });
+                    Ok(())
+                }).await;
+            let delay_seconds = CONFIG.common.recovery_retry_seconds;
+            log::error!(
+                "RELAY Finalized block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.",
+            );
+            tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
+        }
+    }
+
+    async fn subscribe_asset_hub(&'static self) -> anyhow::Result<()> {
+        loop {
+            if ASSET_HUB_IS_BUSY.load(Ordering::SeqCst) {
+                let delay_seconds = CONFIG.common.recovery_retry_seconds;
+                log::warn!("ASSET_JHUB Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
+                tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
+                continue;
+            }
+            let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
+            let finalized_block_subscription_substrate_client = SubstrateClient::new(
+                CONFIG.substrate.asset_hub_rpc_url.as_str(),
+                CONFIG.substrate.network_id,
+                CONFIG.substrate.connection_timeout_seconds,
+                CONFIG.substrate.request_timeout_seconds,
+            )
+            .await?;
+            let substrate_client = Arc::new(Mutex::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.asset_hub_rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            ));
+            let relay_substrate_client = Arc::new(Mutex::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            ));
+            let postgres = Arc::new(
+                PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
+            );
+            // init extrinsic and event process error count metrics
+            metrics::extrinsic_process_error_count()
+                .set(postgres.get_extrinsic_process_error_log_count().await? as i64);
+            metrics::event_process_error_count()
+                .set(postgres.get_event_process_error_log_count().await? as i64);
+
+            finalized_block_subscription_substrate_client.subscribe_to_finalized_blocks(
+                CONFIG.substrate.request_timeout_seconds,
+                |finalized_block_header| async {
+                    let error_cell = error_cell.clone();
+                    if let Some(error) = error_cell.get() {
+                        return Err(anyhow::anyhow!("ASSET_HUB  {:?}", error));
+                    }
+                    let finalized_block_number = match finalized_block_header.get_number() {
+                        Ok(block_number) => block_number,
+                        Err(error) => {
+                            log::error!("ASSET_HUB Cannot get block number for header: {finalized_block_header:?}");
+                            return Err(anyhow::anyhow!("{error:?}"));
+                        }
+                    };
+                    metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    if ASSET_HUB_IS_BUSY.load(Ordering::SeqCst) {
+                        log::debug!("ASSET_HUB Busy processing past blocks. Skip block #{finalized_block_number} for now.");
+                        return Ok(());
+                    }
+                    let block_processor_substrate_client = substrate_client.clone();
+                    let relay_substrate_client = relay_substrate_client.clone();
+                    let postgres = postgres.clone();
+                    ASSET_HUB_IS_BUSY.store(true, Ordering::SeqCst);
+                    tokio::spawn(async move {
+                        let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
+                        let mut relay_substrate_client = relay_substrate_client.lock().await;
+                        let processed_block_height = match postgres.get_processed_block_height("asset_hub").await {
+                            Ok(processed_block_height) => processed_block_height,
+                            Err(error) => {
+                                log::error!("ASSET_HUB Cannot get processed block height from the database: {error:?}");
+                                let _ = error_cell.set(error);
+                                RELAY_IS_BUSY.store(false, Ordering::SeqCst);
+                                return;
+                            }
+                        };
+                        if processed_block_height < (finalized_block_number - 1) {
+                            let mut block_number = std::cmp::max(
+                                processed_block_height,
+                                CONFIG.block_processor.start_block_number
+                            );
+                            while block_number <= finalized_block_number {
+                                log::info!(
+                                    "ASS_ETHUB Process block #{block_number}. Target #{finalized_block_number}.",
+                                );
+                                let start = std::time::Instant::now();
+                                let process_result = self.process_asset_hub_block(
+                                    &mut block_processor_substrate_client,
+                                    &mut relay_substrate_client,
                                     &postgres,
                                     block_number,
                                     false,
@@ -673,9 +834,9 @@ impl Service for BlockProcessor {
                                         block_number += 1
                                     },
                                     Err(error) => {
-                                        log::error!("{error:?}");
+                                        log::error!("ASSET_HUB {error:?}");
                                         log::error!(
-                                            "History block processing failed for block #{block_number}.",
+                                            "ASSET_HUB History block processing failed for block #{block_number}.",
                                         );
                                         let _ = error_cell.set(error);
                                         break;
@@ -686,12 +847,11 @@ impl Service for BlockProcessor {
                             // update current era reward points every 3 minutes
                             let blocks_per_3_minutes = 3 * 60 * 1000
                                 / get_metadata_expected_block_time_millis(&block_processor_substrate_client.metadata).unwrap();
-                            log::info!("Process block #{finalized_block_number}.");
+                            log::info!("ASSET_HUB Process block #{finalized_block_number}.");
                             let start = std::time::Instant::now();
-                            let update_result = self.process_block(
+                            let update_result = self.process_asset_hub_block(
                                 &mut block_processor_substrate_client,
-                                &mut asset_hub_substrate_client,
-                                &runtime_information,
+                                &mut relay_substrate_client,
                                 &postgres,
                                 finalized_block_number,
                                 finalized_block_number % blocks_per_3_minutes == 0,
@@ -702,24 +862,41 @@ impl Service for BlockProcessor {
                                     metrics::processed_finalized_block_number().set(finalized_block_number as i64);
                                 },
                                 Err(error) => {
-                                    log::error!("{error:?}");
+                                    log::error!("RELAY {error:?}");
                                     log::error!(
-                                        "Block processing failed for finalized block #{}. Will try again with the next block.",
+                                        "ASSET_HUB Block processing failed for finalized block #{}. Will try again with the next block.",
                                         finalized_block_header.get_number().unwrap_or(0),
                                     );
                                     let _ = error_cell.set(error);
                                 }
                             }
                         }
-                        IS_BUSY.store(false, Ordering::SeqCst);
+                        ASSET_HUB_IS_BUSY.store(false, Ordering::SeqCst);
                     });
                     Ok(())
-            }).await;
+                }).await;
             let delay_seconds = CONFIG.common.recovery_retry_seconds;
             log::error!(
-                "Finalized block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.",
+                "ASSET_HUB Finalized block subscription exited. Will refresh connection and subscription after {delay_seconds} seconds.",
             );
             tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
         }
+    }
+}
+
+/// Service implementation.
+#[async_trait(?Send)]
+impl Service for BlockProcessor {
+    fn get_metrics_server_addr() -> (&'static str, u16) {
+        (
+            CONFIG.metrics.host.as_str(),
+            CONFIG.metrics.block_processor_port,
+        )
+    }
+
+    async fn run(&'static self) -> anyhow::Result<()> {
+        self.subscribe_relay_chain().await?;
+        self.subscribe_asset_hub().await?;
+        Ok(())
     }
 }

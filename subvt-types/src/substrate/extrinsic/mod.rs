@@ -84,6 +84,7 @@ impl SubstrateExtrinsic {
         }
         let module_index: u8 = Decode::decode(&mut *bytes)?;
         let call_index: u8 = Decode::decode(&mut *bytes)?;
+        println!("AAA {maybe_signature:?} XXX ({module_index},{call_index})");
         let pallet = metadata
             .pallets
             .iter()
@@ -96,11 +97,14 @@ impl SubstrateExtrinsic {
             .find(|metadata_type| metadata_type.id == pallet.calls.clone().unwrap().ty.id)
             .unwrap();
         let call_variant = match &calls_type.ty.type_def {
-            scale_info::TypeDef::Variant(variant) => variant
-                .variants
-                .iter()
-                .find(|variant| variant.index == call_index)
-                .unwrap(),
+            scale_info::TypeDef::Variant(variant) => {
+                log::info!("{variant:?}");
+                variant
+                    .variants
+                    .iter()
+                    .find(|variant| variant.index == call_index)
+                    .unwrap()
+            }
             _ => {
                 return Err(DecodeError::Error(format!(
                     "Unexpected non-variant call type: {:?}",
