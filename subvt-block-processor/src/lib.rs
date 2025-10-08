@@ -428,9 +428,7 @@ impl BlockProcessor {
             )
             .await?;
         }
-        let event_results = relay_substrate_client
-            .get_block_events(&relay_block_hash)
-            .await?;
+        let event_results = substrate_client.get_block_events(&block_hash).await?;
         log::info!(
             "ASSET_HUB Got {} events for block #{}.",
             event_results.len(),
@@ -665,7 +663,7 @@ impl BlockProcessor {
                         if processed_block_height < (finalized_block_number - 1) {
                             let mut block_number = std::cmp::max(
                                 processed_block_height,
-                                CONFIG.block_processor.start_block_number
+                                CONFIG.block_processor.relay_start_block_number
                             );
                             while block_number <= finalized_block_number {
                                 log::info!(
@@ -789,7 +787,7 @@ impl BlockProcessor {
                             return Err(anyhow::anyhow!("{error:?}"));
                         }
                     };
-                    metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    metrics::target_asset_hub_finalized_block_number().set(finalized_block_number as i64);
                     if ASSET_HUB_IS_BUSY.load(Ordering::SeqCst) {
                         log::debug!("ASSET_HUB Busy processing past blocks. Skip block #{finalized_block_number} for now.");
                         return Ok(());
@@ -813,11 +811,11 @@ impl BlockProcessor {
                         if processed_block_height < (finalized_block_number - 1) {
                             let mut block_number = std::cmp::max(
                                 processed_block_height,
-                                CONFIG.block_processor.start_block_number
+                                CONFIG.block_processor.asset_hub_start_block_number
                             );
                             while block_number <= finalized_block_number {
                                 log::info!(
-                                    "ASS_ETHUB Process block #{block_number}. Target #{finalized_block_number}.",
+                                    "ASSET_HUB Process block #{block_number}. Target #{finalized_block_number}.",
                                 );
                                 let start = std::time::Instant::now();
                                 let process_result = self.process_asset_hub_block(
@@ -827,10 +825,10 @@ impl BlockProcessor {
                                     block_number,
                                     false,
                                 ).await;
-                                metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
+                                metrics::asset_hub_block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                                 match process_result {
                                     Ok(_) => {
-                                        metrics::processed_finalized_block_number().set(block_number as i64);
+                                        metrics::processed_asset_hub_finalized_block_number().set(block_number as i64);
                                         block_number += 1
                                     },
                                     Err(error) => {
@@ -859,7 +857,7 @@ impl BlockProcessor {
                             metrics::block_processing_time_ms().observe(start.elapsed().as_millis() as f64);
                             match update_result {
                                 Ok(_) => {
-                                    metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+                                    metrics::processed_asset_hub_finalized_block_number().set(finalized_block_number as i64);
                                 },
                                 Err(error) => {
                                     log::error!("RELAY {error:?}");
@@ -895,8 +893,7 @@ impl Service for BlockProcessor {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        self.subscribe_relay_chain().await?;
-        self.subscribe_asset_hub().await?;
+        let _ = tokio::try_join!(self.subscribe_asset_hub(), self.subscribe_relay_chain(),)?;
         Ok(())
     }
 }

@@ -135,7 +135,8 @@ pub struct PostgreSQLConfig {
 pub struct BlockProcessorConfig {
     /// Indexing starts at this block, indexes all blocks up to
     /// current blocks, then continues with every new block.
-    pub start_block_number: u64,
+    pub relay_start_block_number: u64,
+    pub asset_hub_start_block_number: u64,
 }
 
 /// Validator list updater configuration.

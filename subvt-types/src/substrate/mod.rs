@@ -63,6 +63,7 @@ impl LastRuntimeUpgradeInfo {
 }
 
 /// Chain type.
+#[derive(Clone, Debug)]
 pub enum Chain {
     Kusama,
     KusamaAssetHub,
