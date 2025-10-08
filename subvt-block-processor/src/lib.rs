@@ -124,7 +124,6 @@ impl BlockProcessor {
         &'static self,
         substrate_client: &mut SubstrateClient,
         asset_hub_substrate_client: &mut SubstrateClient,
-        runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
     ) -> anyhow::Result<()> {
@@ -160,108 +159,9 @@ impl BlockProcessor {
                 substrate_client.last_runtime_upgrade_info.spec_version
             );
         }
-        let (last_era_index, last_epoch_index) = {
-            let runtime_information = runtime_information.read().unwrap();
-            (
-                runtime_information.era_index,
-                runtime_information.epoch_index,
-            )
-        };
         let active_validator_account_ids = substrate_client
             .get_active_validator_account_ids(&block_hash)
             .await?;
-        let current_epoch = substrate_client
-            .get_current_epoch(&active_era, &block_hash)
-            .await?;
-        if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
-            let era_stakers = asset_hub_substrate_client
-                .get_era_stakers(&active_era, &asset_hub_block_hash)
-                .await?;
-            if last_epoch_index != current_epoch.index {
-                log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
-                let total_stake = asset_hub_substrate_client
-                    .get_era_total_stake(active_era.index, &asset_hub_block_hash)
-                    .await?;
-                postgres
-                    .save_era(&active_era, total_stake, &era_stakers)
-                    .await?;
-                postgres
-                    .save_epoch(&current_epoch, active_era.index)
-                    .await?;
-                // save session para validators
-                if let Some(para_validator_indices) = substrate_client
-                    .get_paras_active_validator_indices(&block_hash)
-                    .await?
-                {
-                    log::info!(
-                        "Persist {} session para validators.",
-                        para_validator_indices.len()
-                    );
-                    let para_validator_groups = substrate_client
-                        .get_para_validator_groups(&block_hash)
-                        .await?;
-                    for (group_index, group_para_validator_indices) in
-                        para_validator_groups.iter().enumerate()
-                    {
-                        for group_para_validator_index in group_para_validator_indices {
-                            let active_validator_index =
-                                para_validator_indices[*group_para_validator_index as usize];
-                            let active_validator_account_id =
-                                active_validator_account_ids[active_validator_index as usize];
-                            postgres
-                                .save_session_para_validator(
-                                    active_era.index,
-                                    current_epoch.index,
-                                    &active_validator_account_id,
-                                    active_validator_index,
-                                    group_index as u32,
-                                    *group_para_validator_index,
-                                )
-                                .await?;
-                        }
-                    }
-                } else {
-                    log::info!("Parachains not active at this block height.");
-                }
-            }
-            if last_era_index != active_era.index {
-                let era_stakers = asset_hub_substrate_client
-                    .get_era_stakers(&active_era, &asset_hub_block_hash)
-                    .await?;
-                self.persist_era_validators_and_stakers(
-                    substrate_client,
-                    postgres,
-                    &active_era,
-                    block_hash.as_str(),
-                    &active_validator_account_ids,
-                    &era_stakers,
-                )
-                .await?;
-                // update last era
-                let last_era_total_validator_reward = asset_hub_substrate_client
-                    .get_era_total_validator_reward(active_era.index - 1, &asset_hub_block_hash)
-                    .await?;
-                postgres
-                    .update_era_total_validator_reward(
-                        active_era.index - 1,
-                        last_era_total_validator_reward,
-                    )
-                    .await?;
-                self.persist_era_reward_points(
-                    substrate_client,
-                    postgres,
-                    &block_hash,
-                    active_era.index - 1,
-                )
-                .await?;
-            }
-        }
-        {
-            let mut runtime_information = runtime_information.write().unwrap();
-            runtime_information.era_index = active_era.index;
-            runtime_information.epoch_index = current_epoch.index;
-        }
-
         let maybe_author_account_id = if let Some(validator_index) = maybe_validator_index {
             active_validator_account_ids
                 .get(validator_index)
@@ -383,6 +283,7 @@ impl BlockProcessor {
         &'static self,
         substrate_client: &mut SubstrateClient,
         relay_substrate_client: &mut SubstrateClient,
+        runtime_information: &Arc<RwLock<RuntimeInformation>>,
         postgres: &PostgreSQLNetworkStorage,
         block_number: u64,
         persist_era_reward_points: bool,
@@ -410,12 +311,122 @@ impl BlockProcessor {
                 substrate_client.last_runtime_upgrade_info.spec_version
             );
         }
+        let (last_era_index, last_epoch_index) = {
+            let runtime_information = runtime_information.read().unwrap();
+            (
+                runtime_information.era_index,
+                runtime_information.epoch_index,
+            )
+        };
         let active_validator_account_ids = relay_substrate_client
             .get_active_validator_account_ids(&relay_block_hash)
             .await?;
         let active_era = substrate_client
             .get_active_era(&block_hash, &relay_substrate_client.metadata)
             .await?;
+        let current_epoch = relay_substrate_client
+            .get_current_epoch(&active_era, &block_hash)
+            .await?;
+        if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
+            let era_stakers = substrate_client
+                .get_era_stakers(&active_era, &block_hash)
+                .await?;
+            if last_epoch_index != current_epoch.index {
+                log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
+                let total_stake = substrate_client
+                    .get_era_total_stake(active_era.index, &block_hash)
+                    .await?;
+                postgres
+                    .save_era(&active_era, total_stake, &era_stakers)
+                    .await?;
+                postgres
+                    .save_epoch(&current_epoch, active_era.index)
+                    .await?;
+                // save session para validators
+                if let Some(para_validator_indices) = relay_substrate_client
+                    .get_paras_active_validator_indices(&relay_block_hash)
+                    .await?
+                {
+                    log::info!(
+                        "Persist {} session para validators.",
+                        para_validator_indices.len()
+                    );
+                    let para_validator_groups = relay_substrate_client
+                        .get_para_validator_groups(&relay_block_hash)
+                        .await?;
+                    for (group_index, group_para_validator_indices) in
+                        para_validator_groups.iter().enumerate()
+                    {
+                        for group_para_validator_index in group_para_validator_indices {
+                            let active_validator_index =
+                                para_validator_indices[*group_para_validator_index as usize];
+                            let active_validator_account_id =
+                                active_validator_account_ids[active_validator_index as usize];
+                            postgres
+                                .save_session_para_validator(
+                                    active_era.index,
+                                    current_epoch.index,
+                                    &active_validator_account_id,
+                                    active_validator_index,
+                                    group_index as u32,
+                                    *group_para_validator_index,
+                                )
+                                .await?;
+                        }
+                    }
+                } else {
+                    log::info!("Parachains not active at this block height.");
+                }
+            }
+            if last_era_index != active_era.index {
+                let era_stakers = substrate_client
+                    .get_era_stakers(&active_era, &block_hash)
+                    .await?;
+                self.persist_era_validators_and_stakers(
+                    substrate_client,
+                    postgres,
+                    &active_era,
+                    block_hash.as_str(),
+                    &active_validator_account_ids,
+                    &era_stakers,
+                )
+                .await?;
+                // update last era
+                let last_era_total_validator_reward = substrate_client
+                    .get_era_total_validator_reward(active_era.index - 1, &block_hash)
+                    .await?;
+                postgres
+                    .update_era_total_validator_reward(
+                        active_era.index - 1,
+                        last_era_total_validator_reward,
+                    )
+                    .await?;
+                self.persist_era_reward_points(
+                    substrate_client,
+                    postgres,
+                    &block_hash,
+                    active_era.index - 1,
+                )
+                .await?;
+            }
+        }
+        {
+            let mut runtime_information = runtime_information.write().unwrap();
+            runtime_information.era_index = active_era.index;
+            runtime_information.epoch_index = current_epoch.index;
+        }
+
+        if !postgres.era_exists(active_era.index).await? {
+            let total_stake = substrate_client
+                .get_era_total_stake(active_era.index, &block_hash)
+                .await?;
+            let era_stakers = substrate_client
+                .get_era_stakers(&active_era, &block_hash)
+                .await?;
+            postgres
+                .save_era(&active_era, total_stake, &era_stakers)
+                .await?;
+        }
         let current_epoch = relay_substrate_client
             .get_current_epoch(&active_era, &relay_block_hash)
             .await?;
@@ -614,7 +625,6 @@ impl BlockProcessor {
                 )
                 .await?,
             ));
-            let relay_runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
@@ -645,7 +655,6 @@ impl BlockProcessor {
                     }
                     let block_processor_substrate_client = relay_substrate_client.clone();
                     let asset_hub_substrate_client = asset_hub_substrate_client.clone();
-                    let runtime_information = relay_runtime_information.clone();
                     let postgres = postgres.clone();
                     RELAY_IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
@@ -673,7 +682,6 @@ impl BlockProcessor {
                                 let process_result = self.process_relay_block(
                                     &mut block_processor_substrate_client,
                                     &mut asset_hub_substrate_client,
-                                    &runtime_information,
                                     &postgres,
                                     block_number,
                                 ).await;
@@ -699,7 +707,6 @@ impl BlockProcessor {
                             let update_result = self.process_relay_block(
                                 &mut block_processor_substrate_client,
                                 &mut asset_hub_substrate_client,
-                                &runtime_information,
                                 &postgres,
                                 finalized_block_number,
                             ).await;
@@ -734,7 +741,7 @@ impl BlockProcessor {
         loop {
             if ASSET_HUB_IS_BUSY.load(Ordering::SeqCst) {
                 let delay_seconds = CONFIG.common.recovery_retry_seconds;
-                log::warn!("ASSET_JHUB Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
+                log::warn!("ASSET_HUB Busy processing past blocks. Hold re-instantiation for {delay_seconds} seconds.");
                 tokio::time::sleep(std::time::Duration::from_secs(delay_seconds)).await;
                 continue;
             }
@@ -764,6 +771,7 @@ impl BlockProcessor {
                 )
                 .await?,
             ));
+            let runtime_information = Arc::new(RwLock::new(RuntimeInformation::default()));
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
@@ -795,6 +803,7 @@ impl BlockProcessor {
                     let block_processor_substrate_client = substrate_client.clone();
                     let relay_substrate_client = relay_substrate_client.clone();
                     let postgres = postgres.clone();
+                    let runtime_information = runtime_information.clone();
                     ASSET_HUB_IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
                         let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
@@ -821,6 +830,7 @@ impl BlockProcessor {
                                 let process_result = self.process_asset_hub_block(
                                     &mut block_processor_substrate_client,
                                     &mut relay_substrate_client,
+                                    &runtime_information,
                                     &postgres,
                                     block_number,
                                     false,
@@ -850,6 +860,7 @@ impl BlockProcessor {
                             let update_result = self.process_asset_hub_block(
                                 &mut block_processor_substrate_client,
                                 &mut relay_substrate_client,
+                                &runtime_information,
                                 &postgres,
                                 finalized_block_number,
                                 finalized_block_number % blocks_per_3_minutes == 0,
