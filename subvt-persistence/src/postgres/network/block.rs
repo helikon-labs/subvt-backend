@@ -64,7 +64,11 @@ impl PostgreSQLNetworkStorage {
         .map(|hash: (String,)| hash.0))
     }
 
-    pub async fn get_block_by_number(&self, chain_type: &str, block_number: u64) -> anyhow::Result<Option<Block>> {
+    pub async fn get_block_by_number(
+        &self,
+        chain_type: &str,
+        block_number: u64,
+    ) -> anyhow::Result<Option<Block>> {
         let maybe_db_block: Option<PostgresBlock> = sqlx::query_as(
             r#"
             SELECT hash, number, timestamp, author_account_id, era_index, epoch_index, is_finalized, metadata_version, runtime_version

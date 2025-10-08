@@ -23,7 +23,10 @@ impl NotificationGenerator {
         block_number: u64,
     ) -> anyhow::Result<()> {
         log::info!("Inspect block #{block_number}.");
-        let block = match network_postgres.get_block_by_number("asset_hub", block_number).await? {
+        let block = match network_postgres
+            .get_block_by_number("asset_hub", block_number)
+            .await?
+        {
             Some(block) => block,
             None => {
                 log::error!("Asset Hub block #{block_number} not found.");
