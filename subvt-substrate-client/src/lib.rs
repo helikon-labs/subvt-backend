@@ -592,11 +592,78 @@ impl SubstrateClient {
         Ok(all_keys)
     }
 
+    pub async fn get_next_session_keys(
+        &self,
+        validator_map: &mut HashMap<AccountId, ValidatorDetails>,
+        block_hash: &str,
+    ) -> anyhow::Result<()> {
+        log::debug!("Get next session keys.");
+        let keys: Vec<String> = validator_map
+            .values()
+            .map(|validator| {
+                get_storage_map_key(&self.metadata, "Session", "NextKeys", &validator.account.id)
+            })
+            .collect();
+        for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
+            let chunk_values: Vec<StorageChangeSet<String>> = self
+                .ws_client
+                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
+                .await?;
+
+            for (storage_key, data) in chunk_values[0].changes.iter() {
+                if let Some(data) = data {
+                    let account_id = self.account_id_from_storage_key(storage_key);
+                    let session_keys = format!("0x{}", hex::encode_upper(&data.0));
+                    let validator = validator_map.get_mut(&account_id).unwrap();
+                    validator.next_session_keys = session_keys;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn get_queued_session_keys(
+        &self,
+        validator_map: &mut HashMap<AccountId, ValidatorDetails>,
+        block_hash: &str,
+    ) -> anyhow::Result<()> {
+        log::debug!("Get queued session keys & find out which validators are active next session.");
+        let hex_string: String = self
+            .ws_client
+            .request(
+                "state_getStorage",
+                get_rpc_storage_plain_params("Session", "QueuedKeys", Some(block_hash)),
+            )
+            .await?;
+        let maybe_session_key_pairs: anyhow::Result<Vec<(AccountId, [u8; 193])>> =
+            decode_hex_string(&hex_string);
+        if let Ok(session_key_pairs) = &maybe_session_key_pairs {
+            for session_key_pair in session_key_pairs.iter() {
+                let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
+                if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
+                    validator.is_active_next_session = true;
+                    validator.queued_session_keys = Some(session_keys.clone());
+                }
+            }
+        } else {
+            let session_key_pairs: Vec<(AccountId, [u8; 225])> =
+                decode_hex_string(&hex_string).unwrap();
+            for session_key_pair in session_key_pairs.iter() {
+                let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
+                if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
+                    validator.is_active_next_session = true;
+                    validator.queued_session_keys = Some(session_keys.clone());
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// Get the complete details of all validators, active and inactive, at the given block.
     #[allow(clippy::cognitive_complexity)]
     pub async fn get_all_validators(
         &self,
-        babe_metadata: &RuntimeMetadataV14,
+        relay_client: &SubstrateClient,
         people_client: &SubstrateClient,
         block_hash: &str,
         era: &Era,
@@ -610,6 +677,11 @@ impl SubstrateClient {
             all_keys.len()
         );
         log::debug!("Get complete account, active and para-validator info for all validators.");
+        let last_relay_chain_block_number =
+            self.get_last_relay_chain_block_number(block_hash).await?;
+        let last_relay_chain_block_hash = relay_client
+            .get_block_hash(last_relay_chain_block_number as u64)
+            .await?;
         let people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
@@ -618,8 +690,9 @@ impl SubstrateClient {
             log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
                 HashMap::default();
-            if let Some(para_validator_indices) =
-                self.get_paras_active_validator_indices(block_hash).await?
+            if let Some(para_validator_indices) = relay_client
+                .get_paras_active_validator_indices(&last_relay_chain_block_hash)
+                .await?
             {
                 let para_validator_index_map = {
                     let mut map: HashMap<u32, AccountId> = HashMap::default();
@@ -637,7 +710,9 @@ impl SubstrateClient {
                 };
                 let para_validator_group_map = {
                     let mut map: HashMap<u32, Vec<AccountId>> = HashMap::default();
-                    let para_validator_groups = self.get_para_validator_groups(block_hash).await?;
+                    let para_validator_groups = relay_client
+                        .get_para_validator_groups(&last_relay_chain_block_hash)
+                        .await?;
                     for (group_index, group) in para_validator_groups.iter().enumerate() {
                         map.insert(
                             group_index as u32,
@@ -650,8 +725,9 @@ impl SubstrateClient {
                     }
                     map
                 };
-                if let Some(para_core_assignments) =
-                    self.get_para_core_assignments(block_hash).await?
+                if let Some(para_core_assignments) = relay_client
+                    .get_para_core_assignments(&last_relay_chain_block_hash)
+                    .await?
                 {
                     for assignment in &para_core_assignments {
                         if let Some(group) = para_validator_group_map.get(&assignment.group_index) {
@@ -693,68 +769,12 @@ impl SubstrateClient {
                 );
             }
         }
-        // get next session keys
-        {
-            log::debug!("Get session keys.");
-            let keys: Vec<String> = validator_map
-                .values()
-                .map(|validator| {
-                    get_storage_map_key(
-                        &self.metadata,
-                        "Session",
-                        "NextKeys",
-                        &validator.account.id,
-                    )
-                })
-                .collect();
-            for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
-                let chunk_values: Vec<StorageChangeSet<String>> = self
-                    .ws_client
-                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
-                    .await?;
-
-                for (storage_key, data) in chunk_values[0].changes.iter() {
-                    if let Some(data) = data {
-                        let account_id = self.account_id_from_storage_key(storage_key);
-                        let session_keys = format!("0x{}", hex::encode_upper(&data.0));
-                        let validator = validator_map.get_mut(&account_id).unwrap();
-                        validator.next_session_keys = session_keys;
-                    }
-                }
-            }
-        }
-        // get next session active validator keys
-        {
-            log::debug!("Find out which validators are active next session.");
-            let hex_string: String = self
-                .ws_client
-                .request(
-                    "state_getStorage",
-                    get_rpc_storage_plain_params("Session", "QueuedKeys", Some(block_hash)),
-                )
-                .await?;
-            let maybe_session_key_pairs: anyhow::Result<Vec<(AccountId, [u8; 193])>> =
-                decode_hex_string(&hex_string);
-            if let Ok(session_key_pairs) = &maybe_session_key_pairs {
-                for session_key_pair in session_key_pairs.iter() {
-                    let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
-                    if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
-                        validator.is_active_next_session = true;
-                        validator.queued_session_keys = Some(session_keys.clone());
-                    }
-                }
-            } else {
-                let session_key_pairs: Vec<(AccountId, [u8; 225])> =
-                    decode_hex_string(&hex_string).unwrap();
-                for session_key_pair in session_key_pairs.iter() {
-                    let session_keys = format!("0x{}", hex::encode_upper(session_key_pair.1));
-                    if let Some(validator) = validator_map.get_mut(&session_key_pair.0) {
-                        validator.is_active_next_session = true;
-                        validator.queued_session_keys = Some(session_keys.clone());
-                    }
-                }
-            }
-        }
+        relay_client
+            .get_next_session_keys(&mut validator_map, &last_relay_chain_block_hash)
+            .await?;
+        relay_client
+            .get_queued_session_keys(&mut validator_map, &last_relay_chain_block_hash)
+            .await?;
         // get reward destinations
         {
             log::debug!("Get reward destinations.");
@@ -851,37 +871,9 @@ impl SubstrateClient {
             }
 
             log::debug!("Get validator controller account ids.");
-            let mut controller_storage_keys: Vec<String> = validator_map
-                .keys()
-                .map(|validator_account_id| {
-                    get_storage_map_key(&self.metadata, "Staking", "Bonded", validator_account_id)
-                })
-                .collect();
-            for nominator_stash_account_id in nomination_map.keys() {
-                controller_storage_keys.push(get_storage_map_key(
-                    &self.metadata,
-                    "Staking",
-                    "Bonded",
-                    nominator_stash_account_id,
-                ));
-            }
             let mut controller_account_id_map: HashMap<AccountId, AccountId> = HashMap::default();
-            for chunk in controller_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
-                let chunk_values: Vec<StorageChangeSet<String>> = self
-                    .ws_client
-                    .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
-                    .await?;
-                for (storage_key, data) in chunk_values[0].changes.iter() {
-                    if let Some(data) = data {
-                        let account_id = self.account_id_from_storage_key(storage_key);
-                        let mut bytes: &[u8] = &data.0;
-                        let controller_account_id: AccountId = Decode::decode(&mut bytes).unwrap();
-                        if let Some(validator) = validator_map.get_mut(&account_id) {
-                            validator.controller_account_id = controller_account_id;
-                        }
-                        controller_account_id_map.insert(account_id, controller_account_id);
-                    }
-                }
+            for validator_account_id in validator_map.keys() {
+                controller_account_id_map.insert(*validator_account_id, *validator_account_id);
             }
             log::debug!("Get nomination amounts and self stakes.");
             let controller_account_ids: Vec<AccountId> =
@@ -900,7 +892,7 @@ impl SubstrateClient {
                 for (_, data) in chunk_values[0].changes.iter() {
                     if let Some(data) = data {
                         let bytes: &[u8] = &data.0;
-                        let stake: Stake = Stake::from_bytes(bytes).unwrap();
+                        let stake = Stake::from_bytes(bytes).unwrap();
                         let account_id = &stake.stash_account_id;
                         if let Some(nomination) = nomination_map.get_mut(account_id) {
                             nomination.stake = stake;
@@ -956,7 +948,7 @@ impl SubstrateClient {
             // calculate return rates
             let total_staked = self.get_era_total_stake(era.index, block_hash).await?;
             let eras_per_day = 24 * 60 * 60 * 1000
-                / get_metadata_era_duration_millis(babe_metadata, &self.metadata)? as u128;
+                / get_metadata_era_duration_millis(&relay_client.metadata, &self.metadata)? as u128;
             let last_era_total_reward = self
                 .get_era_total_validator_reward(era.index - 1, block_hash)
                 .await?;
@@ -1358,6 +1350,16 @@ impl SubstrateClient {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn get_last_relay_chain_block_number(&self, block_hash: &str) -> anyhow::Result<u32> {
+        let params = get_rpc_storage_plain_params(
+            "ParachainSystem",
+            "LastRelayChainBlockNumber",
+            Some(block_hash),
+        );
+        let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
+        decode_hex_string(&hex_string)
     }
 
     /// Get parachain validator groups. Indices here are the indices of the result of the

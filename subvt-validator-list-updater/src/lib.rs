@@ -229,7 +229,7 @@ impl ValidatorListUpdater {
         // validator account ids
         let mut validators = asset_hub_client
             .get_all_validators(
-                &relay_client.metadata,
+                relay_client,
                 people_client,
                 asset_hub_finalized_block_hash.as_str(),
                 &active_era,

@@ -741,7 +741,6 @@ struct StakingLedger {
     #[codec(compact)]
     pub active: Balance,
     pub _unlocking: BoundedVec<UnlockChunk<Balance>, ConstU32<{ u32::MAX }>>,
-    pub _claimed_rewards: BoundedVec<EraIndex, ConstU32<{ u32::MAX }>>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, Hash, PartialEq, Serialize)]
