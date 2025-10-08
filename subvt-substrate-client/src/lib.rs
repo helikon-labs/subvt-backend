@@ -686,7 +686,7 @@ impl SubstrateClient {
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
             let active_validator_account_ids = relay_client
-                .get_active_validator_account_ids(block_hash)
+                .get_active_validator_account_ids(&last_relay_chain_block_hash)
                 .await?;
             log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
