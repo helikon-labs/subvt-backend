@@ -13,7 +13,8 @@ token_decimals = 10
 [block_processor]
 # min supported for Polkadot is 2_005_673, metadata v12
 # first block of 2021 for Polkadot is 2_700_565
-start_block_number = 2_700_565
+relay_start_block_number = 2_700_565
+asset_hub_start_block_number = 11_150_800
 
 [dn]
 data_endpoint = "https://nodes.web3.foundation/api/cohort/3/polkadot"

@@ -20,7 +20,8 @@ services:
       # rpc
       - SUBVT__SUBSTRATE__RPC_URL=${KUSAMA_RPC_URL}
       # start block
-      - SUBVT__BLOCK_PROCESSOR__START_BLOCK_NUMBER=${KUSAMA_BLOCK_PROCESSOR_START_NUMBER}
+      - SUBVT__BLOCK_PROCESSOR__RELAY_START_BLOCK_NUMBER=${KUSAMA_BLOCK_PROCESSOR_RELAY_START_NUMBER}
+      - SUBVT__BLOCK_PROCESSOR__ASSET_HUB_START_BLOCK_NUMBER=${KUSAMA_BLOCK_PROCESSOR_ASSET_HUB_START_NUMBER}
   subvt_kusama_validator_list_updater:
     container_name: subvt_kusama_validator_list_updater
     restart: unless-stopped
