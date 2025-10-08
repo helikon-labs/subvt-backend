@@ -57,6 +57,8 @@ pub struct SubstrateConfig {
     /// Node WebSocket RPC URL (e.g. `wss://kusama-rpc.polkadot.io` for Kusama).
     pub rpc_url: String,
     /// Identity chain RPC URL.
+    pub asset_hub_rpc_url: String,
+    /// Identity chain RPC URL.
     pub people_rpc_url: String,
     /// RPC connection timeout in seconds.
     pub connection_timeout_seconds: u64,

@@ -65,10 +65,12 @@ impl LastRuntimeUpgradeInfo {
 /// Chain type.
 pub enum Chain {
     Kusama,
-    Polkadot,
-    Westend,
+    KusamaAssetHub,
     KusamaPeople,
+    Polkadot,
+    PolkadotAssetHub,
     PolkadotPeople,
+    Westend,
 }
 
 impl FromStr for Chain {
@@ -78,10 +80,11 @@ impl FromStr for Chain {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "kusama" | "ksm" => Ok(Self::Kusama),
-            "polkadot" | "dot" => Ok(Self::Polkadot),
-            "westend" | "wnd" => Ok(Self::Westend),
+            "kusama asset hub" | "ksm asset hub" => Ok(Self::KusamaAssetHub),
             "kusama people" | "ksm people" => Ok(Self::KusamaPeople),
+            "polkadot" | "dot" => Ok(Self::Polkadot),
             "polkadot people" | "dot people" => Ok(Self::PolkadotPeople),
+            "westend" | "wnd" => Ok(Self::Westend),
             _ => panic!("Unkown chain: {s}"),
         }
     }
@@ -92,10 +95,12 @@ impl Chain {
     fn get_ss58_address_format(&self) -> Ss58AddressFormat {
         match self {
             Self::Kusama => Ss58AddressFormat::from(2u16),
-            Self::Polkadot => Ss58AddressFormat::from(0u16),
-            Self::Westend => Ss58AddressFormat::from(42u16),
+            Self::KusamaAssetHub => Ss58AddressFormat::from(2u16),
             Self::KusamaPeople => Ss58AddressFormat::from(2u16),
+            Self::Polkadot => Ss58AddressFormat::from(0u16),
+            Self::PolkadotAssetHub => Ss58AddressFormat::from(0u16),
             Self::PolkadotPeople => Ss58AddressFormat::from(0u16),
+            Self::Westend => Ss58AddressFormat::from(42u16),
         }
     }
 
@@ -553,7 +558,7 @@ impl EraStakers {
 
 /// Total reward points earned over an era. It will contain the points earned so far
 /// for an active era.
-#[derive(Encode, Decode, Serialize)]
+#[derive(Encode, Decode, Default, Serialize)]
 pub struct EraRewardPoints {
     pub total: u32,
     pub individual: BTreeMap<AccountId32, u32>,

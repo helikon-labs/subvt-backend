@@ -38,7 +38,7 @@ impl NetworkStatusUpdater {
             ))?;
         let status_json_string = serde_json::to_string(status)?;
         let mut redis_cmd_pipeline = Pipeline::new();
-        () = redis_cmd_pipeline
+        redis_cmd_pipeline
             .cmd("SET")
             .arg(format!("subvt:{}:network_status", CONFIG.substrate.chain))
             .arg(status_json_string)
@@ -48,7 +48,7 @@ impl NetworkStatusUpdater {
                 CONFIG.substrate.chain
             ))
             .arg(status.best_block_number)
-            .query_async(&mut redis_connection)
+            .query_async::<()>(&mut redis_connection)
             .await
             .context("Error while publishing Redis pub/sub event.")?;
         Ok(())
@@ -56,40 +56,56 @@ impl NetworkStatusUpdater {
 
     async fn fetch_and_update_network_status(
         &self,
-        client: &SubstrateClient,
-        best_block_header: &BlockHeader,
+        relay_client: &SubstrateClient,
+        asset_hub_client: &SubstrateClient,
+        relay_best_block_header: &BlockHeader,
     ) -> anyhow::Result<NetworkStatus> {
         let last_status = {
             let guard = self.last_network_status.lock().unwrap();
             guard.clone()
         };
-        // best block number
-        let best_block_number = best_block_header
+        // relay best block number
+        let relay_best_block_number = relay_best_block_header
             .get_number()
-            .context("Error while extracting best block number.")?;
-        let best_block_hash = client
-            .get_block_hash(best_block_number)
+            .context("Error while extracting relay best block number.")?;
+        let relay_best_block_hash = relay_client
+            .get_block_hash(relay_best_block_number)
             .await
-            .context("Error while fetching best block hash.")?;
-        log::debug!("Best block #{best_block_number} hash {best_block_hash}.",);
-        // finalized block number & hash
-        let finalized_block_hash = client
+            .context("Error while fetching relay best block hash.")?;
+        log::debug!("Relay best block #{relay_best_block_number} hash {relay_best_block_hash}.",);
+        // relay finalized block number & hash
+        let relay_finalized_block_hash = relay_client
             .get_finalized_block_hash()
             .await
-            .context("Error while fetching finalized block hash.")?;
-        let finalized_block_header = client
-            .get_block_header(finalized_block_hash.as_str())
+            .context("Error while fetching relay finalized block hash.")?;
+        let relay_finalized_block_header = relay_client
+            .get_block_header(relay_finalized_block_hash.as_str())
             .await
-            .context("Error while fetching finalized block header.")?;
-        let finalized_block_number = finalized_block_header
+            .context("Error while fetching relay finalized block header.")?;
+        let finalized_block_number = relay_finalized_block_header
             .get_number()
-            .context("Error while extracting finalized block number.")?;
-        log::debug!("Finalized block #{finalized_block_number} hash {finalized_block_hash}.",);
-        // epoch index & time
-        let epoch = client
-            .get_current_epoch(best_block_hash.as_str())
+            .context("Error while extracting relay finalized block number.")?;
+        log::debug!(
+            "Relay finalized block #{finalized_block_number} hash {relay_finalized_block_hash}.",
+        );
+        // asset hub finalized block number & hash
+        let asset_hub_finalized_block_hash = asset_hub_client
+            .get_finalized_block_hash()
             .await
-            .context("Error while getting current epoch.")?;
+            .context("Error while fetching asset hub finalized block hash.")?;
+        log::debug!("Asset hub finalized block hash {asset_hub_finalized_block_hash}.",);
+
+        let era = asset_hub_client
+            .get_active_era(
+                asset_hub_finalized_block_hash.as_str(),
+                &relay_client.metadata,
+            )
+            .await
+            .context("Error while getting current era from asset hub.")?;
+        let epoch = relay_client
+            .get_current_epoch(&era, relay_finalized_block_hash.as_str())
+            .await
+            .context("Error while getting current epoch from relay.")?;
         let epoch_remaining = epoch.get_end_date_time() - Utc::now();
         log::debug!(
             "Epoch {} start {} end {}. {} days {} hours {} minutes {} seconds.",
@@ -102,22 +118,18 @@ impl NetworkStatusUpdater {
             epoch_remaining.num_seconds() - epoch_remaining.num_minutes() * 60,
         );
         // active and inactive validator counts
-        let active_validator_account_ids = client
-            .get_active_validator_account_ids(best_block_hash.as_str())
+        let active_validator_account_ids = asset_hub_client
+            .get_active_validator_account_ids(asset_hub_finalized_block_hash.as_str())
             .await
-            .context("Error while getting active validator addresses.")?;
+            .context("Error while getting active validator addresses from asset hub.")?;
         // number of validators
-        let total_validator_count = client
-            .get_total_validator_count(best_block_hash.as_str())
+        let total_validator_count = asset_hub_client
+            .get_total_validator_count(asset_hub_finalized_block_hash.as_str())
             .await
-            .context("Error while getting total validator count.")?;
+            .context("Error while getting total validator count from asset hub.")?;
         let active_validator_count = active_validator_account_ids.len() as u32;
         let inactive_validator_count = total_validator_count - active_validator_count;
         // era index & time
-        let era = client
-            .get_active_era(best_block_hash.as_str())
-            .await
-            .context("Error while getting active era.")?;
         let era_remaining = era.get_end_date_time() - Utc::now();
         log::debug!(
             "Era {} start {} end {}. {} days {} hours {} minutes {} seconds.",
@@ -150,17 +162,23 @@ impl NetworkStatusUpdater {
                 last_status.median_stake,
             )
         } else {
-            let last_era_total_reward = client
-                .get_era_total_validator_reward(era.index - 1, best_block_hash.as_str())
+            let last_era_total_reward = asset_hub_client
+                .get_era_total_validator_reward(
+                    era.index - 1,
+                    asset_hub_finalized_block_hash.as_str(),
+                )
                 .await
                 .context("Error while getting last era's total validator reward.")?;
             // era stakers
-            let era_stakers = client
-                .get_era_stakers(&era, best_block_hash.as_str())
+            let era_stakers = asset_hub_client
+                .get_era_stakers(&era, asset_hub_finalized_block_hash.as_str())
                 .await
                 .context("Error while getting last era's active stakers.")?;
             let total_stake = era_stakers.total_stake();
-            let era_duration_seconds = get_metadata_era_duration_millis(&client.metadata)? / 1000;
+            let era_duration_seconds = get_metadata_era_duration_millis(
+                &relay_client.metadata,
+                &asset_hub_client.metadata,
+            )? / 1000;
             let year_seconds = (365 * 24 + 6) * 60 * 60;
             let eras_per_year = (year_seconds / era_duration_seconds) as u128;
             let return_rate_per_million =
@@ -177,16 +195,17 @@ impl NetworkStatusUpdater {
         };
         let last_era_total_reward_decimals: String = format!(
             "{}",
-            last_era_total_reward % 10u128.pow(client.system_properties.token_decimals)
+            last_era_total_reward % 10u128.pow(asset_hub_client.system_properties.token_decimals)
         )
         .chars()
         .take(4)
         .collect();
         log::debug!(
             "Last era total reward {}.{}{}.",
-            last_era_total_reward as u64 / 10u64.pow(client.system_properties.token_decimals),
+            last_era_total_reward as u64
+                / 10u64.pow(asset_hub_client.system_properties.token_decimals),
             last_era_total_reward_decimals,
-            client.system_properties.token_symbol
+            asset_hub_client.system_properties.token_symbol
         );
         log::debug!(
             "Return rate per cent {} total stake {} min stake {} max stake {} average stake {} median stake {}.",
@@ -198,8 +217,8 @@ impl NetworkStatusUpdater {
             median_stake,
         );
         // era reward points so far
-        let era_reward_points = client
-            .get_era_reward_points(era.index, &best_block_hash)
+        let era_reward_points = asset_hub_client
+            .get_era_reward_points(era.index, &asset_hub_finalized_block_hash)
             .await
             .context("Error while getting current era reward points.")?
             .total;
@@ -207,9 +226,9 @@ impl NetworkStatusUpdater {
         // prepare data
         let network_status = NetworkStatus {
             finalized_block_number,
-            finalized_block_hash,
-            best_block_number,
-            best_block_hash,
+            finalized_block_hash: relay_finalized_block_hash,
+            best_block_number: relay_best_block_number,
+            best_block_hash: relay_best_block_hash,
             active_era: era,
             current_epoch: epoch,
             active_validator_count,
@@ -231,23 +250,28 @@ impl NetworkStatusUpdater {
 }
 
 impl NetworkStatusUpdater {
-    async fn on_new_block(
+    async fn on_new_relay_block(
         &self,
-        substrate_client: Arc<SubstrateClient>,
-        best_block_header: BlockHeader,
+        relay_substrate_client: Arc<SubstrateClient>,
+        asset_hub_substrate_client: Arc<SubstrateClient>,
+        relay_best_block_header: BlockHeader,
     ) -> anyhow::Result<()> {
-        if let Ok(best_block_number) = best_block_header.get_number() {
-            metrics::target_best_block_number().set(best_block_number as i64);
-            log::info!("New best block #{best_block_number}.");
+        if let Ok(relay_best_block_number) = relay_best_block_header.get_number() {
+            metrics::target_best_block_number().set(relay_best_block_number as i64);
+            log::info!("New relay best block #{relay_best_block_number}.");
         }
         let start = std::time::Instant::now();
         let update_result = self
-            .fetch_and_update_network_status(&substrate_client, &best_block_header)
+            .fetch_and_update_network_status(
+                &relay_substrate_client,
+                &asset_hub_substrate_client,
+                &relay_best_block_header,
+            )
             .await;
         match update_result {
             Ok(network_status) => {
                 log::info!(
-                    "Processed best block #{}.",
+                    "Processed relay best block #{}.",
                     network_status.best_block_number
                 );
                 metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
@@ -260,7 +284,7 @@ impl NetworkStatusUpdater {
                 log::error!("{error:?}");
                 log::error!(
                     "Network status update failed for block #{}. Will try again with the next block.",
-                    best_block_header.get_number().unwrap_or(0),
+                    relay_best_block_header.get_number().unwrap_or(0),
                 );
                 Err(error)
             }
@@ -280,7 +304,7 @@ impl Service for NetworkStatusUpdater {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         loop {
-            let substrate_client = Arc::new(
+            let relay_substrate_client = Arc::new(
                 SubstrateClient::new(
                     CONFIG.substrate.rpc_url.as_str(),
                     CONFIG.substrate.network_id,
@@ -289,8 +313,17 @@ impl Service for NetworkStatusUpdater {
                 )
                 .await?,
             );
+            let asset_hub_substrate_client = Arc::new(
+                SubstrateClient::new(
+                    CONFIG.substrate.asset_hub_rpc_url.as_str(),
+                    CONFIG.substrate.network_id,
+                    CONFIG.substrate.connection_timeout_seconds,
+                    CONFIG.substrate.request_timeout_seconds,
+                )
+                .await?,
+            );
             let error_cell: Arc<OnceCell<anyhow::Error>> = Arc::new(OnceCell::new());
-            substrate_client
+            relay_substrate_client
                 .subscribe_to_new_blocks(
                     CONFIG.substrate.request_timeout_seconds,
                     |best_block_header| async {
@@ -298,10 +331,16 @@ impl Service for NetworkStatusUpdater {
                         if let Some(error) = error_cell.get() {
                             return Err(anyhow::anyhow!("{:?}", error));
                         }
-                        let substrate_client = Arc::clone(&substrate_client);
+                        let relay_substrate_client = relay_substrate_client.clone();
+                        let asset_hub_substrate_client = asset_hub_substrate_client.clone();
                         tokio::spawn(async move {
-                            if let Err(error) =
-                                self.on_new_block(substrate_client, best_block_header).await
+                            if let Err(error) = self
+                                .on_new_relay_block(
+                                    relay_substrate_client,
+                                    asset_hub_substrate_client,
+                                    best_block_header,
+                                )
+                                .await
                             {
                                 let _ = error_cell.set(error);
                             }

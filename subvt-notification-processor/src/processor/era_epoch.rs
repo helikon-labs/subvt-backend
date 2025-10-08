@@ -20,8 +20,10 @@ impl NotificationProcessor {
             network.display,
         );
         let redis_url = match Chain::from_str(&network.chain)? {
-            Chain::Kusama | Chain::KusamaPeople => &CONFIG.redis.kusama_url,
-            Chain::Polkadot | Chain::PolkadotPeople => &CONFIG.redis.polkadot_url,
+            Chain::Kusama | Chain::KusamaAssetHub | Chain::KusamaPeople => &CONFIG.redis.kusama_url,
+            Chain::Polkadot | Chain::PolkadotAssetHub | Chain::PolkadotPeople => {
+                &CONFIG.redis.polkadot_url
+            }
             Chain::Westend => &CONFIG.redis.westend_url,
         };
         let redis = redis::Client::open(redis_url.as_str()).context(format!(

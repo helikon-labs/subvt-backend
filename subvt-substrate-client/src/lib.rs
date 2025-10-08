@@ -49,7 +49,7 @@ use tokio::time::timeout;
 
 mod storage_utility;
 
-const KEY_QUERY_PAGE_SIZE: usize = 1000;
+const KEY_QUERY_PAGE_SIZE: usize = 500;
 
 /// The client.
 pub struct SubstrateClient {
@@ -223,7 +223,11 @@ impl SubstrateClient {
     }
 
     /// Get active era at the given block.
-    pub async fn get_active_era(&self, block_hash: &str) -> anyhow::Result<Era> {
+    pub async fn get_active_era(
+        &self,
+        block_hash: &str,
+        babe_metadata: &RuntimeMetadataV14,
+    ) -> anyhow::Result<Era> {
         let hex_string: String = self
             .ws_client
             .request(
@@ -233,7 +237,7 @@ impl SubstrateClient {
             .await?;
         let active_era_info = Era::from(
             hex_string.as_str(),
-            get_metadata_era_duration_millis(&self.metadata)?,
+            get_metadata_era_duration_millis(babe_metadata, &self.metadata)?,
         )?;
         Ok(active_era_info)
     }
@@ -252,9 +256,8 @@ impl SubstrateClient {
     }
 
     /// Get current epoch at the given block.
-    pub async fn get_current_epoch(&self, block_hash: &str) -> anyhow::Result<Epoch> {
+    pub async fn get_current_epoch(&self, era: &Era, block_hash: &str) -> anyhow::Result<Epoch> {
         let index = self.get_current_epoch_index(block_hash).await?;
-        let era = self.get_active_era(block_hash).await?;
         let start_block_number = {
             let hex_string: String = self
                 .ws_client
@@ -593,6 +596,7 @@ impl SubstrateClient {
     #[allow(clippy::cognitive_complexity)]
     pub async fn get_all_validators(
         &self,
+        babe_metadata: &RuntimeMetadataV14,
         people_client: &SubstrateClient,
         block_hash: &str,
         era: &Era,
@@ -951,8 +955,8 @@ impl SubstrateClient {
             }
             // calculate return rates
             let total_staked = self.get_era_total_stake(era.index, block_hash).await?;
-            let eras_per_day =
-                (24 * 60 * 60 * 1000 / get_metadata_era_duration_millis(&self.metadata)?) as u128;
+            let eras_per_day = 24 * 60 * 60 * 1000
+                / get_metadata_era_duration_millis(babe_metadata, &self.metadata)? as u128;
             let last_era_total_reward = self
                 .get_era_total_validator_reward(era.index - 1, block_hash)
                 .await?;
@@ -1240,8 +1244,13 @@ impl SubstrateClient {
             &era_index,
             Some(block_hash),
         );
-        let hex_string: String = self.ws_client.request("state_getStorage", params).await?;
-        let reward_points = decode_hex_string(hex_string.as_str())?;
+        let maybe_hex_string: Option<String> =
+            self.ws_client.request("state_getStorage", params).await?;
+        let reward_points = if let Some(hex_string) = maybe_hex_string {
+            decode_hex_string(hex_string.as_str())?
+        } else {
+            Default::default()
+        };
         Ok(reward_points)
     }
 
