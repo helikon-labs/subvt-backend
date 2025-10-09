@@ -331,14 +331,14 @@ impl BlockProcessor {
             let era_stakers = substrate_client
                 .get_era_stakers(&active_era, &block_hash)
                 .await?;
+            let total_stake = substrate_client
+                .get_era_total_stake(active_era.index, &block_hash)
+                .await?;
+            postgres
+                .save_era(&active_era, total_stake, &era_stakers)
+                .await?;
             if last_epoch_index != current_epoch.index {
                 log::info!("New epoch. Persist epoch, and persist era if it doesn't exist.");
-                let total_stake = substrate_client
-                    .get_era_total_stake(active_era.index, &block_hash)
-                    .await?;
-                postgres
-                    .save_era(&active_era, total_stake, &era_stakers)
-                    .await?;
                 postgres
                     .save_epoch(&current_epoch, active_era.index)
                     .await?;
