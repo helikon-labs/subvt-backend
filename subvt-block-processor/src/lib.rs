@@ -905,11 +905,10 @@ impl Service for BlockProcessor {
 
     async fn run(&'static self) -> anyhow::Result<()> {
         match CONFIG.block_processor.chain_type.as_str() {
-            "relay" => self.subscribe_relay_chain(),
-            "asset_hub" => self.subscribe_asset_hub(),
+            "relay" => self.subscribe_relay_chain().await?,
+            "asset_hub" => self.subscribe_asset_hub().await?,
             _ => panic!("Unknown chain type: {}", CONFIG.block_processor.chain_type),
         }
-        .await?;
         Ok(())
     }
 }
