@@ -325,7 +325,7 @@ impl BlockProcessor {
             .get_active_era(&block_hash, &relay_substrate_client.metadata)
             .await?;
         let current_epoch = relay_substrate_client
-            .get_current_epoch(&active_era, &block_hash)
+            .get_current_epoch(&active_era, &relay_block_hash)
             .await?;
         if last_epoch_index != current_epoch.index || last_era_index != active_era.index {
             let era_stakers = substrate_client

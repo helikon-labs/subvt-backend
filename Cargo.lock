@@ -4639,25 +4639,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-im-online"
-version = "40.0.0"
-source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-v1.19.2#2caeef482a437414c6bed2395a16abe08fccbfbb"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "pallet-authorship",
- "parity-scale-codec",
- "scale-info",
- "sp-application-crypto",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-staking",
-]
-
-[[package]]
 name = "pallet-message-queue"
 version = "44.0.0"
 source = "git+https://github.com/paritytech/polkadot-sdk.git?tag=polkadot-v1.19.2#2caeef482a437414c6bed2395a16abe08fccbfbb"
@@ -8088,7 +8069,6 @@ dependencies = [
  "pallet-conviction-voting",
  "pallet-democracy",
  "pallet-identity",
- "pallet-im-online",
  "pallet-multisig",
  "pallet-referenda",
  "pallet-staking",
