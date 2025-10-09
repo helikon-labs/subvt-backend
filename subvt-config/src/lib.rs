@@ -133,8 +133,7 @@ pub struct PostgreSQLConfig {
 /// SubVT block processor configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct BlockProcessorConfig {
-    /// Indexing starts at this block, indexes all blocks up to
-    /// current blocks, then continues with every new block.
+    pub chain_type: String,
     pub relay_start_block_number: u64,
     pub asset_hub_start_block_number: u64,
 }

@@ -19,7 +19,30 @@ services:
       - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
       # rpc
       - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
-      # start block
+      # block processor
+      - SUBVT__BLOCK_PROCESSOR__CHAIN_TYPE=relay
+      - SUBVT__BLOCK_PROCESSOR__RELAY_START_BLOCK_NUMBER=${POLKADOT_BLOCK_PROCESSOR_RELAY_START_NUMBER}
+      - SUBVT__BLOCK_PROCESSOR__ASSET_HUB_START_BLOCK_NUMBER=${POLKADOT_BLOCK_PROCESSOR_ASSET_HUB_START_NUMBER}
+  subvt_polkadot_asset_hub_block_processor:
+    container_name: subvt_polkadot_asset_hub_block_processor
+    restart: unless-stopped
+    image: "helikon/subvt-block-processor:${VERSION}"
+    networks:
+      - subvt_polkadot
+    environment:
+      - SUBVT_ENV=${ENV}
+      - SUBVT_NETWORK=polkadot
+      - SUBVT_CONFIG_DIR=/subvt/config
+      # log level
+      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
+      # metrics
+      - SUBVT__METRICS__HOST=0.0.0.0
+      # postgres
+      - SUBVT__NETWORK_POSTGRES__HOST=subvt_polkadot_postgres
+      # rpc
+      - SUBVT__SUBSTRATE__RPC_URL=${POLKADOT_RPC_URL}
+      # block processor
+      - SUBVT__BLOCK_PROCESSOR__CHAIN_TYPE=asset_hub
       - SUBVT__BLOCK_PROCESSOR__RELAY_START_BLOCK_NUMBER=${POLKADOT_BLOCK_PROCESSOR_RELAY_START_NUMBER}
       - SUBVT__BLOCK_PROCESSOR__ASSET_HUB_START_BLOCK_NUMBER=${POLKADOT_BLOCK_PROCESSOR_ASSET_HUB_START_NUMBER}
   subvt_polkadot_validator_list_updater:

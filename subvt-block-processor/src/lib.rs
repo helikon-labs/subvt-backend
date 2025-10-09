@@ -904,7 +904,12 @@ impl Service for BlockProcessor {
     }
 
     async fn run(&'static self) -> anyhow::Result<()> {
-        let _ = tokio::try_join!(self.subscribe_asset_hub(), self.subscribe_relay_chain(),)?;
+        match CONFIG.block_processor.chain_type.as_str() {
+            "relay" => self.subscribe_relay_chain(),
+            "asset_hub" => self.subscribe_asset_hub(),
+            _ => panic!("Unknown chain type: {}", CONFIG.block_processor.chain_type),
+        }
+        .await?;
         Ok(())
     }
 }
