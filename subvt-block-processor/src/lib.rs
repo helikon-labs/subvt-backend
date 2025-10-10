@@ -289,6 +289,7 @@ impl BlockProcessor {
         block_number: u64,
         persist_era_reward_points: bool,
     ) -> anyhow::Result<()> {
+        log::info!("Process ASSET_HUB finalized block {}.", block_number);
         let block_hash = substrate_client.get_block_hash(block_number).await?;
         let block_header = substrate_client.get_block_header(&block_hash).await?;
         let runtime_upgrade_info = substrate_client
@@ -319,12 +320,15 @@ impl BlockProcessor {
                 runtime_information.epoch_index,
             )
         };
+        log::info!("Get active validator account ids.");
         let active_validator_account_ids = relay_substrate_client
             .get_active_validator_account_ids(&relay_block_hash)
             .await?;
+        log::info!("Get active era.");
         let active_era = substrate_client
             .get_active_era(&block_hash, &relay_substrate_client.metadata)
             .await?;
+        log::info!("Get current epoch.");
         let current_epoch = relay_substrate_client
             .get_current_epoch(&active_era, &relay_block_hash)
             .await?;
@@ -427,22 +431,6 @@ impl BlockProcessor {
             runtime_information.era_index = active_era.index;
             runtime_information.epoch_index = current_epoch.index;
         }
-
-        if !postgres.era_exists(active_era.index).await? {
-            log::info!("Era doesn't exist - persist.");
-            let total_stake = substrate_client
-                .get_era_total_stake(active_era.index, &block_hash)
-                .await?;
-            let era_stakers = substrate_client
-                .get_era_stakers(&active_era, &block_hash)
-                .await?;
-            postgres
-                .save_era(&active_era, total_stake, &era_stakers)
-                .await?;
-        }
-        let current_epoch = relay_substrate_client
-            .get_current_epoch(&active_era, &relay_block_hash)
-            .await?;
         log::info!("Persist era reward points.");
         if persist_era_reward_points {
             self.persist_era_reward_points(
@@ -469,7 +457,7 @@ impl BlockProcessor {
             block_number
         );
 
-        log::info!("Save block.");
+        log::info!("Save finalized block {}.", block_number);
         let block_timestamp = substrate_client.get_block_timestamp(&block_hash).await?;
         let runtime_version = substrate_client.last_runtime_upgrade_info.spec_version as i16;
         postgres
@@ -483,10 +471,12 @@ impl BlockProcessor {
                 (14, runtime_version),
             )
             .await?;
+        log::info!("Saved finalized block {}.", block_number);
         // process/persist events
         let mut extrinsic_event_map: HashMap<u32, Vec<(usize, SubstrateEvent)>> =
             HashMap::default();
         for (index, event_result) in event_results.iter().enumerate() {
+            log::info!("Process event #{} of block {}.", index, block_number);
             match event_result {
                 Ok(event) => {
                     if let Some(extrinsic_index) = event.get_extrinsic_index() {
@@ -542,8 +532,10 @@ impl BlockProcessor {
                 },
             }
         }
+        log::info!("Processed events in block {}.", block_number);
         // persist extrinsics
         for (index, extrinsic_result) in extrinsic_results.iter().enumerate() {
+            log::info!("Process extrinsic #{} of block {}.", index, block_number);
             match extrinsic_result {
                 Ok(extrinsic) => {
                     // check events for batch & batch_all

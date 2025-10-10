@@ -24,15 +24,12 @@ pub async fn start<T: ToSocketAddrs + Debug>(address: T) {
 
     log::info!("Metrics server started on {address:?}");
     let routes = route.with(warp::log("subvt_metrics_server"));
-    warp::serve(routes)
-        .run(
-            address
-                .to_socket_addrs()
-                .expect("Invalid server address.")
-                .next()
-                .unwrap(),
-        )
-        .await;
+    let socket_addr = address
+        .to_socket_addrs()
+        .expect("Invalid server address.")
+        .next()
+        .expect("Could not resolve address.");
+    warp::serve(routes).run(socket_addr).await;
 }
 
 async fn metrics_text_handler(registry: Registry) -> Result<impl Reply, Rejection> {

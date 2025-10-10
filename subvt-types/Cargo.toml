@@ -1,6 +1,6 @@
 [package]
 name = "subvt-types"
-version = "0.24.12"
+version = "0.24.13"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -9,31 +9,31 @@ anyhow = { workspace = true }
 chrono = { version = "0.4", default-features = true, features = ["serde"] }
 enum-iterator = "2.3"
 frame-metadata = { version = "15.0", features = ["std", "v14"] }
-frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
+frame-support = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
 hex = "0.4"
 lazy_static = { workspace = true }
 log = { workspace = true }
 num-traits = { workspace = true }
-pallet-conviction-voting = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-pallet-democracy = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-pallet-identity = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-pallet-multisig = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-pallet-referenda = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-pallet-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
+pallet-conviction-voting = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+pallet-democracy = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+pallet-identity = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+pallet-multisig = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+pallet-referenda = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+pallet-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
 parity-scale-codec = { version = "3.7", default-features = false, features = ["derive", "full"] }
-polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
+polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
 rustc-hash = "2.1"
 scale-info = "2.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
+sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
+staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
 sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono", "bigdecimal"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }

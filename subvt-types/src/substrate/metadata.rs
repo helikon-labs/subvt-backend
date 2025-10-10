@@ -357,11 +357,14 @@ pub fn get_metadata_constant<V: Decode>(
 pub fn get_metadata_expected_block_time_millis(
     metadata: &RuntimeMetadataV14,
 ) -> anyhow::Result<u64> {
+    log::info!("Get metadata expected block time millis.");
     get_metadata_constant(metadata, "Babe", "ExpectedBlockTime")
 }
 
 pub fn get_metadata_epoch_duration_millis(metadata: &RuntimeMetadataV14) -> anyhow::Result<u64> {
+    log::info!("Get metadata epoch duration millis.");
     let expected_block_time_millis: u64 = get_metadata_expected_block_time_millis(metadata)?;
+    log::info!("Get metadata epoch duration millis - epoch duration.");
     let epoch_duration_blocks: u64 = get_metadata_constant(metadata, "Babe", "EpochDuration")?;
     Ok(epoch_duration_blocks * expected_block_time_millis)
 }
@@ -370,12 +373,13 @@ pub fn get_metadata_era_duration_millis(
     babe_metadata: &RuntimeMetadataV14,
     staking_metadata: &RuntimeMetadataV14,
 ) -> anyhow::Result<u64> {
-    let epoch_duration_blocks: u64 = get_metadata_constant(babe_metadata, "Babe", "EpochDuration")?;
+    log::info!("Get metadata era duration millis - era duration.");
+    let epoch_duration_millis: u64 = get_metadata_epoch_duration_millis(babe_metadata)?;
+    log::info!("Get metadata era duration millis - sessions per era.");
     let sessions_per_era: u32 =
         get_metadata_constant(staking_metadata, "Staking", "SessionsPerEra")?;
-    let expected_block_time_millis: u64 = get_metadata_expected_block_time_millis(babe_metadata)?;
-    let era_duration_blocks = epoch_duration_blocks * sessions_per_era as u64;
-    Ok(era_duration_blocks * expected_block_time_millis)
+    let era_duration_millis = epoch_duration_millis * sessions_per_era as u64;
+    Ok(era_duration_millis)
 }
 
 pub fn get_variant_type_code(

@@ -1,6 +1,6 @@
 [package]
 name = "subvt-metrics"
-version = "0.24.12"
+version = "0.24.13"
 edition = "2021"
 rust-version = "1.67.0"
 
@@ -10,4 +10,4 @@ once_cell = "1"
 prometheus = "0.14"
 thiserror = { workspace = true }
 tokio = { version = "1.47", features = ["time", "rt-multi-thread"] }
-warp = { version = "0.3", default-features = false }
+warp = { version = "0.4", features = ["server"] }

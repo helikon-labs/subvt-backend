@@ -36,11 +36,13 @@ impl TelegramSender {
             disable_notification: None,
             protect_content: None,
             message_effect_id: None,
+            suggested_post_parameters: None,
             reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
             business_connection_id: None,
             allow_paid_broadcast: None,
+            direct_messages_topic_id: None,
         };
         match self.telegram_client.send_message(&params).await {
             Ok(response) => {

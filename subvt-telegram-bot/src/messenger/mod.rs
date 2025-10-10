@@ -175,11 +175,13 @@ impl Messenger for MessengerImpl {
             disable_notification: None,
             protect_content: None,
             message_effect_id: None,
+            suggested_post_parameters: None,
             reply_parameters: None,
             reply_markup: None,
             message_thread_id: None,
             business_connection_id: None,
             allow_paid_broadcast: None,
+            direct_messages_topic_id: None,
         };
         match self.api.send_photo(&params).await {
             Ok(response) => Ok(response),
@@ -275,11 +277,13 @@ impl Messenger for MessengerImpl {
             disable_notification: None,
             protect_content: None,
             message_effect_id: None,
+            suggested_post_parameters: None,
             reply_parameters: None,
             reply_markup: inline_keyboard,
             message_thread_id: None,
             business_connection_id: None,
             allow_paid_broadcast: None,
+            direct_messages_topic_id: None,
         };
         log::info!(
             "Message to chat {}: {}",
