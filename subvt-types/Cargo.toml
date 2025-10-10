@@ -32,7 +32,7 @@ serde_json = "1.0"
 sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
-sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
+sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.0" }
 staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.19.2" }
 sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono", "bigdecimal"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
