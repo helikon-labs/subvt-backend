@@ -663,10 +663,10 @@ impl BlockProcessor {
                         log::debug!("RELAY Busy processing past blocks. Skip block #{finalized_block_number} for now.");
                         return Ok(());
                     }
+                    RELAY_IS_BUSY.store(true, Ordering::SeqCst);
                     let block_processor_substrate_client = relay_substrate_client.clone();
                     let asset_hub_substrate_client = asset_hub_substrate_client.clone();
                     let postgres = postgres.clone();
-                    RELAY_IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
                         let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
                         let mut asset_hub_substrate_client = asset_hub_substrate_client.lock().await;
@@ -810,11 +810,11 @@ impl BlockProcessor {
                         log::debug!("ASSET_HUB Busy processing past blocks. Skip block #{finalized_block_number} for now.");
                         return Ok(());
                     }
+                    ASSET_HUB_IS_BUSY.store(true, Ordering::SeqCst);
                     let block_processor_substrate_client = substrate_client.clone();
                     let relay_substrate_client = relay_substrate_client.clone();
                     let postgres = postgres.clone();
                     let runtime_information = runtime_information.clone();
-                    ASSET_HUB_IS_BUSY.store(true, Ordering::SeqCst);
                     tokio::spawn(async move {
                         let mut block_processor_substrate_client = block_processor_substrate_client.lock().await;
                         let mut relay_substrate_client = relay_substrate_client.lock().await;
@@ -827,6 +827,7 @@ impl BlockProcessor {
                                 return;
                             }
                         };
+                        log::info!("Processed block {processed_block_height}, finalized block {finalized_block_number}.");
                         if processed_block_height < (finalized_block_number - 1) {
                             let mut block_number = std::cmp::max(
                                 processed_block_height,
@@ -864,7 +865,7 @@ impl BlockProcessor {
                         } else {
                             // update current era reward points every 3 minutes
                             let blocks_per_3_minutes = 3 * 60 * 1000
-                                / get_metadata_expected_block_time_millis(&block_processor_substrate_client.metadata).unwrap();
+                                / get_metadata_expected_block_time_millis(&relay_substrate_client.metadata).unwrap();
                             log::info!("ASSET_HUB Process block #{finalized_block_number}.");
                             let start = std::time::Instant::now();
                             let update_result = self.process_asset_hub_block(
