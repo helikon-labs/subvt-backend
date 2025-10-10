@@ -52,12 +52,14 @@ impl BlockProcessor {
         active_validator_account_ids: &[AccountId],
         era_stakers: &EraStakers,
     ) -> anyhow::Result<()> {
-        log::info!("Persist era #{} validators.", era.index);
+        log::info!(
+            "Persist {} validators and {} stakers for era #{}.",
+            active_validator_account_ids.len(),
+            era_stakers.stakers.len(),
+            era.index,
+        );
         let all_validator_account_ids = substrate_client
             .get_all_validator_account_ids(block_hash)
-            .await?;
-        let bonded_account_id_map = substrate_client
-            .get_bonded_account_id_map(&all_validator_account_ids, block_hash)
             .await?;
         let validator_stake_map = {
             let mut validator_stake_map: HashMap<AccountId, ValidatorStake> = HashMap::default();
@@ -74,7 +76,6 @@ impl BlockProcessor {
                 era.index,
                 active_validator_account_ids,
                 &all_validator_account_ids,
-                &bonded_account_id_map,
                 &validator_stake_map,
                 &validator_prefs_map,
             )
@@ -354,6 +355,7 @@ impl BlockProcessor {
                     let para_validator_groups = relay_substrate_client
                         .get_para_validator_groups(&relay_block_hash)
                         .await?;
+                    let mut session_para_validators = Vec::new();
                     for (group_index, group_para_validator_indices) in
                         para_validator_groups.iter().enumerate()
                     {
@@ -362,22 +364,30 @@ impl BlockProcessor {
                                 para_validator_indices[*group_para_validator_index as usize];
                             let active_validator_account_id =
                                 active_validator_account_ids[active_validator_index as usize];
-                            postgres
-                                .save_session_para_validator(
-                                    active_era.index,
-                                    current_epoch.index,
-                                    &active_validator_account_id,
-                                    active_validator_index,
-                                    group_index as u32,
-                                    *group_para_validator_index,
-                                )
-                                .await?;
+                            session_para_validators.push((
+                                active_validator_account_id,
+                                active_validator_index,
+                                group_index as u32,
+                                *group_para_validator_index,
+                            ));
                         }
                     }
+                    postgres
+                        .save_session_para_validators(
+                            active_era.index,
+                            current_epoch.index,
+                            &session_para_validators,
+                        )
+                        .await?;
+                    log::info!(
+                        "Persisted {} session para validators.",
+                        para_validator_indices.len()
+                    );
                 } else {
                     log::info!("Parachains not active at this block height.");
                 }
             }
+
             if last_era_index != active_era.index {
                 let era_stakers = substrate_client
                     .get_era_stakers(&active_era, &block_hash)
@@ -392,6 +402,7 @@ impl BlockProcessor {
                 )
                 .await?;
                 // update last era
+                log::info!("Update last era.");
                 let last_era_total_validator_reward = substrate_client
                     .get_era_total_validator_reward(active_era.index - 1, &block_hash)
                     .await?;
@@ -401,6 +412,7 @@ impl BlockProcessor {
                         last_era_total_validator_reward,
                     )
                     .await?;
+                log::info!("Persist era reward points.");
                 self.persist_era_reward_points(
                     substrate_client,
                     postgres,
@@ -417,6 +429,7 @@ impl BlockProcessor {
         }
 
         if !postgres.era_exists(active_era.index).await? {
+            log::info!("Era doesn't exist - persist.");
             let total_stake = substrate_client
                 .get_era_total_stake(active_era.index, &block_hash)
                 .await?;
@@ -430,6 +443,7 @@ impl BlockProcessor {
         let current_epoch = relay_substrate_client
             .get_current_epoch(&active_era, &relay_block_hash)
             .await?;
+        log::info!("Persist era reward points.");
         if persist_era_reward_points {
             self.persist_era_reward_points(
                 substrate_client,
@@ -439,12 +453,15 @@ impl BlockProcessor {
             )
             .await?;
         }
+
+        log::info!("Fetch and decode block events.");
         let event_results = substrate_client.get_block_events(&block_hash).await?;
         log::info!(
             "ASSET_HUB Got {} events for block #{}.",
             event_results.len(),
             block_number
         );
+        log::info!("Fetch and decode block extrinsics.");
         let extrinsic_results = substrate_client.get_block_extrinsics(&block_hash).await?;
         log::info!(
             "ASSET_HUB Got {} extrinsics for block #{}.",
@@ -452,6 +469,7 @@ impl BlockProcessor {
             block_number
         );
 
+        log::info!("Save block.");
         let block_timestamp = substrate_client.get_block_timestamp(&block_hash).await?;
         let runtime_version = substrate_client.last_runtime_upgrade_info.spec_version as i16;
         postgres

@@ -9,6 +9,8 @@ use crate::{
 use frame_metadata::RuntimeMetadataV14;
 use parity_scale_codec::{Compact, Decode, Input};
 
+use staging_xcm::latest::Location;
+
 pub mod conviction_voting;
 pub mod multisig;
 pub mod proxy;
@@ -48,6 +50,12 @@ pub enum SubstrateExtrinsic {
     },
 }
 
+#[derive(Clone, Debug, Decode)]
+pub struct TransactionPayment {
+    pub tip: Compact<Balance>,
+    pub asset_id: Option<Location>,
+}
+
 impl SubstrateExtrinsic {
     pub fn decode_extrinsic(
         chain: &Chain,
@@ -67,9 +75,15 @@ impl SubstrateExtrinsic {
                 let signer = MultiAddress::decode(&mut *bytes)?;
                 let signature = sp_runtime::MultiSignature::decode(&mut *bytes)?;
                 let era: sp_runtime::generic::Era = Decode::decode(&mut *bytes)?;
-                let nonce: Compact<u32> = Decode::decode(&mut *bytes)?; // u32
-                let tip: Compact<Balance> = Decode::decode(&mut *bytes)?;
-                let _extra: u8 = Decode::decode(&mut *bytes)?;
+                let nonce: Compact<u32> = Decode::decode(&mut *bytes)?;
+                let tip: Compact<Balance> = match chain {
+                    Chain::KusamaAssetHub | Chain::PolkadotAssetHub => {
+                        let payment: TransactionPayment = Decode::decode(&mut *bytes)?;
+                        payment.tip
+                    }
+                    _ => Decode::decode(&mut *bytes)?,
+                };
+                let _extra: u8 = Decode::decode(&mut *bytes)?; // hash extension
                 let signature = Signature {
                     signer,
                     signature,
@@ -77,12 +91,6 @@ impl SubstrateExtrinsic {
                     nonce: Some(nonce.0),
                     tip: Some(tip.0),
                 };
-                match chain {
-                    Chain::KusamaAssetHub | Chain::PolkadotAssetHub => {
-                        let _: u8 = Decode::decode(&mut *bytes)?;
-                    }
-                    _ => (),
-                }
                 Some(signature)
             } else {
                 None

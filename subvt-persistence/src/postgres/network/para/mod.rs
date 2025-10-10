@@ -1,4 +1,5 @@
 use crate::postgres::network::PostgreSQLNetworkStorage;
+use sqlx::{Postgres, QueryBuilder};
 use subvt_types::{
     crypto::AccountId, report::SessionParaValidator, substrate::para::ParaCoreAssignment,
 };
@@ -27,6 +28,40 @@ impl PostgreSQLNetworkStorage {
             para_validator_group_index: ev.0 as u64,
             para_validator_index: ev.1 as u64,
         }))
+    }
+
+    pub async fn save_session_para_validators(
+        &self,
+        era_index: u32,
+        session_index: u64,
+        session_para_validators: &[(AccountId, u32, u32, u32)],
+    ) -> anyhow::Result<()> {
+        for chunk in session_para_validators.chunks(250) {
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO sub_session_para_validator (era_index, session_index, validator_account_id, active_validator_index, para_validator_group_index, para_validator_index) ",
+            );
+            query_builder.push_values(chunk, |mut query, session_para_validator| {
+                query
+                    .push_bind(era_index as i64)
+                    .push_bind(session_index as i64)
+                    .push_bind(session_para_validator.0.to_string())
+                    .push_bind(session_para_validator.1 as i64)
+                    .push_bind(session_para_validator.2 as i64)
+                    .push_bind(session_para_validator.3 as i64);
+            });
+            query_builder.push(
+                r#"
+                ON CONFLICT(session_index, validator_account_id) DO UPDATE SET
+                    active_validator_index = EXCLUDED.active_validator_index,
+                    para_validator_group_index = EXCLUDED.para_validator_group_index,
+                    para_validator_index = EXCLUDED.para_validator_index
+            "#,
+            );
+            let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                query_builder.build();
+            query.execute(&self.connection_pool).await?;
+        }
+        Ok(())
     }
 
     pub async fn save_session_para_validator(

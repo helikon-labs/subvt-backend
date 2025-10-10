@@ -8086,6 +8086,7 @@ dependencies = [
  "sp-runtime",
  "sp-staking",
  "sqlx",
+ "staging-xcm",
  "subvt-proc-macro",
  "subvt-utility",
  "thiserror 2.0.17",

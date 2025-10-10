@@ -2,6 +2,7 @@
 //! Each supported network has a separate database.
 use crate::postgres::network::PostgreSQLNetworkStorage;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use sqlx::{Postgres, QueryBuilder};
 use subvt_types::{
     crypto::AccountId,
     rdb::ValidatorInfo,
@@ -122,65 +123,63 @@ impl PostgreSQLNetworkStorage {
         era_index: u32,
         active_validator_account_ids: &[AccountId],
         all_validator_account_ids: &[AccountId],
-        bonded_account_id_map: &HashMap<AccountId, AccountId>,
         validator_stake_map: &HashMap<AccountId, ValidatorStake>,
         validator_prefs_map: &HashMap<AccountId, ValidatorPreferences>,
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
+        let mut validators = Vec::new();
         for validator_account_id in all_validator_account_ids {
-            // create validator account (if not exists)
-            sqlx::query(
-                r#"
-                INSERT INTO sub_account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                "#,
-            )
-            .bind(validator_account_id.to_string())
-            .execute(&mut *transaction)
-            .await?;
-            // create controller account id (if not exists)
-            let maybe_controller_account_id = bonded_account_id_map.get(validator_account_id);
-            if let Some(controller_account_id) = maybe_controller_account_id {
-                sqlx::query(
-                    r#"
-                    INSERT INTO sub_account (id)
-                    VALUES ($1)
-                    ON CONFLICT (id) DO NOTHING
-                    "#,
-                )
-                .bind(controller_account_id.to_string())
-                .execute(&mut *transaction)
-                .await?;
-            }
             let maybe_active_validator_index = active_validator_account_ids
                 .iter()
                 .position(|account_id| account_id == validator_account_id);
-            // get prefs
             let maybe_validator_prefs = validator_prefs_map.get(validator_account_id);
-            // get stakes for active
             let maybe_validator_stake = validator_stake_map.get(validator_account_id);
-
-            // create record (if not exists)
-            sqlx::query(
-                r#"
-                INSERT INTO sub_era_validator (era_index, validator_account_id, controller_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake, active_nominator_count)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                ON CONFLICT (era_index, validator_account_id) DO NOTHING
-                "#,
-            )
-                .bind(era_index as i64)
-                .bind(validator_account_id.to_string())
-                .bind(maybe_controller_account_id.map(|id| id.to_string()))
-                .bind(maybe_active_validator_index.is_some())
-                .bind(maybe_active_validator_index.map(|index| index as i64))
-                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.commission_per_billion as i64))
-                .bind(maybe_validator_prefs.map(|validator_prefs| validator_prefs.blocks_nominations))
-                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()))
-                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.total_stake.to_string()))
-                .bind(maybe_validator_stake.map(|validator_stake| validator_stake.nominators.len() as i32))
-                .execute(&mut *transaction)
-                .await?;
+            validators.push((
+                *validator_account_id,
+                *validator_account_id,
+                maybe_active_validator_index.is_some(),
+                maybe_active_validator_index.map(|index| index as i64),
+                maybe_validator_prefs
+                    .map(|validator_prefs| validator_prefs.commission_per_billion as i64),
+                maybe_validator_prefs.map(|validator_prefs| validator_prefs.blocks_nominations),
+                maybe_validator_stake.map(|validator_stake| validator_stake.self_stake.to_string()),
+                maybe_validator_stake
+                    .map(|validator_stake| validator_stake.total_stake.to_string()),
+                maybe_validator_stake
+                    .map(|validator_stake| validator_stake.nominators.len() as i32),
+            ));
+        }
+        for chunk in validators.chunks(250) {
+            {
+                let mut query_builder = QueryBuilder::new("INSERT INTO sub_account (id)");
+                query_builder.push_values(chunk, |mut query, validator| {
+                    query.push_bind(validator.0.to_string());
+                });
+                query_builder.push(" ON CONFLICT (id) DO NOTHING");
+                let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                    query_builder.build();
+                query.execute(&mut *transaction).await?;
+            }
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO sub_era_validator (era_index, validator_account_id, controller_account_id, is_active, active_validator_index, commission_per_billion, blocks_nominations, self_stake, total_stake, active_nominator_count)",
+            );
+            query_builder.push_values(chunk, |mut query, validator| {
+                query
+                    .push_bind(era_index as i64)
+                    .push_bind(validator.0.to_string())
+                    .push_bind(validator.1.to_string())
+                    .push_bind(validator.2)
+                    .push_bind(validator.3)
+                    .push_bind(validator.4)
+                    .push_bind(validator.5)
+                    .push_bind(&validator.6)
+                    .push_bind(&validator.7)
+                    .push_bind(validator.8);
+            });
+            query_builder.push(" ON CONFLICT (era_index, validator_account_id) DO NOTHING");
+            let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                query_builder.build();
+            query.execute(&mut *transaction).await?;
         }
         transaction.commit().await?;
         Ok(())
@@ -188,43 +187,48 @@ impl PostgreSQLNetworkStorage {
 
     pub async fn save_era_stakers(&self, era_stakers: &EraStakers) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
+        let mut account_ids = Vec::new();
+        let mut records = Vec::new();
         for validator_stake in &era_stakers.stakers {
-            sqlx::query(
-                r#"
-                INSERT INTO sub_account (id)
-                VALUES ($1)
-                ON CONFLICT (id) DO NOTHING
-                "#,
-            )
-            .bind(validator_stake.account.id.to_string())
-            .execute(&mut *transaction)
-            .await?;
+            account_ids.push(validator_stake.account.id);
             for nominator_stake in &validator_stake.nominators {
-                // create nominator account (if not exists)
-                sqlx::query(
-                    r#"
-                    INSERT INTO sub_account (id)
-                    VALUES ($1)
-                    ON CONFLICT (id) DO NOTHING
-                    "#,
-                )
-                .bind(nominator_stake.account.id.to_string())
-                .execute(&mut *transaction)
-                .await?;
-                sqlx::query(
-                    r#"
-                    INSERT INTO sub_era_staker (era_index, validator_account_id, nominator_account_id, stake)
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING
-                    "#,
-                )
-                    .bind(era_stakers.era.index as i64)
-                    .bind(validator_stake.account.id.to_string())
-                    .bind(nominator_stake.account.id.to_string())
-                    .bind(nominator_stake.stake.to_string())
-                    .execute(&mut *transaction)
-                    .await?;
+                account_ids.push(nominator_stake.account.id);
+                records.push((
+                    era_stakers.era.index as i64,
+                    validator_stake.account.id,
+                    nominator_stake.account.id,
+                    nominator_stake.stake,
+                ));
             }
+        }
+
+        for chunk in account_ids.chunks(500) {
+            let mut query_builder = QueryBuilder::new("INSERT INTO sub_account (id)");
+            query_builder.push_values(chunk, |mut query, account_id| {
+                query.push_bind(account_id.to_string());
+            });
+            query_builder.push(" ON CONFLICT (id) DO NOTHING");
+            let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                query_builder.build();
+            query.execute(&mut *transaction).await?;
+        }
+        for chunk in records.chunks(250) {
+            let mut query_builder = QueryBuilder::new(
+                "INSERT INTO sub_era_staker (era_index, validator_account_id, nominator_account_id, stake)",
+            );
+            query_builder.push_values(chunk, |mut query, record| {
+                query
+                    .push_bind(record.0)
+                    .push_bind(record.1.to_string())
+                    .push_bind(record.2.to_string())
+                    .push_bind(record.3.to_string());
+            });
+            query_builder.push(
+                " ON CONFLICT (era_index, validator_account_id, nominator_account_id) DO NOTHING",
+            );
+            let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                query_builder.build();
+            query.execute(&mut *transaction).await?;
         }
         transaction.commit().await?;
         Ok(())
@@ -313,7 +317,10 @@ impl PostgreSQLNetworkStorage {
         era_reward_points_map: HashMap<AccountId, u32>,
     ) -> anyhow::Result<()> {
         let mut transaction = self.connection_pool.begin().await?;
+        let mut records = Vec::new();
         for (validator_account_id, reward_points) in era_reward_points_map {
+            records.push((validator_account_id, reward_points as i64));
+            /*
             sqlx::query(
                 r#"
                 UPDATE sub_era_validator SET reward_points = $1, updated_at = now()
@@ -325,7 +332,33 @@ impl PostgreSQLNetworkStorage {
             .bind(validator_account_id.to_string())
             .execute(&mut *transaction)
             .await?;
+             */
         }
+
+        for chunk in records.chunks(250) {
+            let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+                r#"UPDATE sub_era_validator AS v
+               SET reward_points = c.reward_points, updated_at = now()
+               FROM (VALUES "#,
+            );
+            let mut separated = query_builder.separated(", ");
+            for (account_id, reward_points) in chunk.iter() {
+                separated.push("(");
+                separated.push_bind_unseparated(account_id.to_string());
+                separated.push_unseparated(", ");
+                separated.push_bind_unseparated(*reward_points);
+                separated.push_unseparated(", ");
+                separated.push_bind_unseparated(era_index as i64);
+                separated.push_unseparated(")");
+            }
+            query_builder.push(
+                r#") AS c(validator_account_id, reward_points, era_index)
+               WHERE v.validator_account_id = c.validator_account_id
+               AND v.era_index = c.era_index"#,
+            );
+            query_builder.build().execute(&mut *transaction).await?;
+        }
+
         transaction.commit().await?;
         Ok(())
     }

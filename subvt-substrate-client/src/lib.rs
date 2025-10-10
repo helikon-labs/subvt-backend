@@ -371,39 +371,6 @@ impl SubstrateClient {
         Ok(all_validator_ids)
     }
 
-    /// Gets the map from stash account ids to controller account ids at the given block
-    /// for the given stash account ids.
-    pub async fn get_bonded_account_id_map(
-        &self,
-        account_ids: &[AccountId],
-        block_hash: &str,
-    ) -> anyhow::Result<HashMap<AccountId, AccountId>> {
-        let mut map = HashMap::default();
-        let keys: Vec<String> = account_ids
-            .iter()
-            .map(|account_id| get_storage_map_key(&self.metadata, "Staking", "Bonded", account_id))
-            .collect();
-        if keys.is_empty() {
-            return Ok(HashMap::default());
-        }
-        for chunk in keys.chunks(KEY_QUERY_PAGE_SIZE) {
-            let chunk_values: Vec<StorageChangeSet<String>> = self
-                .ws_client
-                .request("state_queryStorageAt", rpc_params!(chunk, &block_hash))
-                .await?;
-            for (storage_key, data) in &chunk_values[0].changes {
-                if let Some(data) = data {
-                    let bytes: [u8; 32] = (&data.0 as &[u8]).try_into()?;
-                    map.insert(
-                        self.account_id_from_storage_key(storage_key),
-                        AccountId::from(bytes),
-                    );
-                }
-            }
-        }
-        Ok(map)
-    }
-
     /// Get the list of all active validators' stash account ids at the given block.
     pub async fn get_active_validator_account_ids(
         &self,
