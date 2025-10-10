@@ -9,6 +9,11 @@ scrape_configs:
     static_configs:
       - targets: [ "subvt_polkadot_block_processor:11000" ]
     metrics_path: "/metrics"
+  - job_name: subvt_asset_hub_block_processor
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ "subvt_polkadot_asset_hub_block_processor:11011" ]
+    metrics_path: "/metrics"
   - job_name: subvt_validator_list_updater
     scrape_interval: 5s
     static_configs:

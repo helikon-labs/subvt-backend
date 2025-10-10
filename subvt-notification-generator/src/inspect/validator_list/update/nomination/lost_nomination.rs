@@ -10,7 +10,6 @@ use subvt_types::substrate::{Balance, NominationSummary};
 use subvt_types::subvt::ValidatorDetails;
 
 impl NotificationGenerator {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_lost_nominations(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

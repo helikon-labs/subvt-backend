@@ -42,7 +42,6 @@ pub struct ScatterPoint<T: Display, U: Display> {
 }
 
 impl<T: Display, U: Display> ScatterPoint<T, U> {
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         x: f32,
         y: f32,

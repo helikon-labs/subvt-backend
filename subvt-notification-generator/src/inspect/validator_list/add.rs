@@ -8,7 +8,6 @@ use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::{crypto::AccountId, subvt::ValidatorDetails};
 
 impl NotificationGenerator {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn add_validators(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

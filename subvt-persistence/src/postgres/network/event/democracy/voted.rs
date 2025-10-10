@@ -5,7 +5,6 @@ use subvt_types::crypto::AccountId;
 use subvt_types::substrate::Balance;
 
 impl PostgreSQLNetworkStorage {
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_democracy_voted_event(
         &self,
         block_hash: &str,

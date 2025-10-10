@@ -222,6 +222,7 @@ impl TelegramBotConfig {
 pub struct MetricsConfig {
     pub host: String,
     pub block_processor_port: u16,
+    pub asset_hub_block_processor_port: u16,
     pub validator_list_updater_port: u16,
     pub validator_details_server_port: u16,
     pub active_validator_list_server_port: u16,

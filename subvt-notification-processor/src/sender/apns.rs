@@ -48,7 +48,6 @@ struct APNSNotificationData {
 }
 
 impl APNSSender {
-    #[allow(clippy::too_many_arguments)]
     async fn send_inner(
         &self,
         network_id: u32,

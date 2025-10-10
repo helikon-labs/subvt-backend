@@ -910,7 +910,11 @@ impl Service for BlockProcessor {
     fn get_metrics_server_addr() -> (&'static str, u16) {
         (
             CONFIG.metrics.host.as_str(),
-            CONFIG.metrics.block_processor_port,
+            match CONFIG.block_processor.chain_type.as_str() {
+                "relay" => CONFIG.metrics.block_processor_port,
+                "asset_hub" => CONFIG.metrics.asset_hub_block_processor_port,
+                _ => panic!("Unknown chain type: {}", CONFIG.block_processor.chain_type),
+            },
         )
     }
 

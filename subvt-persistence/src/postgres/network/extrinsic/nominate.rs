@@ -2,7 +2,6 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::crypto::AccountId;
 
 impl PostgreSQLNetworkStorage {
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_nominate_extrinsic(
         &self,
         block_hash: &str,

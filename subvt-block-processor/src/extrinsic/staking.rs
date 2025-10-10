@@ -4,7 +4,6 @@ use subvt_types::crypto::AccountId;
 use subvt_types::substrate::extrinsic::staking::StakingExtrinsic;
 use subvt_types::substrate::MultiAddress;
 
-#[allow(clippy::too_many_arguments)]
 #[allow(clippy::cognitive_complexity)]
 pub(crate) async fn process_staking_extrinsic(
     substrate_client: &SubstrateClient,

@@ -12,7 +12,6 @@ use subvt_types::{
 };
 
 impl NotificationGenerator {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_unclaimed_payouts(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

@@ -6,7 +6,6 @@ use subvt_types::substrate::event::SubstrateEvent;
 use subvt_types::substrate::extrinsic::multisig::MultisigExtrinsic;
 
 impl BlockProcessor {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn process_multisig_extrinsic(
         &self,
         substrate_client: &SubstrateClient,

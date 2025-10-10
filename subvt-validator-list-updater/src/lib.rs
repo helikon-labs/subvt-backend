@@ -207,20 +207,11 @@ impl ValidatorListUpdater {
         people_client: &SubstrateClient,
         postgres: &PostgreSQLNetworkStorage,
         processed_block_numbers: &Arc<RwLock<Vec<u64>>>,
-        relay_finalized_block_header: &BlockHeader,
+        block_number: u64,
+        block_hash: &str,
+        _header: &BlockHeader,
     ) -> anyhow::Result<Vec<ValidatorDetails>> {
-        // relay block
-        let relay_finalized_block_number = relay_finalized_block_header
-            .get_number()
-            .context("Error while extracting relay finalized block number.")?;
-        log::info!("Process new relay finalized block #{relay_finalized_block_number}.");
-        let relay_finalized_block_hash = relay_client
-            .get_block_hash(relay_finalized_block_number)
-            .await
-            .context("Error while fetching finalized block hash.")?;
-        let relay_finalized_block_timestamp = relay_client
-            .get_block_timestamp(&relay_finalized_block_hash)
-            .await?;
+        let relay_finalized_block_timestamp = relay_client.get_block_timestamp(block_hash).await?;
         // asset hub block
         let asset_hub_finalized_block_hash = asset_hub_client.get_finalized_block_hash().await?;
         let active_era = asset_hub_client
@@ -248,7 +239,7 @@ impl ValidatorListUpdater {
             let is_active_batch: Vec<bool> = validator_batch.iter().map(|v| v.is_active).collect();
             let mut db_validator_info_batch = postgres
                 .get_validator_info_batch(
-                    &relay_finalized_block_hash,
+                    block_hash,
                     &account_id_batch,
                     &is_active_batch,
                     active_era.index,
@@ -282,8 +273,8 @@ impl ValidatorListUpdater {
         let start = std::time::Instant::now();
         ValidatorListUpdater::update_redis(
             &active_era,
-            relay_finalized_block_number,
-            &relay_finalized_block_hash,
+            block_number,
+            block_hash,
             relay_finalized_block_timestamp,
             &validators,
         )
@@ -292,7 +283,7 @@ impl ValidatorListUpdater {
         log::info!("Redis updated. Took {} ms.", elapsed.as_millis());
         {
             let mut processed_block_numbers = processed_block_numbers.write().await;
-            processed_block_numbers.push(relay_finalized_block_number);
+            processed_block_numbers.push(block_number);
         }
         ValidatorListUpdater::clear_history(processed_block_numbers).await?;
         // update Redis processed block numbers
@@ -376,7 +367,7 @@ impl Service for ValidatorListUpdater {
             let postgres = Arc::new(
                 PostgreSQLNetworkStorage::new(&CONFIG, CONFIG.get_network_postgres_url()).await?,
             );
-            let relay_substrate_client = Arc::new(
+            let substrate_client = Arc::new(
                 SubstrateClient::new(
                     CONFIG.substrate.rpc_url.as_str(),
                     CONFIG.substrate.network_id,
@@ -406,28 +397,57 @@ impl Service for ValidatorListUpdater {
             let processed_block_numbers: Arc<RwLock<Vec<u64>>> = Arc::new(RwLock::new(
                 ValidatorListUpdater::fetch_processed_block_numbers().await?,
             ));
-            relay_substrate_client.subscribe_to_finalized_blocks(
+            substrate_client.subscribe_to_finalized_blocks(
                 CONFIG.substrate.request_timeout_seconds,
                 |finalized_block_header| async {
                     let error_cell = error_cell.clone();
                     if let Some(error) = error_cell.get() {
                         return Err(anyhow::anyhow!("{:?}", error));
                     }
-                    let finalized_block_number = match finalized_block_header.get_number() {
+                    let mut block_number = match finalized_block_header.get_number() {
                         Ok(block_number) => block_number,
                         Err(error) => {
-                            log::error!("Cannot get block number for relay header: {finalized_block_header:?}");
+                            log::error!("Cannot get block number for header: {finalized_block_header:?}");
                             return Err(anyhow::anyhow!("{:?}", error));
                         }
                     };
-                    metrics::target_finalized_block_number().set(finalized_block_number as i64);
+                    metrics::target_finalized_block_number().set(block_number as i64);
                     if IS_BUSY.load(Ordering::SeqCst) {
-                        log::debug!("Busy processing a past relay block. Skip block #{finalized_block_number}.");
+                        log::debug!("Busy processing a past relay block. Skip block #{block_number}.");
                         return Ok(());
                     }
                     IS_BUSY.store(true, Ordering::SeqCst);
+                    let mut block_hash = match substrate_client.get_block_hash(block_number).await {
+                        Ok(block_hash) => block_hash,
+                        Err(error) => {
+                            log::error!("Error while getting hash for #{block_number}: {error}");
+                            IS_BUSY.store(false, Ordering::SeqCst);
+                            return Err(error);
+                        }
+                    };
+                    let mut block_exists = match postgres.block_exists_by_hash(&block_hash).await {
+                        Ok(exists) => exists,
+                        Err(error) => {
+                            log::error!("Error while checking block existence for #{block_number}: {error}");
+                            IS_BUSY.store(false, Ordering::SeqCst);
+                            return Err(error);
+                        }
+                    };
+                    while !block_exists {
+                        log::info!("Finalized relay block #{block_number} does not exist. Check one before.");
+                        block_number -= 1;
+                        block_hash = substrate_client.get_block_hash(block_number).await?;
+                        block_exists = match postgres.block_exists_by_hash(&block_hash).await {
+                            Ok(exists) => exists,
+                            Err(error) => {
+                                log::error!("Error while checking block existence for #{block_number}: {error}");
+                                IS_BUSY.store(false, Ordering::SeqCst);
+                                return Err(error);
+                            }
+                        };
+                    }
                     let processed_block_numbers = processed_block_numbers.clone();
-                    let relay_substrate_client = relay_substrate_client.clone();
+                    let relay_substrate_client = substrate_client.clone();
                     let asset_hub_substrate_client = asset_hub_substrate_client.clone();
                     let people_substrate_client = people_substrate_client.clone();
                     let postgres = postgres.clone();
@@ -439,18 +459,20 @@ impl Service for ValidatorListUpdater {
                             &people_substrate_client,
                             &postgres,
                             &processed_block_numbers,
+                            block_number,
+                            &block_hash,
                             &finalized_block_header,
                         ).await;
                         if let Err(error) = update_result {
                             log::error!("{error:?}");
                             log::error!(
                                 "Validator list update failed for relay block #{}. Will try again with the next block.",
-                                finalized_block_header.get_number().unwrap_or(0),
+                                block_number,
                             );
                             let _ = error_cell.set(error);
                         } else {
                             metrics::processing_time_ms().observe(start.elapsed().as_millis() as f64);
-                            metrics::processed_finalized_block_number().set(finalized_block_number as i64);
+                            metrics::processed_finalized_block_number().set(block_number as i64);
                         }
                         IS_BUSY.store(false, Ordering::SeqCst);
                     });

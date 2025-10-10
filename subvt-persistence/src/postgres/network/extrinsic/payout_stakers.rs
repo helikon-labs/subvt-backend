@@ -26,7 +26,6 @@ impl PostgreSQLNetworkStorage {
         Ok(extrinsics)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_payout_stakers_extrinsic(
         &self,
         block_hash: &str,

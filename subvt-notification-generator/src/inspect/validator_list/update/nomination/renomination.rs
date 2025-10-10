@@ -10,7 +10,6 @@ use subvt_types::{
 };
 
 impl NotificationGenerator {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn inspect_renominations(
         &self,
         network_postgres: Arc<PostgreSQLNetworkStorage>,

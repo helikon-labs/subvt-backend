@@ -3,7 +3,6 @@ use subvt_types::app::event::referenda::ReferendumDecisionStartedEvent;
 use subvt_types::substrate::Balance;
 
 impl PostgreSQLNetworkStorage {
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_referendum_decision_started_event(
         &self,
         block_hash: &str,

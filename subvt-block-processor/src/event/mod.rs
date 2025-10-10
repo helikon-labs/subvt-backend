@@ -10,7 +10,6 @@ mod referenda;
 mod staking;
 mod system;
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) async fn process_event(
     postgres: &PostgreSQLNetworkStorage,
     block_hash: &str,

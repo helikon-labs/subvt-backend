@@ -2,7 +2,6 @@ use crate::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::event::referenda::ReferendumSubmittedEvent;
 
 impl PostgreSQLNetworkStorage {
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_referendum_submitted_event(
         &self,
         block_hash: &str,

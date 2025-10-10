@@ -7,7 +7,6 @@ use subvt_types::substrate::extrinsic::proxy::ProxyExtrinsic;
 use subvt_types::substrate::MultiAddress;
 
 impl BlockProcessor {
-    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn process_proxy_extrinsic(
         &self,
         substrate_client: &SubstrateClient,

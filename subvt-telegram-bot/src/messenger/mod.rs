@@ -84,7 +84,6 @@ pub trait Messenger {
         notification_rules: &[UserNotificationRule],
     ) -> anyhow::Result<MethodResponse<MessageOrBool>>;
 
-    #[allow(clippy::too_many_arguments)]
     async fn update_nfts_message(
         &self,
         chat_id: i64,
@@ -375,7 +374,6 @@ impl Messenger for MessengerImpl {
     }
 
     /// `/nfts` command produces a paged list. This function manages the paging.
-    #[allow(clippy::too_many_arguments)]
     async fn update_nfts_message(
         &self,
         chat_id: i64,

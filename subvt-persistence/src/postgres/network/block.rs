@@ -6,7 +6,6 @@ use subvt_types::app::Block;
 use subvt_types::{crypto::AccountId, substrate::BlockHeader};
 
 impl PostgreSQLNetworkStorage {
-    #[allow(clippy::too_many_arguments)]
     pub async fn save_finalized_block(
         &self,
         chain_type: &str,
@@ -49,6 +48,15 @@ impl PostgreSQLNetworkStorage {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn block_exists_by_hash(&self, hash: &str) -> anyhow::Result<bool> {
+        let exists: (bool,) =
+            sqlx::query_as("SELECT EXISTS(SELECT 1 FROM sub_block WHERE hash = $1)")
+                .bind(hash)
+                .fetch_one(&self.connection_pool)
+                .await?;
+        Ok(exists.0)
     }
 
     pub async fn get_block_hash(&self, block_number: u64) -> anyhow::Result<Option<String>> {

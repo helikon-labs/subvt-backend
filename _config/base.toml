@@ -135,6 +135,7 @@ host = "127.0.0.1"
 active_validator_list_server_port = 11003
 app_service_port = 11013
 block_processor_port = 11000
+asset_hub_block_processor_port = 11011
 inactive_validator_list_server_port = 11004
 network_status_server_port = 11006
 network_status_updater_port = 11005
