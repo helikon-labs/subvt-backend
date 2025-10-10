@@ -650,11 +650,11 @@ impl SubstrateClient {
             .get_block_hash(last_relay_chain_block_number as u64)
             .await?;
         let people_finalized_block_hash = people_client.get_finalized_block_hash().await?;
+        let active_validator_account_ids = relay_client
+            .get_active_validator_account_ids(&last_relay_chain_block_hash)
+            .await?;
         let mut validator_map: HashMap<AccountId, ValidatorDetails> = HashMap::default();
         {
-            let active_validator_account_ids = relay_client
-                .get_active_validator_account_ids(&last_relay_chain_block_hash)
-                .await?;
             log::debug!("Get para validators and core assignments.");
             let mut para_core_assignment_map: HashMap<AccountId, Option<ParaCoreAssignment>> =
                 HashMap::default();
@@ -839,12 +839,21 @@ impl SubstrateClient {
             }
 
             log::debug!("Get nomination amounts and self stakes.");
-            let ledger_storage_keys: Vec<String> = nomination_map
+            let mut ledger_storage_keys: Vec<String> = nomination_map
                 .keys()
                 .map(|stash_account_id| {
                     get_storage_map_key(&self.metadata, "Staking", "Ledger", &stash_account_id)
                 })
                 .collect();
+            active_validator_account_ids.iter().for_each(|account_id| {
+                ledger_storage_keys.push(get_storage_map_key(
+                    &self.metadata,
+                    "Staking",
+                    "Ledger",
+                    account_id,
+                ))
+            });
+
             for chunk in ledger_storage_keys.chunks(KEY_QUERY_PAGE_SIZE) {
                 let chunk_values: Vec<StorageChangeSet<String>> = self
                     .ws_client
