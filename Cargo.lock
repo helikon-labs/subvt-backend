@@ -2517,7 +2517,7 @@ dependencies = [
  "bon",
  "macro_rules_attribute",
  "paste",
- "reqwest 0.12.23",
+ "reqwest 0.12.24",
  "serde",
  "serde_json",
  "serde_with",
@@ -5759,9 +5759,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.23"
+version = "0.12.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d429f34c8092b2d42c7c93cec323bb4adeb7c67698f70839adec842ec10c7ceb"
+checksum = "9d0946410b9f7b082a427e4ef5c8ff541a88b357bc6c637c40db3a68ac70a36f"
 dependencies = [
  "async-compression",
  "base64 0.22.1",
@@ -7707,7 +7707,7 @@ version = "0.24.16"
 dependencies = [
  "anyhow",
  "lazy_static",
- "reqwest 0.12.23",
+ "reqwest 0.12.24",
  "subvt-config",
  "subvt-types",
  "tokio",
@@ -7723,7 +7723,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "reqwest 0.12.23",
+ "reqwest 0.12.24",
  "subvt-config",
  "subvt-metrics",
  "subvt-persistence",
@@ -7800,7 +7800,7 @@ version = "0.24.16"
 dependencies = [
  "anyhow",
  "lazy_static",
- "reqwest 0.12.23",
+ "reqwest 0.12.24",
  "subvt-config",
  "subvt-types",
 ]
@@ -7872,7 +7872,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "reqwest 0.12.23",
+ "reqwest 0.12.24",
  "subvt-config",
  "subvt-metrics",
  "subvt-persistence",
