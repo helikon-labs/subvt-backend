@@ -37,6 +37,16 @@ impl PostgreSQLNetworkStorage {
         session_para_validators: &[(AccountId, u32, u32, u32)],
     ) -> anyhow::Result<()> {
         for chunk in session_para_validators.chunks(250) {
+            {
+                let mut query_builder = QueryBuilder::new("INSERT INTO sub_account (id)");
+                query_builder.push_values(chunk, |mut query, validator| {
+                    query.push_bind(validator.0.to_string());
+                });
+                query_builder.push(" ON CONFLICT (id) DO NOTHING");
+                let query: sqlx::query::Query<'_, Postgres, sqlx::postgres::PgArguments> =
+                    query_builder.build();
+                query.execute(&self.connection_pool).await?;
+            }
             let mut query_builder = QueryBuilder::new(
                 "INSERT INTO sub_session_para_validator (era_index, session_index, validator_account_id, active_validator_index, para_validator_group_index, para_validator_index) ",
             );
@@ -62,36 +72,6 @@ impl PostgreSQLNetworkStorage {
             query.execute(&self.connection_pool).await?;
         }
         Ok(())
-    }
-
-    pub async fn save_session_para_validator(
-        &self,
-        era_index: u32,
-        session_index: u64,
-        validator_account_id: &AccountId,
-        active_validator_index: u32,
-        para_validator_group_index: u32,
-        para_validator_index: u32,
-    ) -> anyhow::Result<i32> {
-        self.save_account(validator_account_id).await?;
-        let result: (i32,) = sqlx::query_as(
-            r#"
-                    INSERT INTO sub_session_para_validator (era_index, session_index, validator_account_id, active_validator_index, para_validator_group_index, para_validator_index)
-                    VALUES ($1, $2, $3, $4, $5, $6)
-                    ON CONFLICT(session_index, validator_account_id) DO UPDATE
-                    SET active_validator_index = EXCLUDED.active_validator_index, para_validator_group_index = EXCLUDED.para_validator_group_index, para_validator_index = EXCLUDED.para_validator_index
-                    RETURNING id
-                    "#,
-        )
-            .bind(era_index as i64)
-            .bind(session_index as i64)
-            .bind(validator_account_id.to_string())
-            .bind(active_validator_index as i64)
-            .bind(para_validator_group_index as i64)
-            .bind(para_validator_index as i64)
-            .fetch_one(&self.connection_pool)
-            .await?;
-        Ok(result.0)
     }
 
     pub async fn save_para_core_assignment(

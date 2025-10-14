@@ -810,10 +810,15 @@ impl RewardDestination {
 pub enum ProxyType {
     Any,
     NonTransfer,
+    CancelProxy,
+    Assets,
+    AssetOwner,
+    AssetManager,
+    Collator,
     Governance,
     Staking,
-    IdentityJudgement,
-    CancelProxy,
-    Auction,
+    NominationPools,
+    ParaRegistration,
     Society,
+    Spokesperson,
 }
