@@ -10,4 +10,4 @@ lazy_static = { workspace = true }
 reqwest = { version = "0.12", features = ["blocking", "json", "gzip", "brotli"] }
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }

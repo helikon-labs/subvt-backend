@@ -18,9 +18,9 @@ sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polka
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }
 
 [dev-dependencies]
 hex = "0.4"
 subvt-config = { path = "../subvt-config" }
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }

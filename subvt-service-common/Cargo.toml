@@ -14,4 +14,4 @@ subvt-config = { path = "../subvt-config" }
 subvt-logging = { path = "../subvt-logging" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-types = { path = "../subvt-types" }
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }
