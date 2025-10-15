@@ -23,4 +23,4 @@ subvt-types = { path = "../subvt-types" }
 subvt-metrics = { path = "../subvt-metrics" }
 subvt-persistence = { path = "../subvt-persistence" }
 subvt-substrate-client = { path = "../subvt-substrate-client" }
-tokio = { version = "1.47", features = ["full"] }
+tokio = { version = "1.48", features = ["full"] }
