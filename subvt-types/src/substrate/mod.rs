@@ -84,9 +84,10 @@ impl FromStr for Chain {
             "kusama asset hub" | "ksm asset hub" => Ok(Self::KusamaAssetHub),
             "kusama people" | "ksm people" => Ok(Self::KusamaPeople),
             "polkadot" | "dot" => Ok(Self::Polkadot),
+            "polkadot asset hub" | "dot asset hub" => Ok(Self::PolkadotAssetHub),
             "polkadot people" | "dot people" => Ok(Self::PolkadotPeople),
             "westend" | "wnd" => Ok(Self::Westend),
-            _ => panic!("Unkown chain: {s}"),
+            _ => panic!("Unknown chain: {s}"),
         }
     }
 }

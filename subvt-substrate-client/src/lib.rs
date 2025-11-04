@@ -509,7 +509,7 @@ impl SubstrateClient {
                         {
                             parent_account.identity = Some(parent_account_identity.clone());
                         }
-                        account.parent = Box::new(Some(parent_account));
+                        *account.parent = Some(parent_account);
                         account.child_display.clone_from(&parent_account_id.1);
                     } else {
                         account.parent_account_id = Some(parent_account_id.0);
