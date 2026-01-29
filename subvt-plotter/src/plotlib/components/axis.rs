@@ -75,7 +75,7 @@ impl AxisTick {
 
     /// Render the axis tick to svg.
     pub fn to_svg(&self) -> Result<Group, String> {
-        let formatted_label = if self.label_format.is_some() {
+        let formatted_label = if let Some(label_format) = &self.label_format {
             let formatter = NumberFormat::new();
             formatter
                 .format(

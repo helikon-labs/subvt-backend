@@ -58,11 +58,14 @@ impl PostgreSQLNetworkStorage {
             .bind(validator_account_id_hex_string)
             .fetch_one(&self.connection_pool)
             .await?;
-        let maybe_era = if era_validator_report.0.is_some() & era_validator_report.1.is_some() {
+
+        let maybe_era = if let (Some(era_validator_report_0), Some(era_validator_report_1)) =
+            (era_validator_report.0, era_validator_report.1)
+        {
             Some(Era {
                 index: era_index,
-                start_timestamp: era_validator_report.0.unwrap() as u64,
-                end_timestamp: era_validator_report.1.unwrap() as u64,
+                start_timestamp: era_validator_report_0 as u64,
+                end_timestamp: era_validator_report_1 as u64,
             })
         } else {
             None

@@ -927,7 +927,14 @@ impl SubstrateClient {
             let average_stake = era_stakers.average_stake();
             for validator in validator_map.values_mut() {
                 validator.return_rate_per_billion = if validator.is_active {
-                    if validator.validator_stake.is_none() {
+                    if let Some(validator_stake) = validator.validator_stake.as_ref() {
+                        let return_rate = (average_stake * total_return_rate_per_billion
+                            / validator_stake.total_stake)
+                            * (1_000_000_000
+                                - (validator.preferences.commission_per_billion as u128))
+                            / 1_000_000_000;
+                        Some(return_rate as u32)
+                    } else {
                         validator.validator_stake = Some(ValidatorStake {
                             account: validator.account.clone(),
                             self_stake: 0,
@@ -935,13 +942,6 @@ impl SubstrateClient {
                             nominators: Vec::new(),
                         });
                         Some(0)
-                    } else {
-                        let return_rate = (average_stake * total_return_rate_per_billion
-                            / validator.validator_stake.as_ref().unwrap().total_stake)
-                            * (1_000_000_000
-                                - (validator.preferences.commission_per_billion as u128))
-                            / 1_000_000_000;
-                        Some(return_rate as u32)
                     }
                 } else {
                     None

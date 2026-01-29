@@ -32,15 +32,16 @@ impl PostgreSQLNetworkStorage {
             .bind(era_index as i64)
             .fetch_one(&self.connection_pool)
             .await?;
-        let maybe_era = if era_report.0.is_some() & era_report.1.is_some() {
-            Some(Era {
-                index: era_index,
-                start_timestamp: era_report.0.unwrap() as u64,
-                end_timestamp: era_report.1.unwrap() as u64,
-            })
-        } else {
-            None
-        };
+        let maybe_era =
+            if let (Some(era_report_0), Some(era_report_1)) = (era_report.0, era_report.1) {
+                Some(Era {
+                    index: era_index,
+                    start_timestamp: era_report_0 as u64,
+                    end_timestamp: era_report_1 as u64,
+                })
+            } else {
+                None
+            };
         if let Some(era) = maybe_era {
             Ok(Some(EraReport {
                 era,
