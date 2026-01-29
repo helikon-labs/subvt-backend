@@ -26,7 +26,6 @@ and reports as documented below.
 - `/democracy` - View the referenda being voted and your validators' votes.
 - `/help` - View the list of all commands.
 - `/networkstatus` - View the current network status information, alias `/network`.
-- `/nfts` - View the NFTs owned by a validator's stash account.
 - `/nominations` - View a summary of nominations, alias `/n`.
 - `/nominationdetails` - View nomination details, alias `/nd`.
 - `/payouts` - View monthly nominator payouts report.

@@ -153,11 +153,6 @@ impl MessageType {
                 context.insert("content", &content);
                 "feature_request.html"
             }
-            Self::NFTs { total_count, .. } => {
-                context.insert("total_count", total_count);
-                "select_nft.html"
-            }
-            Self::NoNFTsForValidator => "no_nfts_for_validator.html",
             Self::Loading => "loading.html",
             Self::ValidatorsSummary(validator_summaries) => {
                 self.fill_validators_summary_context(&mut context, validator_summaries);

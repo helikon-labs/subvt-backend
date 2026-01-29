@@ -53,28 +53,22 @@ docker push --all-tags helikon/subvt-network-status-updater
 # network status server
 docker build -t helikon/subvt-network-status-server:"$1" -t helikon/subvt-network-status-server:latest --no-cache --build-arg version="$1" -f ./network/08-subvt-network-status-server.dockerfile ..
 docker push --all-tags helikon/subvt-network-status-server
-# onekv updater
-docker build -t helikon/subvt-onekv-updater:"$1" -t helikon/subvt-onekv-updater:latest --no-cache --build-arg version="$1" -f ./network/09-subvt-onekv-updater.dockerfile ..
-docker push --all-tags helikon/subvt-onekv-updater
-# telemetry processor
-docker build -t helikon/subvt-telemetry-processor:"$1" -t helikon/subvt-telemetry-processor:latest --no-cache --build-arg version="$1" -f ./network/10-subvt-telemetry-processor.dockerfile ..
-docker push --all-tags helikon/subvt-telemetry-processor
 # telegram bot
-docker build -t helikon/subvt-telegram-bot:"$1" -t helikon/subvt-telegram-bot:latest --no-cache --build-arg version="$1" -f ./network/11-subvt-telegram-bot.dockerfile ..
+docker build -t helikon/subvt-telegram-bot:"$1" -t helikon/subvt-telegram-bot:latest --no-cache --build-arg version="$1" -f ./network/09-subvt-telegram-bot.dockerfile ..
 docker push --all-tags helikon/subvt-telegram-bot
 # notification generator
-docker build -t helikon/subvt-notification-generator:"$1" -t helikon/subvt-notification-generator:latest --no-cache --build-arg version="$1" -f ./network/12-subvt-notification-generator.dockerfile ..
+docker build -t helikon/subvt-notification-generator:"$1" -t helikon/subvt-notification-generator:latest --no-cache --build-arg version="$1" -f ./network/10-subvt-notification-generator.dockerfile ..
 docker push --all-tags helikon/subvt-notification-generator
 # report service
-docker build -t helikon/subvt-report-service:"$1" -t helikon/subvt-report-service:latest --no-cache --build-arg version="$1" -f ./network/13-subvt-report-service.dockerfile ..
+docker build -t helikon/subvt-report-service:"$1" -t helikon/subvt-report-service:latest --no-cache --build-arg version="$1" -f ./network/11-subvt-report-service.dockerfile ..
 docker push --all-tags helikon/subvt-report-service
 
 # referendum updater
-docker build -t helikon/subvt-referendum-updater:"$1" -t helikon/subvt-referendum-updater:latest --no-cache --build-arg version="$1" -f ./network/14-subvt-referendum-updater.dockerfile ..
+docker build -t helikon/subvt-referendum-updater:"$1" -t helikon/subvt-referendum-updater:latest --no-cache --build-arg version="$1" -f ./network/12-subvt-referendum-updater.dockerfile ..
 docker push --all-tags helikon/subvt-referendum-updater
 # kline updater
-docker build -t helikon/subvt-kline-updater:"$1" -t helikon/subvt-kline-updater:latest --no-cache --build-arg version="$1" -f ./network/15-subvt-kline-updater.dockerfile ..
+docker build -t helikon/subvt-kline-updater:"$1" -t helikon/subvt-kline-updater:latest --no-cache --build-arg version="$1" -f ./network/13-subvt-kline-updater.dockerfile ..
 docker push --all-tags helikon/subvt-kline-updater
 # session validator performance updater
-docker build -t helikon/subvt-session-validator-performance-updater:"$1" -t helikon/subvt-session-validator-performance-updater:latest --no-cache --build-arg version="$1" -f ./network/16-subvt-session-validator-performance-updater.dockerfile ..
+docker build -t helikon/subvt-session-validator-performance-updater:"$1" -t helikon/subvt-session-validator-performance-updater:latest --no-cache --build-arg version="$1" -f ./network/14-subvt-session-validator-performance-updater.dockerfile ..
 docker push --all-tags helikon/subvt-session-validator-performance-updater

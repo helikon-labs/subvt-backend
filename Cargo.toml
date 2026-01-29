@@ -9,10 +9,8 @@ members = [
     "subvt-metrics",
     "subvt-network-status-server",
     "subvt-network-status-updater",
-    "subvt-nft",
     "subvt-notification-generator",
     "subvt-notification-processor",
-    "subvt-onekv-updater",
     "subvt-persistence",
     "subvt-plotter",
     "subvt-proc-macro",
@@ -22,7 +20,6 @@ members = [
     "subvt-session-validator-performance-updater",
     "subvt-substrate-client",
     "subvt-telegram-bot",
-    "subvt-telemetry-processor",
     "subvt-types",
     "subvt-utility",
     "subvt-validator-details-server",
@@ -34,7 +31,7 @@ resolver = "2"
 [workspace.dependencies]
 anyhow = "1.0"
 itertools = "0.14"
-lazy_static = "1.4"
+lazy_static = "1.5"
 log = "0.4"
 num-traits = "0.2"
 thiserror = "2.0"

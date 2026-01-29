@@ -15,23 +15,7 @@ pub struct DNNominatorSummary {
 }
 
 #[get("/onekv/nominator")]
-pub(crate) async fn get_onekv_nominator_summaries(data: web::Data<ServiceState>) -> ResultResponse {
-    let stash_account_ids = data
-        .postgres
-        .get_onekv_nominator_stash_account_ids()
-        .await?;
-    let mut nominators: Vec<DNNominatorSummary> = Vec::new();
-    let mut id = 1;
-    for stash_account_id in stash_account_ids.iter() {
-        nominators.push(DNNominatorSummary {
-            id,
-            onekv_id: id.to_string(),
-            stash_account_id: *stash_account_id,
-            stash_address: stash_account_id.to_ss58_check(),
-            bonded_amount: 0,
-            last_nomination_at: 0,
-        });
-        id += 1;
-    }
+pub(crate) async fn get_onekv_nominator_summaries(_: web::Data<ServiceState>) -> ResultResponse {
+    let nominators: Vec<DNNominatorSummary> = Vec::new();
     Ok(HttpResponse::Ok().json(nominators))
 }

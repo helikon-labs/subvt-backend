@@ -65,11 +65,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                         Box::new(MessageType::ValidatorInfo {
                             address: validator.address.clone(),
                             maybe_validator_details: Box::new(maybe_validator_details),
-                            maybe_dn_node: Box::new(
-                                self.network_postgres
-                                    .get_dn_node_by_account_id(&validator.account_id)
-                                    .await?,
-                            ),
+                            maybe_dn_node: Box::new(None),
                             missing_referendum_votes,
                         }),
                     )

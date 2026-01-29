@@ -9,8 +9,6 @@ pub mod kline;
 pub mod performance;
 pub mod rdb;
 pub mod report;
-pub mod sub_id;
 pub mod substrate;
 pub mod subvt;
 pub mod telegram;
-pub mod telemetry;

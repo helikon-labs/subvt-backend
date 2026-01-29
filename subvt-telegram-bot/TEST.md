@@ -60,9 +60,6 @@ Please see the test function comments in the files listed below for test case de
 | [./src/test/command/help.rs](./src/test/command/help.rs)                             | `test_help`                                             |
 | [./src/test/command/invalid.rs](./src/test/command/invalid.rs)                       | `test_invalid_command`                                  |
 | [./src/test/command/network_status.rs](./src/test/command/network_status.rs)         | `test_get_network_status_success`                       |
-| [./src/test/command/nfts.rs](./src/test/command/nfts.rs)                             | `test_nfts_no_validator`                                |
-|                                                                                      | `test_nfts_single_validator_no_nfts`                    |
-|                                                                                      | `test_nfts_single_validator_with_nfts`                  |
 | [./src/test/command/nomination_details.rs](./src/test/command/nomination_details.rs) | `test_nomination_details_multiple_validators`           |
 |                                                                                      | `test_nomination_details_no_validator`                  |
 |                                                                                      | `test_nomination_details_single_non_existent_validator` |

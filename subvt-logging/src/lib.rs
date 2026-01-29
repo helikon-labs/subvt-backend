@@ -19,12 +19,10 @@ pub fn init(config: &subvt_config::Config) {
     builder.filter(Some("subvt_kline_updater"), log_level);
     builder.filter(Some("subvt_metrics"), log_level);
     builder.filter(Some("subvt_metrics_server"), log_level);
-    builder.filter(Some("subvt_nft"), log_level);
     builder.filter(Some("subvt_network_status_server"), log_level);
     builder.filter(Some("subvt_network_status_updater"), log_level);
     builder.filter(Some("subvt_notification_generator"), log_level);
     builder.filter(Some("subvt_notification_processor"), log_level);
-    builder.filter(Some("subvt_onekv_updater"), log_level);
     builder.filter(Some("subvt_persistence"), log_level);
     builder.filter(Some("subvt_plotter"), log_level);
     builder.filter(Some("subvt_referendum_updater"), log_level);
@@ -35,8 +33,6 @@ pub fn init(config: &subvt_config::Config) {
     );
     builder.filter(Some("subvt_substrate_client"), log_level);
     builder.filter(Some("subvt_telegram_bot"), log_level);
-    builder.filter(Some("subvt_telemetry_processor"), log_level);
-    builder.filter(Some("subvt_thousand_validators_updater"), log_level);
     builder.filter(Some("subvt_types"), log_level);
     builder.filter(Some("subvt_validator_details_server"), log_level);
     builder.filter(Some("subvt_validator_list_server"), log_level);

@@ -223,7 +223,7 @@ impl BlockProcessor {
             let session_index: u32 = votes.session;
             let mut total_vote_count = 0;
             for backing in &votes.backing_validators_per_candidate {
-                let para_id: u32 = backing.0.descriptor.para_id.into();
+                let para_id: u32 = backing.0.descriptor.para_id().into();
                 // get scheduled para validators from previous block
                 total_vote_count += backing.1.len();
                 let mut voted_para_validator_indices = vec![];

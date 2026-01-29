@@ -72,12 +72,6 @@ asset_hub_start_block_number = 11_151_931
 history_record_depth = 10
 db_fetch_batch_size = 200
 
-[dn]
-# this many most recent records will always be kept in the database for reference
-candidate_history_record_count = 5
-data_endpoint = "https://nodes.web3.foundation/api/cohort/2-1/polkadot"
-refresh_seconds = 300
-
 [report]
 max_era_index_range = 100
 max_session_index_range = 100
@@ -86,11 +80,6 @@ max_session_index_range = 100
 tmp_dir_path = "/path/to/the/temporary/image/dir"
 font_dir_path = "/path/to/the/fonts/dir"
 font_sans_serif_family = "DejaVu Sans"
-
-[telemetry]
-# W3F       wss://telemetry-backend.w3f.community/feed
-# Polkadot  wss://feed.telemetry.polkadot.io/feed
-websocket_url = "wss://telemetry-backend.w3f.community/feed"
 
 [notification_generator]
 unclaimed_payout_check_delay_hours = 1
@@ -144,16 +133,11 @@ notification_processor_port = 11011
 onekv_updater_port = 11007
 report_service_port = 11009
 telegram_bot_port = 11012
-telemetry_processor_port = 11008
 validator_details_server_port = 11002
 validator_list_updater_port = 11001
 referendum_updater_port = 11014
 kline_updater_port = 11015
 session_validator_performance_updater_port = 11016
-
-[sub_id]
-api_url = "https://sub.id/api/v1/"
-nfts_path = "/nfts"
 
 [app_service]
 # max x users per IP per x minutes

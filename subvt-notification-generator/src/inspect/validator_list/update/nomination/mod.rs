@@ -69,7 +69,6 @@ impl NotificationGenerator {
         // renominations
         let renominator_ids = &current_nominator_ids - &new_nominator_ids;
         self.inspect_renominations(
-            network_postgres.clone(),
             app_postgres.clone(),
             address,
             finalized_block_number,

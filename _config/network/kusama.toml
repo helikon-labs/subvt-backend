@@ -19,9 +19,6 @@ token_decimals = 12
 relay_start_block_number = 6_015_486
 asset_hub_start_block_number = 11_151_931
 
-[dn]
-data_endpoint = "https://nodes.web3.foundation/api/cohort/3/kusama"
-
 [notification_generator]
 unclaimed_payout_check_delay_hours = 3
 

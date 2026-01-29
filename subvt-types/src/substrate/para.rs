@@ -37,7 +37,7 @@ impl ParaCoreAssignment {
     ) -> anyhow::Result<Vec<Self>> {
         let mut result = Vec::new();
         for votes in votes.backing_validators_per_candidate {
-            let para_id: u32 = votes.0.descriptor.para_id.into();
+            let para_id: u32 = votes.0.descriptor.para_id().into();
             if let Some(vote) = votes.1.first() {
                 let group_index = vote.0 .0 / (group_size as u32);
                 // get core index
@@ -73,7 +73,7 @@ impl ParaCoreAssignment {
     ) -> anyhow::Result<Vec<Self>> {
         let mut result = Vec::new();
         for votes in votes.backing_validators_per_candidate {
-            let vote_para_id: u32 = votes.0.descriptor.para_id.into();
+            let vote_para_id: u32 = votes.0.descriptor.para_id().into();
             if let Some(vote) = votes.1.first() {
                 let group_index = vote.0 .0 / group_size;
                 // get core index

@@ -14,7 +14,7 @@ log = { workspace = true }
 parity-scale-codec = { version = "3.7", default-features = false, features = ["derive", "full"] }
 rustc-hash = "2.1"
 serde_json = "1.0"
-sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.20.1" }
+sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.21.1" }
 subvt-config = { path = "../subvt-config" }
 subvt-types = { path = "../subvt-types" }
 subvt-utility = { path = "../subvt-utility" }
@@ -23,4 +23,4 @@ tokio = { version = "1.48", features = ["full"] }
 [dev-dependencies]
 hex = "0.4"
 subvt-config = { path = "../subvt-config" }
-tokio = { version = "1.48", features = ["full"] }
+tokio = { version = "1.49", features = ["full"] }

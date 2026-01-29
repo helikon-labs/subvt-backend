@@ -1,5 +1,5 @@
 //! Queries happen as a result of user interaction with inline keyboards, usually a call-to-action
-//! or item selection (validator, referendum, NFT, etc.).
+//! or item selection (validator, referendum, etc.).
 use serde::{Deserialize, Serialize};
 
 pub mod process;
@@ -21,9 +21,6 @@ pub enum QueryType {
     Close,
     #[serde(rename = "CB")]
     ConfirmBroadcast,
-    // (page index, whether it's the first load)
-    #[serde(rename = "NF")]
-    NFTs(usize, bool),
     #[serde(rename = "ND")]
     NominationDetails,
     #[serde(rename = "NDF")]

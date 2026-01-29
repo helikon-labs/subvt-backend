@@ -36,9 +36,6 @@ impl NotificationGenerator {
                     &current.account.id,
                 )
                 .await?;
-            let is_onekv = network_postgres
-                .is_onekv_nominator_account_id(&lost_nomination.stash_account.id)
-                .await?;
             let event = app_event::LostNomination {
                 validator_account_id: current.account.id,
                 discovered_block_number: finalized_block_number,
@@ -46,7 +43,7 @@ impl NotificationGenerator {
                 active_amount: lost_nomination.stake.active_amount,
                 total_amount: lost_nomination.stake.total_amount,
                 nominee_count: lost_nomination.nominee_count as u64,
-                is_onekv,
+                is_onekv: false,
             };
             for rule in rules {
                 if let Some(min_param) = rule.parameters.first() {

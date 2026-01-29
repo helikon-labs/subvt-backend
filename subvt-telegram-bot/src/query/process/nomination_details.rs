@@ -27,10 +27,6 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                     .await?
                 {
                     log::info!("Validator selected for nomination details in chat {chat_id}.",);
-                    let onekv_nominator_account_ids = self
-                        .network_postgres
-                        .get_onekv_nominator_stash_account_ids()
-                        .await?;
                     self.messenger
                         .send_message(
                             &self.app_postgres,
@@ -39,7 +35,7 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
                             Box::new(MessageType::NominationDetails {
                                 chat_validator_id: validator.id,
                                 validator_details,
-                                onekv_nominator_account_ids,
+                                onekv_nominator_account_ids: Vec::new(),
                                 is_full,
                             }),
                         )

@@ -146,24 +146,11 @@ pub struct ValidatorListUpdaterConfig {
     pub db_fetch_batch_size: usize,
 }
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct DNConfig {
-    pub candidate_history_record_count: u64,
-    pub data_endpoint: String,
-    pub refresh_seconds: u64,
-}
-
 /// Report service configuration.
 #[derive(Clone, Debug, Deserialize)]
 pub struct ReportConfig {
     pub max_era_index_range: u32,
     pub max_session_index_range: u32,
-}
-
-/// Telemetry processor configuration.
-#[derive(Clone, Debug, Deserialize)]
-pub struct TelemetryConfig {
-    pub websocket_url: String,
 }
 
 /// Notification generator configuration.
@@ -229,8 +216,6 @@ pub struct MetricsConfig {
     pub inactive_validator_list_server_port: u16,
     pub network_status_updater_port: u16,
     pub network_status_server_port: u16,
-    pub onekv_updater_port: u16,
-    pub telemetry_processor_port: u16,
     pub report_service_port: u16,
     pub notification_generator_port: u16,
     pub notification_processor_port: u16,
@@ -247,13 +232,6 @@ pub struct PlotterConfig {
     pub tmp_dir_path: String,
     pub font_dir_path: String,
     pub font_sans_serif_family: String,
-}
-
-/// Sub.id NFTs API configuration.
-#[derive(Clone, Debug, Deserialize)]
-pub struct SubIDConfig {
-    pub api_url: String,
-    pub nfts_path: String,
 }
 
 /// App service configuration.
@@ -292,20 +270,17 @@ pub struct Config {
     pub common: CommonConfig,
     pub http: HTTPConfig,
     pub log: LogConfig,
-    pub dn: DNConfig,
     pub app_postgres: PostgreSQLConfig,
     pub network_postgres: PostgreSQLConfig,
     pub redis: RedisConfig,
     pub rpc: RPCConfig,
     pub substrate: SubstrateConfig,
     pub report: ReportConfig,
-    pub telemetry: TelemetryConfig,
     pub notification_generator: NotificationGeneratorConfig,
     pub notification_processor: NotificationProcessorConfig,
     pub telegram_bot: TelegramBotConfig,
     pub metrics: MetricsConfig,
     pub plotter: PlotterConfig,
-    pub sub_id: SubIDConfig,
     pub app_service: AppServiceConfig,
     pub referendum_updater: ReferendumUpdaterConfig,
     pub kline_updater: KLineUpdaterConfig,

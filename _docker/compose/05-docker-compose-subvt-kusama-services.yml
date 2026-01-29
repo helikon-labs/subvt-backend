@@ -168,38 +168,6 @@ services:
       - SUBVT__METRICS__HOST=0.0.0.0
       # redis
       - SUBVT__REDIS__URL=redis://subvt_kusama_redis:6379/
-  subvt_kusama_onekv_updater:
-    container_name: subvt_kusama_onekv_updater
-    restart: unless-stopped
-    image: "helikon/subvt-onekv-updater:${VERSION}"
-    networks:
-      - subvt_kusama
-    environment:
-      - SUBVT_ENV=${ENV}
-      - SUBVT_NETWORK=kusama
-      - SUBVT_CONFIG_DIR=/subvt/config
-      # log level
-      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
-      # metrics
-      - SUBVT__METRICS__HOST=0.0.0.0
-      # postgres
-      - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
-  subvt_kusama_telemetry_processor:
-    container_name: subvt_kusama_telemetry_processor
-    restart: unless-stopped
-    image: "helikon/subvt-telemetry-processor:${VERSION}"
-    networks:
-      - subvt_kusama
-    environment:
-      - SUBVT_ENV=${ENV}
-      - SUBVT_NETWORK=kusama
-      - SUBVT_CONFIG_DIR=/subvt/config
-      # log level
-      - SUBVT__LOG__SUBVT_LEVEL=${LOG_LEVEL}
-      # metrics
-      - SUBVT__METRICS__HOST=0.0.0.0
-      # postgres
-      - SUBVT__NETWORK_POSTGRES__HOST=subvt_kusama_postgres
   subvt_kusama_notification_generator:
     container_name: subvt_kusama_notification_generator
     restart: unless-stopped

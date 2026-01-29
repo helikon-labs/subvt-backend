@@ -6,7 +6,6 @@ mod contact;
 mod help;
 mod invalid;
 mod network_status;
-mod nfts;
 mod nomination_details;
 mod nominations;
 mod payouts;

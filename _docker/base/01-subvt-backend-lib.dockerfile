@@ -17,12 +17,10 @@ RUN cp target/release/subvt-app-service /subvt/bin/ \
   && cp target/release/subvt-network-status-updater /subvt/bin/ \
   && cp target/release/subvt-notification-generator /subvt/bin/ \
   && cp target/release/subvt-notification-processor /subvt/bin/ \
-  && cp target/release/subvt-onekv-updater /subvt/bin/ \
   && cp target/release/subvt-referendum-updater /subvt/bin/ \
   && cp target/release/subvt-report-service /subvt/bin/ \
   && cp target/release/subvt-session-validator-performance-updater /subvt/bin/ \
   && cp target/release/subvt-telegram-bot /subvt/bin/ \
-  && cp target/release/subvt-telemetry-processor /subvt/bin/ \
   && cp target/release/subvt-validator-details-server /subvt/bin/ \
   && cp target/release/subvt-validator-list-server /subvt/bin/ \
   && cp target/release/subvt-validator-list-updater /subvt/bin/

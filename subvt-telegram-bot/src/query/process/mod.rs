@@ -2,7 +2,6 @@ use crate::query::{Query, QueryType};
 use crate::{Messenger, TelegramBot};
 
 mod broadcast;
-mod nfts;
 mod nomination_details;
 mod nomination_summary;
 mod payouts;
@@ -39,16 +38,6 @@ impl<M: Messenger + Send + Sync> TelegramBot<M> {
             QueryType::ConfirmBroadcast => {
                 self.process_confirm_broadcast_query(chat_id, original_message_id)
                     .await?;
-            }
-            QueryType::NFTs(page_index, is_first_load) => {
-                self.process_nfts_query(
-                    chat_id,
-                    original_message_id,
-                    query,
-                    *page_index,
-                    *is_first_load,
-                )
-                .await?;
             }
             QueryType::NominationDetails => {
                 self.process_nomination_details_query(chat_id, original_message_id, query, false)

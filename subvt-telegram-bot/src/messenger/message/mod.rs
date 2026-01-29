@@ -4,7 +4,6 @@ use subvt_types::crypto::AccountId;
 use subvt_types::dn::DNNode;
 use subvt_types::governance::polkassembly::{ReferendumPost, ReferendumPostDetails};
 use subvt_types::governance::track::Track;
-use subvt_types::sub_id::NFTCollection;
 use subvt_types::substrate::democracy::ReferendumVote;
 use subvt_types::subvt::{NetworkStatus, ValidatorDetails};
 use subvt_types::telegram::{TelegramChatValidator, TelegramChatValidatorSummary};
@@ -74,15 +73,6 @@ pub enum MessageType {
     ReportSaved,
     BugReport(String),
     FeatureRequest(String),
-    NFTs {
-        validator_id: u64,
-        total_count: usize,
-        collection_page: NFTCollection,
-        page_index: usize,
-        has_prev: bool,
-        has_next: bool,
-    },
-    NoNFTsForValidator,
     Loading,
     ValidatorsSummary(Vec<TelegramChatValidatorSummary>),
 }

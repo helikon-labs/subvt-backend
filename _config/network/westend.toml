@@ -14,10 +14,5 @@ token_decimals = 12
 # first block of 2021 for Kusama is 6_015_486
 start_block_number = 10_130_000
 
-[telemetry]
-# W3F       wss://telemetry-backend.w3f.community/feed
-# Polkadot  wss://feed.telemetry.polkadot.io/feed
-websocket_url = "wss://feed.telemetry.polkadot.io/feed"
-
 [session_validator_performance_updater]
 start_session_index = 5000

@@ -18,14 +18,6 @@ pub fn get_telegram_message_response() -> MethodResponse<Message> {
     }
 }
 
-pub fn get_telegram_bool_response(result: bool) -> MethodResponse<bool> {
-    MethodResponse {
-        ok: true,
-        result,
-        description: None,
-    }
-}
-
 pub async fn set_redis_finalized_block(redis: &Redis) -> anyhow::Result<BlockSummary> {
     let block_summary = BlockSummary {
         number: 13928858,

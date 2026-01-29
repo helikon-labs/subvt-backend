@@ -4,7 +4,6 @@ use crate::messenger::keyboard::settings::referenda::get_referenda_settings_keyb
 use crate::messenger::keyboard::{
     confirmation::get_confirmation_keyboard,
     contact_type::get_contact_type_keyboard,
-    nft::get_nft_collection_keyboard,
     nomination_details::get_nomination_details_keyboard,
     nomination_summary::get_nomination_summary_keyboard,
     referendum_list::get_referendum_list_keyboard,
@@ -36,7 +35,6 @@ use std::path::Path;
 use subvt_persistence::postgres::app::PostgreSQLAppStorage;
 use subvt_persistence::postgres::network::PostgreSQLNetworkStorage;
 use subvt_types::app::notification::{NotificationTypeCode, UserNotificationRule};
-use subvt_types::sub_id::NFTCollection;
 use tera::{Context, Tera};
 
 pub mod button;
@@ -82,18 +80,6 @@ pub trait Messenger {
         settings_message_id: i32,
         sub_section: SettingsSubSection,
         notification_rules: &[UserNotificationRule],
-    ) -> anyhow::Result<MethodResponse<MessageOrBool>>;
-
-    async fn update_nfts_message(
-        &self,
-        chat_id: i64,
-        message_id: i32,
-        validator_id: u64,
-        total_count: usize,
-        collection_page: NFTCollection,
-        page_index: usize,
-        has_prev: bool,
-        has_next: bool,
     ) -> anyhow::Result<MethodResponse<MessageOrBool>>;
 }
 
@@ -206,8 +192,7 @@ impl Messenger for MessengerImpl {
         chat_id: i64,
         message_type: Box<MessageType>,
     ) -> anyhow::Result<MethodResponse<TelegramMessage>> {
-        // some messages need an inline keyboard, such as selection from the validator list,
-        // selection from the NFT list, etc.
+        // some messages need an inline keyboard, such as selection from the validator list, etc.
         let inline_keyboard = match &*message_type {
             MessageType::BroadcastConfirm => {
                 get_confirmation_keyboard(QueryType::ConfirmBroadcast)?
@@ -248,23 +233,6 @@ impl Messenger for MessengerImpl {
                 get_referendum_tracks_keyboard(&self.renderer, data)?
             }
             MessageType::SelectContactType => get_contact_type_keyboard(&self.renderer)?,
-            MessageType::NFTs {
-                validator_id,
-                collection_page,
-                page_index,
-                has_prev,
-                has_next,
-                ..
-            } => Some(ReplyMarkup::InlineKeyboardMarkup(
-                get_nft_collection_keyboard(
-                    &self.renderer,
-                    *validator_id,
-                    collection_page,
-                    *page_index,
-                    *has_prev,
-                    *has_next,
-                )?,
-            )),
             _ => None,
         };
         let params = SendMessageParams {
@@ -366,46 +334,6 @@ impl Messenger for MessengerImpl {
             entities: None,
             link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
             reply_markup: Some(inline_keyboard),
-        };
-        match self.api.edit_message_text(&params).await {
-            Ok(response) => Ok(response),
-            Err(error) => Err(TelegramBotError::Error(format!("{error:?}")).into()),
-        }
-    }
-
-    /// `/nfts` command produces a paged list. This function manages the paging.
-    async fn update_nfts_message(
-        &self,
-        chat_id: i64,
-        message_id: i32,
-        validator_id: u64,
-        total_count: usize,
-        collection_page: NFTCollection,
-        page_index: usize,
-        has_prev: bool,
-        has_next: bool,
-    ) -> anyhow::Result<MethodResponse<MessageOrBool>> {
-        let params = EditMessageTextParams {
-            business_connection_id: None,
-            chat_id: Some(ChatId::Integer(chat_id)),
-            message_id: Some(message_id),
-            inline_message_id: None,
-            text: {
-                let mut context = Context::new();
-                context.insert("total_count", &total_count);
-                self.renderer.render("select_nft.html", &context)?
-            },
-            parse_mode: Some(ParseMode::Html),
-            entities: None,
-            link_preview_options: Some(LinkPreviewOptions::builder().is_disabled(true).build()),
-            reply_markup: Some(get_nft_collection_keyboard(
-                &self.renderer,
-                validator_id,
-                &collection_page,
-                page_index,
-                has_prev,
-                has_next,
-            )?),
         };
         match self.api.edit_message_text(&params).await {
             Ok(response) => Ok(response),
