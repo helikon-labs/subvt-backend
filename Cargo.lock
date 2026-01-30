@@ -2089,7 +2089,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3300,7 +3300,7 @@ dependencies = [
  "libc",
  "percent-encoding",
  "pin-project-lite",
- "socket2 0.6.2",
+ "socket2 0.5.10",
  "system-configuration 0.6.1",
  "tokio",
  "tower-service",
@@ -4398,7 +4398,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5551,7 +5551,7 @@ dependencies = [
  "quinn-udp",
  "rustc-hash",
  "rustls 0.23.36",
- "socket2 0.6.2",
+ "socket2 0.5.10",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -5589,9 +5589,9 @@ dependencies = [
  "cfg_aliases",
  "libc",
  "once_cell",
- "socket2 0.6.2",
+ "socket2 0.5.10",
  "tracing",
- "windows-sys 0.60.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5685,28 +5685,6 @@ name = "rawpointer"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
-
-[[package]]
-name = "redis"
-version = "0.32.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "014cc767fefab6a3e798ca45112bccad9c6e0e218fbd49720042716c73cfef44"
-dependencies = [
- "bytes",
- "cfg-if",
- "combine",
- "futures-util",
- "itoa",
- "num-bigint",
- "percent-encoding",
- "pin-project-lite",
- "ryu",
- "sha1_smol",
- "socket2 0.6.2",
- "tokio",
- "tokio-util",
- "url",
-]
 
 [[package]]
 name = "redis"
@@ -6042,7 +6020,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -6165,7 +6143,7 @@ dependencies = [
  "security-framework 3.5.1",
  "security-framework-sys",
  "webpki-root-certs 1.0.5",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -7885,7 +7863,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde_json",
  "subvt-config",
  "subvt-metrics",
@@ -7904,7 +7882,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde_json",
  "subvt-config",
  "subvt-metrics",
@@ -7926,7 +7904,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -7955,7 +7933,7 @@ dependencies = [
  "lettre",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -7979,7 +7957,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "log",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -8051,7 +8029,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "subvt-config",
@@ -8213,7 +8191,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde",
  "serde_json",
  "subvt-config",
@@ -8236,7 +8214,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde_json",
  "subvt-config",
@@ -8256,7 +8234,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 0.32.7",
+ "redis",
  "rustc-hash",
  "serde_json",
  "subvt-config",
@@ -8390,7 +8368,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -9441,7 +9419,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
