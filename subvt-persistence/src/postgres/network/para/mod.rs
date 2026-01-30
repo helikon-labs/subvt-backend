@@ -117,14 +117,13 @@ impl PostgreSQLNetworkStorage {
         para_id: u32,
         para_validator_index: u32,
         is_explicit: Option<bool>,
-    ) -> anyhow::Result<i64> {
-        let result: (i64,) = sqlx::query_as(
+    ) -> anyhow::Result<()> {
+        sqlx::query(
             r#"
                 INSERT INTO sub_para_vote (block_hash, session_index, para_id, para_validator_index, is_explicit)
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT(block_hash, para_id, para_validator_index) DO UPDATE
                 SET is_explicit = EXCLUDED.is_explicit
-                RETURNING id
                 "#,
         )
             .bind(block_hash)
@@ -132,8 +131,8 @@ impl PostgreSQLNetworkStorage {
             .bind(para_id as i64)
             .bind(para_validator_index as i64)
             .bind(is_explicit)
-            .fetch_one(&self.connection_pool)
+            .execute(&self.connection_pool)
             .await?;
-        Ok(result.0)
+        Ok(())
     }
 }
