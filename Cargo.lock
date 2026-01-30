@@ -1091,9 +1091,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.54"
+version = "1.2.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6354c81bbfd62d9cfa9cb3c773c2b7b2a3a482d569de977fd0e961f6e7c00583"
+checksum = "47b26a0954ae34af09b50f0de26458fa95369a0d478d8236d3f93082b219bd29"
 dependencies = [
  "find-msvc-tools",
  "jobserver",
@@ -1176,18 +1176,18 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.55"
+version = "4.5.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3e34525d5bbbd55da2bb745d34b36121baac88d07619a9a09cfcf4a6c0832785"
+checksum = "a75ca66430e33a14957acc24c5077b503e7d374151b2b4b3a10c83b4ceb4be0e"
 dependencies = [
  "clap_builder",
 ]
 
 [[package]]
 name = "clap_builder"
-version = "4.5.55"
+version = "4.5.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59a20016a20a3da95bef50ec7238dbd09baeef4311dcdd38ec15aba69812fb61"
+checksum = "793207c7fa6300a0608d1080b858e5fdbe713cdc1c8db9fb17777d8a13e63df0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2236,9 +2236,9 @@ dependencies = [
 
 [[package]]
 name = "find-msvc-tools"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8591b0bcc8a98a64310a2fae1bb3e9b8564dd10e381e6e28010fde8e8e8568db"
+checksum = "5baebc0774151f905a1a2cc41989300b1e6fbb29aff0ceffa1064fdd3088d582"
 
 [[package]]
 name = "fixed-hash"
@@ -5688,31 +5688,9 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "redis"
-version = "0.32.7"
+version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "014cc767fefab6a3e798ca45112bccad9c6e0e218fbd49720042716c73cfef44"
-dependencies = [
- "bytes",
- "cfg-if",
- "combine",
- "futures-util",
- "itoa",
- "num-bigint",
- "percent-encoding",
- "pin-project-lite",
- "ryu",
- "sha1_smol",
- "socket2 0.6.2",
- "tokio",
- "tokio-util",
- "url",
-]
-
-[[package]]
-name = "redis"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dfe20977fe93830c0e9817a16fbf1ed1cfd8d4bba366087a1841d2c6033c251"
+checksum = "e969d1d702793536d5fda739a82b88ad7cbe7d04f8386ee8cd16ad3eff4854a5"
 dependencies = [
  "arcstr",
  "bytes",
@@ -7885,7 +7863,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde_json",
  "subvt-config",
  "subvt-metrics",
@@ -7904,7 +7882,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde_json",
  "subvt-config",
  "subvt-metrics",
@@ -7926,7 +7904,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -7955,7 +7933,7 @@ dependencies = [
  "lettre",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -7979,7 +7957,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "log",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -8051,7 +8029,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde",
  "subvt-config",
@@ -8213,7 +8191,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "serde",
  "serde_json",
  "subvt-config",
@@ -8236,7 +8214,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 1.0.2",
+ "redis",
  "rustc-hash",
  "serde_json",
  "subvt-config",
@@ -8256,7 +8234,7 @@ dependencies = [
  "lazy_static",
  "log",
  "once_cell",
- "redis 0.32.7",
+ "redis",
  "rustc-hash",
  "serde_json",
  "subvt-config",
@@ -9916,18 +9894,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.35"
+version = "0.8.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fdea86ddd5568519879b8187e1cf04e24fce28f7fe046ceecbce472ff19a2572"
+checksum = "7456cf00f0685ad319c5b1693f291a650eaf345e941d082fc4e03df8a03996ac"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.35"
+version = "0.8.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c15e1b46eff7c6c91195752e0eeed8ef040e391cdece7c25376957d5f15df22"
+checksum = "1328722bbf2115db7e19d69ebcc15e795719e2d66b60827c6a69a117365e37a0"
 dependencies = [
  "proc-macro2",
  "quote",
