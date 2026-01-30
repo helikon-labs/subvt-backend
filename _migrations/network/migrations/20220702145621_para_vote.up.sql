@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS sub_para_vote
 (
-    id                      SERIAL PRIMARY KEY,
+    id                      BIGSERIAL PRIMARY KEY,
     block_hash              VARCHAR(66) NOT NULL,
     session_index           bigint NOT NULL,
     para_id                 bigint NOT NULL,

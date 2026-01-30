@@ -117,8 +117,8 @@ impl PostgreSQLNetworkStorage {
         para_id: u32,
         para_validator_index: u32,
         is_explicit: Option<bool>,
-    ) -> anyhow::Result<i32> {
-        let result: (i32,) = sqlx::query_as(
+    ) -> anyhow::Result<i64> {
+        let result: (i64,) = sqlx::query_as(
             r#"
                 INSERT INTO sub_para_vote (block_hash, session_index, para_id, para_validator_index, is_explicit)
                 VALUES ($1, $2, $3, $4, $5)
