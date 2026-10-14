@@ -13,14 +13,16 @@ use subvt_types::report::{
 };
 use subvt_types::subvt::{ValidatorSearchSummary, ValidatorSummary};
 
-fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, HttpResponse> {
+fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, Box<HttpResponse>> {
     let account_id = match AccountId::from_str(ss58_address_or_account_id) {
         Ok(account_id) => account_id,
         Err(_) => match AccountId::from_str(ss58_address_or_account_id) {
             Ok(account_id) => account_id,
             Err(_) => {
-                return Err(HttpResponse::BadRequest()
-                    .json(ServiceError::from("Invalid address or account id.")))
+                return Err(Box::new(
+                    HttpResponse::BadRequest()
+                        .json(ServiceError::from("Invalid address or account id.")),
+                ))
             }
         },
     };
@@ -29,11 +31,11 @@ fn validate_path_param(ss58_address_or_account_id: &str) -> Result<AccountId, Ht
 
 fn get_finalized_block_summary(
     data: &web::Data<ServiceState>,
-) -> Result<BlockSummary, HttpResponse> {
+) -> Result<BlockSummary, Box<HttpResponse>> {
     match data.finalized_block_summary.read() {
         Ok(block_summary) => Ok((*block_summary).clone()),
-        Err(_) => Err(HttpResponse::InternalServerError().json(ServiceError::from(
-            "Internal Error: Cannot get finalized block.",
+        Err(_) => Err(Box::new(HttpResponse::InternalServerError().json(
+            ServiceError::from("Internal Error: Cannot get finalized block."),
         ))),
     }
 }
@@ -41,7 +43,7 @@ fn get_finalized_block_summary(
 fn get_validator_list(
     data: &web::Data<ServiceState>,
     is_active: bool,
-) -> Result<Vec<ValidatorSummary>, HttpResponse> {
+) -> Result<Vec<ValidatorSummary>, Box<HttpResponse>> {
     let validator_list_lock = if is_active {
         &data.active_validator_list
     } else {
@@ -49,8 +51,8 @@ fn get_validator_list(
     };
     match validator_list_lock.read() {
         Ok(list) => Ok((*list).clone()),
-        Err(_) => Err(HttpResponse::InternalServerError().json(ServiceError::from(
-            "Internal Error: Cannot get validator list.",
+        Err(_) => Err(Box::new(HttpResponse::InternalServerError().json(
+            ServiceError::from("Internal Error: Cannot get validator list."),
         ))),
     }
 }
@@ -67,7 +69,7 @@ pub(crate) async fn validator_summary_service(
 ) -> ResultResponse {
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let finalized_block = data.redis.get_finalized_block_summary().await?;
     if let Some(validator_details) = data
@@ -91,7 +93,7 @@ pub(crate) async fn validator_details_service(
 ) -> ResultResponse {
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let finalized_block = data.redis.get_finalized_block_summary().await?;
     if let Some(validator_details) = data
@@ -112,18 +114,18 @@ pub(crate) async fn validator_details_service(
 pub(crate) async fn validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
     let finalized_block = match get_finalized_block_summary(&data) {
         Ok(block_summary) => block_summary,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let mut active_validator_list = {
         match get_validator_list(&data, true) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     let mut inactive_validator_list = {
         match get_validator_list(&data, false) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     active_validator_list.append(&mut inactive_validator_list);
@@ -137,12 +139,12 @@ pub(crate) async fn validator_list_service(data: web::Data<ServiceState>) -> Res
 pub(crate) async fn active_validator_list_service(data: web::Data<ServiceState>) -> ResultResponse {
     let finalized_block = match get_finalized_block_summary(&data) {
         Ok(block_summary) => block_summary,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let active_validator_list = {
         match get_validator_list(&data, true) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     Ok(HttpResponse::Ok().json(ValidatorListReport {
@@ -157,12 +159,12 @@ pub(crate) async fn inactive_validator_list_service(
 ) -> ResultResponse {
     let finalized_block = match get_finalized_block_summary(&data) {
         Ok(block_summary) => block_summary,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let inactive_validator_list = {
         match get_validator_list(&data, false) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     Ok(HttpResponse::Ok().json(ValidatorListReport {
@@ -184,13 +186,13 @@ pub(crate) async fn validator_search_service(
     let mut active_validator_list = {
         match get_validator_list(&data, true) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     let mut inactive_validator_list = {
         match get_validator_list(&data, false) {
             Ok(list) => list,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         }
     };
     active_validator_list.append(&mut inactive_validator_list);
@@ -214,7 +216,7 @@ pub(crate) async fn validator_era_rewards_service(
 ) -> ResultResponse {
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let era_rewards: Vec<EraValidatorRewardReport> = data
         .postgres
@@ -234,7 +236,7 @@ pub(crate) async fn validator_era_payouts_service(
 ) -> ResultResponse {
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let era_payouts: Vec<EraValidatorPayoutReport> = data
         .postgres
@@ -328,7 +330,7 @@ pub(crate) async fn validator_monhtly_income_service(
     let token_symbol = "USDT";
     let account_id = match validate_path_param(&path.into_inner().ss58_address_or_account_id) {
         Ok(account_id) => account_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let now = Utc::now();
     let start_date = now

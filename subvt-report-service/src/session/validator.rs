@@ -16,13 +16,15 @@ async fn validate_params(
     maybe_end_session_index: Option<i64>,
     current_session: Epoch,
     min_para_vote_session_index: u64,
-) -> Result<(AccountId, u64, u64), HttpResponse> {
+) -> Result<(AccountId, u64, u64), Box<HttpResponse>> {
     // check valid address
     let account_id = match AccountId::from_str(ss58_address) {
         Ok(account_id) => account_id,
         Err(_) => {
-            return Err(HttpResponse::BadRequest().json(ServiceError::from(
-                format!("Bad Request: Invalid address {ss58_address}.").as_ref(),
+            return Err(Box::new(HttpResponse::BadRequest().json(
+                ServiceError::from(
+                    format!("Bad Request: Invalid address {ss58_address}.").as_ref(),
+                ),
             )))
         }
     };
@@ -32,17 +34,19 @@ async fn validate_params(
         None => current_session.index,
     };
     if start_session_index > current_session.index {
-        return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
+        return Err(Box::new(HttpResponse::BadRequest().json(ServiceError::from(&format!(
             "Bad Request: start_session_index ({}) cannot be greater than the current session index ({}).",
             start_session_index, current_session.index,
-        ))));
+        )))));
     }
     // end session index
     let end_session_index = match maybe_end_session_index {
         Some(end_session_index) => {
             if maybe_start_session_index.is_none() {
-                return Err(HttpResponse::BadRequest().json(ServiceError::from(
-                    "Bad Request: Please also add the start_session_index query parameter.",
+                return Err(Box::new(HttpResponse::BadRequest().json(
+                    ServiceError::from(
+                        "Bad Request: Please also add the start_session_index query parameter.",
+                    ),
                 )));
             }
             if (end_session_index as u64) > current_session.index {
@@ -54,28 +58,30 @@ async fn validate_params(
         None => start_session_index,
     };
     if start_session_index > end_session_index {
-        return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
+        return Err(Box::new(HttpResponse::BadRequest().json(ServiceError::from(&format!(
             "Bad Request: start_session_index ({start_session_index}) cannot be greater than end_session_index ({end_session_index}).",
-        ))));
+        )))));
     }
     if end_session_index > current_session.index {
-        return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
+        return Err(Box::new(HttpResponse::BadRequest().json(ServiceError::from(&format!(
             "Bad Request: end_session_index ({end_session_index}) cannot be greater than the current session index ({}).",
             current_session.index,
-        ))));
+        )))));
     }
     // check if start session is supported [votes]
     if start_session_index < min_para_vote_session_index {
-        return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
+        return Err(Box::new(HttpResponse::BadRequest().json(ServiceError::from(&format!(
             "Bad Request: start_session_index ({start_session_index}) cannot be less than the earliest supported session index ({min_para_vote_session_index}).",
-        ))));
+        )))));
     }
     // check if era range is valid
     if end_session_index - start_session_index + 1 > CONFIG.report.max_session_index_range as u64 {
-        return Err(HttpResponse::BadRequest().json(ServiceError::from(&format!(
-            "Bad Request: This report cannot span more than {} sessions.",
-            CONFIG.report.max_session_index_range,
-        ))));
+        return Err(Box::new(HttpResponse::BadRequest().json(
+            ServiceError::from(&format!(
+                "Bad Request: This report cannot span more than {} sessions.",
+                CONFIG.report.max_session_index_range,
+            )),
+        )));
     }
     Ok((account_id, start_session_index, end_session_index))
 }
@@ -173,7 +179,7 @@ pub(crate) async fn session_validator_report_service(
     .await
     {
         Ok(tuple) => tuple,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
 
     let mut result = vec![];
@@ -255,7 +261,7 @@ pub(crate) async fn session_validator_para_vote_service(
     .await
     {
         Ok(tuple) => tuple,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     // validation passed
     let mut result = vec![];

@@ -398,11 +398,11 @@ impl<'a> Chart<'a> {
         group.append(view_group);
 
         if let Some(legend_position) = self.legend_position {
-            let width;
-            let x_offset;
-            let y_offset;
+            let width: isize;
+            let x_offset: isize;
+            let y_offset: isize;
 
-            match legend_position {
+            let (width, x_offset, y_offset) = match legend_position {
                 AxisPosition::Top => {
                     let axis_height = {
                         if !self.title.is_empty() {
@@ -411,9 +411,11 @@ impl<'a> Chart<'a> {
                             10
                         }
                     };
-                    width = self.width - self.margin_right - self.margin_left;
-                    x_offset = self.margin_left;
-                    y_offset = axis_height;
+                    (
+                        self.width - self.margin_right - self.margin_left,
+                        self.margin_left,
+                        axis_height,
+                    )
                 }
                 AxisPosition::Bottom => {
                     // Compute the height of the bottom axis that should serve
@@ -432,9 +434,11 @@ impl<'a> Chart<'a> {
                             16
                         }
                     };
-                    width = self.width - self.margin_right - self.margin_left;
-                    x_offset = self.margin_left;
-                    y_offset = self.height - self.margin_bottom + axis_height;
+                    (
+                        self.width - self.margin_right - self.margin_left,
+                        self.margin_left,
+                        self.height - self.margin_bottom + axis_height,
+                    )
                 }
                 AxisPosition::Left => {
                     let axis_width = {
@@ -448,9 +452,7 @@ impl<'a> Chart<'a> {
                             20
                         }
                     };
-                    width = self.margin_left - axis_width - 10; // 10 is described in the comment below
-                    x_offset = 10; // always have a 10px padding from the left of the chart
-                    y_offset = self.margin_top;
+                    (self.margin_left - axis_width - 10, 10, self.margin_top)
                 }
                 AxisPosition::Right => {
                     let axis_width = {
@@ -464,9 +466,11 @@ impl<'a> Chart<'a> {
                             20
                         }
                     };
-                    width = self.margin_right - axis_width;
-                    x_offset = self.width - self.margin_right + axis_width;
-                    y_offset = self.margin_top;
+                    (
+                        self.margin_right - axis_width,
+                        self.width - self.margin_right + axis_width,
+                        self.margin_top,
+                    )
                 }
             };
 

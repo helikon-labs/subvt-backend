@@ -24,12 +24,12 @@ pub(crate) async fn controller_service(
     let stash_account_id =
         match validate_account_id_param(&path.into_inner().ss58_address_or_account_id) {
             Ok(account_id) => account_id,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         };
 
     if let Some(block_hash) = &query.block_hash {
         if let Err(response) = validate_block_hash(block_hash) {
-            return Ok(response);
+            return Ok(*response);
         }
     }
     let controller_account_id =
@@ -58,11 +58,11 @@ pub(crate) async fn bond_service(
     let controller_account_id =
         match validate_account_id_param(&path.into_inner().ss58_address_or_account_id) {
             Ok(account_id) => account_id,
-            Err(response) => return Ok(response),
+            Err(response) => return Ok(*response),
         };
     if let Some(block_hash) = &query.block_hash {
         if let Err(response) = validate_block_hash(block_hash) {
-            return Ok(response);
+            return Ok(*response);
         }
     }
     let bond = match data.substrate_client.get_stake(

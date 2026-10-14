@@ -34,7 +34,7 @@ sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polka
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.21.1" }
 sp-staking = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.21.1" }
 staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.21.1" }
-sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio-rustls", "chrono", "bigdecimal"] }
+sqlx = { git  = "https://github.com/helikon-labs/sqlx.git", branch = "helikon-increased-field-count", features = ["postgres", "runtime-tokio", "chrono", "bigdecimal"] }
 subvt-proc-macro = { path = "../subvt-proc-macro" }
 subvt-utility = { path = "../subvt-utility" }
 scale-bits = "0.7"

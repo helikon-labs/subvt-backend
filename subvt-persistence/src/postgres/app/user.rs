@@ -22,18 +22,16 @@ impl PostgreSQLAppStorage {
         let time_window_mins = self
             .config
             .app_service
-            .user_registration_per_ip_limit_time_window_mins;
+            .user_registration_per_ip_limit_time_window_mins as i32;
         let result: (i64,) = sqlx::query_as(
-            format!(
-                "
-                SELECT COUNT(DISTINCT id) FROM app_user
-                WHERE registration_ip = $1
-                AND created_at > (current_timestamp - interval '{time_window_mins} minutes')
-                ",
-            )
-            .as_str(),
+            "
+            SELECT COUNT(DISTINCT id) FROM app_user
+            WHERE registration_ip = $1
+            AND created_at > (current_timestamp - make_interval(mins => $2))
+            ",
         )
         .bind(registration_ip)
+        .bind(time_window_mins)
         .fetch_one(&self.connection_pool)
         .await?;
         Ok(result.0 as u64)

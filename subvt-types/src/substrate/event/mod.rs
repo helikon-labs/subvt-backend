@@ -90,7 +90,7 @@ impl SubstrateEvent {
                 )))
             }
         };
-        let pre_event_bytes = <&[u8]>::clone(bytes);
+        let pre_event_bytes = *bytes;
         // decode parameters
         for event_field in &event_variant.fields {
             let event_field_type = get_metadata_type(metadata, event_field.ty.id);

@@ -169,6 +169,7 @@ impl ValidatorListUpdater {
                 CONFIG.redis.url
             ))?;
         let mut redis_cmd_pipeline = Pipeline::new();
+        let mut has_commands = false;
         let mut processed_block_numbers = processed_block_numbers.write().await;
         let to_delete: Vec<u64> = processed_block_numbers
             .iter()
@@ -191,13 +192,16 @@ impl ValidatorListUpdater {
             log::info!("Delete {} records for block #{}.", keys.len(), delete);
             for key in keys {
                 redis_cmd_pipeline.cmd("DEL").arg(key);
+                has_commands = true;
             }
             processed_block_numbers.remove(0);
         }
-        redis_cmd_pipeline
-            .query_async::<()>(&mut redis_connection)
-            .await
-            .context("Error while setting Redis validators.")?;
+        if has_commands {
+            redis_cmd_pipeline
+                .query_async::<()>(&mut redis_connection)
+                .await
+                .context("Error while setting Redis validators.")?;
+        }
         Ok(())
     }
 

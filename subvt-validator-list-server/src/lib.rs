@@ -272,7 +272,7 @@ impl Service for ValidatorListServer {
                             .query(&mut data_connection)
                             .context(format!(
                                 "Can't read validator JSON string (2) from Redis :: {}",
-                                &prefix
+                                prefix,
                             ))?;
                         let validator_deser_result: serde_json::error::Result<ValidatorDetails> =
                             serde_json::from_str(&validator_json_string);
