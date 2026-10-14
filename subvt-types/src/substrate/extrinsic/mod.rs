@@ -179,7 +179,7 @@ impl SubstrateExtrinsic {
         } else {
             for call_field in &call_variant.fields {
                 let call_field_type = get_metadata_type(metadata, call_field.ty.id);
-                decode_field(metadata, call_field_type, bytes, false).unwrap();
+                let _ = decode_field(metadata, call_field_type, bytes, false);
             }
             log::debug!(
                 "Decoded non-specified extrinsic {}.{}.",
